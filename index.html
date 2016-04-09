@@ -1,0 +1,190 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>CryptoGraffiti - Bitcoin Blockchain Messages as Text</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="application-name" content="CryptoGraffiti" />
+<meta name="description" content="Read the messages that have been stored in the Bitcoin's blockchain or write them yourself." />
+<meta name="keywords" content="crypto graffity,bitcoin blockchain decode encode messages text,bitcoin,blockchain,ansi,read blockchain messages,create bitcoin message,craft bitcoin message,make bitcoin message,btc,coin,graffity,chain,address,blockchain messages,addresses,engrave,graffiti,bitcoin address,crypto,cyptograffity,cryptograffiti" />
+
+<style media="screen" type="text/css">
+* {margin:0; padding:0;}
+html, body {height:100%; width:100%; font-family: monospace;}
+
+.appear {
+    opacity: 0;
+    -webkit-animation-name: appear-anim;
+    -webkit-animation-duration: 1s;
+    animation-name: appear-anim;
+    animation-duration: 1s;
+    -webkit-animation-fill-mode: forwards;
+    animation-fill-mode: forwards;
+}
+@-webkit-keyframes appear-anim {
+    0%   {opacity: 0;}
+    100% {opacity: 1;}
+}
+@keyframes appear-anim {
+    0%   {opacity: 0;}
+    100% {opacity: 1;}
+}
+
+.disappear {
+    opacity: 1;
+    -webkit-animation-name: disappear-anim;
+    -webkit-animation-duration: 0.5s;
+    animation-name: disappear-anim;
+    animation-duration: 0.5s;
+    -webkit-animation-fill-mode: forwards;
+    animation-fill-mode: forwards;
+}
+@-webkit-keyframes disappear-anim {
+    0%   {opacity: 1;}
+    100% {opacity: 0;}
+}
+@keyframes disappear-anim {
+    0%   {opacity: 1;}
+    100% {opacity: 0;}
+}
+
+#cg-header {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    height: 10rem;
+}
+
+#cg-body {
+    display: block;
+    width: 100%;
+    height: calc(100% - 12rem);
+
+    border-radius: 1.0rem;
+    border-width: medium 0px;
+    border-style: inset;
+    border-color: rgba(212,212,212, 0.5);
+    
+    margin-left: auto; 
+    margin-right: auto;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+#cg-footer {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    height: 2rem;
+    overflow: hidden;
+}
+
+@media screen and (min-width: 15rem) {
+    #cg-header {height: 7rem;}
+    #cg-footer {height: 2rem;}
+    #cg-body   {height: calc(100% - 9rem);}
+}
+
+@media screen and (min-width: 25rem) {
+    #cg-header {height: 5rem;}
+    #cg-footer {height: 2rem;}
+    #cg-body   {height: calc(100% - 7rem);}
+}
+
+@media screen and (min-width: 35rem) {
+    #cg-header {height: 4rem;}
+    #cg-footer {height: 2rem;}
+    #cg-body   {height: calc(100% - 6rem);}
+}
+
+@media screen and (min-width: 50rem) {
+    #cg-header {height: 2rem;}
+    #cg-footer {height: 2rem;}
+    #cg-body   {height: calc(100% - 4rem);}
+}
+
+/* PASTE EXTERNAL CSS HERE */
+</style>
+
+<!-- BEGIN EXTERNAL SCRIPTS -->
+<script src="./lib/cryptojs/core.js"            type="text/javascript"></script>
+<script src="./lib/cryptojs/lib-typedarrays.js" type="text/javascript"></script>
+<script src="./lib/cryptojs/sha256.js"          type="text/javascript"></script>
+<script src="./lib/cryptojs/ripemd160.js"       type="text/javascript"></script>
+<script src="./lib/cryptojs/enc-base64.js"      type="text/javascript"></script>
+<script src="./lib/bitcoin.js"                  type="text/javascript"></script>
+<script src="./lib/sprintf.js"                  type="text/javascript"></script>
+
+<script src="./lang.js"    type="text/javascript" charset="UTF-8"></script>
+<script src="./main.js"    type="text/javascript" charset="UTF-8"></script>
+<script src="./utils.js"   type="text/javascript" charset="UTF-8"></script>
+<script src="./read.js"    type="text/javascript" charset="UTF-8"></script>
+<script src="./write.js"   type="text/javascript" charset="UTF-8"></script>
+<script src="./save.js"    type="text/javascript" charset="UTF-8"></script>
+<script src="./captcha.js" type="text/javascript" charset="UTF-8"></script>
+<script src="./tools.js"   type="text/javascript" charset="UTF-8"></script>
+<script src="./help.js"    type="text/javascript" charset="UTF-8"></script>
+<script src="./about.js"   type="text/javascript" charset="UTF-8"></script>
+<!-- END EXTERNAL SCRIPTS -->
+
+<script type="text/javascript">
+/* BEGIN EXCEPTION 1 */
+cg_start("main.css");
+/* END EXCEPTION 1 */
+
+function fade_out() {
+    var cg = document.getElementById("cg");
+    if (cg !== null) {
+        if (cg.classList.contains('appear'))     cg.classList.remove('appear');
+        if (!cg.classList.contains('disappear')) cg.classList.add('disappear');
+    }
+}
+window.onbeforeunload = fade_out;
+
+/* PASTE EXTERNAL JS HERE */
+</script>
+
+</head>
+<body style="background-color: rgba(224,224,224, 0.5);">
+
+<div style="height: 100%;" id="cg" class="appear">
+    <div id="cg-header">    
+        <div style="overflow: hidden;"><h2 style="display: inline; padding-left: 1ch; padding-right: 0.5ch;">CryptoGraffiti.info</h2></div>
+    </div>
+
+    <div id="cg-body">
+        <div style="width: 100%; height: 100%; text-align: center;">
+            <div id="cg-main" style="width: 100%; height: 100%;">
+
+                <div style="display:table; width: 100%; height: 100%;">
+                    <div style="display:table-cell;vertical-align:middle;">
+                        <div style="margin-left:auto;margin-right:auto;">
+                            <span>Please enable JavaScript.</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>    
+
+    <div id="cg-footer">
+        <span id="cg-credits">&copy;2016 CryptoGraffiti Developers</span>
+    </div>
+</div>
+
+<audio id='sfx_spray_1'  src='sfx/spray_1.wav'  preload='auto'></audio>
+<audio id='sfx_spray_2'  src='sfx/spray_2.wav'  preload='auto'></audio>
+<audio id='sfx_rattle_1' src='sfx/rattle_1.wav' preload='auto'></audio>
+<audio id='sfx_rattle_2' src='sfx/rattle_2.wav' preload='auto'></audio>
+<audio id='sfx_rattle_3' src='sfx/rattle_3.wav' preload='auto'></audio>
+<audio id='sfx_rattle_4' src='sfx/rattle_4.wav' preload='auto'></audio>
+<audio id='sfx_rattle_5' src='sfx/rattle_5.wav' preload='auto'></audio>
+
+</body>
+</html>
