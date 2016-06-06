@@ -7,7 +7,7 @@ var CG_ONLINE      = null;
 var CG_HOLD_STATUS = 0;
 var CG_TX_NR       = null;
 var CG_SCROLL_KEY  = false;
-var CG_VERSION     = "0.70";
+var CG_VERSION     = "0.71";
 
 function cg_start(main_css) {
     CG_MAIN_CSS = main_css;

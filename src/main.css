@@ -88,9 +88,16 @@
     background-color: rgba(240,240,240, 1.0);
 }
 
-@media screen and (min-width: 20rem) {
+@media all and (min-width: 35rem) {
     .cg-write-main{min-width: 15rem;}
     .cg-write-side{min-width: 20rem;}
+}
+
+@media not all and (min-width: 35rem) {
+    .cg-write-main{height: calc(100% - 21rem);}
+    .cg-write-main{min-height: 4rem;}
+    .cg-write-side{height: 20rem;}
+    .cg-write-side{overflow: hidden;}
 }
 
 .cg-write-info {
