@@ -33,22 +33,65 @@ function cg_construct_write(main) {
     
     var main_area = document.createElement("div");
     var side_area = document.createElement("div");
-    var info_area = document.createElement("div");
+    var addr_area = document.createElement("div");
     var btns_area = document.createElement("div");
     var text_area = document.createElement("textarea");
+    var info_area = document.createElement("div");
 
     main_area.classList.add("cg-write-main");
     main_area.classList.add("cg-borderbox");
     side_area.classList.add("cg-write-side");
     side_area.classList.add("cg-borderbox");
-    info_area.classList.add("cg-write-info");
-    info_area.classList.add("cg-borderbox");
+    addr_area.classList.add("cg-write-addr");
+    addr_area.classList.add("cg-borderbox");
     btns_area.classList.add("cg-write-btns");
     text_area.classList.add("cg-write-text");
     text_area.classList.add("cg-borderbox");
+    info_area.classList.add("cg-write-info");
+    info_area.classList.add("cg-borderbox");
 
     text_area.id="cg-write-textarea";
-    info_area.id="cg-write-addresses"
+    addr_area.id="cg-write-addresses";
+    info_area.id="cg-write-infoarea";
+
+    var info_table = document.createElement("table");
+    var caption    = document.createElement("caption");
+    var tr1        = document.createElement("tr");
+    var tr2        = document.createElement("tr");
+    var tr3        = document.createElement("tr");
+    var tr4        = document.createElement("tr");
+    var td1_tr1    = document.createElement("td");
+    var td2_tr1    = document.createElement("td");
+    var td1_tr2    = document.createElement("td");
+    var td2_tr2    = document.createElement("td");
+    var td1_tr3    = document.createElement("td");
+    var td2_tr3    = document.createElement("td");
+    var td1_tr4    = document.createElement("td");
+    var td2_tr4    = document.createElement("td");
+    caption.appendChild(document.createTextNode("New Block Chain Message"));
+    td1_tr1.appendChild(document.createTextNode("Size:"));
+    td2_tr1.appendChild(document.createTextNode("1 KiB"));
+    td1_tr2.appendChild(document.createTextNode("Cost:"));
+    td2_tr2.appendChild(document.createTextNode("~0.00010000 BTC"));
+    td1_tr3.appendChild(document.createTextNode("File:"));
+    td2_tr3.appendChild(document.createTextNode("N/A"));
+    td1_tr4.appendChild(document.createTextNode("Hash:"));
+    td2_tr4.appendChild(document.createTextNode("N/A"));
+    tr1.appendChild(td1_tr1);
+    tr1.appendChild(td2_tr1);
+    tr2.appendChild(td1_tr2);
+    tr2.appendChild(td2_tr2);
+    tr3.appendChild(td1_tr3);
+    tr3.appendChild(td2_tr3);
+    tr4.appendChild(td1_tr4);
+    tr4.appendChild(td2_tr4);
+    info_table.appendChild(caption);
+    info_table.appendChild(tr1);
+    info_table.appendChild(tr2);
+    info_table.appendChild(tr3);
+    info_table.appendChild(tr4);
+    info_table.id="cg-write-infotable";
+    info_area.appendChild(info_table);
 
     if (text_area.addEventListener) {
         text_area.addEventListener('input', function() {
@@ -61,9 +104,11 @@ function cg_construct_write(main) {
             cg_write_update(true);
         });
     }
+    text_area.placeholder = CG_TXT_WRITE_MSG_PLACEHOLDER[CG_LANGUAGE];
 
-    side_area.appendChild(info_area);
+    side_area.appendChild(addr_area);
     side_area.appendChild(btns_area);
+    main_area.appendChild(info_area);
     main_area.appendChild(text_area);
     
     var btn_1 = document.createElement("BUTTON"); btn_1.classList.add("cg-write-btn"); btn_1.disabled = true;

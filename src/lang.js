@@ -402,6 +402,13 @@ var CG_TXT_WRITE_BTN_SAVE =
     et : "SALVESTA PLOKIAHELASSE",
     ru : "СОХРАНИТЬ В БЛОКЧЕЙН"
 };
+
+var CG_TXT_WRITE_MSG_PLACEHOLDER =
+{
+    en : "Type your message here...",
+    et : "Kirjuta oma sõnum siia...",
+    ru : "(Type your message here...)"
+};
 ////////////////////////////////////////////////////////////////////////////////
 //  WRITE TAB TRANSLATIONS END                                                //
 ////////////////////////////////////////////////////////////////////////////////

@@ -28,8 +28,8 @@
 
 .cg-read-tab {
     overflow-y:scroll;
-    border-radius: 1.0rem;
-    background-color: rgba(224,224,224, 0.5);    
+    /*border-radius: 1.0rem;*/
+    /*background-color: rgba(224,224,224, 0.5);*/
 }
 
 .cg-read-tab-premature,
@@ -64,6 +64,33 @@
     margin: 0.25rem;
 }
 
+.cg-write-info {
+    height: 8rem;
+    width: 100%;
+
+    border: medium outset rgba(230,230,230, 0.80);
+    border-radius: 1.0rem;
+    padding: 0.5rem;
+    margin-bottom: 0.25rem;
+    background-color: rgba(240,240,240, 0.80);
+    overflow: hidden;
+}
+
+#cg-write-infotable {
+    width: 100%;
+    max-width: 30rem;
+    margin: auto;
+    border-spacing: 0;
+}
+
+#cg-write-infotable td:nth-child(1) {
+    text-align: left;
+}
+
+#cg-write-infotable td:nth-child(2) {
+    text-align: right;
+}
+
 .cg-write-text {
     width: 100%;
     flex: 1.0;
@@ -72,6 +99,14 @@
     word-wrap: normal;
     overflow-x: auto;
     padding: 1ch;
+    min-height: 3rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    background-color: rgba(255,255,255, 0.75);
+}
+
+.cg-write-text:focus {
+    outline: none;
 }
 
 .cg-write-side {
@@ -81,8 +116,8 @@
     flex: 1.0;
     min-width: 60%;
     
-    border: medium outset rgba(212,212,212, 0.5);
-    border-radius: 1.5rem;
+    border: medium outset rgba(230,230,230, 0.80);
+    border-radius: 1.0rem;
     padding: 0.5rem;
     margin: 0.25rem;
     background-color: rgba(240,240,240, 1.0);
@@ -94,13 +129,13 @@
 }
 
 @media not all and (min-width: 35rem) {
-    .cg-write-main{height: calc(100% - 21rem);}
+    .cg-write-main{height: calc(100% - 16rem);}
     .cg-write-main{min-height: 4rem;}
-    .cg-write-side{height: 20rem;}
+    .cg-write-side{height: 15rem;}
     .cg-write-side{overflow: hidden;}
 }
 
-.cg-write-info {
+.cg-write-addr {
     /*background-color: rgba(0, 0, 255, 0.25);*/
     width: 100%;
     min-height: 5rem;
@@ -109,9 +144,14 @@
     overflow-y: auto;
 
     border: medium inset rgba(212,212,212, 0.25);
-    border-radius: 1.0rem;
+    border-radius: 0.5rem;
     padding: 0.5rem;
-    background-color: rgba(224,224,224, 0.5);
+    /*background-color: rgba(224,224,224, 0.5);*/
+    background: rgba(224,224,224, 0.5);
+    background: -webkit-linear-gradient(rgba(0,0,0,0.0625), rgba(255,255,255,0.03125), rgba(0,0,0,0.0625));
+    background: -o-linear-gradient(rgba(0,0,0,0.0625), rgba(255,255,255,0.03125), rgba(0,0,0,0.0625));
+    background: -moz-linear-gradient(rgba(0,0,0,0.0625), rgba(255,255,255,0.03125), rgba(0,0,0,0.0625));
+    background: linear-gradient(rgba(0,0,0,0.0625), rgba(255,255,255,0.03125), rgba(0,0,0,0.0625));
 }
 
 .cg-write-btns {
@@ -188,9 +228,9 @@
     max-width: 512px;
     height: auto;
     /*border: 1px dotted black;*/
-    border-width: thin;
     border-style: inset inset solid;
     border-color: rgba(212, 212, 212, 0.5);
+    border-width: thin;
     background-color: rgba(224,224,224, 0.5);
     border-radius: 1rem;    
 }
@@ -403,6 +443,8 @@ a.cg-link:hover {
     -moz-transition: background-color 250ms ease;
     -o-transition: background-color 250ms ease;
     transition: background-color 250ms ease;
+
+    /*box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);*/
 }
 
 .cg-msgbox-wide {
@@ -479,9 +521,9 @@ a.cg-link:hover {
     border-width: medium;
     font-size: small;
 */
-    border-width: thin thin 0.0rem;
     border-style: inset;
     border-color: rgba(212, 212, 212, 0.5);
+    border-width: thin thin 0.0rem;
     background-color: rgba(112,112,112, 0.25);
     font-size: small;
     border-radius: 1rem;
@@ -546,9 +588,9 @@ a.cg-link:hover {
     position: relative;
 
     text-align: left;
-    border-width: 0.0rem thin thin;
     border-style: inset;
     border-color: rgba(212, 212, 212, 0.5);
+    border-width: 0.0rem thin thin;
     background-color: rgba(224,224,224, 0.5);
     border-radius: 1rem;
     border-top-left-radius: 0ch;
@@ -568,9 +610,9 @@ a.cg-link:hover {
 .cg-msgbody {
     text-align: left;
     overflow: auto;
-    border-width: thin;
     border-style: inset inset solid;
     border-color: rgba(212, 212, 212, 0.5);
+    border-width: thin;
     background-color: rgba(224,224,224, 0.5);
     border-radius: 0ch;
     padding: 0.5ch;
