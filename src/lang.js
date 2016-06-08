@@ -409,6 +409,42 @@ var CG_TXT_WRITE_MSG_PLACEHOLDER =
     et : "Kirjuta oma sõnum siia...",
     ru : "(Type your message here...)"
 };
+
+var CG_TXT_WRITE_NEW_MSG =
+{
+    en : "New Block Chain Message",
+    et : "Uus Plokiahela Sõnum",
+    ru : "(New Block Chain Message)"
+};
+
+var CG_TXT_WRITE_NEW_MSG_SIZE =
+{
+    en : "Size:",
+    et : "Suurus:",
+    ru : "(Size:)"
+};
+
+var CG_TXT_WRITE_NEW_MSG_COST =
+{
+    en : "Cost:",
+    et : "Hind:",
+    ru : "(Cost:)"
+};
+
+var CG_TXT_WRITE_NEW_MSG_FILE =
+{
+    en : "File:",
+    et : "Fail:",
+    ru : "(File:)"
+};
+
+var CG_TXT_WRITE_NEW_MSG_HASH =
+{
+    en : "Hash:",
+    et : "Räsi:",
+    ru : "(Hash:)"
+};
+
 ////////////////////////////////////////////////////////////////////////////////
 //  WRITE TAB TRANSLATIONS END                                                //
 ////////////////////////////////////////////////////////////////////////////////

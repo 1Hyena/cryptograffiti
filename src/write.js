@@ -1,5 +1,7 @@
 var CG_WRITE_ENCODE_TIME = 0;
 var CG_WRITE_CHUNKS = [];
+var CG_WRITE_MIN_BTC_OUTPUT = 0.00002730;
+var CG_WRITE_MAX_TX_SIZE = 100000;
 
 function cg_construct_write(main) {
     var div = cg_init_tab(main, 'cg-tab-write');
@@ -68,15 +70,19 @@ function cg_construct_write(main) {
     var td2_tr3    = document.createElement("td");
     var td1_tr4    = document.createElement("td");
     var td2_tr4    = document.createElement("td");
-    caption.appendChild(document.createTextNode("New Block Chain Message"));
-    td1_tr1.appendChild(document.createTextNode("Size:"));
-    td2_tr1.appendChild(document.createTextNode("1 KiB"));
-    td1_tr2.appendChild(document.createTextNode("Cost:"));
-    td2_tr2.appendChild(document.createTextNode("~0.00010000 BTC"));
-    td1_tr3.appendChild(document.createTextNode("File:"));
-    td2_tr3.appendChild(document.createTextNode("N/A"));
-    td1_tr4.appendChild(document.createTextNode("Hash:"));
-    td2_tr4.appendChild(document.createTextNode("N/A"));
+    var span_size  = document.createElement("span"); span_size.id="cg-write-msg-size";
+    var span_cost  = document.createElement("span"); span_cost.id="cg-write-msg-cost";
+    var span_file  = document.createElement("span"); span_file.id="cg-write-msg-file";
+    var span_hash  = document.createElement("span"); span_hash.id="cg-write-msg-hash";
+    caption.appendChild(document.createTextNode(CG_TXT_WRITE_NEW_MSG[CG_LANGUAGE]));
+    td1_tr1.appendChild(document.createTextNode(CG_TXT_WRITE_NEW_MSG_SIZE[CG_LANGUAGE]));
+    td2_tr1.appendChild(span_size);
+    td1_tr2.appendChild(document.createTextNode(CG_TXT_WRITE_NEW_MSG_COST[CG_LANGUAGE]));
+    td2_tr2.appendChild(span_cost);
+    td1_tr3.appendChild(document.createTextNode(CG_TXT_WRITE_NEW_MSG_FILE[CG_LANGUAGE]));
+    td2_tr3.appendChild(span_file);
+    td1_tr4.appendChild(document.createTextNode(CG_TXT_WRITE_NEW_MSG_HASH[CG_LANGUAGE]));
+    td2_tr4.appendChild(span_hash);
     tr1.appendChild(td1_tr1);
     tr1.appendChild(td2_tr1);
     tr2.appendChild(td1_tr2);
@@ -160,5 +166,25 @@ function cg_write_update(instant) {
     }
 
     addr.appendChild(document.createTextNode(text));
+    
+    var inputs  = 1;
+    var outputs = sz;
+    var tx_size = inputs*181 + outputs*34 + 10;
+    var tx_fee  = Math.ceil(tx_size/1000) * 0.0001;
+    var tx_cost = CG_WRITE_MIN_BTC_OUTPUT*outputs + tx_fee;
+
+    if (outputs === 0) {
+        tx_size = 0;
+        tx_cost = 0;
+    }
+
+    var size_span = document.getElementById("cg-write-msg-size");
+    var cost_span = document.getElementById("cg-write-msg-cost");
+
+    while (size_span.hasChildNodes()) size_span.removeChild(size_span.lastChild);
+    size_span.appendChild(document.createTextNode((tx_size/1024).toFixed(8)+" KiB"));
+
+    while (cost_span.hasChildNodes()) cost_span.removeChild(cost_span.lastChild);
+    cost_span.appendChild(document.createTextNode((tx_cost).toFixed(8)+" BTC"));
 }
 
