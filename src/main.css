@@ -306,18 +306,30 @@
     100% {flex: 0 0 auto;}
 }
 
+.cg-status-warning {
+    color: red;
+}
+
 .cg-status {
     flex: 1 1 auto;
     opacity: 0;
     border: 0rem solid blue;
     overflow: hidden;
     text-align: left;
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
     -webkit-animation-name: cg-appear-anim;
     -webkit-animation-duration: 1.0s;
     animation-name: cg-appear-anim;
     animation-duration: 1.0s;
     -webkit-animation-fill-mode: forwards;
     animation-fill-mode: forwards;
+
+    -webkit-transition: color 250ms linear;
+    -moz-transition: color 250ms linear;
+    -o-transition: color 250ms linear;
+    -ms-transition: color 250ms linear;
+    transition: color 250ms linear;
 }
 
 .cg-appear {

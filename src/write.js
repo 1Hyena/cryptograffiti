@@ -120,19 +120,44 @@ function cg_construct_write(main) {
     var btn_1 = document.createElement("BUTTON"); btn_1.classList.add("cg-write-btn"); btn_1.disabled = true;
     var btn_2 = document.createElement("BUTTON"); btn_2.classList.add("cg-write-btn"); btn_2.disabled = true;
     var btn_3 = document.createElement("BUTTON"); btn_3.classList.add("cg-write-btn"); btn_3.disabled = true;
+    var btn_4 = document.createElement("BUTTON"); btn_4.classList.add("cg-write-btn"); btn_4.disabled = true;
+
+    if (window.File && window.FileReader && window.FileList && window.Blob) btn_4.disabled = false;
+
     var txt_1 = document.createTextNode(CG_TXT_WRITE_BTN_SELECT_ALL[CG_LANGUAGE]);
     var txt_2 = document.createTextNode(CG_TXT_WRITE_BTN_TO_WALLET [CG_LANGUAGE]);
     var txt_3 = document.createTextNode(CG_TXT_WRITE_BTN_SAVE      [CG_LANGUAGE]);
+    var txt_4 = document.createTextNode(CG_TXT_WRITE_BTN_ATTACH    [CG_LANGUAGE]);
     btn_1.appendChild(txt_1);
     btn_2.appendChild(txt_2);
     btn_3.appendChild(txt_3); btn_3.addEventListener("click", cg_button_click_save);
     btn_3.id = "cg-write-btn-save";
+    btn_4.appendChild(txt_4); btn_4.addEventListener("click", cg_button_click_attach);
+    btn_4.id = "cg-write-btn-file";
+    btns_area.appendChild(btn_4);
     btns_area.appendChild(btn_1);
     btns_area.appendChild(btn_2);
     btns_area.appendChild(btn_3);
 
     div.appendChild(main_area);
     div.appendChild(side_area);
+    cg_write_update(true);
+    cg_write_reset_file_input();
+}
+
+function cg_write_reset_file_input() {
+    var info_area = document.getElementById("cg-write-infoarea");
+    var input = document.getElementById("cg-write-msg-file-input");
+    if (input !== null) {
+        input.parentElement.removeChild(input);
+    }
+
+    var file_input = document.createElement('input');
+    file_input.type="file";
+    file_input.addEventListener('change', cg_write_handle_file_select, false);
+    file_input.id="cg-write-msg-file-input";
+    file_input.style.display="none";
+    info_area.appendChild(file_input);
 }
 
 function cg_write_update(instant) {
@@ -186,5 +211,51 @@ function cg_write_update(instant) {
 
     while (cost_span.hasChildNodes()) cost_span.removeChild(cost_span.lastChild);
     cost_span.appendChild(document.createTextNode((tx_cost).toFixed(8)+" BTC"));
+}
+
+function cg_button_click_save() {
+    var btn = document.getElementById("cg-btn-tab-write");
+    if (CG_CAPTCHA_TOKEN === null) cg_button_click_captcha(cg_button_click_save, cg_button_click_write);
+    else                           cg_button_click(btn, cg_construct_save);
+}
+
+function cg_button_click_attach() {
+    var input = document.getElementById("cg-write-msg-file-input");
+    input.click();
+}
+
+function cg_button_click_detach() {
+    var file_span = document.getElementById("cg-write-msg-file");
+    while (file_span.hasChildNodes()) file_span.removeChild(file_span.lastChild);
+
+    var btn = document.getElementById("cg-write-btn-file");
+    while (btn.hasChildNodes()) btn.removeChild(btn.lastChild);
+    btn.appendChild(document.createTextNode(CG_TXT_WRITE_BTN_ATTACH[CG_LANGUAGE]));
+    btn.removeEventListener("click", cg_button_click_detach);
+    btn.addEventListener("click", cg_button_click_attach);
+    cg_write_reset_file_input();
+}
+
+function cg_write_handle_file_select(evt) {
+    var files = evt.target.files;
+    var output = [];
+    for (var i = 0, f; f = files[i]; i++) {
+        if (f.size > 50*1024) {
+            CG_STATUS.push("!"+sprintf(CG_TXT_WRITE_ERROR_FILE_SIZE[CG_LANGUAGE], f.name, "50 KiB"));
+            cg_write_reset_file_input();
+            break;
+        }
+
+        var file_span = document.getElementById("cg-write-msg-file");
+        while (file_span.hasChildNodes()) file_span.removeChild(file_span.lastChild);
+        file_span.appendChild(document.createTextNode(f.name));
+
+        var btn = document.getElementById("cg-write-btn-file");
+        while (btn.hasChildNodes()) btn.removeChild(btn.lastChild);
+        btn.appendChild(document.createTextNode(CG_TXT_WRITE_BTN_DETACH[CG_LANGUAGE]));
+        btn.removeEventListener("click", cg_button_click_attach);
+        btn.addEventListener("click", cg_button_click_detach);
+        break;
+    }
 }
 

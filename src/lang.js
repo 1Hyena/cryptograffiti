@@ -382,6 +382,20 @@ var CG_TXT_READ_DECODING_MSG =
 ////////////////////////////////////////////////////////////////////////////////
 //  WRITE TAB TRANSLATIONS BEGIN                                              //
 ////////////////////////////////////////////////////////////////////////////////
+var CG_TXT_WRITE_BTN_ATTACH =
+{
+    en : "ATTACH FILE",
+    et : "LISA MANUS",
+    ru : "(ATTACH FILE)"
+};
+
+var CG_TXT_WRITE_BTN_DETACH =
+{
+    en : "DETACH FILE",
+    et : "EEMALDA MANUS",
+    ru : "(DETACH FILE)"
+};
+
 var CG_TXT_WRITE_BTN_SELECT_ALL =
 {
     en : "SELECT ALL ADDRESSES",
@@ -443,6 +457,13 @@ var CG_TXT_WRITE_NEW_MSG_HASH =
     en : "Hash:",
     et : "Räsi:",
     ru : "(Hash:)"
+};
+
+var CG_TXT_WRITE_ERROR_FILE_SIZE =
+{
+    en : "%1$s exceeds the %2$s size limit.",
+    et : "%1$s ületab %2$s suuruse piirangu.",
+    ru : "(%1$s exceeds the %2$s size limit.)"
 };
 
 ////////////////////////////////////////////////////////////////////////////////
