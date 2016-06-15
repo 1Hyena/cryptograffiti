@@ -2,6 +2,10 @@ var CG_WRITE_ENCODE_TIME = 0;
 var CG_WRITE_CHUNKS = [];
 var CG_WRITE_MIN_BTC_OUTPUT = 0.00002730;
 var CG_WRITE_MAX_TX_SIZE = 100000;
+var CG_WRITE_FILE_NAME  = null;
+var CG_WRITE_FILE_BYTES = null;
+var CG_WRITE_FILE_CHUNKS = [];
+var CG_WRITE_FILE_HASH = null;
 
 function cg_construct_write(main) {
     var div = cg_init_tab(main, 'cg-tab-write');
@@ -141,7 +145,7 @@ function cg_construct_write(main) {
 
     div.appendChild(main_area);
     div.appendChild(side_area);
-    cg_write_update(true);
+    cg_write_update_now();
     cg_write_reset_file_input();
 }
 
@@ -157,7 +161,27 @@ function cg_write_reset_file_input() {
     file_input.addEventListener('change', cg_write_handle_file_select, false);
     file_input.id="cg-write-msg-file-input";
     file_input.style.display="none";
+    file_input.accept="image/jpeg";
     info_area.appendChild(file_input);
+    CG_WRITE_FILE_NAME = null;
+    CG_WRITE_FILE_BYTES = null;
+    CG_WRITE_FILE_CHUNKS = [];
+    CG_WRITE_FILE_HASH = null;
+
+    var file_span = document.getElementById("cg-write-msg-file");
+    while (file_span.hasChildNodes()) file_span.removeChild(file_span.lastChild);
+
+    var hash_span = document.getElementById("cg-write-msg-hash");
+    while (hash_span.hasChildNodes()) hash_span.removeChild(hash_span.lastChild);
+
+    cg_write_update_now();
+}
+
+function cg_write_update_now() {
+    var buf = CG_WRITE_ENCODE_TIME;
+    CG_WRITE_ENCODE_TIME = -1;
+    cg_write_update(true);
+    CG_WRITE_ENCODE_TIME = buf;
 }
 
 function cg_write_update(instant) {
@@ -166,24 +190,32 @@ function cg_write_update(instant) {
     var area = document.getElementById("cg-write-textarea");
     var addr = document.getElementById("cg-write-addresses");
     var btn  = document.getElementById("cg-write-btn-save");
+    var size_span = document.getElementById("cg-write-msg-size");
+    var cost_span = document.getElementById("cg-write-msg-cost");
 
     if (area === null || addr === null || btn === null) return;
 
-    if (area.value.length === 0) btn.disabled = true;
-    else                         btn.disabled = false;
+    if (area.value.length === 0 && CG_WRITE_FILE_CHUNKS.length === 0) btn.disabled = true;
+    else if (!size_span.classList.contains("cg-status-warning"))      btn.disabled = false;
 
-    if (instant && CG_WRITE_ENCODE_TIME >= 0 && area.value.length > 200) return;
+    if (instant && CG_WRITE_ENCODE_TIME >= 0 && (area.value.length > 200 || CG_WRITE_FILE_CHUNKS.length > 10)) return;
     if (instant && CG_WRITE_ENCODE_TIME < 0) CG_WRITE_ENCODE_TIME = 3;
     if (!instant && CG_WRITE_ENCODE_TIME !== 0) return;
 
+    var file_hash = [];
+    if (CG_WRITE_FILE_HASH !== null) file_hash.push(CG_WRITE_FILE_HASH);
     var text = unescape(encodeURIComponent(area.value));
-    var chunks = Bitcoin.genAddressesFromText(text);
+    var chunks = CG_WRITE_FILE_CHUNKS.concat(file_hash, Bitcoin.genAddressesFromText(text));
+
+    var scroll = false;
+    if (CG_WRITE_CHUNKS.length < chunks.length) scroll = true;
     CG_WRITE_CHUNKS = chunks;
-    
+
     var sz = chunks.length;
     text = "";
     for (var i = 0; i < sz; i++) {
-        text+=chunks[i]+"\n"
+        //text+=ascii2hex(Bitcoin.getAddressPayload(chunks[i]))+"\n";
+        text+=chunks[i]+"\n";
     }    
 
     while (addr.hasChildNodes()) {
@@ -203,14 +235,21 @@ function cg_write_update(instant) {
         tx_cost = 0;
     }
 
-    var size_span = document.getElementById("cg-write-msg-size");
-    var cost_span = document.getElementById("cg-write-msg-cost");
-
     while (size_span.hasChildNodes()) size_span.removeChild(size_span.lastChild);
     size_span.appendChild(document.createTextNode((tx_size/1024).toFixed(8)+" KiB"));
 
     while (cost_span.hasChildNodes()) cost_span.removeChild(cost_span.lastChild);
     cost_span.appendChild(document.createTextNode((tx_cost).toFixed(8)+" BTC"));
+
+    if (tx_size > 100000) {
+        btn.disabled = true;
+        size_span.classList.add("cg-status-warning");
+    }
+    else if (size_span.classList.contains("cg-status-warning")) {
+        size_span.classList.remove("cg-status-warning");
+    }
+
+    if (scroll) addr.scrollTop = addr.scrollHeight;
 }
 
 function cg_button_click_save() {
@@ -246,15 +285,52 @@ function cg_write_handle_file_select(evt) {
             break;
         }
 
-        var file_span = document.getElementById("cg-write-msg-file");
-        while (file_span.hasChildNodes()) file_span.removeChild(file_span.lastChild);
-        file_span.appendChild(document.createTextNode(f.name));
+        document.getElementById("cg-write-btn-file").disabled = true;
+        var reader = new FileReader();
 
-        var btn = document.getElementById("cg-write-btn-file");
-        while (btn.hasChildNodes()) btn.removeChild(btn.lastChild);
-        btn.appendChild(document.createTextNode(CG_TXT_WRITE_BTN_DETACH[CG_LANGUAGE]));
-        btn.removeEventListener("click", cg_button_click_attach);
-        btn.addEventListener("click", cg_button_click_detach);
+        reader.onloadend = (function(theFile) {
+            return function(evt) {
+                if (evt.target.readyState == FileReader.DONE) {
+                    document.getElementById("cg-write-btn-file").disabled = false;
+                    if (evt.target.result !== null && evt.target.result.byteLength === theFile.size) {
+                        CG_WRITE_FILE_NAME = theFile.name;
+                        var file_span = document.getElementById("cg-write-msg-file");
+                        while (file_span.hasChildNodes()) file_span.removeChild(file_span.lastChild);
+                        file_span.appendChild(document.createTextNode(theFile.name));
+
+                        var btn = document.getElementById("cg-write-btn-file");
+                        while (btn.hasChildNodes()) btn.removeChild(btn.lastChild);
+                        btn.appendChild(document.createTextNode(CG_TXT_WRITE_BTN_DETACH[CG_LANGUAGE]));
+                        btn.removeEventListener("click", cg_button_click_attach);
+                        btn.addEventListener("click", cg_button_click_detach);
+
+                        CG_WRITE_FILE_BYTES = evt.target.result;
+                        var txt = ArrayBufferToString(CG_WRITE_FILE_BYTES);
+                        CG_WRITE_FILE_CHUNKS = Bitcoin.genAddressesFromText(txt, false);
+                        //CG_WRITE_FILE_CHUNKS = Bitcoin.genAddressesFromArrayBuffer(CG_WRITE_FILE_BYTES);
+
+                        /*var ripemd160 = CryptoJS.algo.RIPEMD160.create(); 
+                        ripemd160.update(txt);
+                        var hash = ripemd160.finalize();*/
+                        var hash = CryptoJS.RIPEMD160(arrayBufferToWordArray(CG_WRITE_FILE_BYTES)).toString();
+                        CG_WRITE_FILE_HASH = Bitcoin.createAddressFromText(hex2ascii(hash));
+
+                        var hash_span = document.getElementById("cg-write-msg-hash");
+                        while (hash_span.hasChildNodes()) hash_span.removeChild(hash_span.lastChild);
+                        hash_span.appendChild(document.createTextNode(CG_WRITE_FILE_HASH));
+
+                        cg_write_update_now();
+                        return;
+                    }
+
+                    CG_STATUS.push("!"+sprintf(CG_TXT_WRITE_ERROR_FILE_LOAD[CG_LANGUAGE], f.name));
+                    cg_write_reset_file_input();
+                }
+            };
+        })(f);
+
+        reader.readAsArrayBuffer(f);
+
         break;
     }
 }

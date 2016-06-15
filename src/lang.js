@@ -466,6 +466,13 @@ var CG_TXT_WRITE_ERROR_FILE_SIZE =
     ru : "(%1$s exceeds the %2$s size limit.)"
 };
 
+var CG_TXT_WRITE_ERROR_FILE_LOAD =
+{
+    en : "Failed to load %s.",
+    et : "Faili %s laadimine ebaõnnestus.",
+    ru : "(Failed to load %s.)"
+};
+
 ////////////////////////////////////////////////////////////////////////////////
 //  WRITE TAB TRANSLATIONS END                                                //
 ////////////////////////////////////////////////////////////////////////////////
@@ -653,6 +660,13 @@ var CG_TXT_SAVE_PAYMENT_DETAILS =
     en : "Please send exactly %s bitcoins to %s.",
     et : "Palun saatke täpselt %s bitimünti aadressile %s.",
     ru : "Пожалуйста, отправьте ровно %s биткойнов на %s."
+};
+
+var CG_TXT_SAVE_MAX_DATA_SIZE_EXCEEDED =
+{
+    en : "Request data exceeds the size quota by %s.",
+    et : "Päringu andmed ületavad mahu kvoodi %s võrra.",
+    ru : "(Request data exceeds the size quota by %s.)"
 };
 
 ////////////////////////////////////////////////////////////////////////////////

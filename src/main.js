@@ -7,7 +7,8 @@ var CG_ONLINE      = null;
 var CG_HOLD_STATUS = 0;
 var CG_TX_NR       = null;
 var CG_SCROLL_KEY  = false;
-var CG_VERSION     = "0.71";
+var CG_VERSION     = "0.75";
+var CG_ACTIVE_TAB  = null;
 
 function cg_start(main_css) {
     CG_MAIN_CSS = main_css;
@@ -74,14 +75,12 @@ function cg_main() {
         cg_loadcss(CG_MAIN_CSS);
         setTimeout(function(){
             cg.className = cg.className + " cg-main";
-            cg.className = cg.className + " cg-poofin";
             cg.className = cg.className + " cg-borderbox";
             cg_construct(cg);
         }, 1000);
     }
     else {
         cg.className = cg.className + " cg-main";
-        cg.className = cg.className + " cg-poofin";
         cg.className = cg.className + " cg-borderbox";    
         cg_construct(cg);
     }
@@ -457,17 +456,35 @@ function cg_button_click(btn, fun) {
     }
 
     cg_sfx_rattle();
-    cg.classList.remove("cg-poofin");
-    cg.classList.add("cg-poofout");
+    if (CG_ACTIVE_TAB !== 'cg-tab-read') {
+        cg.classList.remove("cg-poofin");
+        cg.classList.add("cg-poofout");
+    }
+    else {
+        cg.classList.remove("cg-appear");
+        cg.classList.add("cg-disappear");
+    }
 
-    setTimeout(function(){
-        fun(cg);
-        cg.classList.remove("cg-poofout");
-        cg.classList.add("cg-poofin");
-    }, 200);
+    if (fun !== cg_construct_read) {
+        setTimeout(function(){
+            fun(cg);
+            cg.classList.remove("cg-disappear");
+            cg.classList.remove("cg-poofout");
+            cg.classList.add("cg-poofin");
+        }, (CG_ACTIVE_TAB === 'cg-tab-read') ? 500 : 200);
+    }
+    else {
+        setTimeout(function(){
+            fun(cg);
+            cg.classList.remove("cg-disappear");
+            cg.classList.remove("cg-poofout");
+            cg.classList.add("cg-appear");
+        }, (CG_ACTIVE_TAB === 'cg-tab-read') ? 500 : 200);
+    }
 }
 
 function cg_init_tab(main, tab_id) {
+    CG_ACTIVE_TAB = tab_id;
     var tabs = main.children;
     var i, e, d;
     var div = false;

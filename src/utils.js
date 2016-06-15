@@ -336,6 +336,15 @@ function hex2ascii(hexx) {
     return str;
 }
 
+function ascii2hex(str) {
+    var arr = [];
+    for (var i = 0, l = str.length; i < l; i ++) {
+        var hex = Number(str.charCodeAt(i)).toString(16);
+        arr.push(hex.length < 2 ? "0"+hex : hex);
+    }
+    return arr.join('');
+}
+
 function pad(n, width, z) {
     z = z || '0';
     n = n + '';
@@ -393,5 +402,33 @@ function checkRTL(s){
 function is_string(val) {
     if (typeof val == 'string' || val instanceof String) return true;
     return false;
+}
+
+function ArrayBufferToString(buffer) {
+    return BinaryToString(String.fromCharCode.apply(null, Array.prototype.slice.apply(new Uint8Array(buffer))));
+}
+
+function BinaryToString(binary) {
+    var error;
+
+    try {
+        return decodeURIComponent(escape(binary));
+    } catch (_error) {
+        error = _error;
+        if (error instanceof URIError) {
+            return binary;
+        } else {
+            throw error;
+        }
+    }
+}
+
+function arrayBufferToWordArray(ab) {
+  var i8a = new Uint8Array(ab);
+  var a = [];
+  for (var i = 0; i < i8a.length; i += 4) {
+    a.push(i8a[i] << 24 | i8a[i + 1] << 16 | i8a[i + 2] << 8 | i8a[i + 3]);
+  }
+  return CryptoJS.lib.WordArray.create(a, i8a.length);
 }
 

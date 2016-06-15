@@ -62,7 +62,6 @@
     return addressesAsTextInArray;
   };
 
-
   function unbase58(base58str) {
     var intAr = wordarray['words'],
       base = 58,
@@ -97,9 +96,16 @@
         i;
       resetArrayTo(intAr, 0);
 
+      var padding = 0;
+      var count_zeroes = true;
       text = String.fromCharCode(0) + text; //add 00 before message
       for (i = 0, len = Math.min(text.length, 21); i < len; i++) { //put ascii chars to int array
-        intAr[i / 4 >> 0] |= text.charCodeAt(i) << 24 - i % 4 * 8;
+        var chr = text.charCodeAt(i);
+        if (i > 0) {
+            if (chr === 0 && count_zeroes) padding++;
+            if (chr !== 0) count_zeroes = false;
+        }
+        intAr[i / 4 >> 0] |= chr << 24 - i % 4 * 8;
       }
       var hashWordArray = CryptoJS.SHA256(CryptoJS.SHA256(wordarray));
       var checksum = hashWordArray['words'][0];
@@ -130,9 +136,10 @@
         if (!valueExists) break;
       }
 
-      return base58encoded;
-    }
-    //Testinnn
+      return "1".repeat(padding)+base58encoded;
+  }
+
+  //Testinnn
   function resetArrayTo(array, val) {
     var i = array.length;
     while (i--) array[i] = val;

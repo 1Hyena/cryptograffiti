@@ -4,6 +4,7 @@ var CG_SAVE_MAKING_ORDER   = false;
 var CG_SAVE_UPDATING_ORDER = 0;
 var CG_SAVE_SKIP_UPDATE    = false;
 var CG_SAVE_ORDER_FILLED   = false;
+var CG_SAVE_DELAY          = 0;
 
 function cg_construct_save(main) {
     var div = cg_init_tab(main, 'cg-tab-save');
@@ -125,6 +126,10 @@ function cg_save_wallet() {
 function cg_save_update() {
     if (CG_SAVE_SKIP_UPDATE) {
         CG_SAVE_SKIP_UPDATE = false;
+        return;
+    }
+    if (CG_SAVE_DELAY > 0) {
+        CG_SAVE_DELAY--;
         return;
     }
     cg_save_make_order();
@@ -283,8 +288,11 @@ function cg_save_make_order() {
         chunks : ""
     };
 
+    var donation = 0.001;
+    if (CG_WRITE_CHUNKS.length < 10) donation = 0.0001;
+
     order.addr   = "1MVpQJA7FtcDrwKC6zATkZvZcxqma4JixS";
-    order.amount = Math.floor(0.001 * 100000000);
+    order.amount = Math.floor(donation * 100000000);
     order.chunks = CG_WRITE_CHUNKS;
 
     var data_obj = {
@@ -296,7 +304,18 @@ function cg_save_make_order() {
     data_obj.input = order;
     data_obj.token = CG_CAPTCHA_TOKEN;
 
-    var json_str = encodeURIComponent(JSON.stringify(data_obj)); 
+    var json_str = JSON.stringify(data_obj);
+
+    if (json_str.length > CG_CONSTANTS.MAX_DATA_SIZE) {
+        var KiB = ((json_str.length - CG_CONSTANTS.MAX_DATA_SIZE)/1024).toFixed(2);
+        CG_STATUS.push("!"+sprintf(CG_TXT_SAVE_MAX_DATA_SIZE_EXCEEDED[CG_LANGUAGE], KiB+" KiB"));
+        CG_SAVE_MAKING_ORDER = false;
+        CG_SAVE_DELAY = 10;
+        return;
+    }
+
+    json_str = encodeURIComponent(json_str);
+
     xmlhttpPost('http://cryptograffiti.info/database/', 'fun=make_order&data='+json_str,
         function(response) {
             var status = "???";

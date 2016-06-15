@@ -137,11 +137,14 @@
 
 .cg-write-addr {
     /*background-color: rgba(0, 0, 255, 0.25);*/
+    font-size: x-small;
     width: 100%;
     min-height: 5rem;
     flex: 1.0;
     overflow-x: hidden;
     overflow-y: auto;
+    white-space: pre;
+    font-family: monospace;
 
     border: medium inset rgba(212,212,212, 0.25);
     border-radius: 0.5rem;
