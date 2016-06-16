@@ -5,7 +5,7 @@ var CG_TXT_MAIN_ERROR_1 =
 {
     en : "Error, cg-main element does not exist.",
     et : "Viga, cg-main elementi ei eksisteeri.",
-    ru : "(Error, cg-main element does not exist.)"
+    ru : "Ошибка, cg-main элемент не существует."
 };
 
 var CG_TXT_MAIN_PLEASE_WAIT =
@@ -19,14 +19,14 @@ var CG_TXT_MAIN_ERROR_2 =
 {
     en : "Error, cg-footer element does not exist.",
     et : "Viga, cg-footer elementi ei eksisteeri.",
-    ru : "(Error, cg-footer element does not exist.)"
+    ru : "Ошибка, cg-footer элемент не существует."
 };
 
 var CG_TXT_MAIN_ERROR_3 =
 {
     en : "Error, cg-credits element does not exist.",
     et : "Viga, cg-credits elementi ei eksisteeri.",
-    ru : "(Error, cg-credits element does not exist.)"
+    ru : "Ошибка, cg-credits элемент не существует."
 };
 
 var CG_TXT_MAIN_TRANSLATE_TO_EN =
@@ -110,7 +110,7 @@ var CG_TXT_MAIN_ERROR_4 =
 {
     en : "Error, cg-header element does not exist.",
     et : "Viga , cg-header elementi ei eksisteeri.",
-    ru : "(Error, cg-header element does not exist.)"
+    ru : "Ошибка, cg-header элемент не существует."
 };
 
 var CG_TXT_MAIN_BTN_READ =
@@ -173,6 +173,34 @@ var CG_TXT_MAIN_SESSIONS = {
     et : "sessiooni",
     ru : "сессии"
 };
+
+var CG_TXT_MAIN_API_REQUEST = 
+{
+    en : "Querying %s.",
+    et : "Pärin %s teenust.",
+    ru : "Запрашиваем %s."
+};
+
+var CG_TXT_MAIN_API_ERROR = 
+{
+    en : "Erroneous response from %s.",
+    et : "Vigane vastus %s teenuselt.",
+    ru : "Ошибочный ответ от %s."
+};
+
+var CG_TXT_MAIN_API_TIMEOUT = 
+{
+    en : "Timeout occurred when querying %s.",
+    et : "Teenusele %s saadetud päring jäi vastuseta.",
+    ru : "(Timeout occurred when querying %s.)"
+};
+
+var CG_TXT_MAIN_API_INVALID_RESPONSE = 
+{
+    en : "Invalid response from %s.",
+    et : "Lubamatu vastus teenuselt %s.",
+    ru : "Недопустимый ответ от %s."
+};
 ////////////////////////////////////////////////////////////////////////////////
 // MAIN TRANSLATIONS END                                                      //
 ////////////////////////////////////////////////////////////////////////////////
@@ -184,7 +212,7 @@ var CG_TXT_READ_ERROR_1 =
 {
     en : "Error, %s element does not exist.",
     et : "Viga, %s elementi ei eksisteeri.",
-    ru : "(Error, %s element does not exist.)"
+    ru : "Ошибка, %s элемент не существует."
 };
 
 var CG_TXT_READ_ERROR_2 =
@@ -386,14 +414,35 @@ var CG_TXT_WRITE_BTN_ATTACH =
 {
     en : "ATTACH FILE",
     et : "LISA MANUS",
-    ru : "(ATTACH FILE)"
+    ru : "ПРИКРЕПИТЬ ФАЙЛ"
+};
+
+var CG_TXT_WRITE_BTN_ADD_PAYMENT =
+{
+    en : "ADD PAYMENT",
+    et : "LISA MAKSE",
+    ru : "(ADD PAYMENT)"
+};
+
+var CG_TXT_WRITE_BTN_REMOVE_PAYMENT =
+{
+    en : "REMOVE PAYMENT",
+    et : "EEMALDA MAKSE",
+    ru : "(REMOVE PAYMENT)"
+};
+
+var CG_TXT_WRITE_BTN_PREVIEW =
+{
+    en : "PREVIEW",
+    et : "EELVAADE",
+    ru : "(PREVIEW)"
 };
 
 var CG_TXT_WRITE_BTN_DETACH =
 {
     en : "DETACH FILE",
     et : "EEMALDA MANUS",
-    ru : "(DETACH FILE)"
+    ru : "ОТКРЕПИТЬ ФАЙЛ"
 };
 
 var CG_TXT_WRITE_BTN_SELECT_ALL =
@@ -421,56 +470,131 @@ var CG_TXT_WRITE_MSG_PLACEHOLDER =
 {
     en : "Type your message here...",
     et : "Kirjuta oma sõnum siia...",
-    ru : "(Type your message here...)"
+    ru : "Напишите сюда ваше сообщение..."
 };
 
 var CG_TXT_WRITE_NEW_MSG =
 {
     en : "New Block Chain Message",
     et : "Uus Plokiahela Sõnum",
-    ru : "(New Block Chain Message)"
+    ru : "Новое сообщение цепочки блоков"
 };
 
 var CG_TXT_WRITE_NEW_MSG_SIZE =
 {
     en : "Size:",
     et : "Suurus:",
-    ru : "(Size:)"
+    ru : "Размер:"
 };
 
 var CG_TXT_WRITE_NEW_MSG_COST =
 {
     en : "Cost:",
     et : "Hind:",
-    ru : "(Cost:)"
+    ru : "Стоимость:"
 };
 
 var CG_TXT_WRITE_NEW_MSG_FILE =
 {
     en : "File:",
     et : "Fail:",
-    ru : "(File:)"
+    ru : "Файл:"
 };
 
 var CG_TXT_WRITE_NEW_MSG_HASH =
 {
     en : "Hash:",
     et : "Räsi:",
-    ru : "(Hash:)"
+    ru : "Хеш:"
 };
 
 var CG_TXT_WRITE_ERROR_FILE_SIZE =
 {
     en : "%1$s exceeds the %2$s size limit.",
     et : "%1$s ületab %2$s suuruse piirangu.",
-    ru : "(%1$s exceeds the %2$s size limit.)"
+    ru : "(%1$s превысил %2$s лимит размера."
 };
 
 var CG_TXT_WRITE_ERROR_FILE_LOAD =
 {
     en : "Failed to load %s.",
     et : "Faili %s laadimine ebaõnnestus.",
-    ru : "(Failed to load %s.)"
+    ru : "Не удалось загрузить %s."
+};
+
+var CG_TXT_WRITE_TX_FEE_PER_KB =
+{
+    en : "Effective TX fee per kilobyte is %s.",
+    et : "Efektiivne ülekande maks kilobaidi kohta on %s.",
+    ru : "(Effective TX fee per kilobyte is %s.)"
+};
+
+var CG_TXT_WRITE_PAYMENT_CAPTION =
+{
+    en : "Embedded Payment Details",
+    et : "Lisatud Makse Detailid",
+    ru : "(Embedded Payment Details)"
+};
+
+var CG_TXT_WRITE_PAYMENT_RECEIVER =
+{
+    en : "Pay To:",
+    et : "Makse saaja:",
+    ru : "(Pay To:)"
+};
+
+var CG_TXT_WRITE_PAYMENT_AMOUNT =
+{
+    en : "Amount:",
+    et : "Summa:",
+    ru : "(Amount:)"
+};
+
+var CG_TXT_WRITE_PAYMENT_ADDRESS_PLACEHOLDER =
+{
+    en : "Enter Bitcoin address here...",
+    et : "Sisesta Bitimündi aadress siia...",
+    ru : "(Enter Bitcoin address here...)"
+};
+
+var CG_TXT_WRITE_PAYMENT_AMOUNT_PLACEHOLDER =
+{
+    en : "Enter amount here...",
+    et : "Sisesta summa siia...",
+    ru : "(Enter amount here...)"
+};
+
+var CG_TXT_WRITE_INVALID_BTC_ADDRESS =
+{
+    en : "%s is an invalid Bitcoin address.",
+    et : "%s pole valiidne Bitimündi aadress.",
+    ru : "(%s is an invalid Bitcoin address.)"
+};
+
+var CG_TXT_WRITE_EMPTY_BTC_ADDRESS =
+{
+    en : "Bitcoin address field must not be empty.",
+    et : "Bitimündi aadressi väli ei tohi jääda tühjaks.",
+    ru : "(Bitcoin address field must not be empty.)"
+};
+
+var CG_TXT_WRITE_INVALID_AMOUNT =
+{
+    en : "Invalid number of bitcoins.",
+    et : "Valitud bitimüntide arv pole lubatud.",
+    ru : "(Invalid number of bitcoins.)"
+};
+
+var CG_TXT_WRITE_DUST_AMOUNT = {
+    en : "Amount must be at least %s.",
+    et : "Summa peab olema vähemalt %s.",
+    ru : "(Amount must be at least %s.)"
+};
+
+var CG_TXT_WRITE_MSG_PAYMENT = {
+    en : "Also send %s BTC to %s.",
+    et : "Lisaks saada %s BTC aadressile %s.",
+    ru : "(Also send %s BTC to %s.)"
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -662,11 +786,18 @@ var CG_TXT_SAVE_PAYMENT_DETAILS =
     ru : "Пожалуйста, отправьте ровно %s биткойнов на %s."
 };
 
+var CG_TXT_SAVE_PAYMENT_NOTE = 
+{
+    en : "Sending a wrong number of bitcoins will not fill the order. By using this service you agree not to save anything illegal on the block chain. In case of abuse we may report your IP address to the police.",
+    et : "Kui Te saadate vale summa bitimünte, siis Teie tellimust ei täideta. Seda teenust kasutades nõustute, et Te ei salvesta plokiahelasse midagi illegaalset. Rikkumise korral võime edastada Teie IP aadress politseisse.",
+    ru : "(Sending a wrong number of bitcoins will not fill the order. By using this service you agree not to save anything illegal on the block chain. In case of abuse we may report your IP address to the police.)"
+};
+
 var CG_TXT_SAVE_MAX_DATA_SIZE_EXCEEDED =
 {
     en : "Request data exceeds the size quota by %s.",
     et : "Päringu andmed ületavad mahu kvoodi %s võrra.",
-    ru : "(Request data exceeds the size quota by %s.)"
+    ru : "Данные запроса превышают допустимый размер на %s."
 };
 
 ////////////////////////////////////////////////////////////////////////////////

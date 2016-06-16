@@ -56,7 +56,7 @@
 
 .cg-write-main {
     /*background-color: rgba(255, 0, 0, 0.25);*/
-    min-height: 15rem; /* should be same as .cg-write-side's min-height */
+    min-height: 16rem; /* should be same as .cg-write-side's min-height */
     flex: 9.0;
     min-width: 60%;
     display: flex;
@@ -65,7 +65,7 @@
 }
 
 .cg-write-info {
-    height: 8rem;
+    height: 9rem;
     width: 100%;
 
     border: medium outset rgba(230,230,230, 0.80);
@@ -91,6 +91,10 @@
     text-align: right;
 }
 
+#cg-write-msg-payment {
+    font-size: xx-small;
+}
+
 .cg-write-text {
     width: 100%;
     flex: 1.0;
@@ -109,10 +113,27 @@
     outline: none;
 }
 
+#cg-write-paymentarea, #cg-write-previewarea {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    flex: 1.0;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+#cg-write-paymenttable {
+    width: 100%;
+    max-width: 30rem;
+    margin: auto;
+    border-spacing: 0;
+}
+
 .cg-write-side {
     display: flex;
     flex-direction: column;
-    min-height: 15rem;
+    min-height: 16rem;
     flex: 1.0;
     min-width: 60%;
     
@@ -129,9 +150,9 @@
 }
 
 @media not all and (min-width: 35rem) {
-    .cg-write-main{height: calc(100% - 16rem);}
+    .cg-write-main{height: calc(100% - 17rem);}
     .cg-write-main{min-height: 4rem;}
-    .cg-write-side{height: 15rem;}
+    .cg-write-side{height: 16rem;}
     .cg-write-side{overflow: hidden;}
 }
 

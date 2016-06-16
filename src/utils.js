@@ -328,6 +328,10 @@ function isNormalInteger(str) {
     return String(n) === str && n >= 0;
 }
 
+function isNumeric(value) {
+    return /^\d+$/.test(value);
+}
+
 function hex2ascii(hexx) {
     var hex = hexx.toString();//force conversion
     var str = '';
@@ -430,5 +434,17 @@ function arrayBufferToWordArray(ab) {
     a.push(i8a[i] << 24 | i8a[i + 1] << 16 | i8a[i + 2] << 8 | i8a[i + 3]);
   }
   return CryptoJS.lib.WordArray.create(a, i8a.length);
+}
+
+function selectText(containerid) {
+    if (document.selection) {
+        var range = document.body.createTextRange();
+        range.moveToElementText(document.getElementById(containerid));
+        range.select();
+    } else if (window.getSelection) {
+        var range = document.createRange();
+        range.selectNode(document.getElementById(containerid));
+        window.getSelection().addRange(range);
+    }
 }
 

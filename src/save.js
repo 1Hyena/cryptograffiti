@@ -33,10 +33,10 @@ function cg_construct_save(main) {
     var order_status  = document.createElement("input"); order_status.id  = "cg-save-order-status";
     var order_address = document.createElement("input"); order_address.id = "cg-save-order-address";
     var order_amount  = document.createElement("input"); order_amount.id  = "cg-save-order-amount";
-    order_nr     .classList.add("cg-save-order-input"); order_nr.disabled      = true; order_nr.size      = 40;
-    order_status .classList.add("cg-save-order-input"); order_status.disabled  = true; order_status.size  = 40;
-    order_address.classList.add("cg-save-order-input"); order_address.disabled = true; order_address.size = 40;
-    order_amount .classList.add("cg-save-order-input"); order_amount.disabled  = true; order_amount.size  = 40;
+    order_nr     .classList.add("cg-save-order-input"); order_nr.disabled      = true; order_nr.size      = "40";
+    order_status .classList.add("cg-save-order-input"); order_status.disabled  = true; order_status.size  = "40";
+    order_address.classList.add("cg-save-order-input"); order_address.disabled = true; order_address.size = "40";
+    order_amount .classList.add("cg-save-order-input"); order_amount.disabled  = true; order_amount.size  = "40";
 
     var t  = document.createElement("table");
     var tr1 = document.createElement("tr"); // order
@@ -88,8 +88,14 @@ function cg_construct_save(main) {
     order_details.id = "cg-save-order-details";
     order_details.appendChild(document.createTextNode(CG_TXT_SAVE_ORDER_GREETING[CG_LANGUAGE]));
 
+    var order_note = document.createElement("p");
+    order_note.id = "cg-save-order-note";
+    order_note.appendChild(document.createTextNode(CG_TXT_SAVE_PAYMENT_NOTE[CG_LANGUAGE]));
+
     wrapper.appendChild(t);
     wrapper.appendChild(order_details);
+    wrapper.appendChild(document.createElement("br"));
+    wrapper.appendChild(order_note);
     cell.appendChild(wrapper);
     table.appendChild(cell);
     div.appendChild(table);
@@ -266,7 +272,7 @@ function cg_save_get_order() {
             }
 
             CG_STATUS.push(status);
-            if (CG_SAVE_UPDATING_ORDER === -1) CG_SAVE_UPDATING_ORDER = 10;
+            if (CG_SAVE_UPDATING_ORDER < 0) CG_SAVE_UPDATING_ORDER = 10;
         }
     );    
 }
@@ -294,6 +300,11 @@ function cg_save_make_order() {
     order.addr   = "1MVpQJA7FtcDrwKC6zATkZvZcxqma4JixS";
     order.amount = Math.floor(donation * 100000000);
     order.chunks = CG_WRITE_CHUNKS;
+
+    if (CG_WRITE_PAY_TO !== null && CG_WRITE_PAY_AMOUNT !== null) {
+        order.addr   = CG_WRITE_PAY_TO;
+        order.amount = Math.floor(CG_WRITE_PAY_AMOUNT * 100000000);
+    }
 
     var data_obj = {
         group    : CG_SAVE_ORDER_GROUP,

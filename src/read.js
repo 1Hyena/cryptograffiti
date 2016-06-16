@@ -284,8 +284,7 @@ function cg_decode() {
             else if (json === null ) status = CG_TXT_READ_BLOCKCHAIN_TIMEOUT[CG_LANGUAGE];
             else {
                 var response = JSON.parse(json);
-                var txt = "";
-                
+
                 if (typeof response === 'object') {
                     var r = response;
                     var msg  = "";
@@ -324,52 +323,51 @@ function cg_decode() {
                         msg = msg + "-----BEGIN OP_RETURN MESSAGE BLOCK-----\n" 
                                   + op_return_msg + "\n----- END OP_RETURN MESSAGE BLOCK -----";
                     }
-                    txt = msg;
+                    var txt = msg;
                     
                     if ("time" in r) {
                         while (msgheaderR.hasChildNodes()) msgheaderR.removeChild(msgheaderR.lastChild);
                         msgheaderR.appendChild(document.createTextNode(timeConverter(r.time)));
                     }
+
+                    msgbox.classList.add("cg-msgbox-decoded");
+                    while (msgspan.hasChildNodes()) msgspan.removeChild(msgspan.lastChild);
+                    msgspan.appendChild(document.createTextNode(txt));
+
+                    var isRTL = checkRTL(txt);
+                    var dir = isRTL ? 'RTL' : 'LTR';
+                    if(dir === 'RTL') msgbody.classList.add("cg-msgbody-rtl");
+
+                    if (type.toUpperCase() === "JPG") {
+                        var media = document.createElement("DIV");
+                        
+                        var b64imgData = btoa(out_bytes);
+                        var img = new Image();
+                        img.src = "data:image/jpeg;base64," + b64imgData;
+                        
+                        media.appendChild(img);
+                        msgbody.insertBefore(media, msgspan);
+                    }
+
+                    if (isOverflowed(msgbody)) {
+                        msgbody.classList.add("cg-msgbody-tiny");
+                    }
+
+                    status  = sprintf(CG_TXT_READ_BLOCKCHAIN_SUCCESS[CG_LANGUAGE], nr);
+                    success = true;
                 }
                 else status = CG_TXT_READ_BLOCKCHAIN_INVALID[CG_LANGUAGE];
-
-                msgbox.classList.add("cg-msgbox-decoded");
-                
-                while (msgspan.hasChildNodes()) msgspan.removeChild(msgspan.lastChild);
-                msgspan.appendChild(document.createTextNode(txt));
-
-                var isRTL = checkRTL(txt);
-                var dir = isRTL ? 'RTL' : 'LTR';
-                if(dir === 'RTL') msgbody.classList.add("cg-msgbody-rtl");
-
-                if (type.toUpperCase() === "JPG") {
-                    var media = document.createElement("DIV");
-                    
-                    var b64imgData = btoa(out_bytes);
-                    var img = new Image();
-                    img.src = "data:image/jpeg;base64," + b64imgData;
-                    
-                    media.appendChild(img);
-                    msgbody.insertBefore(media, msgspan);
-                }
-
-                if (isOverflowed(msgbody)) {
-                    msgbody.classList.add("cg-msgbody-tiny");
-                }
-
-                status  = sprintf(CG_TXT_READ_BLOCKCHAIN_SUCCESS[CG_LANGUAGE], nr);
-                success = true;
             }
-            
+
             if (!success) {
                 msgbox.classList.add("cg-msgbox-failed");
                 while (msgspan.hasChildNodes()) msgspan.removeChild(msgspan.lastChild);
                 msgspan.appendChild(document.createTextNode("("+CG_TXT_READ_DECODING_FAILED[CG_LANGUAGE]+")"));
             }
-            
+
             //     if (top)    cg_read_scroll_top(tab, true);
             //else if (bottom) cg_read_scroll_bottom(tab, true);
-            
+
             CG_DECODING = null;
             CG_STATUS.push(status);
         }
