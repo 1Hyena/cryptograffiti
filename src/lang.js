@@ -476,7 +476,7 @@ var CG_TXT_WRITE_MSG_PLACEHOLDER =
 var CG_TXT_WRITE_NEW_MSG =
 {
     en : "New Block Chain Message",
-    et : "Uus Plokiahela Sõnum",
+    et : "Uus plokiahela sõnum",
     ru : "Новое сообщение цепочки блоков"
 };
 
@@ -532,7 +532,7 @@ var CG_TXT_WRITE_TX_FEE_PER_KB =
 var CG_TXT_WRITE_PAYMENT_CAPTION =
 {
     en : "Embedded Payment Details",
-    et : "Lisatud Makse Detailid",
+    et : "Lisatava makse detailid",
     ru : "(Embedded Payment Details)"
 };
 
@@ -935,6 +935,36 @@ var CG_TXT_HELP_TODO = [
         en : "Add support for messages that cointain ANSI colours.",
         et : "Lisada tugi sõnumitele, mis sisaldavad ANSI värve.",
         ru : "Добавить поддержку сообщений, содержащих цвета в формате ANSI."
+    },
+    {
+        en : "Make it possible to attach all file types not just JPEG images.",
+        et : "Võimaldada kõigi failitüüpide lisamist sõnumile.",
+        ru : "(Make it possible to attach all file types not just JPEG images.)"
+    },
+    {
+        en : "Do not decode addresses that are known to be part of the attached file.",
+        et : "Ära dekodeeri aadresseid, mille puhul on teada, et nad on osa sõnumi manusest.",
+        ru : "(Do not decode addresses that are known to be part of the attached file.)"
+    },
+    {
+        en : "Add Proof of Existence widget under the tools tab.",
+        et : "Lisada notari vidin tööriistade kaardi alla.",
+        ru : "(Add Proof of Existence widget under the tools tab.)"
+    },
+    {
+        en : "Make it possible to view only the messages of a certain type, such as images.",
+        et : "Võimaldada lugeda vaid kindlaksmääratud tüüpi sõnumeid nagu näiteks pilte.",
+        ru : "(Make it possible to view only the messages of a certain type, such as images.)"
+    },
+    {
+        en : "Make it possible to decode only the transactions of a user defined address.",
+        et : "Võimaldada üksnes kasutaja määratud aadressile tehtud ülekannete dekodeerimine.",
+        ru : "(Make it possible to decode only the transactions of a user defined address.)"
+    },
+    {
+        en : "Add more hints and helping information under the help tab and into tooltips.",
+        et : "Lisa rohkem abistavat teavet abi kaardi alla ja muudesse kohtadesse.",
+        ru : "(Add more hints and helping information under the help tab and into tooltips.)"
     }
 ];
 ////////////////////////////////////////////////////////////////////////////////

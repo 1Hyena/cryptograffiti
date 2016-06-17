@@ -22,14 +22,11 @@
     width: 100%;
     height: 100%;
     overflow: auto; /* In Chrome this is buggy. The scrollbar gets reset on content changes. */
-    /*overflow-y:scroll;*/
     padding: 0.5rem;
 }
 
 .cg-read-tab {
     overflow-y:scroll;
-    /*border-radius: 1.0rem;*/
-    /*background-color: rgba(224,224,224, 0.5);*/
 }
 
 .cg-read-tab-premature,
@@ -55,12 +52,9 @@
 }
 
 .cg-write-main {
-    /*background-color: rgba(255, 0, 0, 0.25);*/
-    min-height: 16rem; /* should be same as .cg-write-side's min-height */
+    min-height: 18rem; /* should be same as .cg-write-side's min-height */
     flex: 9.0;
     min-width: 60%;
-    display: flex;
-    flex-direction: column;
     margin: 0.25rem;
 }
 
@@ -95,15 +89,18 @@
     font-size: xx-small;
 }
 
+#cg-write-core {
+    height: calc(100% - 9rem);
+}
+
 .cg-write-text {
     width: 100%;
-    flex: 1.0;
+    height: 100%;
     resize: none;
     white-space: pre;
     word-wrap: normal;
     overflow-x: auto;
     padding: 1ch;
-    min-height: 3rem;
     border-radius: 0.5rem;
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
     background-color: rgba(255,255,255, 0.75);
@@ -114,13 +111,8 @@
 }
 
 #cg-write-paymentarea, #cg-write-previewarea {
-    display: flex;
-    flex-direction: column;
     width: 100%;
-    flex: 1.0;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
+    height: 100%;
 }
 
 #cg-write-paymenttable {
@@ -130,10 +122,15 @@
     border-spacing: 0;
 }
 
+#cg-write-paymenttable td:nth-child(1) {
+    text-align: left;
+    min-width: 12ch;
+}
+
 .cg-write-side {
     display: flex;
     flex-direction: column;
-    min-height: 16rem;
+    min-height: 18rem;
     flex: 1.0;
     min-width: 60%;
     
@@ -145,19 +142,17 @@
 }
 
 @media all and (min-width: 35rem) {
-    .cg-write-main{min-width: 15rem;}
+    .cg-write-main{min-width: 15rem; height: calc(100% - 1rem);}
     .cg-write-side{min-width: 20rem;}
 }
 
 @media not all and (min-width: 35rem) {
-    .cg-write-main{height: calc(100% - 17rem);}
-    .cg-write-main{min-height: 4rem;}
-    .cg-write-side{height: 16rem;}
+    .cg-write-main{height: calc(100% - 19rem);}
+    .cg-write-side{height: 18rem;}
     .cg-write-side{overflow: hidden;}
 }
 
 .cg-write-addr {
-    /*background-color: rgba(0, 0, 255, 0.25);*/
     font-size: x-small;
     width: 100%;
     min-height: 5rem;
@@ -170,7 +165,6 @@
     border: medium inset rgba(212,212,212, 0.25);
     border-radius: 0.5rem;
     padding: 0.5rem;
-    /*background-color: rgba(224,224,224, 0.5);*/
     background: rgba(224,224,224, 0.5);
     background: -webkit-linear-gradient(rgba(0,0,0,0.0625), rgba(255,255,255,0.03125), rgba(0,0,0,0.0625));
     background: -o-linear-gradient(rgba(0,0,0,0.0625), rgba(255,255,255,0.03125), rgba(0,0,0,0.0625));
@@ -183,7 +177,6 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    /*background-color: rgba(0, 255, 0, 0.25);*/
     width: 100%;
     min-height: 10rem;
     overflow: hidden;
@@ -227,7 +220,8 @@
 }
 
 .cg-write-btn {
-    width: 23ch;
+    width: 100%;
+    max-width: 23ch;
     overflow: hidden;
     white-space: nowrap;
     font-family: monospace;
@@ -251,7 +245,6 @@
     width: 100%;
     max-width: 512px;
     height: auto;
-    /*border: 1px dotted black;*/
     border-style: inset inset solid;
     border-color: rgba(212, 212, 212, 0.5);
     border-width: thin;
@@ -479,8 +472,6 @@ a.cg-link:hover {
     -moz-transition: background-color 250ms ease;
     -o-transition: background-color 250ms ease;
     transition: background-color 250ms ease;
-
-    /*box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);*/
 }
 
 .cg-msgbox-wide {
@@ -545,22 +536,9 @@ a.cg-link:hover {
 .cg-msgheader {
     height: 2ch;
     position: relative;    
-/*
-    display: table-cell;
-    padding: 0ch 1ch;
-    border-style: inset;
-    border-color: rgba(212, 212, 212, 0.5);
-    background-color: rgba(224,224,224, 0.5);
-    border-radius: 1rem;
-    border-bottom-left-radius: 0ch;
-    border-bottom-right-radius: 0ch;
-    border-width: medium;
-    font-size: small;
-*/
     border-style: inset;
     border-color: rgba(212, 212, 212, 0.5);
     border-width: thin thin 0.0rem;
-    /*background-color: rgba(112,112,112, 0.25);*/
     font-size: small;
     border-radius: 1rem;
     border-bottom-left-radius: 0ch;
@@ -581,14 +559,6 @@ a.cg-link:hover {
     position: absolute;
     text-overflow: ellipsis;  
     overflow: hidden;
-/*
-    text-align: left;
-    border-top-right-radius: 0ch;
-    border-width: thin 0.0rem 0rem thin;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    overflow: hidden;
-*/
 }
 
 .cg-msgheader-right {
@@ -599,33 +569,9 @@ a.cg-link:hover {
     text-overflow: ellipsis;  
     overflow: hidden;
     left: 25%;
-/*
-    text-align: right;
-    border-top-left-radius: 0ch;
-    border-width: thin thin 0.0rem 0.0rem;
-    max-width: 22ch;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    overflow: hidden;*/
 }
 
 .cg-msgfooter {
-    /*display: table-cell;*/
-    /*
-    padding: 0ch 1ch;
-    text-align: left;
-    border-width: 0.0rem thin thin;
-    border-style: inset;
-    border-color: rgba(212, 212, 212, 0.5);
-    background-color: rgba(224,224,224, 0.5);
-    border-radius: 1rem;
-    border-top-left-radius: 0ch;
-    border-top-right-radius: 0ch;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: x-small;
-    */
     height: 2ch;
     position: relative;
 

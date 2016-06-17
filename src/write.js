@@ -71,9 +71,20 @@ function cg_construct_write(main) {
     preview_area.id="cg-write-previewarea";
 
     var payment_wrap  = document.createElement("div");
+    payment_wrap.style.marginLeft="auto";
+    payment_wrap.style.marginRight="auto";
+    var helper_table = document.createElement("div");
+    helper_table.style.width="100%";
+    helper_table.style.height="100%";
+    helper_table.style.display="table";
+    var helper_cell = document.createElement("div");
+    helper_cell.style.display="table-cell";
+    helper_cell.style.verticalAlign="middle";
     var payment_table = create_payment_table("cg-write-paymenttable");
     payment_wrap.appendChild(payment_table);
-    payment_area.appendChild(payment_wrap);
+    helper_cell.appendChild(payment_wrap);
+    helper_table.appendChild(helper_cell);
+    payment_area.appendChild(helper_table);
 
     var info_table = document.createElement("table");
     var caption    = document.createElement("caption");
@@ -137,9 +148,13 @@ function cg_construct_write(main) {
     side_area.appendChild(addr_area);
     side_area.appendChild(btns_area);
     main_area.appendChild(info_area);
-    main_area.appendChild(payment_area);
-    main_area.appendChild(text_area);
-    main_area.appendChild(preview_area);
+    
+    var writecore = document.createElement("div");
+    writecore.id = "cg-write-core";
+    writecore.appendChild(payment_area);
+    writecore.appendChild(text_area);
+    writecore.appendChild(preview_area);
+    main_area.appendChild(writecore);
 
     var btn_1 = document.createElement("BUTTON"); btn_1.classList.add("cg-write-btn");
     var btn_2 = document.createElement("BUTTON"); btn_2.classList.add("cg-write-btn"); btn_2.disabled = true;
@@ -171,8 +186,10 @@ function cg_construct_write(main) {
     btn_6.appendChild(txt_6); btn_6.addEventListener("click", cg_button_click_preview);
     btn_6.id = "cg-write-btn-preview";
     btn_7.appendChild(txt_7); btn_7.addEventListener("click", cg_button_click_payment_next);
+    btn_7.style.width="50%";
     btn_7.id = "cg-write-btn-payment-next";
     btn_8.appendChild(txt_8); btn_8.addEventListener("click", cg_button_click_payment_back);
+    btn_8.style.width="50%";
     btns_area.appendChild(btn_4);
     btns_area.appendChild(btn_5);
     btns_area.appendChild(btn_1);
@@ -393,7 +410,7 @@ function cg_button_click_payment() {
         state.classList.remove("cg-poofout");
 
         var paymentarea = document.getElementById(CG_WRITE_STATE);
-        paymentarea.style.display = "flex";
+        paymentarea.style.display = "block";
         paymentarea.classList.add("cg-appear");
     }, 200);
 }
@@ -468,7 +485,7 @@ function cg_button_click_payment_back() {
         state.classList.remove("cg-disappear");
 
         var textarea = document.getElementById(CG_WRITE_STATE);
-        textarea.style.display = "flex";
+        textarea.style.display = "block";
         textarea.classList.add("cg-poofin");
     }, 500);
 }
@@ -509,17 +526,15 @@ function cg_button_click_preview() {
 
         var msgbox = cg_write_create_msgbox(CG_WRITE_CHUNKS);
         previewarea.appendChild(msgbox);
+        previewarea.appendChild(document.createElement("br"));
 
         var btn = document.createElement("BUTTON"); btn.classList.add("cg-write-btn");
         btn.appendChild(document.createTextNode(CG_TXT_CAPTCHA_BTN_BACK[CG_LANGUAGE]));
         btn.addEventListener("click", cg_button_click_preview_back);
         previewarea.appendChild(btn);
 
-        previewarea.style.display = "flex";
+        previewarea.style.display = "block";
         previewarea.classList.add("cg-appear");
-        setTimeout(function(){
-            cg_sfx_spray();
-        }, 500);
     }, 200);
 }
 
@@ -541,7 +556,7 @@ function cg_button_click_preview_back() {
         state.classList.remove("cg-disappear");
 
         var textarea = document.getElementById(CG_WRITE_STATE);
-        textarea.style.display = "flex";
+        textarea.style.display = "block";
         textarea.classList.add("cg-poofin");
     }, 500);
 }
@@ -723,6 +738,10 @@ function cg_write_create_msgbox(CG_WRITE_CHUNKS) {
         msgbody.classList.add("cg-msgbody-tiny");
     }
 
+    msgbox.style.width="100%";
+    msgbox.style.height="calc(100% - 2rem)";
+    msgbody.style.maxHeight="none";
+    msgbody.style.height="calc(100% - 4ch)";
     return msgbox;
 }
 

@@ -28,6 +28,7 @@ function cg_construct_save(main) {
     var wrapper = document.createElement("div");
     wrapper.style.marginLeft="auto";
     wrapper.style.marginRight="auto";
+    wrapper.style.maxWidth="50rem";
 
     var order_nr      = document.createElement("input"); order_nr.id      = "cg-save-order-nr";
     var order_status  = document.createElement("input"); order_status.id  = "cg-save-order-status";
