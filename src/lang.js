@@ -192,7 +192,7 @@ var CG_TXT_MAIN_API_TIMEOUT =
 {
     en : "Timeout occurred when querying %s.",
     et : "Teenusele %s saadetud päring jäi vastuseta.",
-    ru : "(Timeout occurred when querying %s.)"
+    ru : "Превышен интервал ожидания при запросе %s."
 };
 
 var CG_TXT_MAIN_API_INVALID_RESPONSE = 
@@ -421,21 +421,21 @@ var CG_TXT_WRITE_BTN_ADD_PAYMENT =
 {
     en : "ADD PAYMENT",
     et : "LISA MAKSE",
-    ru : "(ADD PAYMENT)"
+    ru : "ДОБАВИТЬ ПЛАТЁЖ"
 };
 
 var CG_TXT_WRITE_BTN_REMOVE_PAYMENT =
 {
     en : "REMOVE PAYMENT",
     et : "EEMALDA MAKSE",
-    ru : "(REMOVE PAYMENT)"
+    ru : "УДАЛИТЬ ПЛАТЁЖ"
 };
 
 var CG_TXT_WRITE_BTN_PREVIEW =
 {
     en : "PREVIEW",
     et : "EELVAADE",
-    ru : "(PREVIEW)"
+    ru : "ПРЕДОСМОТР"
 };
 
 var CG_TXT_WRITE_BTN_DETACH =
@@ -512,7 +512,7 @@ var CG_TXT_WRITE_ERROR_FILE_SIZE =
 {
     en : "%1$s exceeds the %2$s size limit.",
     et : "%1$s ületab %2$s suuruse piirangu.",
-    ru : "(%1$s превысил %2$s лимит размера."
+    ru : "%1$s превысил лимит размера в %2$s."
 };
 
 var CG_TXT_WRITE_ERROR_FILE_LOAD =
@@ -526,75 +526,75 @@ var CG_TXT_WRITE_TX_FEE_PER_KB =
 {
     en : "Effective TX fee per kilobyte is %s.",
     et : "Efektiivne ülekande maks kilobaidi kohta on %s.",
-    ru : "(Effective TX fee per kilobyte is %s.)"
+    ru : "Действующая комиссия платежа за килобайт составляет %s."
 };
 
 var CG_TXT_WRITE_PAYMENT_CAPTION =
 {
     en : "Embedded Payment Details",
     et : "Lisatava makse detailid",
-    ru : "(Embedded Payment Details)"
+    ru : "Детали включённого платежа"
 };
 
 var CG_TXT_WRITE_PAYMENT_RECEIVER =
 {
     en : "Pay To:",
     et : "Makse saaja:",
-    ru : "(Pay To:)"
+    ru : "Кому:"
 };
 
 var CG_TXT_WRITE_PAYMENT_AMOUNT =
 {
     en : "Amount:",
     et : "Summa:",
-    ru : "(Amount:)"
+    ru : "Сумма:"
 };
 
 var CG_TXT_WRITE_PAYMENT_ADDRESS_PLACEHOLDER =
 {
     en : "Enter Bitcoin address here...",
     et : "Sisesta Bitimündi aadress siia...",
-    ru : "(Enter Bitcoin address here...)"
+    ru : "Введите биткойн адрес сюда..."
 };
 
 var CG_TXT_WRITE_PAYMENT_AMOUNT_PLACEHOLDER =
 {
     en : "Enter amount here...",
     et : "Sisesta summa siia...",
-    ru : "(Enter amount here...)"
+    ru : "Введите сумму сюда..."
 };
 
 var CG_TXT_WRITE_INVALID_BTC_ADDRESS =
 {
     en : "%s is an invalid Bitcoin address.",
     et : "%s pole valiidne Bitimündi aadress.",
-    ru : "(%s is an invalid Bitcoin address.)"
+    ru : "%s недопустимый биткойн адрес."
 };
 
 var CG_TXT_WRITE_EMPTY_BTC_ADDRESS =
 {
     en : "Bitcoin address field must not be empty.",
     et : "Bitimündi aadressi väli ei tohi jääda tühjaks.",
-    ru : "(Bitcoin address field must not be empty.)"
+    ru : "Поле биткойн адреса не должно быть пустым."
 };
 
 var CG_TXT_WRITE_INVALID_AMOUNT =
 {
     en : "Invalid number of bitcoins.",
     et : "Valitud bitimüntide arv pole lubatud.",
-    ru : "(Invalid number of bitcoins.)"
+    ru : "Недопустимое количество биткойнов."
 };
 
 var CG_TXT_WRITE_DUST_AMOUNT = {
     en : "Amount must be at least %s.",
     et : "Summa peab olema vähemalt %s.",
-    ru : "(Amount must be at least %s.)"
+    ru : "Сумма должна быть не менее %s."
 };
 
 var CG_TXT_WRITE_MSG_PAYMENT = {
     en : "Also send %s BTC to %s.",
     et : "Lisaks saada %s BTC aadressile %s.",
-    ru : "(Also send %s BTC to %s.)"
+    ru : "Так же послать %s BTC на %s."
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -790,7 +790,7 @@ var CG_TXT_SAVE_PAYMENT_NOTE =
 {
     en : "Sending a wrong number of bitcoins will not fill the order. By using this service you agree not to save anything illegal on the block chain. In case of abuse we may report your IP address to the police.",
     et : "Kui Te saadate vale summa bitimünte, siis Teie tellimust ei täideta. Seda teenust kasutades nõustute, et Te ei salvesta plokiahelasse midagi illegaalset. Rikkumise korral võime edastada Teie IP aadress politseisse.",
-    ru : "(Sending a wrong number of bitcoins will not fill the order. By using this service you agree not to save anything illegal on the block chain. In case of abuse we may report your IP address to the police.)"
+    ru : "Отправка неверного количества биткойнов приведёт к не заполнению ордера. Используя данный сервис вы соглашаетесь не сохранять что-либо нелегальное в цепочку блоков. В случае злоупотребления мы можем сообщить ваш IP адрес полиции."
 };
 
 var CG_TXT_SAVE_MAX_DATA_SIZE_EXCEEDED =
@@ -939,34 +939,35 @@ var CG_TXT_HELP_TODO = [
     {
         en : "Make it possible to attach all file types not just JPEG images.",
         et : "Võimaldada kõigi failitüüpide lisamist sõnumile.",
-        ru : "(Make it possible to attach all file types not just JPEG images.)"
+        ru : "Добавить возможность прикрепления всех типов файлов, не только JPEG картинок."
     },
     {
         en : "Do not decode addresses that are known to be part of the attached file.",
         et : "Ära dekodeeri aadresseid, mille puhul on teada, et nad on osa sõnumi manusest.",
-        ru : "(Do not decode addresses that are known to be part of the attached file.)"
+        ru : "Не декодировать адреса о которых известно, что они являются частью прикреплённого файла."
     },
     {
         en : "Add Proof of Existence widget under the tools tab.",
         et : "Lisada notari vidin tööriistade kaardi alla.",
-        ru : "(Add Proof of Existence widget under the tools tab.)"
+        ru : "Добавить виджет Доказательство Существования в закладку инструменты."
     },
     {
         en : "Make it possible to view only the messages of a certain type, such as images.",
         et : "Võimaldada lugeda vaid kindlaksmääratud tüüpi sõnumeid nagu näiteks pilte.",
-        ru : "(Make it possible to view only the messages of a certain type, such as images.)"
+        ru : "Сделать возможным просмотр только сообщений определённого вида, таких как картинки."
     },
     {
         en : "Make it possible to decode only the transactions of a user defined address.",
         et : "Võimaldada üksnes kasutaja määratud aadressile tehtud ülekannete dekodeerimine.",
-        ru : "(Make it possible to decode only the transactions of a user defined address.)"
+        ru : "Сделать возможным декодирование только транзакций указанного пользователем адреса."
     },
     {
         en : "Add more hints and helping information under the help tab and into tooltips.",
         et : "Lisa rohkem abistavat teavet abi kaardi alla ja muudesse kohtadesse.",
-        ru : "(Add more hints and helping information under the help tab and into tooltips.)"
+        ru : "Добавить больше рекомендаций и вспомогательной информации в закладку помощь и всплывающие подсказки."
     }
 ];
+
 ////////////////////////////////////////////////////////////////////////////////
 //  HELP TAB TRANSLATIONS END                                                 //
 ////////////////////////////////////////////////////////////////////////////////

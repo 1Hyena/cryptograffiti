@@ -465,7 +465,7 @@ a.cg-link:hover {
     border-style: solid;
     background-color: rgba(0, 0, 0, 0.0);
     border-color:     rgba(0, 0, 0, 0.0);
-    border-radius: 1rem;    
+    border-radius: 1.5rem;    
     border-width: medium;
 
     -webkit-transition: background-color 250ms ease;
