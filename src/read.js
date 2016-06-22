@@ -30,7 +30,8 @@ var CG_READ_APIS = [
         link      : "https://blockchain.info/tx/%s",
         extract   : "cg_read_extract_blockchaininfo",
         delay     : 0,
-        max_delay : 2*CG_READ_PPS
+        max_delay : 2*CG_READ_PPS,
+        down      : false
     },
     {
         domain    : "blockexplorer.com",
@@ -38,7 +39,8 @@ var CG_READ_APIS = [
         link      : "https://blockexplorer.com/tx/%s",
         extract   : "cg_read_extract_blockexplorer",
         delay     : 0,
-        max_delay : 2*CG_READ_PPS
+        max_delay : 2*CG_READ_PPS,
+        down      : false
     },
     {
         domain    : "blockr.io",
@@ -46,9 +48,11 @@ var CG_READ_APIS = [
         link      : "http://blockr.io/tx/info/%s",
         extract   : "cg_read_extract_blockr",
         delay     : 0,
-        max_delay : 2*CG_READ_PPS
+        max_delay : 2*CG_READ_PPS,
+        down      : false
     }
 ];
+var CG_READ_API_BLOCKCHAIN_INFO = 0; // Index of blockchain.info in the CG_READ_APIS array.
 
 function cg_construct_read(main) {
     var div = cg_init_tab(main, 'cg-tab-read');
@@ -292,6 +296,7 @@ function cg_decode() {
     xmlhttpGet(sprintf(CG_READ_APIS[api].request, txid), '',
         function(json) {
             CG_READ_APIS[api].delay = CG_READ_APIS[api].max_delay;
+            CG_READ_APIS[api].down  = false;
             CG_READ_JOBS["cg_decode"] = 1;
             var nr = CG_DECODING;
 
@@ -336,12 +341,14 @@ function cg_decode() {
                     var msg  = "";
                     var out_bytes= "";
                     var op_return= "";
+                    var timestamp=  0;
                     var op_return_msg = "";
                     
                     var extract = window[CG_READ_APIS[api].extract](r);
                     if (extract !== null) {
                         out_bytes = extract[0];
                         op_return = extract[1];
+                        timestamp = extract[2];
 
                         var msg_utf8  = decode_utf8(out_bytes);
                         var msg_ascii = decode_ascii(out_bytes);
@@ -361,9 +368,9 @@ function cg_decode() {
                         }
                         var txt = msg;
 
-                        if ("time" in r) {
+                        if (timestamp != 0) {
                             while (msgheaderR.hasChildNodes()) msgheaderR.removeChild(msgheaderR.lastChild);
-                            msgheaderR.appendChild(document.createTextNode(timeConverter(r.time)));
+                            msgheaderR.appendChild(document.createTextNode(timeConverter(timestamp)));
                         }
 
                         msgbox.classList.add("cg-msgbox-decoded");
@@ -374,12 +381,16 @@ function cg_decode() {
                         var dir = isRTL ? 'RTL' : 'LTR';
                         if(dir === 'RTL') msgbody.classList.add("cg-msgbody-rtl");
 
-                        if (type.toUpperCase() === "JPG") {
+                        // Conversion hack for compatibility with outdated data:
+                             if (type === "UTF8" || type === "ASCII") type = "application/octet-stream";
+                        else if (type === "JPG")                      type = "image/jpeg";
+
+                        if (type.indexOf("image/") === 0) {
                             var media = document.createElement("DIV");
 
                             var b64imgData = btoa(out_bytes);
                             var img = new Image();
-                            img.src = "data:image/jpeg;base64," + b64imgData;
+                            img.src = "data:"+type+";base64,"+b64imgData;
 
                             media.appendChild(img);
                             msgbody.insertBefore(media, msgspan);
@@ -398,6 +409,7 @@ function cg_decode() {
             }
 
             if (!success) {
+                CG_READ_APIS[api].down = true;
                 msgbox.classList.add("cg-msgbox-failed");
                 while (msgspan.hasChildNodes()) msgspan.removeChild(msgspan.lastChild);
                 msgspan.appendChild(document.createTextNode("("+CG_TXT_READ_DECODING_FAILED[CG_LANGUAGE]+")"));
@@ -415,7 +427,10 @@ function cg_decode() {
             if (success) {
                 var msgtxhash_id = "cg-msgtxhash-"+nr;
                 var msgtxhash    = document.getElementById(msgtxhash_id);
-                msgtxhash.href   = sprintf(CG_READ_APIS[api].link, txid);
+                if (CG_READ_APIS[CG_READ_API_BLOCKCHAIN_INFO].down) {
+                    msgtxhash.href = sprintf(CG_READ_APIS[api].link, txid);
+                }
+                else msgtxhash.href = sprintf(CG_READ_APIS[CG_READ_API_BLOCKCHAIN_INFO].link, txid);
             }
 
             CG_STATUS.push(status);
@@ -443,7 +458,7 @@ function cg_read_extract_blockchaininfo(r) {
             }
         }
     }
-    return [out_bytes, op_return];
+    return [out_bytes, op_return, r.time];
 }
 
 function cg_read_extract_blockexplorer(r) {
@@ -458,7 +473,7 @@ function cg_read_extract_blockexplorer(r) {
             out_bytes = out_bytes + Bitcoin.getAddressPayload(r.vout[j].scriptPubKey.addresses[0]);
         }
     }
-    return [out_bytes, op_return];
+    return [out_bytes, op_return, r.time];
 }
 
 function cg_read_extract_blockr(r) {
@@ -477,7 +492,8 @@ function cg_read_extract_blockr(r) {
     }
     else return null;
 
-    return [out_bytes, op_return];
+    var timestamp = Date.parse(r.data.time_utc)/1000;
+    return [out_bytes, op_return, timestamp];
 }
 
 function cg_read_get_latest() {

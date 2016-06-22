@@ -3,6 +3,7 @@ var CG_WRITE_CHUNKS = [];
 var CG_WRITE_MIN_BTC_OUTPUT = 0.00002730;
 var CG_WRITE_MAX_TX_SIZE = 100000;
 var CG_WRITE_FILE_NAME  = null;
+var CG_WRITE_FILE_TYPE  = null;
 var CG_WRITE_FILE_BYTES = null;
 var CG_WRITE_FILE_CHUNKS = [];
 var CG_WRITE_FILE_HASH = null;
@@ -258,9 +259,10 @@ function cg_write_reset_file_input() {
     file_input.addEventListener('change', cg_write_handle_file_select, false);
     file_input.id="cg-write-msg-file-input";
     file_input.style.display="none";
-    file_input.accept="image/jpeg";
+    file_input.accept="image/*";
     info_area.appendChild(file_input);
     CG_WRITE_FILE_NAME = null;
+    CG_WRITE_FILE_TYPE = null;
     CG_WRITE_FILE_BYTES = null;
     CG_WRITE_FILE_CHUNKS = [];
     CG_WRITE_FILE_HASH = null;
@@ -524,7 +526,7 @@ function cg_button_click_preview() {
         var previewarea = document.getElementById(CG_WRITE_STATE);
         while (previewarea.hasChildNodes()) previewarea.removeChild(previewarea.lastChild);
 
-        var msgbox = cg_write_create_msgbox(CG_WRITE_CHUNKS);
+        var msgbox = cg_write_create_msgbox(CG_WRITE_CHUNKS, CG_WRITE_FILE_TYPE);
         previewarea.appendChild(msgbox);
         previewarea.appendChild(document.createElement("br"));
 
@@ -580,6 +582,7 @@ function cg_write_handle_file_select(evt) {
                     document.getElementById("cg-write-btn-file").disabled = false;
                     if (evt.target.result !== null && evt.target.result.byteLength === theFile.size) {
                         CG_WRITE_FILE_NAME = theFile.name;
+                        CG_WRITE_FILE_TYPE = theFile.type;
                         var file_span = document.getElementById("cg-write-msg-file");
                         while (file_span.hasChildNodes()) file_span.removeChild(file_span.lastChild);
                         file_span.appendChild(document.createTextNode(theFile.name));
@@ -669,7 +672,7 @@ function cg_write_check_amount(str) {
     return "";
 }
 
-function cg_write_create_msgbox(CG_WRITE_CHUNKS) {
+function cg_write_create_msgbox(CG_WRITE_CHUNKS, mimetype) {
     var msgbox     = document.createElement("DIV");
     var msgheader  = document.createElement("DIV");
     var msgheaderL = document.createElement("DIV");
@@ -723,12 +726,12 @@ function cg_write_create_msgbox(CG_WRITE_CHUNKS) {
     var dir = isRTL ? 'RTL' : 'LTR';
     if(dir === 'RTL') msgbody.classList.add("cg-msgbody-rtl");
 
-    if (CG_WRITE_FILE_CHUNKS.length > 0) {
+    if (CG_WRITE_FILE_CHUNKS.length > 0 && mimetype.indexOf("image/") === 0) {
         var media = document.createElement("DIV");
 
         var b64imgData = btoa(out_bytes);
         var img = new Image();
-        img.src = "data:image/jpeg;base64," + b64imgData;
+        img.src = "data:"+mimetype+";base64," + b64imgData;
 
         media.appendChild(img);
         msgbody.insertBefore(media, span);
