@@ -466,3 +466,71 @@ function shuffle(array) {
     return array;
 }
 
+function is_blockchain_file(bytes) {
+    // Returns the size of the file in case chunks contain a file. Returns zero
+    // if bytes do not hold a file. A valid block chain file always ends with
+    // zero padding to fill up the last 20-byte chunk. After that the next chunk
+    // must be the RIPEMD-160 hash of the file (excluding the zero padding).
+
+    var filesize = 0;
+    var size=bytes.length;
+
+    if (size >= 40 && (size % 20) == 0) {
+        var ripemd160 = CryptoJS.algo.RIPEMD160.create(); 
+        var i = 0;
+        while ((i+20) < size) {
+            var j;
+            var this_chunk = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+            var next_chunk = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+
+            var last_nonzero = 0;
+            for (j=0; j<20; ++j) {
+                this_chunk[j] = bytes.charCodeAt(i+j);
+                if (this_chunk[j] != 0) last_nonzero = j;
+            }
+            var next_i = i+j;
+
+            for (j=0; j<20; ++j) {
+                next_chunk[j] = bytes.charCodeAt(next_i+j);
+            }
+
+            if (last_nonzero+1 == 20) {
+                var wordArray = CryptoJS.lib.WordArray.create(new Uint8Array(this_chunk));
+                ripemd160.update(wordArray);
+                var current_hash = ripemd160.clone().finalize().toString(CryptoJS.enc.Hex);
+                var expected_hash = CryptoJS.lib.WordArray.create(new Uint8Array(next_chunk)).toString(CryptoJS.enc.Hex);
+
+                if (current_hash === expected_hash) {
+                    filesize = next_i;
+                }
+            }
+            else {
+                var count = last_nonzero + 1;
+                var iteration = 0;
+                for (var first = 0; first < 20;) {
+                    var arraybuf = [];
+                    for (var k=0; k<count; ++k) {
+                        arraybuf.push(this_chunk[first+k]);
+                    }
+                    var wordArray = CryptoJS.lib.WordArray.create(new Uint8Array(arraybuf));
+                    ripemd160.update(wordArray);
+                    var current_hash = ripemd160.clone().finalize().toString(CryptoJS.enc.Hex);
+                    var expected_hash = CryptoJS.lib.WordArray.create(new Uint8Array(next_chunk)).toString(CryptoJS.enc.Hex);
+
+                    if (current_hash === expected_hash) {
+                        filesize = i + first + count;
+                    }
+
+                    ++iteration;
+                    first = last_nonzero + iteration;
+                    count = 1;
+                }
+            }
+
+            i = next_i;
+        }
+    }
+
+    return filesize;
+}
+

@@ -350,6 +350,18 @@ function cg_decode() {
                         op_return = extract[1];
                         timestamp = extract[2];
 
+                        var fsz = is_blockchain_file(out_bytes);
+                        var blockchain_file = null;
+                        if (fsz > 0) {
+                            blockchain_file = out_bytes.substr(0, fsz);
+                            var comment_start = fsz;
+                            var comment_mod   = fsz % 20;
+                            if (comment_mod !== 0) {
+                                comment_start+= (20-comment_mod);
+                            }
+                            out_bytes = out_bytes.slice(comment_start + 20); // 20 to compensate file hash.
+                        }
+
                         var msg_utf8  = decode_utf8(out_bytes);
                         var msg_ascii = decode_ascii(out_bytes);
 
@@ -388,7 +400,7 @@ function cg_decode() {
                         if (type.indexOf("image/") === 0) {
                             var media = document.createElement("DIV");
 
-                            var b64imgData = btoa(out_bytes);
+                            var b64imgData = btoa(blockchain_file == null ? out_bytes : blockchain_file);
                             var img = new Image();
                             img.src = "data:"+type+";base64,"+b64imgData;
 
@@ -473,7 +485,9 @@ function cg_read_extract_blockexplorer(r) {
             out_bytes = out_bytes + Bitcoin.getAddressPayload(r.vout[j].scriptPubKey.addresses[0]);
         }
     }
-    return [out_bytes, op_return, r.time];
+    var time = 0;
+    if ("time" in r) time = r.time;
+    return [out_bytes, op_return, time];
 }
 
 function cg_read_extract_blockr(r) {

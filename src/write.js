@@ -259,7 +259,7 @@ function cg_write_reset_file_input() {
     file_input.addEventListener('change', cg_write_handle_file_select, false);
     file_input.id="cg-write-msg-file-input";
     file_input.style.display="none";
-    file_input.accept="image/*";
+//  file_input.accept="image/*";
     info_area.appendChild(file_input);
     CG_WRITE_FILE_NAME = null;
     CG_WRITE_FILE_TYPE = null;
@@ -517,6 +517,7 @@ function cg_button_click_preview() {
     var btnsarea = document.getElementById("cg-write-btnsarea");
     btnsarea.classList.remove("cg-appear");
     btnsarea.classList.add("cg-disappear");
+    cg_write_update_now();
 
     setTimeout(function(){
         CG_WRITE_STATE = "cg-write-previewarea";
@@ -709,6 +710,18 @@ function cg_write_create_msgbox(CG_WRITE_CHUNKS, mimetype) {
         out_bytes = out_bytes + Bitcoin.getAddressPayload(CG_WRITE_CHUNKS[j]);
     }
 
+    var fsz = is_blockchain_file(out_bytes);
+    var blockchain_file = null;
+    if (fsz > 0) {
+        blockchain_file = out_bytes.substr(0, fsz);
+        var comment_start = fsz;
+        var comment_mod   = fsz % 20;
+        if (comment_mod !== 0) {
+            comment_start+= (20-comment_mod);
+        }
+        out_bytes = out_bytes.slice(comment_start + 20); // 20 to compensate file hash.
+    }
+
     var msg_utf8  = decode_utf8(out_bytes);
     var msg_ascii = decode_ascii(out_bytes);
 
@@ -729,7 +742,7 @@ function cg_write_create_msgbox(CG_WRITE_CHUNKS, mimetype) {
     if (CG_WRITE_FILE_CHUNKS.length > 0 && mimetype.indexOf("image/") === 0) {
         var media = document.createElement("DIV");
 
-        var b64imgData = btoa(out_bytes);
+        var b64imgData = btoa(blockchain_file == null ? out_bytes : blockchain_file);
         var img = new Image();
         img.src = "data:"+mimetype+";base64," + b64imgData;
 

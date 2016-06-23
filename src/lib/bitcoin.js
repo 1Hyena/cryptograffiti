@@ -136,6 +136,9 @@
         if (!valueExists) break;
       }
 
+      base58encoded = "1".repeat(padding)+base58encoded;
+      // Bitcoin address cannot be shorter than 27 characters.
+      padding = Math.max( 27-base58encoded.length, 0 );
       return "1".repeat(padding)+base58encoded;
   }
 
