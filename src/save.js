@@ -34,10 +34,10 @@ function cg_construct_save(main) {
     var order_status  = document.createElement("input"); order_status.id  = "cg-save-order-status";
     var order_address = document.createElement("input"); order_address.id = "cg-save-order-address";
     var order_amount  = document.createElement("input"); order_amount.id  = "cg-save-order-amount";
-    order_nr     .classList.add("cg-save-order-input"); order_nr.disabled      = true; order_nr.size      = "40";
-    order_status .classList.add("cg-save-order-input"); order_status.disabled  = true; order_status.size  = "40";
-    order_address.classList.add("cg-save-order-input"); order_address.disabled = true; order_address.size = "40";
-    order_amount .classList.add("cg-save-order-input"); order_amount.disabled  = true; order_amount.size  = "40";
+    order_nr     .classList.add("cg-save-order-input"); order_nr.readOnly      = true; order_nr.size      = "40";
+    order_status .classList.add("cg-save-order-input"); order_status.readOnly  = true; order_status.size  = "40";
+    order_address.classList.add("cg-save-order-input"); order_address.readOnly = true; order_address.size = "40";
+    order_amount .classList.add("cg-save-order-input"); order_amount.readOnly  = true; order_amount.size  = "40";
 
     var t  = document.createElement("table");
     var tr1 = document.createElement("tr"); // order
@@ -143,7 +143,7 @@ function cg_save_update() {
     cg_save_get_order();
 
     var order_nr = document.getElementById("cg-save-order-nr");
-    var value = (CG_SAVE_ORDER_NR ? CG_SAVE_ORDER_NR : "");
+    var value = (CG_SAVE_ORDER_NR ? ""+CG_SAVE_ORDER_NR : "");
     if (order_nr.value !== value) order_nr.value = value;
 
     var btn = document.getElementById("cg-save-btn-back");
@@ -263,8 +263,9 @@ function cg_save_get_order() {
                 else {
                     status = sprintf(CG_TXT_SAVE_UPDATING_ORDER_ERROR[CG_LANGUAGE], CG_SAVE_ORDER_NR);
                     details_msg = status;
+                    cg_handle_error(json);
                 }
-                
+
                 if (details_msg !== null) {
                     var details = document.getElementById("cg-save-order-details");
                     while (details.hasChildNodes()) details.removeChild(details.lastChild);
@@ -349,6 +350,8 @@ function cg_save_make_order() {
                     var details = document.getElementById("cg-save-order-details");
                     while (details.hasChildNodes()) details.removeChild(details.lastChild);
                     details.appendChild(document.createTextNode(CG_TXT_SAVE_MAKING_ORDER_ERROR[CG_LANGUAGE]));                    
+
+                    cg_handle_error(json);
                 }
                 CG_CAPTCHA_TOKEN = null;
             }

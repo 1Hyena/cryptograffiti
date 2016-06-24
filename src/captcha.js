@@ -4,6 +4,7 @@ var CG_CAPTCHA_NEXT_FUN  = null;
 var CG_CAPTCHA_BACK_FUN  = null;
 var CG_CAPTCHA_C_LOADING = false;
 var CG_CAPTCHA_T_LOADING = false;
+var CG_CAPTCHA_COOLDOWN  = 0;
 var CG_CAPTCHA_IMAGE_SRC =
 "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAAAtCAYAAAAp4WArAAAACXBIWXM"+
 "AAAsTAAALEwEAmpwYAAAAMklEQVR42u3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAAAAAAAA"+
@@ -106,6 +107,7 @@ function cg_captcha_back() {
 }
 
 function cg_captcha_update() {
+    if (CG_CAPTCHA_COOLDOWN > 0) CG_CAPTCHA_COOLDOWN--;
     cg_captcha_get_challenge();
     if (CG_CAPTCHA_TOKEN !== null) cg_captcha_next();
     
@@ -124,7 +126,7 @@ function cg_captcha_update() {
 }
 
 function cg_captcha_get_challenge() {
-    if (CG_CAPTCHA_C_LOADING || CG_CAPTCHA_IMAGE) return;
+    if (CG_CAPTCHA_C_LOADING || CG_CAPTCHA_IMAGE || CG_CAPTCHA_COOLDOWN > 0) return;
     CG_CAPTCHA_C_LOADING = true;
     CG_STATUS.push(CG_TXT_CAPTCHA_LOADING_CHALLENGE[CG_LANGUAGE]);
     xmlhttpPost('http://cryptograffiti.info/database/', 'fun=get_captcha',
@@ -146,17 +148,21 @@ function cg_captcha_get_challenge() {
                     var img = document.getElementById("cg-captcha-img");
                     img.setAttribute("src", json.captcha.url);
                 }
-                else status = CG_TXT_CAPTCHA_LOADING_CHALLENGE_ERROR[CG_LANGUAGE];
+                else {
+                    status = CG_TXT_CAPTCHA_LOADING_CHALLENGE_ERROR[CG_LANGUAGE];
+                    cg_handle_error(json);
+                }
             }
             
             CG_STATUS.push(status);
             CG_CAPTCHA_C_LOADING = false;
+            CG_CAPTCHA_COOLDOWN = 5;
         }
     );
 }
 
 function cg_captcha_get_token() {
-    if (CG_CAPTCHA_T_LOADING || CG_CAPTCHA_TOKEN) return;
+    if (CG_CAPTCHA_T_LOADING || CG_CAPTCHA_TOKEN || CG_CAPTCHA_COOLDOWN > 0) return;
     CG_CAPTCHA_T_LOADING = true;
     CG_STATUS.push(CG_TXT_CAPTCHA_LOADING_TOKEN[CG_LANGUAGE]);
 
@@ -181,11 +187,13 @@ function cg_captcha_get_token() {
                     document.getElementById("cg-captcha-answer").value = "";
                     var img = document.getElementById("cg-captcha-img");
                     img.setAttribute("src", CG_CAPTCHA_IMAGE_SRC);
+                    cg_handle_error(json);
                 }
             }
             
             CG_STATUS.push(status);
             CG_CAPTCHA_T_LOADING = false;
+            CG_CAPTCHA_COOLDOWN = 5;
         }
     );
 }

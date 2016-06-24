@@ -7,7 +7,7 @@ var CG_ONLINE      = null;
 var CG_HOLD_STATUS = 0;
 var CG_TX_NR       = null;
 var CG_SCROLL_KEY  = false;
-var CG_VERSION     = "0.76";
+var CG_VERSION     = "0.77";
 var CG_ACTIVE_TAB  = null;
 
 function cg_start(main_css) {
@@ -293,7 +293,7 @@ function cg_refresh_status(div) {
 
     setTimeout(function(){
         cg_refresh_status(div);
-    }, 250);
+    }, 500);
 }
 
 function cg_load_constants() {
@@ -301,68 +301,75 @@ function cg_load_constants() {
     var json_str = encodeURIComponent(JSON.stringify(data_obj));
 
     CG_STATUS.push(CG_TXT_MAIN_LOADING_CONSTANTS[CG_LANGUAGE]);
-    setTimeout(function(){
-        xmlhttpPost('http://cryptograffiti.info/database/', 'fun=get_constants&data='+json_str,
-            function(response) {
-                var status = "???";
+    xmlhttpPost('http://cryptograffiti.info/database/', 'fun=get_constants&data='+json_str,
+        function(response) {
+            var status = "";
 
-                     if (response === false) status = CG_TXT_MAIN_ERROR[CG_LANGUAGE];
-                else if (response === null ) status = CG_TXT_MAIN_TIMEOUT[CG_LANGUAGE];
-                else {
-                    json = JSON.parse(response);
-                    if ("constants" in json
-                    &&  "TXS_PER_QUERY" in json.constants) {
-                       CG_CONSTANTS = json.constants;
-                       status = CG_TXT_MAIN_CONSTANTS_LOADED[CG_LANGUAGE];
-                    }
+                 if (response === false) status = CG_TXT_MAIN_ERROR[CG_LANGUAGE];
+            else if (response === null ) status = CG_TXT_MAIN_TIMEOUT[CG_LANGUAGE];
+            else {
+                json = JSON.parse(response);
+                if ("constants" in json
+                &&  "TXS_PER_QUERY" in json.constants) {
+                   CG_CONSTANTS = json.constants;
+                   status = CG_TXT_MAIN_CONSTANTS_LOADED[CG_LANGUAGE];
                 }
-
-                CG_STATUS.push(status);
-
-                if (CG_CONSTANTS !== null) {
-                    setTimeout(function(){cg_load_stats();}, 100);
-                    return;
-                }
-
-                setTimeout(function(){cg_load_constants();}, 10000);                
+                else cg_handle_error(json);
             }
-        );
-    }, 100);
-    
+
+            if (status.length > 0) CG_STATUS.push(status);
+
+            if (CG_CONSTANTS !== null) {
+                setTimeout(function(){cg_load_stats();}, 100);
+                return;
+            }
+
+            setTimeout(function(){cg_load_constants();}, 10000);
+        }
+    );
+
     return;
 }
 
 function cg_load_stats() {
     var data_obj = {};
     var json_str = encodeURIComponent(JSON.stringify(data_obj));
-    
+
     CG_STATUS.push(CG_TXT_MAIN_ONLINE[CG_LANGUAGE]+": ...");
-    setTimeout(function(){
-        xmlhttpPost('http://cryptograffiti.info/database/', 'fun=get_stats&data='+json_str,
-            function(response) {
-                var online = "???";
+    xmlhttpPost('http://cryptograffiti.info/database/', 'fun=get_stats&data='+json_str,
+        function(response) {
+            var online = "???";
 
-                     if (response === false) online = CG_TXT_MAIN_ERROR[CG_LANGUAGE];
-                else if (response === null ) online = CG_TXT_MAIN_TIMEOUT[CG_LANGUAGE];
-                else {
-                    json = JSON.parse(response);
-                    if ("stats" in json && json.stats.length === 1 
-                    &&  "sessions" in json.stats[0]
-                    &&  "IPs" in json.stats[0]) {
-                       var units = (json.stats[0].sessions == 1 ? CG_TXT_MAIN_SESSION[CG_LANGUAGE] : CG_TXT_MAIN_SESSIONS[CG_LANGUAGE]);
-                       online = json.stats[0].IPs+" ("+json.stats[0].sessions+" "+units+")";
-                    }
+                 if (response === false) online = CG_TXT_MAIN_ERROR[CG_LANGUAGE];
+            else if (response === null ) online = CG_TXT_MAIN_TIMEOUT[CG_LANGUAGE];
+            else {
+                json = JSON.parse(response);
+                if ("stats" in json && json.stats.length === 1 
+                &&  "sessions" in json.stats[0]
+                &&  "IPs" in json.stats[0]) {
+                   var units = (json.stats[0].sessions == 1 ? CG_TXT_MAIN_SESSION[CG_LANGUAGE] : CG_TXT_MAIN_SESSIONS[CG_LANGUAGE]);
+                   online = json.stats[0].IPs+" ("+json.stats[0].sessions+" "+units+")";
                 }
-
-                CG_ONLINE=CG_TXT_MAIN_ONLINE[CG_LANGUAGE]+": "+online;
-                CG_STATUS.push(CG_ONLINE);
-
-                setTimeout(function(){
-                    cg_load_stats();
-                }, 60000);
+                else cg_handle_error(json);
             }
-        );
-    }, 100);
+
+            CG_ONLINE=CG_TXT_MAIN_ONLINE[CG_LANGUAGE]+": "+online;
+            CG_STATUS.push(CG_ONLINE);
+
+            setTimeout(function(){
+                cg_load_stats();
+            }, 60000);
+        }
+    );
+}
+
+function cg_handle_error(obj) {
+    if ("error" in obj && "code" in obj.error) {
+        if (obj.error.code === "ERROR_ACCESS_DENIED") {
+            CG_STATUS.push("!"+CG_TXT_MAIN_ERROR_ACCESS_DENIED[CG_LANGUAGE]);
+        }
+    }
+    return;
 }
 
 function cg_construct_header() {

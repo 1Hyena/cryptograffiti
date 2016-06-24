@@ -201,6 +201,13 @@ var CG_TXT_MAIN_API_INVALID_RESPONSE =
     et : "Lubamatu vastus teenuselt %s.",
     ru : "Недопустимый ответ от %s."
 };
+
+var CG_TXT_MAIN_ERROR_ACCESS_DENIED =
+{
+    en : "Access denied.",
+    et : "Ligipääs keelatud..",
+    ru : "(Access denied.)"
+};
 ////////////////////////////////////////////////////////////////////////////////
 // MAIN TRANSLATIONS END                                                      //
 ////////////////////////////////////////////////////////////////////////////////

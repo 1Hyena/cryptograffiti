@@ -4,8 +4,8 @@ var NEXT_REQUEST_ID   = 1;
 
 function xmlhttpPost(strURL, strParams, fun) {
     var timeout = 20000;
-    //if (Math.random() > 0.9) timeout = 10;
-    
+    //if (Math.random() > 0.5) timeout = 10;
+
     var self = { open : true, 
                  id   : NEXT_REQUEST_ID
                };
@@ -20,25 +20,29 @@ function xmlhttpPost(strURL, strParams, fun) {
     else if (window.ActiveXObject) {
         self.xmlHttpReq = new ActiveXObject("Microsoft.XMLHTTP");
     }    
-    
+
     self.xmlHttpReq.open('POST', strURL, true);
-    
+
     var requestTimer = setTimeout(function() {
-        self.xmlHttpReq.abort();
-        fun(null);
-        OPEN_HTTP_REQUESTS--;
-        delete HTTP_REQUESTS[self.id];        
-        // Handle timeout situation, e.g. Retry or inform user.
+        if (self.id in HTTP_REQUESTS) {
+            delete HTTP_REQUESTS[self.id];
+            self.xmlHttpReq.abort();
+            fun(null);
+            OPEN_HTTP_REQUESTS--;
+            // Handle timeout situation, e.g. Retry or inform user.
+        }
     }, timeout);
-    
+
     self.xmlHttpReq.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     self.xmlHttpReq.onreadystatechange = function() {
-        clearTimeout(requestTimer);
         if (self.xmlHttpReq.readyState == 4) {
-            if (self.xmlHttpReq.status == 200) fun(self.xmlHttpReq.responseText);
-            else                               fun(false);
-            OPEN_HTTP_REQUESTS--;
-            delete HTTP_REQUESTS[self.id];            
+            clearTimeout(requestTimer);
+            if (self.id in HTTP_REQUESTS) {
+                if (self.xmlHttpReq.status == 200) fun(self.xmlHttpReq.responseText);
+                else                               fun(false);
+                OPEN_HTTP_REQUESTS--;
+                delete HTTP_REQUESTS[self.id];
+            }
         }
     }
 
@@ -48,7 +52,7 @@ function xmlhttpPost(strURL, strParams, fun) {
 
 function xmlhttpGet(strURL, strParams, fun) {
     var timeout = 20000;
-    //if (Math.random() > 0.9) timeout = 10;
+    //if (Math.random() > 0.5) timeout = 10;
     
     var self = { open : true, 
                  id   : NEXT_REQUEST_ID
@@ -66,23 +70,27 @@ function xmlhttpGet(strURL, strParams, fun) {
     }
     
     self.xmlHttpReq.open('GET', strURL, true);
-    
+
     var requestTimer = setTimeout(function() {
-        self.xmlHttpReq.abort();
-        fun(null);
-        OPEN_HTTP_REQUESTS--;
-        delete HTTP_REQUESTS[self.id];
-        // Handle timeout situation, e.g. Retry or inform user.
+        if (self.id in HTTP_REQUESTS) {
+            delete HTTP_REQUESTS[self.id];
+            self.xmlHttpReq.abort();
+            fun(null);
+            OPEN_HTTP_REQUESTS--;
+            // Handle timeout situation, e.g. Retry or inform user.
+        }
     }, timeout);
-    
+
     self.xmlHttpReq.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     self.xmlHttpReq.onreadystatechange = function() {
-        clearTimeout(requestTimer);
         if (self.xmlHttpReq.readyState == 4) {
-            if (self.xmlHttpReq.status == 200) fun(self.xmlHttpReq.responseText);
-            else                               fun(false);
-            OPEN_HTTP_REQUESTS--;
-            delete HTTP_REQUESTS[self.id];
+            clearTimeout(requestTimer);
+            if (self.id in HTTP_REQUESTS) {
+                if (self.xmlHttpReq.status == 200) fun(self.xmlHttpReq.responseText);
+                else                               fun(false);
+                OPEN_HTTP_REQUESTS--;
+                delete HTTP_REQUESTS[self.id];
+            }
         }
     }
 
@@ -472,13 +480,26 @@ function is_blockchain_file(bytes) {
     // zero padding to fill up the last 20-byte chunk. After that the next chunk
     // must be the RIPEMD-160 hash of the file (excluding the zero padding).
 
+    // HACK:
+    // Expect the file to end within the last 50 addresses. If it ends sooner,
+    // this function returns 0 as a false negative. This hack is here because
+    // ripemd160.clone().finalize() is way too slow and must be called as few
+    // times as possible.
+
     var filesize = 0;
     var size=bytes.length;
 
+    var start = new Date().getTime();
     if (size >= 40 && (size % 20) == 0) {
         var ripemd160 = CryptoJS.algo.RIPEMD160.create(); 
         var i = 0;
         while ((i+20) < size) {
+            { 
+                // HACK: Return when this function takes more than 250 ms to run.
+                var end = new Date().getTime();
+                var time = end - start;
+                if (time > 250) return 0;
+            }
             var j;
             var this_chunk = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
             var next_chunk = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
@@ -497,7 +518,8 @@ function is_blockchain_file(bytes) {
             if (last_nonzero+1 == 20) {
                 var wordArray = CryptoJS.lib.WordArray.create(new Uint8Array(this_chunk));
                 ripemd160.update(wordArray);
-                var current_hash = ripemd160.clone().finalize().toString(CryptoJS.enc.Hex);
+                var current_hash = null;
+                if (i+1000 >= size) current_hash = ripemd160.clone().finalize().toString(CryptoJS.enc.Hex); // Last 50 addresses here.
                 var expected_hash = CryptoJS.lib.WordArray.create(new Uint8Array(next_chunk)).toString(CryptoJS.enc.Hex);
 
                 if (current_hash === expected_hash) {
@@ -514,7 +536,8 @@ function is_blockchain_file(bytes) {
                     }
                     var wordArray = CryptoJS.lib.WordArray.create(new Uint8Array(arraybuf));
                     ripemd160.update(wordArray);
-                    var current_hash = ripemd160.clone().finalize().toString(CryptoJS.enc.Hex);
+                    var current_hash = null;
+                    if (i+1000 >= size) current_hash = ripemd160.clone().finalize().toString(CryptoJS.enc.Hex); // Last 50 addresses here.
                     var expected_hash = CryptoJS.lib.WordArray.create(new Uint8Array(next_chunk)).toString(CryptoJS.enc.Hex);
 
                     if (current_hash === expected_hash) {

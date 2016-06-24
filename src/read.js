@@ -133,7 +133,7 @@ function cg_read_loop() {
                 }
                 else {
                     if ("cg_read_load_new_txs" in CG_READ_JOBS == false) {
-                        CG_READ_JOBS["cg_read_load_new_txs"] = 1;
+                        CG_READ_JOBS["cg_read_load_new_txs"] = 1*CG_READ_PPS;
                     }
                 }
                 break;
@@ -170,7 +170,7 @@ function cg_read_loop() {
                 }
                 else {
                     if ("cg_read_load_old_txs" in CG_READ_JOBS == false) {
-                        CG_READ_JOBS["cg_read_load_old_txs"] = 1;
+                        CG_READ_JOBS["cg_read_load_old_txs"] = 1*CG_READ_PPS;
                     }
                 }
                 break;
@@ -571,7 +571,10 @@ function cg_read_get_latest() {
                         else status = CG_TXT_READ_NO_GRAFFITI[CG_LANGUAGE];
                     }
                 }
-                else status = CG_TXT_READ_INVALID_RESPONSE[CG_LANGUAGE];
+                else {
+                    status = CG_TXT_READ_INVALID_RESPONSE[CG_LANGUAGE];
+                    cg_handle_error(json);
+                }
             }
 
             CG_STATUS.push(status);
@@ -627,8 +630,12 @@ function cg_read_load_new_txs() {
                     
                     status = sprintf(CG_TXT_READ_NEW_GRAFFITI_LOADED[CG_LANGUAGE], count, CG_GRAFFITI_NRS.length);
                 }
+                else {
+                    cg_handle_error(json);
+                    status = CG_TXT_READ_LOADING_NEW_ERROR[CG_LANGUAGE];
+                }
             }
-            
+
             CG_STATUS.push(status);
         }
     );
@@ -678,6 +685,10 @@ function cg_read_load_old_txs() {
                     if (json.txs.length <= 1) CG_READ_JOBS["cg_read_load_old_txs"] = 30*CG_READ_PPS;
 
                     status = sprintf(CG_TXT_READ_OLD_GRAFFITI_LOADED[CG_LANGUAGE], count, CG_GRAFFITI_NRS.length);
+                }
+                else {
+                    cg_handle_error(json);
+                    status = CG_TXT_READ_LOADING_OLD_ERROR[CG_LANGUAGE];
                 }
             }
 
@@ -982,9 +993,11 @@ function cg_read_mature(tab, near_bottom) {
     
     var row = [];
     var row_width = 0;
-    var max_width = tab.clientWidth;
     var all_wide = false;
-    
+    var style = window.getComputedStyle(tab, null);
+    var padding = parseFloat(style.getPropertyValue("padding-left")) + parseFloat(style.getPropertyValue("padding-right"));
+    var max_width = tab.clientWidth - padding;
+
     var sz = list.length;
     var mature = false;
     for (var i = 0; i < sz; i++) {
