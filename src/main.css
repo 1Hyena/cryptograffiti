@@ -32,7 +32,6 @@
 .cg-read-tab-premature,
 .cg-write-tab,
 .cg-tools-tab,
-.cg-help-tab,
 .cg-about-tab {
     display: flex;
     flex-direction: row;
@@ -82,6 +81,21 @@
 }
 
 #cg-write-infotable td:nth-child(2) {
+    text-align: right;
+}
+
+.cg-read-filetable {
+    width: 100%;
+    max-width: 30rem;
+    margin: auto;
+    border-spacing: 0;
+}
+
+.cg-read-filetable td:nth-child(1) {
+    text-align: left;
+}
+
+.cg-read-filetable td:nth-child(2) {
     text-align: right;
 }
 

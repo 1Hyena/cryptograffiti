@@ -410,6 +410,42 @@ var CG_TXT_READ_DECODING_MSG =
     et : "Dekodeerin sõnumit.",
     ru : "Декодирование граффити."
 }
+
+var CG_TXT_READ_FILE_TYPE =
+{
+    en : "Type:",
+    et : "Tüüp:",
+    ru : "(Type:)"
+};
+
+var CG_TXT_READ_FILE_LINK =
+{
+    en : "Link:",
+    et : "Viit:",
+    ru : "(Link:)"
+};
+
+var CG_TXT_READ_FILE_CAPTION =
+{
+    en : "Block Chain File",
+    et : "Plokiahela fail",
+    ru : "(Block Chain File)"
+};
+
+var CG_TXT_READ_FILE_DOWNLOAD =
+{
+    en : "DOWNLOAD",
+    et : "LAE ALLA",
+    ru : "(DOWNLOAD)"
+};
+
+var CG_TXT_READ_FILE_TITLE =
+{
+    en : "Download this file.",
+    et : "Lae see fail alla.",
+    ru : "(Download this file.)"
+};
+
 ////////////////////////////////////////////////////////////////////////////////
 //  READ TAB TRANSLATIONS END                                                 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -921,6 +957,24 @@ var CG_TXT_TOOLS_COMING_SOON =
 ////////////////////////////////////////////////////////////////////////////////
 //  HELP TAB TRANSLATIONS BEGIN                                               //
 ////////////////////////////////////////////////////////////////////////////////
+var CG_TXT_HELP_PROTOCOL_HEAD = {
+    en : "Protocol Specification",
+    et : "Protokolli kirjeldus",
+    ru : "(Protocol Specification)"
+};
+
+var CG_TXT_HELP_PROTOCOL_BODY = {
+    en : "Each Bitcoin transaction contains a number of output addresses. Normally we see these addresses in their Base58 format. However, in essence they are all just 20-byte binary strings. To save a file on the block chain, it should be divided into 20-byte chunks (adding zeroes to the end of the last chunk if needed). Then, to indicate the end-of-file, one must append the RIPEMD-160 hash of the original file to the list of file chunks. Optionally, one could append a textual comment to the block chain file (right after the hash). The comment should be in UTF-8 encoding and similarly to the file, the comment should be divided into 20-byte chunks. However, the comment does not have to end with its hash. We then concatenate the file chunks, file hash and comment chunks into one array. All of the chunks must then be converted to Base58 format. Finally, a normal Bitcoin transaction has to be made, sending the smallest possible amount of bitcoins to each of the Bitcoin addresses in that array.",
+    et : "Iga Bitimündi ülekanne sisaldab väljundaadresseid. Tavaliselt me näeme neid aadresseid Base58 formaadis. Tegelikult aga on iga aadress lihtsalt 20-baidine binaarsõne. Et salvestada fail plokiahelasse, peaks ta kõigepealt jagama 20-baidisteks tükkideks. Kui viimane tükk on lühem kui 20 baiti, tuleb selle lõppu lisada vajaminev arv nullbaite. Faili lõpu tähistamiseks tuleb lisada tükkide jadale veel faili enda RIPEMD-160 räsi. Valikuliselt võib lisada failile ka tekstilise kommentaari, mis peab järgnema vahetult faili räsile. Kommentaar peaks olema UTF-8 kodeeringus ja sarnaselt failile peaks ta olema jagatud 20-baidisteks tükkideks. Kommentaar ise ei pea lõppema oma räsiga. Faili tükid, faili räsi ja kommentaari tükid tuleb siis liita kokku ühte massiivi ja seejärel iga tükk viia tema Base58 kujule. Viimase toiminguna on veel vaja teha tavapärane Bitimündi ülekanne kõigile saadud massiivis esindatud Bitimündi aadressidele.",
+    ru : "(Each Bitcoin transaction contains a number of output addresses. Normally we see these addresses in their Base58 format. However, in essence they are all just 20-byte binary strings. To save a file on the block chain, it should be divided into 20-byte chunks (adding zeroes to the end of the last chunk if needed). Then, to indicate the end-of-file, one must append the RIPEMD-160 hash of the original file to the list of file chunks. Optionally, one could append a textual comment to the block chain file (right after the hash). The comment should be in UTF-8 encoding and similarly to the file, the comment should be divided into 20-byte chunks. However, the comment does not have to end with its hash. We then concatenate the file chunks, file hash and comment chunks into one array. All of the chunks must then be converted to Base58 format. Finally, a normal Bitcoin transaction has to be made, sending the smallest possible amount of bitcoins to each of the Bitcoin addresses in that array.)"
+};
+
+var CG_TXT_HELP_PROTOCOL_FOOT = {
+    en : "Warning! Bitcoin Core wallet might not allow duplicate output addresses in its createrawtransaction RPC. A workaround for this is to apply the named remote procedure on a list of unique addresses at first. Then, after receiving the hex string of the raw transaction, one should search and replace those unique addresses with the intended and possibly duplicate transaction outputs.",
+    et : "Hoiatus! Bitcoin Core rahakotihaldur ei pruugi lubada teha ülekandeid, kus on duplitseeritud aadresseid, kui kasutada selleks createrawtransaction protseduuri. Probleemist saab mööda, kui teha esialgu ülekanne unikaalsetele aadressidele, kuid enne allkirjastamist unikaalsed väljundaadressid soovitud aadressidega asendada.",
+    ru : "(Warning! Bitcoin Core wallet might not allow duplicate output addresses in its createrawtransaction RPC. A workaround for this is to apply the named remote procedure on a list of unique addresses at first. Then, after receiving the hex string of the raw transaction, one should search and replace those unique addresses with the intended and possibly duplicate transaction outputs.)"
+};
+
 var CG_TXT_HELP_KNOWN_ISSUES = {
     en : "Known Issues",
     et : "Teadaolevad probleemid",
@@ -943,16 +997,16 @@ var CG_TXT_HELP_TODO = [
         et : "Lisada tugi sõnumitele, mis sisaldavad ANSI värve.",
         ru : "Добавить поддержку сообщений, содержащих цвета в формате ANSI."
     },
-    {
-        en : "Make it possible to attach all file types not just JPEG images.",
-        et : "Võimaldada kõigi failitüüpide lisamist sõnumile.",
-        ru : "Добавить возможность прикрепления всех типов файлов, не только JPEG картинок."
-    },
-    {
-        en : "Do not decode addresses that are known to be part of the attached file.",
-        et : "Ära dekodeeri aadresseid, mille puhul on teada, et nad on osa sõnumi manusest.",
-        ru : "Не декодировать адреса о которых известно, что они являются частью прикреплённого файла."
-    },
+    //{
+    //    en : "Make it possible to attach all file types not just JPEG images.",
+    //    et : "Võimaldada kõigi failitüüpide lisamist sõnumile.",
+    //    ru : "Добавить возможность прикрепления всех типов файлов, не только JPEG картинок."
+    //},
+    //{
+    //    en : "Do not decode addresses that are known to be part of the attached file.",
+    //    et : "Ära dekodeeri aadresseid, mille puhul on teada, et nad on osa sõnumi manusest.",
+    //    ru : "Не декодировать адреса о которых известно, что они являются частью прикреплённого файла."
+    //},
     {
         en : "Add Proof of Existence widget under the tools tab.",
         et : "Lisada notari vidin tööriistade kaardi alla.",

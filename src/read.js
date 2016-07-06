@@ -289,8 +289,10 @@ function cg_decode() {
     while (msgspan.hasChildNodes()) msgspan.removeChild(msgspan.lastChild);
     msgspan.appendChild(document.createTextNode("("+CG_TXT_READ_DECODING_MSG[CG_LANGUAGE]+")"));
 
-    var txid = CG_GRAFFITI[nr].txid;
-    var type = CG_GRAFFITI[nr].type;
+    var txid  = CG_GRAFFITI[nr].txid;
+    var type  = CG_GRAFFITI[nr].type;
+    var fsize = CG_GRAFFITI[nr].fsize;
+    if (fsize !== null) fsize = parseInt(fsize, 10);
 
     CG_READ_APIS[api].delay = -1;
     xmlhttpGet(sprintf(CG_READ_APIS[api].request, txid), '',
@@ -343,6 +345,7 @@ function cg_decode() {
                     var op_return= "";
                     var timestamp=  0;
                     var op_return_msg = "";
+                    var filehash = null;
                     
                     var extract = window[CG_READ_APIS[api].extract](r);
                     if (extract !== null) {
@@ -350,7 +353,7 @@ function cg_decode() {
                         op_return = extract[1];
                         timestamp = extract[2];
 
-                        var fsz = is_blockchain_file(out_bytes);
+                        var fsz = (fsize !== null ? fsize : is_blockchain_file(out_bytes));
                         var blockchain_file = null;
                         if (fsz > 0) {
                             blockchain_file = out_bytes.substr(0, fsz);
@@ -359,6 +362,8 @@ function cg_decode() {
                             if (comment_mod !== 0) {
                                 comment_start+= (20-comment_mod);
                             }
+                            filehash = out_bytes.slice(comment_start, comment_start + 20);
+                            filehash = Bitcoin.createAddressFromText(filehash);
                             out_bytes = out_bytes.slice(comment_start + 20); // 20 to compensate file hash.
                         }
 
@@ -406,6 +411,49 @@ function cg_decode() {
 
                             media.appendChild(img);
                             msgbody.insertBefore(media, msgspan);
+                        }
+                        else if (blockchain_file !== null) {
+                            var b64Data = btoa(blockchain_file);
+
+                            var file_link = document.createElement("A");
+                            file_link.href = "data:"+type+";base64,"+b64Data;
+                            if (filehash !== null) file_link.download = filehash;
+                            file_link.title = CG_TXT_READ_FILE_TITLE[CG_LANGUAGE];
+                            file_link.target = "_blank";
+                            file_link.type = type;
+
+                            var link_text = document.createTextNode(CG_TXT_READ_FILE_DOWNLOAD[CG_LANGUAGE]);
+                            file_link.appendChild(link_text);
+
+                            var file_table   = document.createElement("table");
+                            var file_caption = document.createElement("caption"); file_table.appendChild(file_caption);
+                            var file_tr1     = document.createElement("tr"); file_table.appendChild(file_tr1);
+                            var file_tr1_td1 = document.createElement("td"); file_tr1.appendChild(file_tr1_td1);
+                            var file_tr1_td2 = document.createElement("td"); file_tr1.appendChild(file_tr1_td2);
+                            var file_tr2     = document.createElement("tr"); file_table.appendChild(file_tr2);
+                            var file_tr2_td1 = document.createElement("td"); file_tr2.appendChild(file_tr2_td1);
+                            var file_tr2_td2 = document.createElement("td"); file_tr2.appendChild(file_tr2_td2);
+                            var file_tr3     = document.createElement("tr"); file_table.appendChild(file_tr3);
+                            var file_tr3_td1 = document.createElement("td"); file_tr3.appendChild(file_tr3_td1);
+                            var file_tr3_td2 = document.createElement("td"); file_tr3.appendChild(file_tr3_td2);
+                            var file_tr4     = document.createElement("tr"); file_table.appendChild(file_tr4);
+                            var file_tr4_td1 = document.createElement("td"); file_tr4.appendChild(file_tr4_td1);
+                            var file_tr4_td2 = document.createElement("td"); file_tr4.appendChild(file_tr4_td2);
+
+                            file_caption.appendChild(document.createTextNode(CG_TXT_READ_FILE_CAPTION[CG_LANGUAGE]));
+                            file_tr1_td1.appendChild(document.createTextNode(CG_TXT_READ_FILE_TYPE[CG_LANGUAGE]));
+                            file_tr2_td1.appendChild(document.createTextNode(CG_TXT_WRITE_NEW_MSG_SIZE[CG_LANGUAGE]));
+                            file_tr3_td1.appendChild(document.createTextNode(CG_TXT_WRITE_NEW_MSG_HASH[CG_LANGUAGE]));
+                            file_tr4_td1.appendChild(document.createTextNode(CG_TXT_READ_FILE_LINK[CG_LANGUAGE]));
+
+                            file_tr1_td2.appendChild(document.createTextNode(type));
+                            file_tr2_td2.appendChild(document.createTextNode((fsz/1024).toFixed(4)+" KiB"));
+                            file_tr3_td2.appendChild(document.createTextNode(filehash));
+                            file_tr4_td2.appendChild(file_link);
+
+                            file_table.classList.add("cg-read-filetable");
+                            msgbody.insertBefore(file_table, msgspan);
+                            msgbody.insertBefore(document.createElement("BR"), msgspan);
                         }
 
                         if (isOverflowed(msgbody)) {
@@ -536,8 +584,9 @@ function cg_read_get_latest() {
                     
                         if (CG_NEWEST_TX_NR !== null) {
                             var obj = {
-                                type: json.txs[0].type,
-                                txid: json.txs[0].txid
+                                type:  json.txs[0].type,
+                                fsize: json.txs[0].fsize,
+                                txid:  json.txs[0].txid
                             };
                             var key = parseInt(json.txs[0].nr, 10);
                             if (key in CG_GRAFFITI === false) {
@@ -613,8 +662,9 @@ function cg_read_load_new_txs() {
                         var sz = json.txs.length;
                         for (var i = 0; i < sz; i++) {
                             var obj = {
-                                type: json.txs[i].type,
-                                txid: json.txs[i].txid
+                                type:  json.txs[i].type,
+                                fsize: json.txs[i].fsize,
+                                txid:  json.txs[i].txid
                             };
                             var key = parseInt(json.txs[i].nr, 10);
                             if (key in CG_GRAFFITI === false) {
@@ -670,8 +720,9 @@ function cg_read_load_old_txs() {
                         var sz = json.txs.length;
                         for (var i = 0; i < sz; i++) {
                             var obj = {
-                                type: json.txs[i].type,
-                                txid: json.txs[i].txid
+                                type:  json.txs[i].type,
+                                fsize: json.txs[i].fsize,
+                                txid:  json.txs[i].txid
                             };
                             var key = parseInt(json.txs[i].nr, 10);
                             if (key in CG_GRAFFITI === false) {
