@@ -1,7 +1,8 @@
 var CG_WRITE_ENCODE_TIME = 0;
 var CG_WRITE_CHUNKS = [];
-var CG_WRITE_MIN_BTC_OUTPUT = 0.00002730;
-var CG_WRITE_MAX_TX_SIZE = 100000;
+var CG_WRITE_MIN_BTC_OUTPUT = 0.00002730;//0.0000001;//
+var CG_WRITE_MAX_TX_SIZE = 100000;//174271;//
+var CG_WRITE_MAX_FILE_SIZE_KiB = 50;//100;//
 var CG_WRITE_FILE_NAME  = null;
 var CG_WRITE_FILE_TYPE  = null;
 var CG_WRITE_FILE_BYTES = null;
@@ -12,6 +13,7 @@ var CG_WRITE_FEE_API_DELAY = 5;
 var CG_WRITE_STATE = "cg-write-textarea";
 var CG_WRITE_PAY_TO = null;
 var CG_WRITE_PAY_AMOUNT = null;
+var CG_WRITE_AREA_LAST_VALUE = "";
 
 function cg_construct_write(main) {
     var div = cg_init_tab(main, 'cg-tab-write');
@@ -309,7 +311,8 @@ function cg_write_update(instant) {
 
     if (instant && CG_WRITE_ENCODE_TIME >= 0 && (area.value.length > 200 || CG_WRITE_FILE_CHUNKS.length > 10)) return;
     if (instant && CG_WRITE_ENCODE_TIME < 0) CG_WRITE_ENCODE_TIME = 3;
-    if (!instant && CG_WRITE_ENCODE_TIME !== 0) return;
+    if (!instant && CG_WRITE_ENCODE_TIME !== 0 && area.value === CG_WRITE_AREA_LAST_VALUE) return;
+    CG_WRITE_AREA_LAST_VALUE = area.value;
 
     var file_hash = [];
     if (CG_WRITE_FILE_HASH !== null) file_hash.push(CG_WRITE_FILE_HASH);
@@ -327,12 +330,9 @@ function cg_write_update(instant) {
         text+=chunks[i]+"\n";
     }    
 
-    while (addr.hasChildNodes()) {
-        addr.removeChild(addr.lastChild);
-    }
-
+    while (addr.hasChildNodes()) addr.removeChild(addr.lastChild);
     addr.appendChild(document.createTextNode(text));
-    
+
     var inputs  = 1;
     var outputs = sz;
     var tx_size = inputs*181 + outputs*34 + 10;
@@ -350,7 +350,7 @@ function cg_write_update(instant) {
     while (cost_span.hasChildNodes()) cost_span.removeChild(cost_span.lastChild);
     cost_span.appendChild(document.createTextNode((tx_cost).toFixed(8)+" BTC"));
 
-    if (tx_size > 100000) {
+    if (tx_size > CG_WRITE_MAX_TX_SIZE) {
         btn.disabled = true;
         size_span.classList.add("cg-status-warning");
     }
@@ -364,6 +364,7 @@ function cg_write_update(instant) {
 function cg_button_click_save() {
     if (CG_WRITE_STATE !== "cg-write-textarea") return;
 
+    cg_write_update_now();
     var btn = document.getElementById("cg-btn-tab-write");
     if (CG_CAPTCHA_TOKEN === null) cg_button_click_captcha(cg_button_click_save, cg_button_click_write);
     else                           cg_button_click(btn, cg_construct_save);
@@ -568,8 +569,8 @@ function cg_write_handle_file_select(evt) {
     var files = evt.target.files;
     var output = [];
     for (var i = 0, f; f = files[i]; i++) {
-        if (f.size > 50*1024) {
-            CG_STATUS.push("!"+sprintf(CG_TXT_WRITE_ERROR_FILE_SIZE[CG_LANGUAGE], f.name, "50 KiB"));
+        if (f.size > CG_WRITE_MAX_FILE_SIZE_KiB*1024) {
+            CG_STATUS.push("!"+sprintf(CG_TXT_WRITE_ERROR_FILE_SIZE[CG_LANGUAGE], f.name, CG_WRITE_MAX_FILE_SIZE_KiB+" KiB"));
             cg_write_reset_file_input();
             break;
         }
@@ -595,9 +596,8 @@ function cg_write_handle_file_select(evt) {
                         btn.addEventListener("click", cg_button_click_detach);
 
                         CG_WRITE_FILE_BYTES = evt.target.result;
-                        var txt = ArrayBufferToString(CG_WRITE_FILE_BYTES);
+                        var txt = Uint8ToString(new Uint8Array(CG_WRITE_FILE_BYTES));
                         CG_WRITE_FILE_CHUNKS = Bitcoin.genAddressesFromText(txt, false);
-                        //CG_WRITE_FILE_CHUNKS = Bitcoin.genAddressesFromArrayBuffer(CG_WRITE_FILE_BYTES);
 
                         /*var ripemd160 = CryptoJS.algo.RIPEMD160.create(); 
                         ripemd160.update(txt);
@@ -710,8 +710,9 @@ function cg_write_create_msgbox(CG_WRITE_CHUNKS, mimetype) {
         out_bytes = out_bytes + Bitcoin.getAddressPayload(CG_WRITE_CHUNKS[j]);
     }
 
-    var fsz = is_blockchain_file(out_bytes);
+    var fsz = (CG_WRITE_FILE_BYTES !== null ? CG_WRITE_FILE_BYTES.byteLength : 0);
     var blockchain_file = null;
+    var filehash = null;
     if (fsz > 0) {
         blockchain_file = out_bytes.substr(0, fsz);
         var comment_start = fsz;
@@ -719,6 +720,9 @@ function cg_write_create_msgbox(CG_WRITE_CHUNKS, mimetype) {
         if (comment_mod !== 0) {
             comment_start+= (20-comment_mod);
         }
+
+        filehash = out_bytes.slice(comment_start, comment_start + 20);
+        filehash = Bitcoin.createAddressFromText(filehash);
         out_bytes = out_bytes.slice(comment_start + 20); // 20 to compensate file hash.
     }
 
@@ -739,15 +743,23 @@ function cg_write_create_msgbox(CG_WRITE_CHUNKS, mimetype) {
     var dir = isRTL ? 'RTL' : 'LTR';
     if(dir === 'RTL') msgbody.classList.add("cg-msgbody-rtl");
 
-    if (CG_WRITE_FILE_CHUNKS.length > 0 && mimetype.indexOf("image/") === 0) {
-        var media = document.createElement("DIV");
+    if (CG_WRITE_FILE_CHUNKS.length > 0) {
+        if (mimetype.indexOf("image/") === 0) {
+            var media = document.createElement("DIV");
 
-        var b64imgData = btoa(blockchain_file == null ? out_bytes : blockchain_file);
-        var img = new Image();
-        img.src = "data:"+mimetype+";base64," + b64imgData;
+            var b64imgData = btoa(blockchain_file == null ? out_bytes : blockchain_file);
+            var img = new Image();
+            img.src = "data:"+mimetype+";base64," + b64imgData;
 
-        media.appendChild(img);
-        msgbody.insertBefore(media, span);
+            media.appendChild(img);
+            msgbody.insertBefore(media, span);
+        }
+        else {
+            var file_table = cg_read_create_filetable(blockchain_file, mimetype, filehash, fsz);
+            file_table.classList.add("cg-read-filetable");
+            msgbody.insertBefore(file_table, span);
+            msgbody.insertBefore(document.createElement("BR"), span);
+        }
     }
 
     if (isOverflowed(msgbody)) {

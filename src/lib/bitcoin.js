@@ -1,14 +1,16 @@
 /**
- * @preserve Bitcoin lib v1.1
+ * @preserve Bitcoin lib v1.2
  * (c) 2014 by Icedude. All rights reserved.
  * dependant on sha256.js
  *
  * USE:
  * Bitcoin.testAddress(base58BitcoinAddressString) returns 1 or 0
- * Bitcoin.getAddressPayload(base58BitcoinAddressString) returns upto 20char Latin1 encoded string
+ * Bitcoin.getAddressPayload(base58BitcoinAddressString) returns upto 20char Latin1 encoded string or if the address is bad it returns Null
  * Bitcoin.createAddressFromText(20charString) returns bitcoin address from 20 char long string
  * Bitcoin.genAddressesFromText(string,true or false newline at end) returns array with address strings
  */
+
+//remove leading 00 byte for speed gains and combine for loops
 
 (function (root, factory) {
   if (typeof define === 'function' && define.amd) {
@@ -19,8 +21,8 @@
     root.Bitcoin = factory();
   }
 }(this, function () {
-  
-  
+
+
   var o = {};
   var asc256 = []; //ascii char value is converted to 58base value
   var alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
@@ -32,17 +34,33 @@
   var checksum = 0;
   var wordarray = CryptoJS.lib.WordArray.create(new Array(7), 21); //holds 21 bytes of the addresses 25total bytes. so need 28byte array
 
-  o.testAddress = function (address) {
+  o.testAddress = function (address) { 
+    if (address.length<26 || (address.charCodeAt(0) !== 49 && address.charCodeAt(0) !== 51)) return 0; //has to start with "1"/49 "3"/51 means bitcoin address THIS CAN BE MOVED TO TESTADDRESS
     if (!unbase58(address)) return 0;
     var hashWordArray = CryptoJS.SHA256(CryptoJS.SHA256(wordarray));
-    if (hashWordArray['words'][0] === checksum) return 1;
+    if (hashWordArray['words'][0] === checksum) {
+      var string = CryptoJS.enc.Latin1.stringify(wordarray);
+      var i, len, paddingString = 0,
+        paddingAddress = 0;
+      for (i = 1, len = string.length; i < len; i++) {
+        if (string.charCodeAt(i) !== 0) break;
+        paddingString += 1;
+      }
+      for (i = 1, len = address.length; i < len; i++) {
+        if (address.charCodeAt(i) !== 49) break;
+        paddingAddress += 1;
+      }
+      if (paddingAddress === paddingString) return 1;
+    }
     return 0;
   };
 
-  o.getAddressPayload = function (address) {
+  o.getAddressPayload = function (address) {//dont check if leading 1-s are correct or not
     if (!unbase58(address)) return null;
     var string = CryptoJS.enc.Latin1.stringify(wordarray);
     //        var string = CryptoJS.enc.Utf16.stringify(wordarray);
+
+    //still contains leading and trailing 00 bytes
     return string.substr(1);
   };
 
@@ -61,6 +79,7 @@
     }
     return addressesAsTextInArray;
   };
+
 
   function unbase58(base58str) {
     var intAr = wordarray['words'],
@@ -91,57 +110,59 @@
   }
 
   function base58(text) {
-      var intAr = wordarray['words'],
-        base = 58,
-        i;
-      resetArrayTo(intAr, 0);
+    var intAr = wordarray['words'],
+      base = 58,
+      i, len;
+    resetArrayTo(intAr, 0);
 
-      var padding = 0;
-      var count_zeroes = true;
-      text = String.fromCharCode(0) + text; //add 00 before message
-      for (i = 0, len = Math.min(text.length, 21); i < len; i++) { //put ascii chars to int array
-        var chr = text.charCodeAt(i);
-        if (i > 0) {
-            if (chr === 0 && count_zeroes) padding++;
-            if (chr !== 0) count_zeroes = false;
-        }
-        intAr[i / 4 >> 0] |= chr << 24 - i % 4 * 8;
-      }
-      var hashWordArray = CryptoJS.SHA256(CryptoJS.SHA256(wordarray));
-      var checksum = hashWordArray['words'][0];
-      //shift all integers right for wordarray
-      var c = 0;
-      var flow = 0;
+    var padding = '';
+    for (i = 0, len = text.length; i < len; i++) {
+      if (text.charCodeAt(i) !== 0) break;
+      padding += '1';
+    }
+
+    if (padding.length === text.length) padding = "11111111111111111111";
+
+    text = String.fromCharCode(0) + text; //add 00 before message
+
+
+    for (i = 0, len = Math.min(text.length, 21); i < len; i++) { //put ascii chars to int array
+      intAr[i / 4 >> 0] |= text.charCodeAt(i) << 24 - i % 4 * 8;
+    }
+    var hashWordArray = CryptoJS.SHA256(CryptoJS.SHA256(wordarray));
+    var checksum = hashWordArray['words'][0];
+
+    //shift all integers right for wordarray
+    //can be optimized i think to the last for loop
+    var c = 0;
+    var flow = 0;
+    for (i = 0, len = intAr.length; i < len; i++) {
+      c = intAr[i];
+      intAr[i] = (c >>> 24) + flow;
+      flow = c << 8;
+    }
+    //        intAr[0] = parseInt("00000001", 16);
+
+    //place checksum
+    intAr[intAr.length - 1] = checksum;
+
+    var base58encoded = "";
+    var reminder, valueExists;
+    while (true) {
+      valueExists = 0;
+      reminder = 0;
       for (i = 0, len = intAr.length; i < len; i++) {
-        c = intAr[i];
-        intAr[i] = (c >>> 24) + flow;
-        flow = c << 8;
+        reminder = 0x100000000 * reminder + (intAr[i] >>> 0);
+        if (intAr[i] !== 0) valueExists = 1;
+        intAr[i] = reminder / base >>> 0;
+        reminder = reminder % base;
       }
+      if (!valueExists) break;
+      base58encoded = alphabet[reminder] + base58encoded; // the reason why 1 is added all the time to all addresses is because reminder=0 and 0='1' so this line of code should execute only when valueExists !== 0
+    }
 
-      //place checksum
-      intAr[intAr.length - 1] = checksum;
-
-      var base58encoded = "";
-      var reminder, valueExists;
-      while (true) {
-        valueExists = 0;
-        reminder = 0;
-        for (i = 0, len = intAr.length; i < len; i++) {
-          reminder = 0x100000000 * reminder + (intAr[i] >>> 0);
-          if (intAr[i] !== 0) valueExists = 1;
-          intAr[i] = reminder / base >>> 0;
-          reminder = reminder % base;
-        }
-        base58encoded = alphabet[reminder] + base58encoded;
-        if (!valueExists) break;
-      }
-
-      base58encoded = "1".repeat(padding)+base58encoded;
-      // Bitcoin address cannot be shorter than 27 characters.
-      padding = Math.max( 27-base58encoded.length, 0 );
-      return "1".repeat(padding)+base58encoded;
+    return '1'+padding + base58encoded;
   }
-
   //Testinnn
   function resetArrayTo(array, val) {
     var i = array.length;

@@ -413,44 +413,7 @@ function cg_decode() {
                             msgbody.insertBefore(media, msgspan);
                         }
                         else if (blockchain_file !== null) {
-                            var b64Data = btoa(blockchain_file);
-
-                            var file_link = document.createElement("A");
-                            file_link.href = "data:"+type+";base64,"+b64Data;
-                            if (filehash !== null) file_link.download = filehash;
-                            file_link.title = CG_TXT_READ_FILE_TITLE[CG_LANGUAGE];
-                            file_link.target = "_blank";
-                            file_link.type = type;
-
-                            var link_text = document.createTextNode(CG_TXT_READ_FILE_DOWNLOAD[CG_LANGUAGE]);
-                            file_link.appendChild(link_text);
-
-                            var file_table   = document.createElement("table");
-                            var file_caption = document.createElement("caption"); file_table.appendChild(file_caption);
-                            var file_tr1     = document.createElement("tr"); file_table.appendChild(file_tr1);
-                            var file_tr1_td1 = document.createElement("td"); file_tr1.appendChild(file_tr1_td1);
-                            var file_tr1_td2 = document.createElement("td"); file_tr1.appendChild(file_tr1_td2);
-                            var file_tr2     = document.createElement("tr"); file_table.appendChild(file_tr2);
-                            var file_tr2_td1 = document.createElement("td"); file_tr2.appendChild(file_tr2_td1);
-                            var file_tr2_td2 = document.createElement("td"); file_tr2.appendChild(file_tr2_td2);
-                            var file_tr3     = document.createElement("tr"); file_table.appendChild(file_tr3);
-                            var file_tr3_td1 = document.createElement("td"); file_tr3.appendChild(file_tr3_td1);
-                            var file_tr3_td2 = document.createElement("td"); file_tr3.appendChild(file_tr3_td2);
-                            var file_tr4     = document.createElement("tr"); file_table.appendChild(file_tr4);
-                            var file_tr4_td1 = document.createElement("td"); file_tr4.appendChild(file_tr4_td1);
-                            var file_tr4_td2 = document.createElement("td"); file_tr4.appendChild(file_tr4_td2);
-
-                            file_caption.appendChild(document.createTextNode(CG_TXT_READ_FILE_CAPTION[CG_LANGUAGE]));
-                            file_tr1_td1.appendChild(document.createTextNode(CG_TXT_READ_FILE_TYPE[CG_LANGUAGE]));
-                            file_tr2_td1.appendChild(document.createTextNode(CG_TXT_WRITE_NEW_MSG_SIZE[CG_LANGUAGE]));
-                            file_tr3_td1.appendChild(document.createTextNode(CG_TXT_WRITE_NEW_MSG_HASH[CG_LANGUAGE]));
-                            file_tr4_td1.appendChild(document.createTextNode(CG_TXT_READ_FILE_LINK[CG_LANGUAGE]));
-
-                            file_tr1_td2.appendChild(document.createTextNode(type));
-                            file_tr2_td2.appendChild(document.createTextNode((fsz/1024).toFixed(4)+" KiB"));
-                            file_tr3_td2.appendChild(document.createTextNode(filehash));
-                            file_tr4_td2.appendChild(file_link);
-
+                            var file_table = cg_read_create_filetable(blockchain_file, type, filehash, fsz);
                             file_table.classList.add("cg-read-filetable");
                             msgbody.insertBefore(file_table, msgspan);
                             msgbody.insertBefore(document.createElement("BR"), msgspan);
@@ -1301,5 +1264,47 @@ function scrollTo(div, to, duration) {
 
     //alert(div.id+" by: "+by+ " steps: "+steps+" delay: "+delay+" scrollTop: "+div.scrollTop+" to: "+to+" duration: "+duration);    
     smoothScroll(div.id, by, steps, delay, key);
+}
+
+function cg_read_create_filetable(blockchain_file, type, filehash, fsz) {
+    var b64Data = btoa(blockchain_file);
+
+    var file_link = document.createElement("A");
+    file_link.href = "data:"+type+";base64,"+b64Data;
+    if (filehash !== null) file_link.download = filehash;
+    file_link.title = CG_TXT_READ_FILE_TITLE[CG_LANGUAGE];
+    file_link.target = "_blank";
+    file_link.type = type;
+
+    var link_text = document.createTextNode(CG_TXT_READ_FILE_DOWNLOAD[CG_LANGUAGE]);
+    file_link.appendChild(link_text);
+
+    var file_table   = document.createElement("table");
+    var file_caption = document.createElement("caption"); file_table.appendChild(file_caption);
+    var file_tr1     = document.createElement("tr"); file_table.appendChild(file_tr1);
+    var file_tr1_td1 = document.createElement("td"); file_tr1.appendChild(file_tr1_td1);
+    var file_tr1_td2 = document.createElement("td"); file_tr1.appendChild(file_tr1_td2);
+    var file_tr2     = document.createElement("tr"); file_table.appendChild(file_tr2);
+    var file_tr2_td1 = document.createElement("td"); file_tr2.appendChild(file_tr2_td1);
+    var file_tr2_td2 = document.createElement("td"); file_tr2.appendChild(file_tr2_td2);
+    var file_tr3     = document.createElement("tr"); file_table.appendChild(file_tr3);
+    var file_tr3_td1 = document.createElement("td"); file_tr3.appendChild(file_tr3_td1);
+    var file_tr3_td2 = document.createElement("td"); file_tr3.appendChild(file_tr3_td2);
+    var file_tr4     = document.createElement("tr"); file_table.appendChild(file_tr4);
+    var file_tr4_td1 = document.createElement("td"); file_tr4.appendChild(file_tr4_td1);
+    var file_tr4_td2 = document.createElement("td"); file_tr4.appendChild(file_tr4_td2);
+
+    file_caption.appendChild(document.createTextNode(CG_TXT_READ_FILE_CAPTION[CG_LANGUAGE]));
+    file_tr1_td1.appendChild(document.createTextNode(CG_TXT_READ_FILE_TYPE[CG_LANGUAGE]));
+    file_tr2_td1.appendChild(document.createTextNode(CG_TXT_WRITE_NEW_MSG_SIZE[CG_LANGUAGE]));
+    file_tr3_td1.appendChild(document.createTextNode(CG_TXT_WRITE_NEW_MSG_HASH[CG_LANGUAGE]));
+    file_tr4_td1.appendChild(document.createTextNode(CG_TXT_READ_FILE_LINK[CG_LANGUAGE]));
+
+    file_tr1_td2.appendChild(document.createTextNode(type));
+    file_tr2_td2.appendChild(document.createTextNode((fsz/1024).toFixed(4)+" KiB"));
+    file_tr3_td2.appendChild(document.createTextNode(filehash));
+    file_tr4_td2.appendChild(file_link);
+    
+    return file_table;
 }
 

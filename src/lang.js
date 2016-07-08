@@ -206,7 +206,7 @@ var CG_TXT_MAIN_ERROR_ACCESS_DENIED =
 {
     en : "Access denied.",
     et : "Ligipääs keelatud..",
-    ru : "(Access denied.)"
+    ru : "Доступ запрещён."
 };
 ////////////////////////////////////////////////////////////////////////////////
 // MAIN TRANSLATIONS END                                                      //
@@ -415,35 +415,35 @@ var CG_TXT_READ_FILE_TYPE =
 {
     en : "Type:",
     et : "Tüüp:",
-    ru : "(Type:)"
+    ru : "Тип:"
 };
 
 var CG_TXT_READ_FILE_LINK =
 {
     en : "Link:",
     et : "Viit:",
-    ru : "(Link:)"
+    ru : "Ссылка:"
 };
 
 var CG_TXT_READ_FILE_CAPTION =
 {
     en : "Block Chain File",
     et : "Plokiahela fail",
-    ru : "(Block Chain File)"
+    ru : "Файл цепочки блоков"
 };
 
 var CG_TXT_READ_FILE_DOWNLOAD =
 {
     en : "DOWNLOAD",
     et : "LAE ALLA",
-    ru : "(DOWNLOAD)"
+    ru : "СКАЧАТЬ"
 };
 
 var CG_TXT_READ_FILE_TITLE =
 {
     en : "Download this file.",
     et : "Lae see fail alla.",
-    ru : "(Download this file.)"
+    ru : "Скачать данный файл."
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -960,19 +960,19 @@ var CG_TXT_TOOLS_COMING_SOON =
 var CG_TXT_HELP_PROTOCOL_HEAD = {
     en : "Protocol Specification",
     et : "Protokolli kirjeldus",
-    ru : "(Protocol Specification)"
+    ru : "Спецификация протокола"
 };
 
 var CG_TXT_HELP_PROTOCOL_BODY = {
     en : "Each Bitcoin transaction contains a number of output addresses. Normally we see these addresses in their Base58 format. However, in essence they are all just 20-byte binary strings. To save a file on the block chain, it should be divided into 20-byte chunks (adding zeroes to the end of the last chunk if needed). Then, to indicate the end-of-file, one must append the RIPEMD-160 hash of the original file to the list of file chunks. Optionally, one could append a textual comment to the block chain file (right after the hash). The comment should be in UTF-8 encoding and similarly to the file, the comment should be divided into 20-byte chunks. However, the comment does not have to end with its hash. We then concatenate the file chunks, file hash and comment chunks into one array. All of the chunks must then be converted to Base58 format. Finally, a normal Bitcoin transaction has to be made, sending the smallest possible amount of bitcoins to each of the Bitcoin addresses in that array.",
     et : "Iga Bitimündi ülekanne sisaldab väljundaadresseid. Tavaliselt me näeme neid aadresseid Base58 formaadis. Tegelikult aga on iga aadress lihtsalt 20-baidine binaarsõne. Et salvestada fail plokiahelasse, peaks ta kõigepealt jagama 20-baidisteks tükkideks. Kui viimane tükk on lühem kui 20 baiti, tuleb selle lõppu lisada vajaminev arv nullbaite. Faili lõpu tähistamiseks tuleb lisada tükkide jadale veel faili enda RIPEMD-160 räsi. Valikuliselt võib lisada failile ka tekstilise kommentaari, mis peab järgnema vahetult faili räsile. Kommentaar peaks olema UTF-8 kodeeringus ja sarnaselt failile peaks ta olema jagatud 20-baidisteks tükkideks. Kommentaar ise ei pea lõppema oma räsiga. Faili tükid, faili räsi ja kommentaari tükid tuleb siis liita kokku ühte massiivi ja seejärel iga tükk viia tema Base58 kujule. Viimase toiminguna on veel vaja teha tavapärane Bitimündi ülekanne kõigile saadud massiivis esindatud Bitimündi aadressidele.",
-    ru : "(Each Bitcoin transaction contains a number of output addresses. Normally we see these addresses in their Base58 format. However, in essence they are all just 20-byte binary strings. To save a file on the block chain, it should be divided into 20-byte chunks (adding zeroes to the end of the last chunk if needed). Then, to indicate the end-of-file, one must append the RIPEMD-160 hash of the original file to the list of file chunks. Optionally, one could append a textual comment to the block chain file (right after the hash). The comment should be in UTF-8 encoding and similarly to the file, the comment should be divided into 20-byte chunks. However, the comment does not have to end with its hash. We then concatenate the file chunks, file hash and comment chunks into one array. All of the chunks must then be converted to Base58 format. Finally, a normal Bitcoin transaction has to be made, sending the smallest possible amount of bitcoins to each of the Bitcoin addresses in that array.)"
+    ru : "Каждая Биткойн транзакция содержит число исходящих адресов. Обычно мы видим эти адреса в их Base58 формате. Однако, по своей сути, они всего лишь 20-байтные двоичные строки. Что бы сохранить файл в цепочку блоков, он должен быть поделён на 20-байтные куски (добавляя нули в конец последнего куска при необходимости). Затем, для обозначения конца файла, необходимо добавить RIPEMD-160 хеш оригинального файла к списку кусков файла. По желанию, можно добавить текстовый комментарий к файлу цепочки блоков сразу после хеша. Комментарий должен быть в UTF-8 кодировке и аналогично файлу, комментарий должен быть поделён на 20-байтные куски. Однако, комментарий не должен заканчиваться своим хешем. Затем мы связываем куски файла, хеш файла и куски комментария в один массив. Все куски должны быть сконвертированы в Base58 формат. В заключение, обычная Биткойн транзакция должна быть произведена, послав минимально возможную сумму биткойнов на каждый биткойн адрес в этом массиве."
 };
 
 var CG_TXT_HELP_PROTOCOL_FOOT = {
     en : "Warning! Bitcoin Core wallet might not allow duplicate output addresses in its createrawtransaction RPC. A workaround for this is to apply the named remote procedure on a list of unique addresses at first. Then, after receiving the hex string of the raw transaction, one should search and replace those unique addresses with the intended and possibly duplicate transaction outputs.",
     et : "Hoiatus! Bitcoin Core rahakotihaldur ei pruugi lubada teha ülekandeid, kus on duplitseeritud aadresseid, kui kasutada selleks createrawtransaction protseduuri. Probleemist saab mööda, kui teha esialgu ülekanne unikaalsetele aadressidele, kuid enne allkirjastamist unikaalsed väljundaadressid soovitud aadressidega asendada.",
-    ru : "(Warning! Bitcoin Core wallet might not allow duplicate output addresses in its createrawtransaction RPC. A workaround for this is to apply the named remote procedure on a list of unique addresses at first. Then, after receiving the hex string of the raw transaction, one should search and replace those unique addresses with the intended and possibly duplicate transaction outputs.)"
+    ru : "Осторожно! Bitcoin Core кошелёк может не позволить повторные исходящие адреса в его createrawtransaction RPC. В качестве временного решения данной ситуации необходимо, сперва, применить именованную удалённую процедуру к списку уникальных адресов. Затем, после получения шестнадцатиричной строки сырой транзакции, необходимо найти и заменить те уникальные адреса на целевые и возможно повторные выходы транзакции."
 };
 
 var CG_TXT_HELP_KNOWN_ISSUES = {
