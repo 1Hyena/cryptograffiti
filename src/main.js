@@ -38,11 +38,23 @@ function cg_main() {
     cg_init_sound();
 
     var lang_given = false;
-    var hash = decodeURIComponent(location.hash.substring(1));
-         if (hash === "en") {CG_LANGUAGE = "en"; lang_given = true;}
-    else if (hash === "ru") {CG_LANGUAGE = "ru"; lang_given = true;}
-    else if (hash === "et") {CG_LANGUAGE = "et"; lang_given = true;}
-    else if (isNormalInteger(hash)) CG_TX_NR = hash;
+    var hashes = location.hash.substring(1).split("#");
+    for (var i=0, sz=hashes.length; i<sz; ++i) {
+        var hash = decodeURIComponent(hashes[i]);
+             if (hash === "en") {CG_LANGUAGE = "en"; lang_given = true;}
+        else if (hash === "ru") {CG_LANGUAGE = "ru"; lang_given = true;}
+        else if (hash === "et") {CG_LANGUAGE = "et"; lang_given = true;}
+        else if (isNormalInteger(hash)) CG_TX_NR = hash;
+        else if (Bitcoin.testAddress(hash)) CG_READ_FILTER_ADDR = hash;
+        else if (hash.length > 0) {
+            // Filter TXs only containing an address that is a hash of this argument.
+            var ripemd160 = CryptoJS.algo.RIPEMD160.create();
+            ripemd160.update(hash);
+            var filter = Bitcoin.createAddressFromText(hex2ascii(ripemd160.finalize()));
+            CG_READ_FILTER_ADDR = filter;
+            CG_READ_FILTER_KEY  = hash;
+        }
+    }
 
     if (!lang_given) {
         var lang = navigator.languages ? navigator.languages[0] : (navigator.language || navigator.userLanguage);

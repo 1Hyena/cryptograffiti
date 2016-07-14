@@ -1,6 +1,6 @@
 var CG_WRITE_ENCODE_TIME = 0;
 var CG_WRITE_CHUNKS = [];
-var CG_WRITE_MIN_BTC_OUTPUT = 0.00002730;
+var CG_WRITE_MIN_BTC_OUTPUT = 0.00000546;
 var CG_WRITE_MAX_TX_SIZE = 100000;
 var CG_WRITE_MAX_FILE_SIZE_KiB = 50;
 var CG_WRITE_FILE_NAME  = null;
@@ -314,10 +314,12 @@ function cg_write_update(instant) {
     if (!instant && CG_WRITE_ENCODE_TIME !== 0 && area.value === CG_WRITE_AREA_LAST_VALUE) return;
     CG_WRITE_AREA_LAST_VALUE = area.value;
 
+    var category  = [];
     var file_hash = [];
-    if (CG_WRITE_FILE_HASH !== null) file_hash.push(CG_WRITE_FILE_HASH);
+    if (CG_READ_FILTER_ADDR !== null && CG_READ_FILTER_KEY !== null) category.push(CG_READ_FILTER_ADDR);
+    if (CG_WRITE_FILE_HASH  !== null) file_hash.push(CG_WRITE_FILE_HASH);
     var text = unescape(encodeURIComponent(area.value));
-    var chunks = CG_WRITE_FILE_CHUNKS.concat(file_hash, Bitcoin.genAddressesFromText(text));
+    var chunks = CG_WRITE_FILE_CHUNKS.concat(file_hash, Bitcoin.genAddressesFromText(text), category);
 
     var scroll = false;
     if (CG_WRITE_CHUNKS.length < chunks.length) scroll = true;
@@ -640,6 +642,7 @@ function cg_write_estimate_fee() {
                     var hourfee = Number(response.hourFee);
                     if (hourfee > 0) {
                         var new_fee = 0.00000001*(hourfee*1000);
+                        new_fee = new_fee * 2; // Compensate for the lower than dust outputs.
                         if (CG_WRITE_FEE_PER_KB !== new_fee) {
                             CG_WRITE_FEE_PER_KB = new_fee;
                             cg_write_update_now();

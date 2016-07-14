@@ -17,9 +17,12 @@ var CG_SCROLL_DELAY    = 500;  // Number of milliseconds for the read tab to scr
 var CG_READ_SCROLL_KEY = null; // Only the div holding the key gets to auto-scroll to prevent mass scrolling.
 var CG_READ_PPS        = 4;
 var CG_READ_COOLDOWN   = 0;
+var CG_READ_FILTER_KEY = null;
+var CG_READ_FILTER_ADDR= null;
+var CG_READ_FILTER_TXS = null;
 
 var CG_READ_JOBS = {
-    "cg_read_get_latest" : 1,
+    "cg_read_get_filter" : 1,
     "cg_decode"          : 1
 };
 
@@ -521,6 +524,52 @@ function cg_read_extract_blockr(r) {
     return [out_bytes, op_return, timestamp];
 }
 
+function cg_read_get_filter() {
+    if (CG_CONSTANTS === null) return false;
+    if (CG_READ_FILTER_ADDR === null) {
+        CG_READ_JOBS["cg_read_get_latest"] = 1;
+        return true;
+    }
+
+    var key = (CG_READ_FILTER_KEY !== null ? CG_READ_FILTER_KEY : CG_READ_FILTER_ADDR);
+    key = key.substring(0, 64);
+    if (key !== CG_READ_FILTER_KEY) key = key+"...";
+
+    CG_STATUS.push(sprintf(CG_TXT_READ_LOADING_FILTER[CG_LANGUAGE], key));
+    xmlhttpGet("http://btc.blockr.io/api/v1/address/txs/"+CG_READ_FILTER_ADDR, '',
+        function(response) {
+            var status = "???";
+            var success = false;
+
+                 if (response === false) status = CG_TXT_READ_BLOCKCHAIN_ERROR[CG_LANGUAGE];
+            else if (response === null ) status = CG_TXT_READ_BLOCKCHAIN_TIMEOUT[CG_LANGUAGE];
+            else {
+                var json = JSON.parse(response);
+                if ("status" in json && json.status === "success"
+                &&  "data" in json && "txs" in json.data) {
+                    var outs = json.data.txs.length;
+                    CG_READ_FILTER_TXS = {};
+                    for (var j = 0; j < outs; j++) {
+                        if ("tx" in json.data.txs[j]) {
+                            CG_READ_FILTER_TXS[json.data.txs[j].tx] = true;
+                        }
+                    }
+                    success = true;
+                    status  = null;
+                }
+                else status = CG_TXT_READ_BLOCKCHAIN_INVALID[CG_LANGUAGE];
+            }
+
+            if (success) CG_READ_JOBS["cg_read_get_latest"] = 1;
+            else         CG_READ_JOBS["cg_read_get_filter"] = 10*CG_READ_PPS;
+
+            if (status !== null) CG_STATUS.push(status);
+        }
+    );
+
+    return true;
+}
+
 function cg_read_get_latest() {
     if (CG_CONSTANTS === null) return false;
 
@@ -551,12 +600,15 @@ function cg_read_get_latest() {
                                 fsize: json.txs[0].fsize,
                                 txid:  json.txs[0].txid
                             };
+
                             var key = parseInt(json.txs[0].nr, 10);
-                            if (key in CG_GRAFFITI === false) {
-                                CG_GRAFFITI_NRS.push(key);
-                                CG_GRAFFITI_NEWS.push(key);
+                            if (CG_READ_FILTER_TXS === null || obj.txid in CG_READ_FILTER_TXS) {
+                                if (key in CG_GRAFFITI === false) {
+                                    CG_GRAFFITI_NRS.push(key);
+                                    CG_GRAFFITI_NEWS.push(key);
+                                }
+                                CG_GRAFFITI[key] = obj;
                             }
-                            CG_GRAFFITI[key] = obj;
 
                             status = sprintf(CG_TXT_READ_GRAFFITI_LOADED[CG_LANGUAGE], CG_NEWEST_TX_NR);
                             
@@ -618,6 +670,7 @@ function cg_read_load_new_txs() {
             else if (response === null ) status = CG_TXT_READ_LOADING_NEW_TIMEOUT[CG_LANGUAGE];
             else {
                 var count = 0;
+                var delay = true;
                 json = JSON.parse(response);
                 if ("txs" in json) {
                     if (json.txs.length > 0) {
@@ -629,17 +682,20 @@ function cg_read_load_new_txs() {
                                 fsize: json.txs[i].fsize,
                                 txid:  json.txs[i].txid
                             };
-                            var key = parseInt(json.txs[i].nr, 10);
-                            if (key in CG_GRAFFITI === false) {
-                                CG_GRAFFITI_NRS.push(key);
-                                CG_GRAFFITI_NEWS.push(key);
-                                count++;
+                            if (CG_READ_FILTER_TXS === null || obj.txid in CG_READ_FILTER_TXS) {
+                                var key = parseInt(json.txs[i].nr, 10);
+                                if (key in CG_GRAFFITI === false) {
+                                    CG_GRAFFITI_NRS.push(key);
+                                    CG_GRAFFITI_NEWS.push(key);
+                                    count++;
+                                }
+                                CG_GRAFFITI[key] = obj;
+                                delay = false;
                             }
-                            CG_GRAFFITI[key] = obj;
                         }
                     }
 
-                    if (json.txs.length <= 1) CG_READ_JOBS["cg_read_load_new_txs"] = 30*CG_READ_PPS;
+                    if (json.txs.length <= 1 || delay) CG_READ_JOBS["cg_read_load_new_txs"] = 30*CG_READ_PPS;
                     
                     status = sprintf(CG_TXT_READ_NEW_GRAFFITI_LOADED[CG_LANGUAGE], count, CG_GRAFFITI_NRS.length);
                 }
@@ -676,6 +732,7 @@ function cg_read_load_old_txs() {
             else if (response === null ) status = CG_TXT_READ_LOADING_OLD_TIMEOUT[CG_LANGUAGE];
             else {
                 var count = 0;
+                var delay = true;
                 json = JSON.parse(response);
                 if ("txs" in json) {
                     if (json.txs.length > 0) {
@@ -687,16 +744,19 @@ function cg_read_load_old_txs() {
                                 fsize: json.txs[i].fsize,
                                 txid:  json.txs[i].txid
                             };
-                            var key = parseInt(json.txs[i].nr, 10);
-                            if (key in CG_GRAFFITI === false) {
-                                CG_GRAFFITI_NRS.unshift(key);
-                                CG_GRAFFITI_OLDS.push(key);
-                                count++;
+                            if (CG_READ_FILTER_TXS === null || obj.txid in CG_READ_FILTER_TXS) {
+                                var key = parseInt(json.txs[i].nr, 10);
+                                if (key in CG_GRAFFITI === false) {
+                                    CG_GRAFFITI_NRS.unshift(key);
+                                    CG_GRAFFITI_OLDS.push(key);
+                                    count++;
+                                }
+                                CG_GRAFFITI[key] = obj;
+                                delay = false;
                             }
-                            CG_GRAFFITI[key] = obj;
                         }
                     }
-                    if (json.txs.length <= 1) CG_READ_JOBS["cg_read_load_old_txs"] = 30*CG_READ_PPS;
+                    if (json.txs.length <= 1 || delay) CG_READ_JOBS["cg_read_load_old_txs"] = 30*CG_READ_PPS;
 
                     status = sprintf(CG_TXT_READ_OLD_GRAFFITI_LOADED[CG_LANGUAGE], count, CG_GRAFFITI_NRS.length);
                 }

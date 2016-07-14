@@ -446,6 +446,13 @@ var CG_TXT_READ_FILE_TITLE =
     ru : "Скачать данный файл."
 };
 
+var CG_TXT_READ_LOADING_FILTER =
+{
+    en : "Loading graffiti filter '%s'.",
+    et : "Laen graffitit filtrit '%s'.",
+    ru : "(Loading graffiti filter '%s'.)"
+};
+
 ////////////////////////////////////////////////////////////////////////////////
 //  READ TAB TRANSLATIONS END                                                 //
 ////////////////////////////////////////////////////////////////////////////////
