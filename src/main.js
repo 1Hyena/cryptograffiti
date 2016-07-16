@@ -46,6 +46,19 @@ function cg_main() {
         else if (hash === "et") {CG_LANGUAGE = "et"; lang_given = true;}
         else if (isNormalInteger(hash)) CG_TX_NR = hash;
         else if (Bitcoin.testAddress(hash)) CG_READ_FILTER_ADDR = hash;
+        else if (hash.indexOf(":") > -1) {
+            var parts = hash.split(":");
+            if (parts.length == 2 && parts[1].indexOf(".") > -1 && Bitcoin.testAddress(parts[0])) {
+                var nums = parts[1].split(".");
+                if (nums.length == 2 && isNumeric(nums[0]) && isNumeric(nums[1])) {
+                    var amount = nums[0]+"."+nums[1].substring(0,8);
+                    if (cg_write_check_amount(amount) === "") {
+                        CG_WRITE_PAY_TO     = parts[0];
+                        CG_WRITE_PAY_AMOUNT = Math.floor(parseFloat(amount)*100000000)/100000000;
+                    }
+                }
+            }
+        }
         else if (hash.length > 0) {
             // Filter TXs only containing an address that is a hash of this argument.
             var ripemd160 = CryptoJS.algo.RIPEMD160.create();
@@ -235,24 +248,28 @@ function cg_construct_footer() {
         img_ee.setAttribute('src', CG_IMG_EE);
         img_ee.setAttribute('alt', CG_TXT_MAIN_FLAG_OF_EE[CG_LANGUAGE]);
         img_ee.style.verticalAlign="middle";
-        
+
+        var options="";
+        if (CG_READ_FILTER_KEY !== null) options = "#"+CG_READ_FILTER_KEY;
+        if (CG_WRITE_PAY_TO !== null && CG_WRITE_PAY_AMOUNT !== null) options += "#"+CG_WRITE_PAY_TO+":"+CG_WRITE_PAY_AMOUNT;
+
         var a_en = document.createElement("a"); a_en.appendChild(img_us);
         a_en.title = CG_TXT_MAIN_TRANSLATE_TO_EN[CG_LANGUAGE];
-        a_en.href  = "#en";
+        a_en.href  = "#en"+options;
         a_en.classList.add("hvr-glow");
         a_en.onclick=function(){fade_out(); setTimeout(function(){location.reload();}, 500); return true;};
         a_en.style.margin="0ch 0.25ch";
 
         var a_ru = document.createElement("a"); a_ru.appendChild(img_ru);
         a_ru.title = CG_TXT_MAIN_TRANSLATE_TO_RU[CG_LANGUAGE];
-        a_ru.href  = "#ru";
+        a_ru.href  = "#ru"+options;
         a_ru.classList.add("hvr-glow");        
         a_ru.onclick=function(){fade_out(); setTimeout(function(){location.reload();}, 500); return true;};
         a_ru.style.margin="0ch 0.25ch";
         
         var a_ee = document.createElement("a"); a_ee.appendChild(img_ee);
         a_ee.title = CG_TXT_MAIN_TRANSLATE_TO_EE[CG_LANGUAGE];
-        a_ee.href  = "#et";
+        a_ee.href  = "#et"+options;
         a_ee.classList.add("hvr-glow");        
         a_ee.onclick=function(){fade_out(); setTimeout(function(){location.reload();}, 500); return true;};
         a_ee.style.margin="0ch 0.25ch";

@@ -186,6 +186,7 @@ function cg_construct_write(main) {
     btn_4.id = "cg-write-btn-file";
     btn_5.appendChild(txt_5); btn_5.addEventListener("click", cg_button_click_payment);
     btn_5.id = "cg-write-btn-payment";
+    if (CG_WRITE_PAY_TO !== null) btn_5.disabled = true;
     btn_6.appendChild(txt_6); btn_6.addEventListener("click", cg_button_click_preview);
     btn_6.id = "cg-write-btn-preview";
     btn_7.appendChild(txt_7); btn_7.addEventListener("click", cg_button_click_payment_next);
