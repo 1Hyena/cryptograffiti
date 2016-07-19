@@ -20,6 +20,7 @@ var CG_READ_COOLDOWN   = 0;
 var CG_READ_FILTER_KEY = null;
 var CG_READ_FILTER_ADDR= null;
 var CG_READ_FILTER_TXS = null;
+var CG_READ_CENSOR_TXS = {};
 
 var CG_READ_JOBS = {
     "cg_read_get_filter" : 1,
@@ -286,11 +287,28 @@ function cg_decode() {
         CG_DECODE_ATTEMPTS = 0;
         return false;
     }
-    
+
     msgbox.classList.add("cg-msgbox-decoding");
 
     while (msgspan.hasChildNodes()) msgspan.removeChild(msgspan.lastChild);
     msgspan.appendChild(document.createTextNode("("+CG_TXT_READ_DECODING_MSG[CG_LANGUAGE]+")"));
+
+    if (CG_GRAFFITI[nr].txid in CG_READ_CENSOR_TXS) {
+        CG_READ_APIS[api].delay = -1;
+        setTimeout(function(){
+            CG_READ_APIS[api].delay = CG_READ_APIS[api].max_delay;
+            CG_READ_APIS[api].down  = false;
+            CG_READ_JOBS["cg_decode"] = 1;
+            CG_DECODING = null;
+            CG_DECODE_ATTEMPTS = 0;
+            msgbox.classList.remove("cg-msgbox-decoding");
+            msgbox.classList.add("cg-msgbox-failed");
+            while (msgspan.hasChildNodes()) msgspan.removeChild(msgspan.lastChild);
+            msgspan.appendChild(document.createTextNode("("+CG_TXT_READ_MESSAGE_CENSORED[CG_LANGUAGE]+")"));
+        }, 100);
+
+        return true;
+    }
 
     var txid  = CG_GRAFFITI[nr].txid;
     var type  = CG_GRAFFITI[nr].type;

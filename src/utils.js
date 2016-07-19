@@ -340,6 +340,24 @@ function isNumeric(value) {
     return /^\d+$/.test(value);
 }
 
+function isHex(hex) {
+    if (hex.length % 2 !== 0) return false;
+    var i = 0;
+    var curCharCode = 0;
+    hex = hex.toLowerCase();
+
+    for (i=0, sz=hex.length; i<sz; i++) {
+        curCharCode = hex.charCodeAt(i);
+
+        if ((curCharCode>47 && curCharCode< 58)
+        ||  (curCharCode>96 && curCharCode<103)) continue;
+
+        return false;
+    }
+
+    return true;
+}
+
 function hex2ascii(hexx) {
     var hex = hexx.toString();//force conversion
     var str = '';

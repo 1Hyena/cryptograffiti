@@ -48,7 +48,17 @@ function cg_main() {
         else if (Bitcoin.testAddress(hash)) CG_READ_FILTER_ADDR = hash;
         else if (hash.indexOf(":") > -1) {
             var parts = hash.split(":");
-            if (parts.length == 2 && parts[1].indexOf(".") > -1 && Bitcoin.testAddress(parts[0])) {
+            if (parts.length === 2 && parts[0] === "censor") {
+                var censor_txs = {};
+                var txs = parts[1].split(",");
+                for (var j=0, txsz=txs.length; j<txsz; ++j) {
+                    if (txs[j].length === 64 && isHex(txs[j])) {
+                        censor_txs[txs[j].toLowerCase()] = true;
+                    }
+                }
+                if (Object.keys(censor_txs).length > 0) CG_READ_CENSOR_TXS = censor_txs;
+            }
+            else if (parts.length == 2 && parts[1].indexOf(".") > -1 && Bitcoin.testAddress(parts[0])) {
                 var nums = parts[1].split(".");
                 if (nums.length == 2 && isNumeric(nums[0]) && isNumeric(nums[1])) {
                     var amount = nums[0]+"."+nums[1].substring(0,8);
@@ -252,6 +262,13 @@ function cg_construct_footer() {
         var options="";
         if (CG_READ_FILTER_KEY !== null) options = "#"+CG_READ_FILTER_KEY;
         if (CG_WRITE_PAY_TO !== null && CG_WRITE_PAY_AMOUNT !== null) options += "#"+CG_WRITE_PAY_TO+":"+CG_WRITE_PAY_AMOUNT;
+        if (Object.keys(CG_READ_CENSOR_TXS).length > 0) {
+            var keys = [];
+            for (var key in CG_READ_CENSOR_TXS) {
+                if (CG_READ_CENSOR_TXS.hasOwnProperty(key)) keys.push(key);
+            }
+            if (keys.length > 0) options += "#censor:"+keys.join();
+        }
 
         var a_en = document.createElement("a"); a_en.appendChild(img_us);
         a_en.title = CG_TXT_MAIN_TRANSLATE_TO_EN[CG_LANGUAGE];

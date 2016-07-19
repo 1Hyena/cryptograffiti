@@ -453,6 +453,13 @@ var CG_TXT_READ_LOADING_FILTER =
     ru : "(Loading graffiti filter '%s'.)"
 };
 
+var CG_TXT_READ_MESSAGE_CENSORED =
+{
+    en : "This message is censored.",
+    et : "See sõnum on tsenseeritud.",
+    ru : "(This message is censored.)"
+};
+
 ////////////////////////////////////////////////////////////////////////////////
 //  READ TAB TRANSLATIONS END                                                 //
 ////////////////////////////////////////////////////////////////////////////////
