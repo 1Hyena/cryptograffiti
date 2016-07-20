@@ -240,7 +240,7 @@ var CG_TXT_READ_LOADING_GRAFFITI =
 {
     en : "Loading graffiti.",
     et : "Laen graffitit.",
-    ru : "Загружаем граффити."
+    ru : "Загружается граффити."
 };
 
 var CG_TXT_READ_LOADING_ERROR =
@@ -268,7 +268,7 @@ var CG_TXT_READ_LOADING_NEW_GRAFFITI =
 {
     en : "Loading new graffiti.",
     et : "Laen uusi graffiteid.",
-    ru : "Загружаем новое граффити."
+    ru : "Загружается новое граффити."
 };
 
 var CG_TXT_READ_LOADING_NEW_ERROR =
@@ -296,7 +296,7 @@ var CG_TXT_READ_LOADING_OLD_GRAFFITI =
 {
     en : "Loading old graffiti.",
     et : "Laen vanu graffiteid.",
-    ru : "Загружаем старое граффити."
+    ru : "Загружается старое граффити."
 };
 
 var CG_TXT_READ_LOADING_OLD_ERROR =
@@ -450,14 +450,14 @@ var CG_TXT_READ_LOADING_FILTER =
 {
     en : "Loading graffiti filter '%s'.",
     et : "Laen graffitit filtrit '%s'.",
-    ru : "(Loading graffiti filter '%s'.)"
+    ru : "Загружается граффити фильтр '%s'."
 };
 
 var CG_TXT_READ_MESSAGE_CENSORED =
 {
     en : "This message is censored.",
     et : "See sõnum on tsenseeritud.",
-    ru : "(This message is censored.)"
+    ru : "Это сообщение отцензурировано."
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -901,7 +901,7 @@ var CG_TXT_CAPTCHA_INPUT_PLACEHOLDER = {
 var CG_TXT_CAPTCHA_LOADING_CHALLENGE = {
     en : "Loading CAPTCHA challenge.",
     et : "Laen CAPTCHA ülesannet.",
-    ru : "Загрузка CAPTCHA задачи."
+    ru : "Загружается CAPTCHA задача."
 };
 
 var CG_TXT_CAPTCHA_LOADING_CHALLENGE_ERROR = {
@@ -980,7 +980,7 @@ var CG_TXT_HELP_PROTOCOL_HEAD = {
 var CG_TXT_HELP_PROTOCOL_BODY = {
     en : "Each Bitcoin transaction contains a number of output addresses. Normally we see these addresses in their Base58 format. However, in essence they are all just 20-byte binary strings. To save a file on the block chain, it should be divided into 20-byte chunks (adding zeroes to the end of the last chunk if needed). Then, to indicate the end-of-file, one must append the RIPEMD-160 hash of the original file to the list of file chunks. Optionally, one could append a textual comment to the block chain file (right after the hash). The comment should be in UTF-8 encoding and similarly to the file, the comment should be divided into 20-byte chunks. However, the comment does not have to end with its hash. We then concatenate the file chunks, file hash and comment chunks into one array. All of the chunks must then be converted to Base58 format. Finally, a normal Bitcoin transaction has to be made, sending the smallest possible amount of bitcoins to each of the Bitcoin addresses in that array.",
     et : "Iga Bitimündi ülekanne sisaldab väljundaadresseid. Tavaliselt me näeme neid aadresseid Base58 formaadis. Tegelikult aga on iga aadress lihtsalt 20-baidine binaarsõne. Et salvestada fail plokiahelasse, peaks ta kõigepealt jagama 20-baidisteks tükkideks. Kui viimane tükk on lühem kui 20 baiti, tuleb selle lõppu lisada vajaminev arv nullbaite. Faili lõpu tähistamiseks tuleb lisada tükkide jadale veel faili enda RIPEMD-160 räsi. Valikuliselt võib lisada failile ka tekstilise kommentaari, mis peab järgnema vahetult faili räsile. Kommentaar peaks olema UTF-8 kodeeringus ja sarnaselt failile peaks ta olema jagatud 20-baidisteks tükkideks. Kommentaar ise ei pea lõppema oma räsiga. Faili tükid, faili räsi ja kommentaari tükid tuleb siis liita kokku ühte massiivi ja seejärel iga tükk viia tema Base58 kujule. Viimase toiminguna on veel vaja teha tavapärane Bitimündi ülekanne kõigile saadud massiivis esindatud Bitimündi aadressidele.",
-    ru : "Каждая Биткойн транзакция содержит число исходящих адресов. Обычно мы видим эти адреса в их Base58 формате. Однако, по своей сути, они всего лишь 20-байтные двоичные строки. Что бы сохранить файл в цепочку блоков, он должен быть поделён на 20-байтные куски (добавляя нули в конец последнего куска при необходимости). Затем, для обозначения конца файла, необходимо добавить RIPEMD-160 хеш оригинального файла к списку кусков файла. По желанию, можно добавить текстовый комментарий к файлу цепочки блоков сразу после хеша. Комментарий должен быть в UTF-8 кодировке и аналогично файлу, комментарий должен быть поделён на 20-байтные куски. Однако, комментарий не должен заканчиваться своим хешем. Затем мы связываем куски файла, хеш файла и куски комментария в один массив. Все куски должны быть сконвертированы в Base58 формат. В заключение, обычная Биткойн транзакция должна быть произведена, послав минимально возможную сумму биткойнов на каждый биткойн адрес в этом массиве."
+    ru : "Каждая Биткойн транзакция содержит число исходящих адресов. Обычно мы видим эти адреса в их Base58 формате. Однако, по своей сути, они всего лишь 20-байтные двоичные строки. Что бы сохранить файл в цепочку блоков, он должен быть поделён на 20-байтные фрагменты (добавляя нули в конец последнего фрагмента при необходимости). Затем, для обозначения конца файла, необходимо добавить RIPEMD-160 хеш оригинального файла к списку фрагментов файла. По желанию, можно добавить текстовый комментарий к файлу цепочки блоков сразу после хеша. Комментарий должен быть в UTF-8 кодировке и аналогично файлу, комментарий должен быть поделён на 20-байтные фрагменты. Однако, комментарий не должен заканчиваться своим хешем. Затем мы связываем фрагменты файла, хеш файла и фрагменты комментария в один массив. Все фрагменты должны быть сконвертированы в Base58 формат. В заключение, обычная Биткойн транзакция должна быть произведена, послав минимально возможную сумму биткойнов на каждый биткойн адрес в этом массиве."
 };
 
 var CG_TXT_HELP_PROTOCOL_FOOT = {
