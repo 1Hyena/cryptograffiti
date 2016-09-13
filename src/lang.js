@@ -1092,11 +1092,18 @@ var CG_TXT_ABOUT_DONATE_ALT =
     ru : "пожертвовать биткойны для cryptograffiti.info"
 };
 
+/*var CG_TXT_ABOUT_NOTE =
+{
+    en : "By sending a message that includes a payment to the donation address you are supporting the development of this free web service. In addition, your message will appear in the feed instantly while non-donators will have to wait for the first confirmation of the Bitcoin network.",
+    et : "Saates sõnumi, mis sisaldab makset annetuste jaoks mõeldud aadressile, toetate selle tasuta veebiteenuse arendust. Lisaks sellele ilmub Teie sõnum lehele koheselt, samal ajal kui annetust mittesisaldavad sõnumid peavad ootama Bitimündi võrgu esimest kinnitust.",
+    ru : "Отправляя сообщение, содержащее адрес для пожертвований, вы поддерживаете развитие данного свободного сервиса. Кроме того, ваше сообщение появится в списке мгновенно, тогда как тот, кто не пожертвовал, должен ожидать первого подтверждения сети Биткойн."
+};*/
+
 var CG_TXT_ABOUT_NOTE =
 {
-    en : "By sending a message that includes the donation address you are supporting the development of this free web service. In addition, your message will appear in the feed instantly while non-donators will have to wait for the first confirmation of the Bitcoin network.",
-    et : "Saates sõnumi, mis sisaldab annetuste jaoks mõeldud aadressi, toetate selle tasuta veebiteenuse arendust. Lisaks sellele ilmub teie sõnum lehele koheselt, samal ajal kui annetust mittesisaldavad sõnumid peavad ootama Bitimündi võrgu esimest kinnitust.",
-    ru : "Отправляя сообщение, содержащее адрес для пожертвований, вы поддерживаете развитие данного свободного сервиса. Кроме того, ваше сообщение появится в списке мгновенно, тогда как тот, кто не пожертвовал, должен ожидать первого подтверждения сети Биткойн."
+    en : "By sending a message that includes a payment to the donation address you are supporting the development of this free web service. Such a donation is added automatically to your message when you use the 'save to block chain' button under the write tab. Messages containing a donation will appear in the feed instantly while non-donators have to wait for the first confirmation of the Bitcoin network.",
+    et : "Saates sõnumi, mis sisaldab makset annetuste jaoks mõeldud aadressile, toetate selle tasuta veebiteenuse arendust. Annetus lisatakse Teie sõnumile automaatselt, kui kasutate 'salvesta plokiahelasse' nuppu sõnumi kirjutamise kaardil. Annetust sisaldavad sõnumid kuvatakse lehel koheselt, samal ajal kui annetust mittesisaldavad sõnumid peavad ära ootama Bitimündi võrgu esimese kinnituse.",
+    ru : "(By sending a message that includes a payment to the donation address you are supporting the development of this free web service. Such a donation is added automatically to your message when you use the 'save to block chain' button under the write tab. Messages containing a donation will appear in the feed instantly while non-donators have to wait for the first confirmation of the Bitcoin network.)"
 };
 
 var CG_TXT_ABOUT_FORUM_TOPIC =
