@@ -21,12 +21,18 @@ function cg_construct_about(main) {
     var tr1   = document.createElement("tr");
     var tr2   = document.createElement("tr");
     var tr3   = document.createElement("tr");
+    var tr4   = document.createElement("tr");
+    var tr5   = document.createElement("tr");
     var td1_1 = document.createElement("td");
     var td1_2 = document.createElement("td");
     var td2_1 = document.createElement("td");
     var td2_2 = document.createElement("td");
     var td3_1 = document.createElement("td");
-    var td3_2 = document.createElement("td");        
+    var td3_2 = document.createElement("td");
+    var td4_1 = document.createElement("td");
+    var td4_2 = document.createElement("td");
+    var td5_1 = document.createElement("td");
+    var td5_2 = document.createElement("td");
     table.appendChild(tr1);
     tr1.appendChild(td1_1);
     tr1.appendChild(td1_2);
@@ -35,16 +41,28 @@ function cg_construct_about(main) {
     tr2.appendChild(td2_2);    
     table.appendChild(tr3);
     tr3.appendChild(td3_1);
-    tr3.appendChild(td3_2);    
+    tr3.appendChild(td3_2);
+    table.appendChild(tr4);
+    tr4.appendChild(td4_1);
+    tr4.appendChild(td4_2);
+    table.appendChild(tr5);
+    tr5.appendChild(td5_1);
+    tr5.appendChild(td5_2);
 
     var t_topic  = document.createTextNode("bitcointalk.org/?topic=524877.0");
     var t_email  = document.createTextNode("hyena@");
     var t_donate = document.createTextNode("1MVpQJA7FtcDrwKC6zATkZvZcxqma4JixS");
+    var t_source = document.createTextNode("github.com/1Hyena/cryptograffiti");
     
     var a_topic   = document.createElement("a"); a_topic.appendChild(t_topic);
     a_topic.title = CG_TXT_ABOUT_TOPIC[CG_LANGUAGE];
     a_topic.href  = "https://bitcointalk.org/index.php?topic=524877.0";
     a_topic.target= "_blank";
+
+    var a_source   = document.createElement("a"); a_source.appendChild(t_source);
+    a_source.title = CG_TXT_ABOUT_SOURCE[CG_LANGUAGE];
+    a_source.href  = "https://github.com/1Hyena/cryptograffiti";
+    a_source.target= "_blank";
 
     var img_domain = document.createElement("img");
     img_domain.setAttribute('src', CG_IMG_DOMAIN);
@@ -65,8 +83,26 @@ function cg_construct_about(main) {
     a_donate.classList.add('cg-link');
     
     td1_1.appendChild(document.createTextNode(CG_TXT_ABOUT_FORUM_TOPIC[CG_LANGUAGE])); td1_2.appendChild(a_topic);
-    td2_1.appendChild(document.createTextNode(CG_TXT_ABOUT_CONTACT_US [CG_LANGUAGE])); td2_2.appendChild(t_email); td2_2.appendChild(img_domain);
-    td3_1.appendChild(document.createTextNode(CG_TXT_ABOUT_DONATE_BTC [CG_LANGUAGE])); td3_2.appendChild(a_donate);
+    td2_1.appendChild(document.createTextNode(CG_TXT_ABOUT_SOURCE_CODE[CG_LANGUAGE])); td2_2.appendChild(a_source);
+    td3_1.appendChild(document.createTextNode(CG_TXT_ABOUT_CONTACT_US [CG_LANGUAGE])); td3_2.appendChild(t_email); td3_2.appendChild(img_domain);
+    td4_1.appendChild(document.createTextNode(CG_TXT_ABOUT_DONATE_BTC [CG_LANGUAGE])); td4_2.appendChild(a_donate);
+    td5_1.appendChild(document.createTextNode(CG_TXT_ABOUT_MEMORABLE_DONORS[CG_LANGUAGE]));
+    var first_donor = true;
+    for (var key in CG_TXT_ABOUT_DONOR_LIST) {
+        if (!CG_TXT_ABOUT_DONOR_LIST.hasOwnProperty(key)) continue;
+        if (!first_donor) {
+            td5_2.appendChild(document.createTextNode(", "));
+        }
+
+        var t_donor = document.createTextNode(key);
+        var a_donor = document.createElement("a");
+        a_donor.appendChild(t_donor);
+        a_donor.title = CG_TXT_ABOUT_DONOR_LIST[key][CG_LANGUAGE];
+        a_donor.href  = CG_TXT_ABOUT_DONOR_LIST[key].website;
+        a_donor.target= "_blank";
+        td5_2.appendChild(a_donor);
+        first_donor = false;
+    }
 
     table.classList.add('cg-table');
     contact.appendChild(table);

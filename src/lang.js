@@ -1078,6 +1078,13 @@ var CG_TXT_ABOUT_TOPIC =
     ru : "тема обсуждения на bitcointalk.org"
 };
 
+var CG_TXT_ABOUT_SOURCE =
+{
+    en : "source code at github.com",
+    et : "lähtekood github.com varamus",
+    ru : "(source code at github.com)"
+};
+
 var CG_TXT_ABOUT_EMAIL_ALT =
 {
     en : "administrator's e-mail address",
@@ -1113,6 +1120,13 @@ var CG_TXT_ABOUT_FORUM_TOPIC =
     ru : "Тема на форуме:"
 };
 
+var CG_TXT_ABOUT_SOURCE_CODE =
+{
+    en : "Source code:",
+    et : "Lähtekood:",
+    ru : "(Source code:)"
+};
+
 var CG_TXT_ABOUT_CONTACT_US =
 {
     en : "Contact us by e-mail:",
@@ -1125,6 +1139,29 @@ var CG_TXT_ABOUT_DONATE_BTC =
     en : "Donate bitcoins:",
     et : "Annetage meile bitimünte:",
     ru : "Пожертвовать биткойны:"
+};
+
+var CG_TXT_ABOUT_MEMORABLE_DONORS =
+{
+    en : "Memorable donors:",
+    et : "Mälestusväärsed annetajad:",
+    ru : "(Memorable donors:)"
+};
+
+var CG_TXT_ABOUT_DONOR_LIST =
+{
+   "xumuku" : {
+        website : "https://bitcointalk.org/index.php?action=profile;u=440239",
+        en  : "Xumuku's profile at bitcointalk.org",
+        et  : "Xumuku konto bitcointalk.org foorumis",
+        ru  : "(Xumuku's profile at bitcointalk.org)"
+    },
+   "Maxim"  : {
+        website : "https://depthsofsun.com/",
+        en  : "Maxim's bitcoin art",
+        et  : "Maximi bitimündi kunst",
+        ru  : "(Maxim's bitcoin art)"
+    }
 };
 ////////////////////////////////////////////////////////////////////////////////
 //  ABOUT TAB TRANSLATIONS END                                                //
