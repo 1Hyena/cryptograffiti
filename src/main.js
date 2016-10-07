@@ -7,7 +7,7 @@ var CG_ONLINE      = null;
 var CG_HOLD_STATUS = 0;
 var CG_TX_NR       = null;
 var CG_SCROLL_KEY  = false;
-var CG_VERSION     = "0.83";
+var CG_VERSION     = "0.84";
 var CG_ACTIVE_TAB  = null;
 
 function cg_start(main_css) {
