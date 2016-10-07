@@ -1110,7 +1110,7 @@ var CG_TXT_ABOUT_NOTE =
 {
     en : "By sending a message that includes a payment to the donation address you are supporting the development of this free web service. Such a donation is added automatically to your message when you use the 'save to block chain' button under the write tab. Messages containing a donation will appear in the feed instantly while non-donators have to wait for the first confirmation of the Bitcoin network.",
     et : "Saates sõnumi, mis sisaldab makset annetuste jaoks mõeldud aadressile, toetate selle tasuta veebiteenuse arendust. Annetus lisatakse Teie sõnumile automaatselt, kui kasutate 'salvesta plokiahelasse' nuppu sõnumi kirjutamise kaardil. Annetust sisaldavad sõnumid kuvatakse lehel koheselt, samal ajal kui annetust mittesisaldavad sõnumid peavad ära ootama Bitimündi võrgu esimese kinnituse.",
-    ru : "(By sending a message that includes a payment to the donation address you are supporting the development of this free web service. Such a donation is added automatically to your message when you use the 'save to block chain' button under the write tab. Messages containing a donation will appear in the feed instantly while non-donators have to wait for the first confirmation of the Bitcoin network.)"
+    ru : "Отправляя сообщение, включающее платеж на наш адрес для пожертвований, вы помогаете разработке этого свободного веб сервиса. Такое пожертвование добавляется автоматически к вашему сообщению, когда вы используете кнопку 'СОХРАНИТЬ В БЛОКЧЕЙН' под полем для ввода. Сообщение, содержащее пожертвование, появится на сайте сразу, тогда как сообщения без пожертвования появятся только после первого подтверждения Биткойн сети."
 };
 
 var CG_TXT_ABOUT_FORUM_TOPIC =
