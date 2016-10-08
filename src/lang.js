@@ -1082,7 +1082,7 @@ var CG_TXT_ABOUT_SOURCE =
 {
     en : "source code at github.com",
     et : "lähtekood github.com varamus",
-    ru : "(source code at github.com)"
+    ru : "исходный код на github.com"
 };
 
 var CG_TXT_ABOUT_EMAIL_ALT =
@@ -1124,7 +1124,7 @@ var CG_TXT_ABOUT_SOURCE_CODE =
 {
     en : "Source code:",
     et : "Lähtekood:",
-    ru : "(Source code:)"
+    ru : "Исходный код:"
 };
 
 var CG_TXT_ABOUT_CONTACT_US =
@@ -1145,7 +1145,7 @@ var CG_TXT_ABOUT_MEMORABLE_DONORS =
 {
     en : "Memorable donors:",
     et : "Mälestusväärsed annetajad:",
-    ru : "(Memorable donors:)"
+    ru : "Памятные жертвователи:"
 };
 
 var CG_TXT_ABOUT_DONOR_LIST =
@@ -1154,13 +1154,13 @@ var CG_TXT_ABOUT_DONOR_LIST =
         website : "https://bitcointalk.org/index.php?action=profile;u=440239",
         en  : "Xumuku's profile at bitcointalk.org",
         et  : "Xumuku konto bitcointalk.org foorumis",
-        ru  : "(Xumuku's profile at bitcointalk.org)"
+        ru  : "Cтраница химиков на bitcointalk.org"
     },
    "Maxim"  : {
         website : "https://depthsofsun.com/",
         en  : "Maxim's bitcoin art",
         et  : "Maximi bitimündi kunst",
-        ru  : "(Maxim's bitcoin art)"
+        ru  : "Биткойн искусство Максима"
     }
 };
 ////////////////////////////////////////////////////////////////////////////////
