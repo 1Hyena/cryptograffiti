@@ -713,7 +713,7 @@ function cg_read_load_new_txs() {
                         }
                     }
 
-                    if (json.txs.length <= 1 || delay) CG_READ_JOBS["cg_read_load_new_txs"] = 30*CG_READ_PPS;
+                    if (json.txs.length <= 1 || (delay && count > 0)) CG_READ_JOBS["cg_read_load_new_txs"] = 30*CG_READ_PPS;
                     
                     status = sprintf(CG_TXT_READ_NEW_GRAFFITI_LOADED[CG_LANGUAGE], count, CG_GRAFFITI_NRS.length);
                 }
@@ -774,7 +774,7 @@ function cg_read_load_old_txs() {
                             }
                         }
                     }
-                    if (json.txs.length <= 1 || delay) CG_READ_JOBS["cg_read_load_old_txs"] = 30*CG_READ_PPS;
+                    if (json.txs.length <= 1 || (delay && count > 0)) CG_READ_JOBS["cg_read_load_old_txs"] = 30*CG_READ_PPS;
 
                     status = sprintf(CG_TXT_READ_OLD_GRAFFITI_LOADED[CG_LANGUAGE], count, CG_GRAFFITI_NRS.length);
                 }
