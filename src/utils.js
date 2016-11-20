@@ -565,3 +565,10 @@ function is_blockchain_file(bytes) {
     return filesize;
 }
 
+function formatBytes(bytes) {
+         if (bytes <       1024) return bytes + " byt";
+    else if (bytes <    1048576) return(bytes / 1024).toFixed(2) + " KiB";
+    else if (bytes < 1073741824) return(bytes / 1048576).toFixed(2) + " MiB";
+    else return (bytes / 1073741824).toFixed(2) + " GiB";
+}
+

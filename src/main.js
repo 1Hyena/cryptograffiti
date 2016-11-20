@@ -7,7 +7,7 @@ var CG_ONLINE      = null;
 var CG_HOLD_STATUS = 0;
 var CG_TX_NR       = null;
 var CG_SCROLL_KEY  = false;
-var CG_VERSION     = "0.84";
+var CG_VERSION     = "0.85";
 var CG_ACTIVE_TAB  = null;
 
 function cg_start(main_css) {
@@ -215,7 +215,7 @@ function cg_construct(cg) {
     
     setTimeout(function(){
         cg_construct_footer();
-    }, 3000);
+    }, 500);
 }
 
 function cg_construct_footer() {
@@ -296,6 +296,7 @@ function cg_construct_footer() {
         if (CG_LANGUAGE !== "et") languages.appendChild(a_ee);                
         
         languages.classList.add("cg-appear");
+        languages.classList.add("cg-footer-languages");
         
         footer.appendChild(languages);
     }, 1000);
@@ -394,7 +395,7 @@ function cg_load_stats() {
                 &&  "sessions" in json.stats[0]
                 &&  "IPs" in json.stats[0]) {
                    var units = (json.stats[0].sessions == 1 ? CG_TXT_MAIN_SESSION[CG_LANGUAGE] : CG_TXT_MAIN_SESSIONS[CG_LANGUAGE]);
-                   online = json.stats[0].IPs+" ("+json.stats[0].sessions+" "+units+")";
+                   online = json.stats[0].IPs/*+" ("+json.stats[0].sessions+" "+units+")"*/;
                 }
                 else cg_handle_error(json);
             }
@@ -474,11 +475,12 @@ function cg_construct_buttons(tabs) {
     btn_4.appendChild(txt_4); btn_4.id = "cg-btn-tab-help";
     btn_5.appendChild(txt_5); btn_5.id = "cg-btn-tab-about";
 
-    setTimeout(function(){tabs.appendChild(btn_1);}, 250);
-    setTimeout(function(){tabs.appendChild(btn_2);}, 500);
-    setTimeout(function(){tabs.appendChild(btn_3);}, 750);
-    setTimeout(function(){tabs.appendChild(btn_4);}, 1000);
-    setTimeout(function(){tabs.appendChild(btn_5);}, 1250);
+    var spawn_delay = 200;
+    setTimeout(function(){tabs.appendChild(btn_1);}, 1*spawn_delay);
+    setTimeout(function(){tabs.appendChild(btn_2);}, 2*spawn_delay);
+    setTimeout(function(){tabs.appendChild(btn_3);}, 3*spawn_delay);
+    setTimeout(function(){tabs.appendChild(btn_4);}, 4*spawn_delay);
+    setTimeout(function(){tabs.appendChild(btn_5);}, 5*spawn_delay);
     setTimeout(function(){
         var cg = document.getElementById("cg-main");
         if (cg == null) {
@@ -492,7 +494,7 @@ function cg_construct_buttons(tabs) {
 
         btn_1.disabled = false;
         btn_1.click();
-    }, 1500);
+    }, 6*spawn_delay);
 }
 
 function cg_button_click(btn, fun) {

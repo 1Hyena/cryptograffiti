@@ -568,6 +568,36 @@ function cg_button_click_preview_back() {
     }, 500);
 }
 
+function cg_write_attach_file(fname, type, bytes_arraybuffer) {
+    CG_WRITE_FILE_NAME = fname;
+    CG_WRITE_FILE_TYPE = type;
+    var file_span = document.getElementById("cg-write-msg-file");
+    while (file_span.hasChildNodes()) file_span.removeChild(file_span.lastChild);
+    file_span.appendChild(document.createTextNode(fname));
+
+    var btn = document.getElementById("cg-write-btn-file");
+    while (btn.hasChildNodes()) btn.removeChild(btn.lastChild);
+    btn.appendChild(document.createTextNode(CG_TXT_WRITE_BTN_DETACH[CG_LANGUAGE]));
+    btn.removeEventListener("click", cg_button_click_attach);
+    btn.addEventListener("click", cg_button_click_detach);
+
+    CG_WRITE_FILE_BYTES = bytes_arraybuffer;
+    var txt = Uint8ToString(new Uint8Array(CG_WRITE_FILE_BYTES));
+    CG_WRITE_FILE_CHUNKS = Bitcoin.genAddressesFromText(txt, false);
+
+    /*var ripemd160 = CryptoJS.algo.RIPEMD160.create();
+    ripemd160.update(txt);
+    var hash = ripemd160.finalize();*/
+    var hash = CryptoJS.RIPEMD160(arrayBufferToWordArray(CG_WRITE_FILE_BYTES)).toString();
+    CG_WRITE_FILE_HASH = Bitcoin.createAddressFromText(hex2ascii(hash));
+
+    var hash_span = document.getElementById("cg-write-msg-hash");
+    while (hash_span.hasChildNodes()) hash_span.removeChild(hash_span.lastChild);
+    hash_span.appendChild(document.createTextNode(CG_WRITE_FILE_HASH));
+
+    cg_write_update_now();
+}
+
 function cg_write_handle_file_select(evt) {
     var files = evt.target.files;
     var output = [];
@@ -586,33 +616,7 @@ function cg_write_handle_file_select(evt) {
                 if (evt.target.readyState == FileReader.DONE) {
                     document.getElementById("cg-write-btn-file").disabled = false;
                     if (evt.target.result !== null && evt.target.result.byteLength === theFile.size) {
-                        CG_WRITE_FILE_NAME = theFile.name;
-                        CG_WRITE_FILE_TYPE = theFile.type;
-                        var file_span = document.getElementById("cg-write-msg-file");
-                        while (file_span.hasChildNodes()) file_span.removeChild(file_span.lastChild);
-                        file_span.appendChild(document.createTextNode(theFile.name));
-
-                        var btn = document.getElementById("cg-write-btn-file");
-                        while (btn.hasChildNodes()) btn.removeChild(btn.lastChild);
-                        btn.appendChild(document.createTextNode(CG_TXT_WRITE_BTN_DETACH[CG_LANGUAGE]));
-                        btn.removeEventListener("click", cg_button_click_attach);
-                        btn.addEventListener("click", cg_button_click_detach);
-
-                        CG_WRITE_FILE_BYTES = evt.target.result;
-                        var txt = Uint8ToString(new Uint8Array(CG_WRITE_FILE_BYTES));
-                        CG_WRITE_FILE_CHUNKS = Bitcoin.genAddressesFromText(txt, false);
-
-                        /*var ripemd160 = CryptoJS.algo.RIPEMD160.create(); 
-                        ripemd160.update(txt);
-                        var hash = ripemd160.finalize();*/
-                        var hash = CryptoJS.RIPEMD160(arrayBufferToWordArray(CG_WRITE_FILE_BYTES)).toString();
-                        CG_WRITE_FILE_HASH = Bitcoin.createAddressFromText(hex2ascii(hash));
-
-                        var hash_span = document.getElementById("cg-write-msg-hash");
-                        while (hash_span.hasChildNodes()) hash_span.removeChild(hash_span.lastChild);
-                        hash_span.appendChild(document.createTextNode(CG_WRITE_FILE_HASH));
-
-                        cg_write_update_now();
+                        cg_write_attach_file(theFile.name, theFile.type, evt.target.result);
                         return;
                     }
 
