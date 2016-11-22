@@ -388,7 +388,7 @@ function cg_tools_poe_file_selection(files) {
         setTimeout(function(){
             d.classList.remove("cg-poofin");
             cg_tools_poe_read_files();
-        }, 500);
+        }, 1500);
     }, 500);
 }
 
