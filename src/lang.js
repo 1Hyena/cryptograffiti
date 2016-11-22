@@ -969,11 +969,11 @@ var CG_TXT_TOOLS_BTN_PROOF_OF_EXISTENCE =
 {
     en : "PROOF OF EXISTENCE",
     et : "OLEMASOLU TÕESTUS",
-    ru : "(PROOF OF EXISTENCE)",
+    ru : "ДОКАЗАТЕЛЬСТВО СУЩЕСТВОВАНИЯ",
     description : {
         en : "Decentralized Proof of Existence is a powerful concept that is bound to render conventional notary and patent offices obsolete. This tool allows anyone to securely time stamp files without revealing their actual content. If you ever need to prove that a particular file existed at a certain moment in time you will simply have to show that the file's cryptographic hash can be found from the Bitcoin's block chain. The Proof of Existence tool provided by CryptoGraffiti.info is spectacular in a way that it uses normal Bitcoin addresses to represent time stamps. This provides a simpler and more elegant means to verify a file's existence than competing methods. One would simply have to check the date of the oldest transaction made to the Bitcoin address that represents a file in question. In other words, the proof of existence remains intrinsically accessible even at times when CryptoGraffiti.info is offline.",
         et : "Detsentraliseeritud olemasolu tõestus on võimas uus meetod, mis muudab konventsionaalsed notariteenused ja patendiameti iganenuks. See tööriist võimaldab igaühel turvaliselt luua ja talletada failide ajatempleid nende sisu avalikustamata. Kui Te peate tõestama, et mõni konkreetne fail eksisteeris mingil kindlal ajahetkel, siis peate te lihtsalt näitama, et selle faili krüptograafiline räsi on talletatud Bitimündi plokiahelasse. KrüptoGraffiti pakutav olemasolu tõestamise tööriist on silmapaistev veel ka selle pärast, et ta kasutab tavalisi Bitimündi aadresseid, esindamaks failide ajatempleid. See võimaldab lihtsamaid ja elegantsemaid mooduseid faili eksistentsi kontrollimiseks kui konkureerivad meetodid. Eksistentsi kontrollimiseks tuleks kõigest kontrollida failile vastavale Bitimündi aadressile tehtud vanima ülekande kuupäeva. Teisisõnu, faili eksistentsi tõestus jääb loomupäraselt ligipääsetavaks ka ajal, mil CrpytoGraffiti.info teenus pole kättesaadav.",
-        ru : "(Decentralized Proof of Existence is a powerful concept that is bound to render conventional notary and patent offices obsolete. This tool allows anyone to securely time stamp files without revealing their actual content. If you ever need to prove that a particular file existed at a certain moment in time you will simply have to show that the file's cryptographic hash can be found from the Bitcoin's block chain. The Proof of Existence tool provided by CryptoGraffiti.info is spectacular in a way that it uses normal Bitcoin addresses to represent time stamps. This provides a simpler and more elegant means to verify a file's existence than competing methods. One would simply have to check the date of the oldest transaction made to the Bitcoin address that represents a file in question. In other words, the proof of existence remains intrinsically accessible even at times when CryptoGraffiti.info is offline.)",
+        ru : "Децентрализованное Доказательство Существования это мощная концепция призванная сделать традиционные нотариальные и патентные ведомства устаревшими. Данный инструмент позволяет любому безопасно засвидетельствовать файлы не раскрывая их текущего содержимого. Если вам когда-нибудь понадобится доказать, что определённый файл существовал в определённый момент времени, вам лишь необходимо показать, что криптографический хэш находится в цепочке блоков Биткойна. Инструмент Доказательство Существования предоставляемый CryptoGraffiti.info отличается тем, что он использует обычные биткойн адреса для представления меток времени. Это обеспечивает более простой и элегантный способ проверки существования файла, чем конкурирующие методы. Всего лишь необходимо проверить дату самой ранней транзакции осуществлённой на биткойн адрес представляющий искомый файл. Другими словами, доказательство существования остаётся в действительности доступным даже когда CryptoGraffiti.info отключён.",
     }
 };
 
@@ -981,60 +981,60 @@ var CG_TXT_TOOLS_BTN_ADDRESS_DECODER =
 {
     en : "ADDRESS DECODER",
     et : "AADRESSI DEKODEERIJA",
-    ru : "(ADDRESS DECODER)"
+    ru : "ДЕКОДЕР АДРЕСА"
 };
 
 var CG_TXT_TOOLS_BTN_TRANSACTION_DECODER =
 {
     en : "TRANSACTION DECODER",
     et : "ÜLEKANDE DEKODEERIJA",
-    ru : "(TRANSACTION DECODER)"
+    ru : "ДЕКОДЕР ТРАНЗАКЦИИ"
 };
 
 var CG_TXT_TOOLS_DROP_FILES_HERE =
 {
     en : "Click here or drag and drop your files in the box.",
     et : "Vajuta siia või lohista oma failid sellesse kasti.",
-    ru : "(Click here or drag and drop your files in the box.)"
+    ru : "Нажмите сюда или перетащите ваш файл в данную область."
 };
 
 var CG_TXT_TOOLS_FILES_WILL_NOT_BE_UPLOADED =
 {
     en : "The files will NOT be uploaded. The cryptographic proof is calculated client-side.",
     et : "Faile ei laeta üles. Krüptograafiline tõestus arvutatakse kliendi poolel.",
-    ru : "(The files will NOT be uploaded. The cryptographic proof is calculated client-side.)"
+    ru : "Файл НЕ будет загружен. Криптографическое доказательство просчитывается на стороне клиента."
 };
 
 var CG_TXT_TOOLS_BTN_CANCEL =
 {
     en : "CANCEL",
     et : "TÜHISTA",
-    ru : "(CANCEL)"
+    ru : "ОТМЕНА"
 };
 
 var CG_TXT_TOOLS_BTN_COMPILE =
 {
     en : "COMPILE",
     et : "KOMPILEERI",
-    ru : "(COMPILE)"
+    ru : "СФОРМИРОВАТЬ"
 };
 
 var CG_TXT_TOOLS_WRITE_TAB_NOT_EMPTY = {
     en : "Write tab needs to be cleared first!",
     et : "Kirjuta kaart peab esmalt olema puhtaks tehtud!",
-    ru : "(Write tab needs to be cleared first!)"
+    ru : "Необходимо сначала очистить закладку записи!"
 };
 
 var CG_TXT_TOOLS_PROOF = {
     en : "Proof",
     et : "Tõestus",
-    ru : "(Proof)"
+    ru : "Доказательство"
 };
 
 var CG_TXT_TOOLS_POE_PROOF_LINK = {
     en : "Proof of existence details.",
     et : "Eksistentsi tõestuse detailid.",
-    ru : "(Proof of existence details.)"
+    ru : "Подробности доказательства существования."
 };
 ////////////////////////////////////////////////////////////////////////////////
 //  TOOLS TAB TRANSLATIONS END                                                //
