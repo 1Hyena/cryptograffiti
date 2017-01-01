@@ -1,3 +1,44 @@
+body {
+    background:url(gfx/color.png);
+    background-size:cover;
+    background-position: center center;
+}
+#cg {
+	background: linear-gradient(90deg, rgba(0, 0, 0, 0.1) 0%, rgba(255, 255, 255, 0.05) 15%, rgba(255, 255, 255, 0.35) 50%, rgba(255, 255, 255, 0.05) 85%, rgba(0, 0, 0, 0.1) 100%);
+}
+#cg-body {
+    background:none;
+    border-style: solid;
+    border-width: thin 0px;
+    border-color: rgba(0,0,0,0.1) rgba(255,255,255,0) rgba(255,255,255,0.1) rgba(0,0,0,0);
+    border-radius: 0.75rem;
+    box-shadow: -0.25rem 0.5rem 5rem -1.5rem rgba(0,0,0,1) inset;
+    background:url(gfx/color.png);
+    background-size:cover;
+    background-position: center center;
+}
+#cg-header{
+    background:url(gfx/vertical.png);
+    background-position: center center;
+}
+#cg-footer{
+    background:url(gfx/vertical.png);
+    background-position: center center;
+}
+#cg-body-texture {
+    background:url(gfx/cross.png);
+    background-position: center center;
+    box-sizing:border-box;
+    border:0.1rem solid rgba(0,0,0,0);
+    border-radius: 0.75rem;
+}
+#cg-body-shade {
+    background: none;
+    background: -webkit-radial-gradient(rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.05) 66%, rgba(0, 0, 0, 0.1) 99%);
+    background: -o-radial-gradient(rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.05) 66%, rgba(0, 0, 0, 0.1) 99%);
+    background: -moz-radial-gradient(rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.05) 66%, rgba(0, 0, 0, 0.1) 99%);
+    background: radial-gradient(rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.05) 66%, rgba(0, 0, 0, 0.1) 99%);
+}
 #cg-version {
     font-size: xx-small;
     opacity: 0.5;
@@ -15,7 +56,7 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
-    border-radius: 1.0rem;
+    border-radius: 0.64rem;
 }
 
 .cg-tab {
@@ -633,15 +674,16 @@ a.cg-link:hover {
     max-width: 100%;
 
     border-style: solid;
-    background-color: rgba(0, 0, 0, 0.0);
     border-color:     rgba(0, 0, 0, 0.0);
-    border-radius: 1.5rem;    
     border-width: medium;
 
     -webkit-transition: background-color 250ms ease;
     -moz-transition: background-color 250ms ease;
     -o-transition: background-color 250ms ease;
     transition: background-color 250ms ease;
+
+    background-color:rgba(0, 48, 255, 0);
+    border-radius:0.75rem;
 }
 
 .cg-msgbox-wide {
@@ -655,9 +697,29 @@ a.cg-link:hover {
 }
 
 .cg-msgbox-selected {
-    background-color: rgba(0, 255, 255, 0.125);
-    border-radius: 1.5rem;
     cursor: initial;
+    background-color:rgba(0, 48, 255, 0.33);
+    border-radius:0.75rem;
+}
+
+.cg-msgbox-selected>.cg-msgbody{
+    border-color: white;
+    border-width: 0px 1px;
+    background-color:white;
+}
+.cg-msgbox-selected>.cg-msgheader {
+    background-color:lightblue;
+    background:linear-gradient(rgb(173, 216, 230),lightcyan);
+    border:none;
+    border-bottom:thin solid silver;
+}
+.cg-msgbox-selected>.cg-msgheader>.cg-msgheader-left>a {
+    text-decoration:none;
+}
+.cg-msgbox-selected>.cg-msgfooter {
+    border:none;
+    background:linear-gradient(lightcyan,rgb(173, 216, 230));
+    border-top:thin solid silver;
 }
 
 .cg-msgbox-decoding {
@@ -705,20 +767,21 @@ a.cg-link:hover {
 
 .cg-msgheader {
     height: 2ch;
-    position: relative;    
-    border-style: inset;
-    border-color: rgba(212, 212, 212, 0.5);
+    position: relative;
     border-width: thin thin 0.0rem;
     font-size: small;
-    border-radius: 1rem;
-    border-bottom-left-radius: 0ch;
-    border-bottom-right-radius: 0ch;
-    
-    background: rgba(224,224,224, 1.0);
-    background: -webkit-linear-gradient(rgba(224,224,224,1.0), rgba(224,224,224,1.0), rgba(200,200,200,1.0));
-    background: -o-linear-gradient(rgba(224,224,224,1.0), rgba(224,224,224,1.0), rgba(200,200,200,1.0));
-    background: -moz-linear-gradient(rgba(224,224,224,1.0), rgba(224,224,224,1.0), rgba(200,200,200,1.0));
-    background: linear-gradient(rgba(224,224,224,1.0), rgba(224,224,224,1.0), rgba(200,200,200,1.0));
+    border-radius:0.4rem;
+    border-bottom-left-radius:0ch;
+    border-bottom-right-radius:0ch;
+    background: rgba(255, 255, 255, 0.64);
+    background: -webkit-linear-gradient(rgba(255,255,255,0.80),rgba(255,255,255,0.64)0.2rem);
+    background: -o-linear-gradient(rgba(255,255,255,0.80),rgba(255,255,255,0.64)0.2rem);
+    background: -moz-linear-gradient(rgba(255,255,255,0.80),rgba(255,255,255,0.64)0.2rem);
+    background: linear-gradient(rgba(255,255,255,0.80),rgba(255,255,255,0.64)0.2rem);
+    border-color:gray;
+    border-bottom-width:0;
+    border-style: solid;
+    padding: 0.25rem 0rem 0.25rem;
 }
 
 .cg-msgheader-left {
@@ -746,14 +809,16 @@ a.cg-link:hover {
     position: relative;
 
     text-align: left;
-    border-style: inset;
-    border-color: rgba(212, 212, 212, 0.5);
     border-width: 0.0rem thin thin;
-    background-color: rgba(224,224,224, 0.5);
-    border-radius: 1rem;
-    border-top-left-radius: 0ch;
-    border-top-right-radius: 0ch;
+    background-color:rgba(255, 255, 255, 0.64);
+    border-radius:0.4rem;
+    border-top-left-radius:0ch;
+    border-top-right-radius:0ch;
     font-size: x-small;
+    border-color:gray;
+    border-style: solid;
+    box-shadow: 0rem 0.5rem 0.5rem -0.5rem rgba(0, 0, 0, 0.85);
+    padding: 0.25rem 0rem 0.25rem;
 }
 
 .cg-msgfooter-content {
@@ -763,18 +828,31 @@ a.cg-link:hover {
     overflow: hidden;  
     width: calc(100% - 1ch);
     padding-left: 1ch;
+    color:rgb(150,200,255);
+}
+.cg-msgfooter-content:hover {
+    color:rgba(0,0,255,0.5);
+}
+.cg-msgfooter-content>a {
+    text-decoration:none;
+    color:rgba(0,0,255,0.25);
+}
+.cg-msgfooter-content>a:hover {
+    text-decoration:none;
+    color:rgb(100,100,255);
 }
 
 .cg-msgbody {
     text-align: left;
     overflow: auto;
-    border-style: inset inset solid;
-    border-color: rgba(212, 212, 212, 0.5);
-    border-width: thin;
-    background-color: rgba(224,224,224, 0.5);
+    background-color:rgba(255, 255, 255, 0.64);
+    border-bottom: none;
+    border-top: none;
     border-radius: 0ch;
     padding: 0.5ch;
     max-height: 50.0vh;
+    border-left:thin solid gray;
+    border-right:thin solid gray;
 }
 
 .cg-msgspan {
@@ -852,3 +930,7 @@ a.cg-link:hover {
     white-space: nowrap;
 }
 
+.hvr-glow>img {
+    border: thin outset white;
+    border-radius: 20%;
+}
