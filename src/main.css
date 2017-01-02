@@ -4,7 +4,7 @@ body {
     background-position: center center;
 }
 #cg {
-	background: linear-gradient(90deg, rgba(0, 0, 0, 0.1) 0%, rgba(255, 255, 255, 0.05) 15%, rgba(255, 255, 255, 0.35) 50%, rgba(255, 255, 255, 0.05) 85%, rgba(0, 0, 0, 0.1) 100%);
+    background: rgba(255, 255, 255, 0.35);
 }
 #cg-body {
     background:none;
