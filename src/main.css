@@ -12,7 +12,7 @@ body {
     border-width: thin 0px;
     border-color: rgba(0,0,0,0.1) rgba(255,255,255,0) rgba(255,255,255,0.1) rgba(0,0,0,0);
     border-radius: 0.75rem;
-    box-shadow: -0.25rem 0.5rem 5rem -1.5rem rgba(0,0,0,1) inset;
+    box-shadow: inset -0.25rem 0.5rem 10rem 0 rgba(0,0,0,0.5);
     background:url(gfx/color.png);
     background-size:cover;
     background-position: center center;
@@ -33,11 +33,26 @@ body {
     border-radius: 0.75rem;
 }
 #cg-body-shade {
+    position: relative;
     background: none;
     background: -webkit-radial-gradient(rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.05) 66%, rgba(0, 0, 0, 0.1) 99%);
     background: -o-radial-gradient(rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.05) 66%, rgba(0, 0, 0, 0.1) 99%);
     background: -moz-radial-gradient(rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.05) 66%, rgba(0, 0, 0, 0.1) 99%);
     background: radial-gradient(rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.05) 66%, rgba(0, 0, 0, 0.1) 99%);
+}
+#cg-body-shade::before{
+    -webkit-box-shadow: inset 0.25rem 0 1.75rem -0.75rem rgba(0,0,0,1);
+    box-shadow: inset 0.25rem 0 1.75rem -0.75rem rgba(0,0,0,1);
+    position: absolute;
+	z-index: 1;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    content: "";
+	-moz-user-select: none;
+	cursor: not-allowed;
+	pointer-events: none;
 }
 #cg-version {
     font-size: xx-small;
