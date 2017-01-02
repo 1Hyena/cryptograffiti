@@ -12,13 +12,6 @@
 * {margin:0; padding:0;}
 html, body {height:100%; width:100%; font-family: monospace; overflow: hidden;}
 
-#cg {
-  background: -webkit-repeating-linear-gradient(-45deg, rgba(0,0,0,0), rgba(0,0,0,0.1) 5%, rgba(0,0,0,0) 10%);
-  background: -o-repeating-linear-gradient(-45deg, rgba(0,0,0,0), rgba(0,0,0,0.1) 5%, rgba(0,0,0,0) 10%);
-  background: -moz-repeating-linear-gradient(-45deg, rgba(0,0,0,0), rgba(0,0,0,0.1) 5%, rgba(0,0,0,0) 10%);
-  background: repeating-linear-gradient(-45deg, rgba(0,0,0,0), rgba(0,0,0,0.1) 5%, rgba(0,0,0,0) 10%);
-}
-
 .appear {
     opacity: 0;
     -webkit-animation-name: appear-anim;
@@ -70,12 +63,7 @@ html, body {height:100%; width:100%; font-family: monospace; overflow: hidden;}
     width: 100%;
     height: calc(100% - 12rem);
 
-    border-radius: 1.5rem;
-    border-style: inset;
-    border-color: rgba(240, 240, 240, 0.33);
-    border-width: medium 0rem;
     overflow: hidden;
-    background: rgb(240, 240, 240);
     margin-left: auto; 
     margin-right: auto;
     -webkit-box-sizing: border-box;
@@ -86,17 +74,12 @@ html, body {height:100%; width:100%; font-family: monospace; overflow: hidden;}
 #cg-body-texture {
     width: 100%;
     height: 100%;
-    background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAQAAABuBnYAAAAAU0lEQVQIHQXBwRGDIBAAwO2/AMcCDHAcPjIRxjJ8Je1kl1uqUgphsWu6w0sIG6npLpcUBql4e/wsVRKabrkNTacIYbMrwsF06rqUhsnXVKVT+Hj+Ue4rPSONk4kAAAAASUVORK5CYII=);
 }
 
 #cg-body-shade {
     width: 100%;
     height: 100%;
     text-align: center;
-    background: -webkit-radial-gradient(rgba(255,255,255,0.75), rgba(255,255,255,0.66), rgba(255,255,255,0.33));
-    background: -o-radial-gradient(rgba(255,255,255,0.75), rgba(255,255,255,0.66), rgba(255,255,255,0.33));
-    background: -moz-radial-gradient(rgba(255,255,255,0.75), rgba(255,255,255,0.66), rgba(255,255,255,0.33));
-    background: radial-gradient(rgba(255,255,255,0.75), rgba(255,255,255,0.66), rgba(255,255,255,0.33));
 }
 
 #cg-footer {
@@ -175,7 +158,7 @@ window.onbeforeunload = fade_out;
 </script>
 
 </head>
-<body style="background-color: rgba(224,224,224, 0.5);">
+<body>
 
 <div style="height: 100%;" id="cg" class="appear">
     <div id="cg-header">    
@@ -184,7 +167,7 @@ window.onbeforeunload = fade_out;
 
     <div id="cg-body">
         <div id="cg-body-texture"><div id="cg-body-shade">
-            <div id="cg-main" style="width: 100%; height: 100%;">
+            <div id="cg-main">
 
                 <div style="display:table; width: 100%; height: 100%;">
                     <div style="display:table-cell;vertical-align:middle;">

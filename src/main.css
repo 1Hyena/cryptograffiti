@@ -4,19 +4,16 @@ body {
     background-position: center center;
 }
 #cg {
-    background: rgba(255, 255, 255, 0.35);
+	background: rgba(255, 255, 255, 0.35);
 }
 #cg-body {
-    background:none;
-    border-style: solid;
-    border-width: thin 0px;
-    border-color: rgba(0,0,0,0.1) rgba(255,255,255,0) rgba(255,255,255,0.1) rgba(0,0,0,0);
     border-radius: 0.75rem;
     box-shadow: inset -0.25rem 0.5rem 10rem 0 rgba(0,0,0,0.5);
     background:url(gfx/color.png);
     background-size:cover;
     background-position: center center;
 }
+
 #cg-header{
     background:url(gfx/vertical.png);
     background-position: center center;
@@ -33,25 +30,16 @@ body {
     border-radius: 0.75rem;
 }
 #cg-body-shade {
-    position: relative;
-    background: none;
-    background: -webkit-radial-gradient(rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.05) 66%, rgba(0, 0, 0, 0.1) 99%);
-    background: -o-radial-gradient(rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.05) 66%, rgba(0, 0, 0, 0.1) 99%);
-    background: -moz-radial-gradient(rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.05) 66%, rgba(0, 0, 0, 0.1) 99%);
-    background: radial-gradient(rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.05) 66%, rgba(0, 0, 0, 0.1) 99%);
+	position: relative;
 }
 #cg-body-shade::before{
-    -webkit-box-shadow: inset 0.25rem 0 1.75rem -0.75rem rgba(0,0,0,1);
     box-shadow: inset 0.25rem 0 1.75rem -0.75rem rgba(0,0,0,1);
     position: absolute;
 	z-index: 1;
-    top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     content: "";
-	-moz-user-select: none;
-	cursor: not-allowed;
 	pointer-events: none;
 }
 #cg-version {
@@ -683,21 +671,16 @@ a.cg-link:hover {
 
 .cg-msgbox {
     display: inline-block;
-    padding:  0.5ch;
+    padding:  1ch;
     -ms-word-break: break-all;
     word-break: break-all;
     max-width: 100%;
-
-    border-style: solid;
-    border-color:     rgba(0, 0, 0, 0.0);
-    border-width: medium;
 
     -webkit-transition: background-color 250ms ease;
     -moz-transition: background-color 250ms ease;
     -o-transition: background-color 250ms ease;
     transition: background-color 250ms ease;
 
-    background-color:rgba(0, 48, 255, 0);
     border-radius:0.75rem;
 }
 
@@ -714,7 +697,6 @@ a.cg-link:hover {
 .cg-msgbox-selected {
     cursor: initial;
     background-color:rgba(0, 48, 255, 0.33);
-    border-radius:0.75rem;
 }
 
 .cg-msgbox-selected>.cg-msgbody{
@@ -737,16 +719,16 @@ a.cg-link:hover {
     border-top:thin solid silver;
 }
 
-.cg-msgbox-decoding {
-    border-color: rgba(255, 255, 0, 0.25);
+.cg-msgbox-decoding>.cg-msgheader {
+    background-color:rgba(255, 255, 0, 0.33);
 }
 
-.cg-msgbox-decoded {
-    border-color: rgba(0, 255, 0, 0.0);
+.cg-msgbox-decoded>.cg-msgheader {
+    background-color:rgba(0, 255, 0, 0.0);
 }
 
-.cg-msgbox-failed {
-    border-color: rgba(255, 0, 0, 0.25);
+.cg-msgbox-failed>.cg-msgheader {
+    background-color:rgba(255, 0, 0, 0.33);
 }
 
 .cg-read-loadingbox {
@@ -944,7 +926,6 @@ a.cg-link:hover {
 .cg-footer-languages {
     white-space: nowrap;
 }
-
 .hvr-glow>img {
     border: thin outset white;
     border-radius: 20%;
