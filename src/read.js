@@ -30,7 +30,7 @@ var CG_READ_JOBS = {
 var CG_READ_APIS = [
     {
         domain    : "blockchain.info",
-        request   : "https://blockchain.info/tx-index/%s/?cors=true&format=json",
+        request   : "https://blockchain.info/tx-index/%s?format=json&cors=true",
         link      : "https://blockchain.info/tx/%s",
         extract   : "cg_read_extract_blockchaininfo",
         delay     : 0,
