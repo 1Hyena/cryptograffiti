@@ -692,23 +692,18 @@ a.cg-link:hover {
 }
 
 .cg-msgbox-selected>.cg-msgbody{
-    border-color: white;
-    border-width: 0px 1px;
     background-color:white;
 }
 .cg-msgbox-selected>.cg-msgheader {
     background-color:lightblue;
-    background:linear-gradient(rgb(173, 216, 230),lightcyan);
-    border:none;
-    border-bottom:thin solid silver;
+    background:linear-gradient(linear-gradient(rgb(173, 216, 230),lightcyan calc(100% - 1px),silver calc(100% - 1px)));
 }
 .cg-msgbox-selected>.cg-msgheader>.cg-msgheader-left>a {
     text-decoration:none;
 }
 .cg-msgbox-selected>.cg-msgfooter {
-    border:none;
-    background:linear-gradient(lightcyan,rgb(173, 216, 230));
-    border-top:thin solid silver;
+    background-color:lightblue;
+    background:linear-gradient(silver 1px,lightcyan 1px,rgb(173, 216, 230));
 }
 
 .cg-msgbox-decoding>.cg-msgheader {
