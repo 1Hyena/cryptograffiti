@@ -10,7 +10,8 @@ body {
 }
 
 #cg-body {
-    background: rgb(240, 240, 240);
+    background: rgb(204, 206, 212);
+    background-image: linear-gradient(70deg ,rgba(94, 111, 134, 0.68) 20%,rgba(255,255,255,0) 60%,rgba(235, 246, 249, 0.58)),linear-gradient(5deg, rgb(171, 181, 194) 15%,rgb(243, 220, 211) 55%,rgb(227, 234, 239));
     border-radius: 0.75rem;
     border-style: inset;
     border-color: rgba(240, 240, 240, 0.33);
@@ -22,16 +23,16 @@ body {
 
 #cg-footer{
 }
-
+/*
 #cg-body-texture {
     background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAQAAABuBnYAAAAAU0lEQVQIHQXBwRGDIBAAwO2/AMcCDHAcPjIRxjJ8Je1kl1uqUgphsWu6w0sIG6npLpcUBql4e/wsVRKabrkNTacIYbMrwsF06rqUhsnXVKVT+Hj+Ue4rPSONk4kAAAAASUVORK5CYII=);
 }
-
+*/
 #cg-body-shade {
-    background: -webkit-radial-gradient(rgba(255,255,255,0.75), rgba(255,255,255,0.66), rgba(255,255,255,0.33));
-    background: -o-radial-gradient(rgba(255,255,255,0.75), rgba(255,255,255,0.66), rgba(255,255,255,0.33));
-    background: -moz-radial-gradient(rgba(255,255,255,0.75), rgba(255,255,255,0.66), rgba(255,255,255,0.33));
-    background: radial-gradient(rgba(255,255,255,0.75), rgba(255,255,255,0.66), rgba(255,255,255,0.33));
+    background: -webkit-radial-gradient(rgba(255,255,255,0.55), rgba(255,255,255,0.44), rgba(255,255,255,0.11));
+    background: -o-radial-gradient(rgba(255,255,255,0.55), rgba(255,255,255,0.44), rgba(255,255,255,0.11));
+    background: -moz-radial-gradient(rgba(255,255,255,0.55), rgba(255,255,255,0.44), rgba(255,255,255,0.11));
+    background: radial-gradient(rgba(255,255,255,0.55), rgba(255,255,255,0.44), rgba(255,255,255,0.11));
 }
 
 #cg-version {
