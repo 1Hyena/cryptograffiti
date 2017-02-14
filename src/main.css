@@ -696,7 +696,7 @@ a.cg-link:hover {
 }
 .cg-msgbox-selected>.cg-msgheader {
     background-color:lightblue;
-    background:linear-gradient(linear-gradient(rgb(173, 216, 230),lightcyan calc(100% - 1px),silver calc(100% - 1px)));
+    background:linear-gradient(rgb(173, 216, 230),lightcyan calc(100% - 1px),silver calc(100% - 1px));
 }
 .cg-msgbox-selected>.cg-msgheader>.cg-msgheader-left>a {
     text-decoration:none;
