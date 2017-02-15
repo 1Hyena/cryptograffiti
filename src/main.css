@@ -11,7 +11,7 @@ body {
 
 #cg-body {
     background: rgb(204, 206, 212);
-    background-image: linear-gradient(70deg ,rgba(48, 72, 104, 0.5) 10%,rgba(248, 255, 236, 0.39) 65%,rgba(235, 249, 248, 0.56)),linear-gradient(5deg, rgb(175, 185, 201) 10%,rgb(248, 223, 212) 50%,rgb(227, 234, 239));
+    background-image: linear-gradient(70deg ,rgba(48, 72, 104, 0.5),rgba(179, 199, 189, 0.15),rgba(147, 163, 173, 0.42)),linear-gradient(5deg, rgb(149, 154, 162) 10%,rgb(248, 223, 212) 50%,rgb(227, 234, 239));
     border-radius: 0.75rem;
     border-style: inset;
     border-color: rgba(240, 240, 240, 0.33);
