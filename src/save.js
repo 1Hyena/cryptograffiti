@@ -5,6 +5,7 @@ var CG_SAVE_UPDATING_ORDER = 0;
 var CG_SAVE_SKIP_UPDATE    = false;
 var CG_SAVE_ORDER_FILLED   = false;
 var CG_SAVE_DELAY          = 0;
+var CG_SAVE_ORDER_TIMEOUT  = 0;
 
 function cg_construct_save(main) {
     var div = cg_init_tab(main, 'cg-tab-save');
@@ -100,6 +101,15 @@ function cg_construct_save(main) {
     cell.appendChild(wrapper);
     table.appendChild(cell);
     div.appendChild(table);
+}
+
+function cg_save_pulse() {
+    if (CG_SAVE_ORDER_TIMEOUT > 0 && --CG_SAVE_ORDER_TIMEOUT == 0) {
+        var details = document.getElementById("cg-save-order-details");
+        while (details.hasChildNodes()) details.removeChild(details.lastChild);
+        details.appendChild(document.createTextNode(CG_TXT_SAVE_ORDER_TIMEOUT[CG_LANGUAGE]));
+        CG_SAVE_ORDER_TIMEOUT = -1; // Indicates that timeout has occurred.
+    }
 }
 
 function cg_save_back() {
@@ -222,6 +232,10 @@ function cg_save_get_order() {
                     }
                     else order_status = "";                    
 
+                    if (accepted && CG_SAVE_ORDER_TIMEOUT > 0) {
+                        CG_SAVE_ORDER_TIMEOUT = 0; // Disable order timeout counter.
+                    }
+
                     var order_status_input = document.getElementById("cg-save-order-status");
                     if (order_status_input.value !== order_status) order_status_input.value = order_status;
 
@@ -256,7 +270,9 @@ function cg_save_get_order() {
                     }
                     else {
                         status = sprintf(CG_TXT_SAVE_UPDATING_ORDER_OK[CG_LANGUAGE], json.order.nr);
-                        if (details_msg === null) details_msg = CG_TXT_SAVE_ORDER_PROCESSING[CG_LANGUAGE];
+                        if (details_msg === null && CG_SAVE_ORDER_TIMEOUT >= 0) {
+                            details_msg = CG_TXT_SAVE_ORDER_PROCESSING[CG_LANGUAGE];
+                        }
                         CG_SAVE_UPDATING_ORDER = 5;
                     }
                 }
@@ -343,6 +359,7 @@ function cg_save_make_order() {
                     var details = document.getElementById("cg-save-order-details");
                     while (details.hasChildNodes()) details.removeChild(details.lastChild);
                     details.appendChild(document.createTextNode(CG_TXT_SAVE_ORDER_PENDING[CG_LANGUAGE]));
+                    CG_SAVE_ORDER_TIMEOUT = 30;
                 }
                 else {
                     status = CG_TXT_SAVE_MAKING_ORDER_ERROR[CG_LANGUAGE];

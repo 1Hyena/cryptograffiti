@@ -5,10 +5,13 @@ var CG_STATUS      = [];
 var CG_LAST_STATUS = "";
 var CG_ONLINE      = null;
 var CG_HOLD_STATUS = 0;
+var CG_HOLD_DELAY  = false;
 var CG_TX_NR       = null;
 var CG_SCROLL_KEY  = false;
-var CG_VERSION     = "0.85";
+var CG_VERSION     = "0.86";
 var CG_ACTIVE_TAB  = null;
+var CG_DECODER_OK  = true; // Decoder is online?
+var CG_ENCODER_OK  = true; // Encoder is online?
 
 function cg_start(main_css) {
     CG_MAIN_CSS = main_css;
@@ -161,6 +164,8 @@ function cg_main_loop() {
         cg_save_update();
     }
 
+    cg_save_pulse();
+
     setTimeout(function(){
         cg_main_loop();
     }, 1000);
@@ -308,17 +313,28 @@ function cg_refresh_status(div) {
     }
 
     var status = "";
-    if (CG_STATUS.length === 0) {
+    if (CG_HOLD_STATUS > 0) {
+        status = CG_LAST_STATUS; //CG_STATUS[0];
+        CG_HOLD_STATUS--;
+        if (CG_HOLD_DELAY && CG_STATUS.length > 0) {
+            CG_HOLD_STATUS = 0;
+            CG_HOLD_DELAY = false;
+        }
+    }
+    else if (CG_STATUS.length === 0) {
         if (CG_ONLINE === null) status = CG_TXT_MAIN_PLEASE_WAIT[CG_LANGUAGE];
         else                    status = CG_ONLINE;
     }
-    else if (CG_STATUS.length === 1 && CG_HOLD_STATUS > 0) {
-        status = CG_STATUS[0];
-        CG_HOLD_STATUS--;
-    }
     else {
         status = CG_STATUS.shift();
-        CG_HOLD_STATUS = 20;
+        if (CG_STATUS.length === 0){
+            CG_HOLD_STATUS = 20;
+            CG_HOLD_DELAY  = true;
+        }
+        else CG_HOLD_STATUS = 0;
+
+        if (status.charAt(0) === '!'
+        ||  status.charAt(0) === '_') CG_HOLD_STATUS = 6;
     }
 
     if (CG_LAST_STATUS !== status) {
@@ -327,7 +343,7 @@ function cg_refresh_status(div) {
         }
 
         var buf = status;
-        if (buf.charAt(0) === '!') {
+        if (buf.charAt(0) === '!' || buf.charAt(0) === '_') {
             buf = buf.substr(1);
         }
 
@@ -393,9 +409,23 @@ function cg_load_stats() {
                 json = JSON.parse(response);
                 if ("stats" in json && json.stats.length === 1 
                 &&  "sessions" in json.stats[0]
-                &&  "IPs" in json.stats[0]) {
+                &&  "IPs" in json.stats[0]
+                &&  "decoder" in json.stats[0]
+                &&  "encoder" in json.stats[0]) {
                    var units = (json.stats[0].sessions == 1 ? CG_TXT_MAIN_SESSION[CG_LANGUAGE] : CG_TXT_MAIN_SESSIONS[CG_LANGUAGE]);
                    online = json.stats[0].IPs/*+" ("+json.stats[0].sessions+" "+units+")"*/;
+                   var decoder_ok = (json.stats[0].decoder !== "0");
+                   var encoder_ok = (json.stats[0].encoder !== "0");
+                   if (decoder_ok != CG_DECODER_OK) {
+                       if (!decoder_ok) CG_STATUS.push("!"+CG_TXT_MAIN_DECODER_APPEARS_OFFLINE[CG_LANGUAGE]);
+                       else CG_STATUS.push("_"+CG_TXT_MAIN_DECODER_APPEARS_ONLINE[CG_LANGUAGE]);
+                   }
+                   if (encoder_ok != CG_ENCODER_OK) {
+                       if (!encoder_ok) CG_STATUS.push("!"+CG_TXT_MAIN_ENCODER_APPEARS_OFFLINE[CG_LANGUAGE]);
+                       else CG_STATUS.push("_"+CG_TXT_MAIN_ENCODER_APPEARS_ONLINE[CG_LANGUAGE]);
+                   }
+                   CG_DECODER_OK = decoder_ok;
+                   CG_ENCODER_OK = encoder_ok;
                 }
                 else cg_handle_error(json);
             }

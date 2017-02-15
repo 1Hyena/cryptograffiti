@@ -367,6 +367,13 @@ function cg_write_update(instant) {
 function cg_button_click_save() {
     if (CG_WRITE_STATE !== "cg-write-textarea") return;
 
+    if (!CG_ENCODER_OK) {
+        CG_STATUS = [];
+        CG_HOLD_STATUS = 0;
+        CG_STATUS.push("!"+CG_TXT_MAIN_ERROR_ENCODER_IS_DOWN[CG_LANGUAGE]);
+        return;
+    }
+
     cg_write_update_now();
     var btn = document.getElementById("cg-btn-tab-write");
     if (CG_CAPTCHA_TOKEN === null) cg_button_click_captcha(cg_button_click_save, cg_button_click_write);
