@@ -234,7 +234,7 @@ var CG_TXT_MAIN_ENCODER_APPEARS_OFFLINE =
 {
     en : "Block chain message encoding service is now offline.",
     et : "Plokiahelasse andmete salvestamise teenus on peatatud.",
-    ru : "Сервис кодирования сообщений цепочки блоков выключён."
+    ru : "Сервис кодирования сообщений цепочки блоков выключен."
 };
 
 var CG_TXT_MAIN_ERROR_ENCODER_IS_DOWN =
