@@ -213,35 +213,35 @@ var CG_TXT_MAIN_DECODER_APPEARS_ONLINE =
 {
     en : "Real-time block chain decoding is now enabled.",
     et : "Plokiahela reaalajas dekodeerimine toimib nüüd.",
-    ru : "(Real-time block chain decoding is now enabled.)"
+    ru : "Декодирование цепочки блоков в режиме реального времени включено."
 };
 
 var CG_TXT_MAIN_DECODER_APPEARS_OFFLINE =
 {
     en : "Real-time block chain decoding is now disabled.",
     et : "Plokiahela reaalajas dekodeerimine on katkenud.",
-    ru : "(Real-time block chain decoding is now disabled.)"
+    ru : "Декодирование цепочки блоков в режиме реального времени отключено."
 };
 
 var CG_TXT_MAIN_ENCODER_APPEARS_ONLINE =
 {
     en : "Block chain message encoding service is now online.",
     et : "Plokiahelasse andmete salvestamine on nüüd võimalik.",
-    ru : "(Block chain message encoding service is now online.)"
+    ru : "Сервис кодирования сообщений цепочки блоков включён."
 };
 
 var CG_TXT_MAIN_ENCODER_APPEARS_OFFLINE =
 {
     en : "Block chain message encoding service is now offline.",
     et : "Plokiahelasse andmete salvestamise teenus on peatatud.",
-    ru : "(Block chain message encoding service is now offline.)"
+    ru : "Сервис кодирования сообщений цепочки блоков выключен."
 };
 
 var CG_TXT_MAIN_ERROR_ENCODER_IS_DOWN =
 {
     en : "Block chain message encoding service is temporarily disabled.",
     et : "Plokiahelasse andmete salvestamise teenus on ajutiselt peatatud.",
-    ru : "(Block chain message encoding service is temporarily disabled.)"
+    ru : "Сервис кодирования сообщений цепочки блоков временно выключен."
 };
 ////////////////////////////////////////////////////////////////////////////////
 // MAIN TRANSLATIONS END                                                      //
@@ -763,7 +763,7 @@ var CG_TXT_SAVE_ORDER_TIMEOUT =
 {
     en : "Your order has been pending for abnormally long time now. There are probably issues with the message encoding service. You may either continue waiting or go back and try again later.",
     et : "Teie tellimust ei aksepteeritud mõistliku ajaga. Sõnumi salvestamise teenus on ilmselt halvatud. Te võite kas ootamist jätkata või proovida tellimust hiljem uuesti esitada.",
-    ru : "(Your order has been pending for abnormally long time now. There are probably issues with the message encoding service. You may either continue waiting or go back and try again later.)"
+    ru : "Ваш ордер был направлен в ожидание из-за аномально длительного времени. Вероятно, что проблема с сервисом кодирования сообщений. Вы можете продолжить ожидание или вернуться назад и повторить попытку позже."
 };
 
 var CG_TXT_SAVE_NO_TOKEN =
