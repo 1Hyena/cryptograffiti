@@ -156,24 +156,6 @@ html, body {height:100%; width:100%; font-family: monospace; overflow: hidden;}
 <script src="./help.js"    type="text/javascript" charset="UTF-8"></script>
 <script src="./about.js"   type="text/javascript" charset="UTF-8"></script>
 <!-- END EXTERNAL SCRIPTS -->
-
-<script type="text/javascript">
-/* BEGIN EXCEPTION 1 */
-cg_start("main.css");
-/* END EXCEPTION 1 */
-
-function fade_out() {
-    var cg = document.getElementById("cg");
-    if (cg !== null) {
-        if (cg.classList.contains('appear'))     cg.classList.remove('appear');
-        if (!cg.classList.contains('disappear')) cg.classList.add('disappear');
-    }
-}
-window.onbeforeunload = fade_out;
-
-/* PASTE EXTERNAL JS HERE */
-</script>
-
 </head>
 <body style="background-color: rgba(224,224,224, 0.5);">
 
@@ -189,7 +171,7 @@ window.onbeforeunload = fade_out;
                 <div style="display:table; width: 100%; height: 100%;">
                     <div style="display:table-cell;vertical-align:middle;">
                         <div style="margin-left:auto;margin-right:auto;">
-                            <span>Please enable JavaScript.</span>
+                            <span id="cg-no-script">Please enable JavaScript.</span>
                         </div>
                     </div>
                 </div>
@@ -203,6 +185,14 @@ window.onbeforeunload = fade_out;
     </div>
 </div>
 
+<script>
+var noscript = document.getElementById("cg-no-script");
+while (noscript.hasChildNodes()) noscript.removeChild(noscript.lastChild);
+noscript.appendChild(document.createTextNode("⌛"));
+noscript.style.fontSize = "400%";
+noscript.style.opacity = "0.75";
+</script>
+
 <audio id='sfx_spray_1'  src='sfx/spray_1.wav'  preload='auto'></audio>
 <audio id='sfx_spray_2'  src='sfx/spray_2.wav'  preload='auto'></audio>
 <audio id='sfx_rattle_1' src='sfx/rattle_1.wav' preload='auto'></audio>
@@ -210,6 +200,23 @@ window.onbeforeunload = fade_out;
 <audio id='sfx_rattle_3' src='sfx/rattle_3.wav' preload='auto'></audio>
 <audio id='sfx_rattle_4' src='sfx/rattle_4.wav' preload='auto'></audio>
 <audio id='sfx_rattle_5' src='sfx/rattle_5.wav' preload='auto'></audio>
+
+<script>
+/* BEGIN EXCEPTION 1 */
+cg_start("main.css");
+/* END EXCEPTION 1 */
+
+function fade_out() {
+    var cg = document.getElementById("cg");
+    if (cg !== null) {
+        if (cg.classList.contains('appear'))     cg.classList.remove('appear');
+        if (!cg.classList.contains('disappear')) cg.classList.add('disappear');
+    }
+}
+window.onbeforeunload = fade_out;
+
+/* PASTE EXTERNAL JS HERE */
+</script>
 
 </body>
 </html>
