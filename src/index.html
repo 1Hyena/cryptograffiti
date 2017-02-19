@@ -191,6 +191,15 @@ while (noscript.hasChildNodes()) noscript.removeChild(noscript.lastChild);
 noscript.appendChild(document.createTextNode("⌛"));
 noscript.style.fontSize = "400%";
 noscript.style.opacity = "0.75";
+
+function fade_out() {
+    var cg = document.getElementById("cg");
+    if (cg !== null) {
+        if (cg.classList.contains('appear'))     cg.classList.remove('appear');
+        if (!cg.classList.contains('disappear')) cg.classList.add('disappear');
+    }
+}
+window.onbeforeunload = fade_out;
 </script>
 
 <audio id='sfx_spray_1'  src='sfx/spray_1.wav'  preload='auto'></audio>
@@ -205,15 +214,6 @@ noscript.style.opacity = "0.75";
 /* BEGIN EXCEPTION 1 */
 cg_start("main.css");
 /* END EXCEPTION 1 */
-
-function fade_out() {
-    var cg = document.getElementById("cg");
-    if (cg !== null) {
-        if (cg.classList.contains('appear'))     cg.classList.remove('appear');
-        if (!cg.classList.contains('disappear')) cg.classList.add('disappear');
-    }
-}
-window.onbeforeunload = fade_out;
 
 /* PASTE EXTERNAL JS HERE */
 </script>
