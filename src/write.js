@@ -326,7 +326,7 @@ function cg_write_update(instant) {
 
     var category  = [];
     var file_hash = [];
-    if (CG_READ_FILTER_ADDR !== null && CG_READ_FILTER_KEY !== null) category.push(CG_READ_FILTER_ADDR);
+    if (CG_READ_FILTER_ADDR !== null) category.push(CG_READ_FILTER_ADDR);
     if (CG_WRITE_FILE_HASH  !== null) file_hash.push(CG_WRITE_FILE_HASH);
     var text = unescape(encodeURIComponent(area.value));
     var chunks = CG_WRITE_FILE_CHUNKS.concat(file_hash, Bitcoin.genAddressesFromText(text), category);
