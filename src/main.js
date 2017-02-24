@@ -61,7 +61,10 @@ function cg_main() {
                 }
                 if (Object.keys(censor_txs).length > 0) CG_READ_CENSOR_TXS = censor_txs;
             }
-            else if (parts.length == 2 && parts[1].indexOf(".") > -1 && Bitcoin.testAddress(parts[0])) {
+            else if (parts.length === 2 && parts[0] === "write") {
+                CG_WRITE_TEXT = parts[1];
+            }
+            else if (parts.length === 2 && parts[1].indexOf(".") > -1 && Bitcoin.testAddress(parts[0])) {
                 var nums = parts[1].split(".");
                 if (nums.length == 2 && isNumeric(nums[0]) && isNumeric(nums[1])) {
                     var amount = nums[0]+"."+nums[1].substring(0,8);
@@ -522,8 +525,14 @@ function cg_construct_buttons(tabs) {
             cg.removeChild(cg.lastChild);
         }
 
-        btn_1.disabled = false;
-        btn_1.click();
+        if (CG_WRITE_TEXT === null) {
+            btn_1.disabled = false;
+            btn_1.click();
+        }
+        else {
+            btn_2.disabled = false;
+            btn_2.click();
+        }
     }, 6*spawn_delay);
 }
 

@@ -14,6 +14,7 @@ var CG_WRITE_STATE = "cg-write-textarea";
 var CG_WRITE_PAY_TO = null;
 var CG_WRITE_PAY_AMOUNT = null;
 var CG_WRITE_AREA_LAST_VALUE = "";
+var CG_WRITE_TEXT = null;
 
 function cg_construct_write(main) {
     var div = cg_init_tab(main, 'cg-tab-write');
@@ -72,6 +73,8 @@ function cg_construct_write(main) {
     info_area.id="cg-write-infoarea";
     payment_area.id="cg-write-paymentarea";
     preview_area.id="cg-write-previewarea";
+
+    if (CG_WRITE_TEXT !== null) text_area.value = CG_WRITE_TEXT;
 
     var payment_wrap  = document.createElement("div");
     payment_wrap.style.marginLeft="auto";
@@ -209,6 +212,12 @@ function cg_construct_write(main) {
     div.appendChild(side_area);
     cg_write_update_now();
     cg_write_reset_file_input();
+
+    setTimeout(function(){
+        if (CG_WRITE_TEXT !== null) {
+            cg_button_click_save();
+        }
+    }, 500);
 }
 
 function create_payment_table(id) {
