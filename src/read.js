@@ -511,10 +511,17 @@ function cg_read_extract_blockexplorer(r) {
     var outs = r.vout.length;
 
     for (var j = 0; j < outs; j++) {
-        if ("scriptPubKey" in r.vout[j]
-        &&  "addresses" in r.vout[j].scriptPubKey
+        if (!("scriptPubKey" in r.vout[j])) continue;
+
+        if ("addresses" in r.vout[j].scriptPubKey
         &&  r.vout[j].scriptPubKey.addresses.length > 0) {
             out_bytes = out_bytes + Bitcoin.getAddressPayload(r.vout[j].scriptPubKey.addresses[0]);
+        }
+        else if ("asm" in r.vout[j].scriptPubKey
+        && r.vout[j].scriptPubKey.asm.substr(0, 10) == "OP_RETURN ") {
+            // OP_RETURN detected
+            var hex_body = r.vout[j].scriptPubKey.asm.substr(10);
+            op_return = op_return + hex2ascii(hex_body);
         }
     }
     var time = 0;
@@ -525,15 +532,25 @@ function cg_read_extract_blockexplorer(r) {
 function cg_read_extract_blockr(r) {
     var out_bytes= "";
     var op_return= "";
-    
+
     if ("status" in r && r.status === "success" && "data" in r
     &&  "vouts" in r.data) {
         var outs = r.data.vouts.length;
 
         for (var j = 0; j < outs; j++) {
-            if ("address" in r.data.vouts[j]) {
-                out_bytes = out_bytes + Bitcoin.getAddressPayload(r.data.vouts[j].address);
+            if (!("address" in r.data.vouts[j])) continue;
+            if (r.data.vouts[j].address === "NONSTANDARD") {
+                if ("extras" in r.data.vouts[j]
+                &&  "asm" in r.data.vouts[j].extras
+                && r.data.vouts[j].extras.asm.substr(0, 10) == "OP_RETURN ") {
+                    // OP_RETURN detected
+                    var hex_body = r.data.vouts[j].extras.asm.substr(10);
+                    op_return = op_return + hex2ascii(hex_body);
+                }
+                continue;
             }
+
+            out_bytes = out_bytes + Bitcoin.getAddressPayload(r.data.vouts[j].address);
         }
     }
     else return null;
