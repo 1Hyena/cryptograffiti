@@ -726,6 +726,7 @@ function cg_write_create_msgbox(CG_WRITE_CHUNKS, mimetype) {
     msgfooterC.classList.add("cg-msgfooter-content");
     msgbody.classList.add("cg-msgbody");
     msgbox.classList.add("cg-msgbox");
+    msgbox.classList.add("cg-msgbox-selected");
     msgbox.classList.add("cg-borderbox");
 
     var msg = "";
@@ -792,8 +793,9 @@ function cg_write_create_msgbox(CG_WRITE_CHUNKS, mimetype) {
 
     msgbox.style.width="100%";
     msgbox.style.height="calc(100% - 2rem)";
+    msgbox.style.backgroundColor="transparent";
     msgbody.style.maxHeight="none";
-    msgbody.style.height="calc(100% - 4ch)";
+    msgbody.style.height="calc(100% - 6.5ch)";
     return msgbox;
 }
 

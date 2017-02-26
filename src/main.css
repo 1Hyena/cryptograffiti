@@ -35,8 +35,14 @@ body {
 }
 
 #cg-version {
+    display: inline;
+    width: 0ch;
+    opacity: 0;
     font-size: xx-small;
-    opacity: 0.5;
+    color: rgba(0,0,0,0.5);
+    overflow: hidden;
+    -webkit-transition: width 1s;
+    transition: width 1s;
 }
 
 .cg-borderbox {

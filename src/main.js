@@ -459,8 +459,9 @@ function cg_construct_header() {
         return;
     }
 
+    var version = null;
     if (header.hasChildNodes()) {
-        var version = document.createElement("span");
+        version = document.createElement("span");
         version.appendChild(document.createTextNode("v"+CG_VERSION));
         version.id="cg-version"
         
@@ -480,6 +481,12 @@ function cg_construct_header() {
     
     setTimeout(function(){
         cg_construct_buttons(tabs);
+        if (version) {
+            version.style.width="5ch";
+            setTimeout(function(){
+                version.classList.add("cg-appear");
+            }, 1000);
+        }
     }, 100);
 }
 
