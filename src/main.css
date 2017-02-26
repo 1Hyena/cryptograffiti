@@ -10,12 +10,28 @@ body {
 }
 
 #cg-body {
-    background: rgb(204, 206, 212);
-    background-image: linear-gradient(70deg ,rgba(48, 72, 104, 0.5),rgba(179, 199, 189, 0.15),rgba(147, 163, 173, 0.42)),linear-gradient(5deg, rgb(149, 154, 162) 10%,rgb(248, 223, 212) 50%,rgb(227, 234, 239));
+    background: rgb(240, 240, 240);
     border-radius: 0.75rem;
     border-style: inset;
     border-color: rgba(240, 240, 240, 0.33);
     border-width: medium 0rem;
+}
+
+#cg-header{
+}
+
+#cg-footer{
+}
+
+#cg-body-texture {
+    background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAQAAABuBnYAAAAAU0lEQVQIHQXBwRGDIBAAwO2/AMcCDHAcPjIRxjJ8Je1kl1uqUgphsWu6w0sIG6npLpcUBql4e/wsVRKabrkNTacIYbMrwsF06rqUhsnXVKVT+Hj+Ue4rPSONk4kAAAAASUVORK5CYII=);
+}
+
+#cg-body-shade {
+    background: -webkit-radial-gradient(rgba(255,255,255,0.75), rgba(255,255,255,0.66), rgba(255,255,255,0.33));
+    background: -o-radial-gradient(rgba(255,255,255,0.75), rgba(255,255,255,0.66), rgba(255,255,255,0.33));
+    background: -moz-radial-gradient(rgba(255,255,255,0.75), rgba(255,255,255,0.66), rgba(255,255,255,0.33));
+    background: radial-gradient(rgba(255,255,255,0.75), rgba(255,255,255,0.66), rgba(255,255,255,0.33));
 }
 
 #cg-version {
