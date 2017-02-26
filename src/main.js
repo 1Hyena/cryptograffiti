@@ -1,4 +1,3 @@
-var CG_MAIN_CSS    = null;
 var CG_LANGUAGE    = "en";
 var CG_CONSTANTS   = null;
 var CG_STATUS      = [];
@@ -13,8 +12,7 @@ var CG_ACTIVE_TAB  = null;
 var CG_DECODER_OK  = true; // Decoder is online?
 var CG_ENCODER_OK  = true; // Encoder is online?
 
-function cg_start(main_css) {
-    CG_MAIN_CSS = main_css;
+function cg_start() {
     if (window.attachEvent) {
         window.attachEvent('onload', cg_main);
     } else {
@@ -108,27 +106,19 @@ function cg_main() {
     }
     credits.appendChild(document.createTextNode(CG_TXT_MAIN_CREDITS[CG_LANGUAGE]));
 
-    while (cg.hasChildNodes()) {
-        cg.removeChild(cg.lastChild);
-    }
+    cg.classList.add("disappear");
 
-    if (CG_MAIN_CSS !== null) {
-        cg_loadcss(CG_MAIN_CSS);
-        setTimeout(function(){
-            cg.className = cg.className + " cg-main";
-            cg.className = cg.className + " cg-borderbox";
-            cg_construct(cg);
-        }, 1000);
-    }
-    else {
-        cg.className = cg.className + " cg-main";
-        cg.className = cg.className + " cg-borderbox";    
+    setTimeout(function(){
+        cg.classList.remove("disappear");
+        cg.classList.add("appear");
+        while (cg.hasChildNodes()) {
+            cg.removeChild(cg.lastChild);
+        }
+
         cg_construct(cg);
-    }
-
-    document.onkeydown = cg_check_key;
-
-    cg_main_loop();
+        document.onkeydown = cg_check_key;
+        cg_main_loop();
+    }, 500);
 }
 
 function cg_main_loop() {
