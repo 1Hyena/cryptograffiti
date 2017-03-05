@@ -522,6 +522,11 @@ button {
     width: 100%;
 }
 
+#cg-write-btn-payment-next,
+#cg-write-btn-payment-back {
+    max-width: 15rem;
+}
+
 .cg-captcha-btn {
     width: 7ch;
 }
@@ -989,7 +994,7 @@ a.cg-link:hover {
 }
 
 .cg-save-order-input {
-    max-width: 40ch;
+    /*max-width: 40ch;*/
     width: 100%;
 }
 

@@ -197,6 +197,7 @@ function cg_construct_write(main) {
     btn_7.id = "cg-write-btn-payment-next";
     btn_8.appendChild(txt_8); btn_8.addEventListener("click", cg_button_click_payment_back);
     btn_8.style.width="50%";
+    btn_8.id = "cg-write-btn-payment-back";
     btns_area.appendChild(btn_4);
     btns_area.appendChild(btn_5);
     btns_area.appendChild(btn_1);
