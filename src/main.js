@@ -7,7 +7,7 @@ var CG_HOLD_STATUS = 0;
 var CG_HOLD_DELAY  = false;
 var CG_TX_NR       = null;
 var CG_SCROLL_KEY  = false;
-var CG_VERSION     = "0.87";
+var CG_VERSION     = "0.88";
 var CG_ACTIVE_TAB  = null;
 var CG_DECODER_OK  = true; // Decoder is online?
 var CG_ENCODER_OK  = true; // Encoder is online?
@@ -481,11 +481,11 @@ function cg_construct_header() {
 }
 
 function cg_construct_buttons(tabs) {
-    var btn_1 = document.createElement("BUTTON"); btn_1.className = btn_1.className + " cg-btn";
-    var btn_2 = document.createElement("BUTTON"); btn_2.className = btn_2.className + " cg-btn";
-    var btn_3 = document.createElement("BUTTON"); btn_3.className = btn_3.className + " cg-btn";
-    var btn_4 = document.createElement("BUTTON"); btn_4.className = btn_4.className + " cg-btn";
-    var btn_5 = document.createElement("BUTTON"); btn_5.className = btn_5.className + " cg-btn";
+    var btn_1 = document.createElement("BUTTON"); btn_1.classList.add("cg-btn");
+    var btn_2 = document.createElement("BUTTON"); btn_2.classList.add("cg-btn");
+    var btn_3 = document.createElement("BUTTON"); btn_3.classList.add("cg-btn");
+    var btn_4 = document.createElement("BUTTON"); btn_4.classList.add("cg-btn");
+    var btn_5 = document.createElement("BUTTON"); btn_5.classList.add("cg-btn");
     
     btn_1.addEventListener("click", cg_button_click_read ); btn_1.disabled = true;
     btn_2.addEventListener("click", cg_button_click_write); btn_2.disabled = true;

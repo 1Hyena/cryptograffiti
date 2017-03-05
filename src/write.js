@@ -549,12 +549,15 @@ function cg_button_click_preview() {
 
         var msgbox = cg_write_create_msgbox(CG_WRITE_CHUNKS, CG_WRITE_FILE_TYPE);
         previewarea.appendChild(msgbox);
-        previewarea.appendChild(document.createElement("br"));
+
+        var btn_container = document.createElement("DIV");
+        btn_container.style = "font-size: 1rem; width: 12ch; display: inline-block;";
 
         var btn = document.createElement("BUTTON"); btn.classList.add("cg-write-btn");
         btn.appendChild(document.createTextNode(CG_TXT_CAPTCHA_BTN_BACK[CG_LANGUAGE]));
         btn.addEventListener("click", cg_button_click_preview_back);
-        previewarea.appendChild(btn);
+        btn_container.appendChild(btn);
+        previewarea.appendChild(btn_container);
 
         previewarea.style.display = "block";
         previewarea.classList.add("cg-appear");
@@ -792,7 +795,7 @@ function cg_write_create_msgbox(CG_WRITE_CHUNKS, mimetype) {
     }
 
     msgbox.style.width="100%";
-    msgbox.style.height="calc(100% - 2rem)";
+    msgbox.style.height="calc(100% - 2.25rem)";
     msgbox.style.backgroundColor="transparent";
     msgbody.style.maxHeight="none";
     msgbody.style.height="calc(100% - 6.5ch)";

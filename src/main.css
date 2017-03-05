@@ -1,8 +1,18 @@
 * {margin:0; padding:0;}
-html, body {height:100%; width:100%; font-family: monospace; overflow: hidden;}
+html, body {height:100%; width:100%; overflow: hidden;}
 
 body {
     background-color: rgba(224,224,224, 0.5);
+}
+
+button {
+    height: 2rem;
+    min-height: 2rem;
+    max-height: 2rem;
+    overflow: hidden;
+    white-space: nowrap;
+    font-family: monospace;
+    font-size: 1rem;
 }
 
 .appear {
@@ -42,19 +52,22 @@ body {
 }
 
 #cg-header {
+    font-size: 1rem;
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: center;
     align-items: center;
-    height: 10rem;
+    min-height: 2rem;
     text-shadow: 1px 1px 1px rgba(255,255,255,0.4), -1px -1px 1px rgba(0,0,0,0.4);
 }
 
 #cg-body {
+    font-size: 1rem;
     display: block;
     width: 100%;
-    height: calc(100% - 12rem);
+    height: 100%;
+    position: absolute;
 
     overflow: hidden;
     margin-left: auto; 
@@ -76,36 +89,13 @@ body {
 }
 
 #cg-footer {
+    font-size: 1rem;
     display: flex;
     flex-direction: row;
     justify-content: center;
     align-items: center;
-    height: 2rem;
+    min-height: 2rem;
     overflow: hidden;
-}
-
-@media screen and (min-width: 15rem) {
-    #cg-header {height: 7rem;}
-    #cg-footer {height: 2rem;}
-    #cg-body   {height: calc(100% - 9rem);}
-}
-
-@media screen and (min-width: 25rem) {
-    #cg-header {height: 5rem;}
-    #cg-footer {height: 2rem;}
-    #cg-body   {height: calc(100% - 7rem);}
-}
-
-@media screen and (min-width: 35rem) {
-    #cg-header {height: 4rem;}
-    #cg-footer {height: 2rem;}
-    #cg-body   {height: calc(100% - 6rem);}
-}
-
-@media screen and (min-width: 50rem) {
-    #cg-header {height: 2rem;}
-    #cg-footer {height: 2rem;}
-    #cg-body   {height: calc(100% - 4rem);}
 }
 
 #cg {
@@ -113,6 +103,8 @@ body {
     background: -o-repeating-linear-gradient(-45deg, rgba(0,0,0,0), rgba(0,0,0,0.1) 5%, rgba(0,0,0,0) 10%);
     background: -moz-repeating-linear-gradient(-45deg, rgba(0,0,0,0), rgba(0,0,0,0.1) 5%, rgba(0,0,0,0) 10%);
     background: repeating-linear-gradient(-45deg, rgba(0,0,0,0), rgba(0,0,0,0.1) 5%, rgba(0,0,0,0) 10%);
+    font-family: monospace;
+    font-size: 1rem;
 }
 
 #cg-body {
@@ -121,12 +113,6 @@ body {
     border-style: inset;
     border-color: rgba(240, 240, 240, 0.33);
     border-width: medium 0rem;
-}
-
-#cg-header{
-}
-
-#cg-footer{
 }
 
 #cg-body-texture {
@@ -151,7 +137,7 @@ body {
     display: inline;
     width: 0ch;
     opacity: 0;
-    font-size: xx-small;
+    font-size: 0.5rem;
     color: rgba(0,0,0,0.5);
     overflow: hidden;
     -webkit-transition: width 1s;
@@ -204,9 +190,10 @@ body {
 
 .cg-write-main {
     min-height: 18rem; /* should be same as .cg-write-side's min-height */
-    flex: 9.0;
-    min-width: 60%;
+    flex: 1.0;
     margin: 0.25rem;
+    height: calc(100% - 1rem);
+    overflow: hidden;
 }
 
 .cg-write-info {
@@ -236,7 +223,7 @@ body {
 }
 
 #cg-tools-p-tool-desc {
-    font-size: small;
+    font-size: 0.9rem;
     text-align: left;
     height: calc(100% - 3rem);
     overflow: auto;
@@ -286,11 +273,11 @@ body {
 }
 
 #cg-write-msg-payment {
-    font-size: xx-small;
+    font-size: 0.5rem;
 }
 
 #cg-write-core {
-    height: calc(100% - 9rem);
+    height: calc(100% - 9.25rem);
 }
 
 #cg-tools-core {
@@ -307,8 +294,8 @@ body {
     overflow-x: auto;
     padding: 1ch;
     border-radius: 0.5rem;
-    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
     background-color: rgba(255,255,255, 0.75);
+    font-size: 1rem;
 }
 
 .cg-write-text:focus {
@@ -318,6 +305,7 @@ body {
 #cg-write-paymentarea, #cg-write-previewarea {
     width: 100%;
     height: 100%;
+    overflow: hidden;
 }
 
 #cg-write-paymenttable {
@@ -336,22 +324,23 @@ body {
     display: flex;
     flex-direction: column;
     min-height: 18rem;
-    flex: 1.0;
-    min-width: 60%;
-    
+    flex: 99.0;
+    max-width: 20rem;
+
     border: medium outset rgba(230,230,230, 0.80);
     border-radius: 1.0rem;
     padding: 0.5rem;
     margin: 0.25rem;
     background-color: rgba(240,240,240, 1.0);
+    overflow: hidden;
 }
 
 .cg-tools-list {
     display: inline-block;
     vertical-align: top;
     width: 14rem;
-    height: 6rem;
-    
+    height: 8.0rem;
+
     border: medium outset rgba(230,230,230, 0.80);
     border-radius: 1.0rem;
     padding: 0.5rem;
@@ -362,7 +351,6 @@ body {
 #cg-tools-proof-of-existence {
     width: 100%;
     height: 100%;
-    min-height: 15rem;
 }
 
 #cg-tools-poe-file-selection {
@@ -391,16 +379,12 @@ body {
 .cg-tools-poe-footer-table {
     display: table;
     width:  100%;
-    height: 2.5rem;
     table-layout: fixed;
 }
 
 .cg-tools-poe-footer-cell {
     display: table-cell;
-    vertical-align: middle;
     text-align: left;
-    padding: 0.5rem;
-    overflow: hidden;
 }
 
 .cg-tools-poe-footer-table .cg-tools-poe-footer-cell:nth-child(2) {
@@ -408,7 +392,16 @@ body {
 }
 
 #cg-tools-poe-browse-btn {
+    position: absolute;
+    bottom: 0.25rem;
+    left: 0.25rem;
     width: 100%;
+}
+
+#cg-tools-poe-browse-div {
+    position: relative;
+    height: 3rem;
+    overflow: visible;
 }
 
 #cg-tools-poe-file-table {
@@ -443,24 +436,17 @@ body {
     text-align: center;
 }
 
-@media all and (min-width: 35rem) {
-    .cg-write-main{min-width: 15rem; height: calc(100% - 1rem);}
-    .cg-write-side{min-width: 20rem;}
-}
-
-@media not all and (min-width: 35rem) {
-    .cg-write-main{height: calc(100% - 19rem);}
-    .cg-write-side{height: 18rem;}
-    .cg-write-side{overflow: hidden;}
+@media not all and (min-width: 40rem) {
+    .cg-write-side{min-width: 100%; height: 22rem;}
+    .cg-write-main{min-width: 100%; height: calc(100% - 23rem);}
     .cg-tools-info{width:  calc(100% - 0.5rem);}
     .cg-tools-list{width:  calc(100% - 0.5rem);}
-    #cg-tools-core{height: calc(100% - 21.25rem);}
+    #cg-tools-core{height: calc(100% - 24.25rem);}
 }
 
 .cg-write-addr {
-    font-size: x-small;
+    font-size: 0.75rem;
     width: 100%;
-    min-height: 5rem;
     flex: 1.0;
     overflow-x: hidden;
     overflow-y: auto;
@@ -483,7 +469,7 @@ body {
     align-items: center;
     justify-content: center;
     width: 100%;
-    min-height: 10rem;
+    min-height: 14rem;
     overflow: hidden;
 }
 
@@ -491,7 +477,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: center;
     width: 100%;
     height: 100%;
     overflow: hidden;
@@ -522,10 +508,7 @@ body {
 
 .cg-btn {
     width: 0ch;
-    overflow: hidden;
-    white-space: nowrap;
     opacity: 0;
-    font-family: monospace;
     -webkit-animation-name: cg-btn-anim;
     -webkit-animation-duration: 0.200s;
     animation-name: cg-btn-anim;
@@ -537,23 +520,14 @@ body {
 .cg-write-btn,
 .cg-tools-btn {
     width: 100%;
-    max-width: 23ch;
-    white-space: nowrap;
-    font-family: monospace;
 }
 
 .cg-captcha-btn {
     width: 7ch;
-    overflow: hidden;
-    white-space: nowrap;
-    font-family: monospace;
 }
 
 .cg-save-btn {
     width: 9ch;
-    overflow: hidden;
-    white-space: nowrap;
-    font-family: monospace;
 }
 
 .cg-captcha-img {
@@ -591,6 +565,7 @@ body {
     animation-duration: 1.5s;
     -webkit-animation-fill-mode: forwards;
     animation-fill-mode: forwards;
+    font-size: 1rem;
 }
 
 @-webkit-keyframes cg-tabs-anim {
@@ -774,6 +749,7 @@ a.cg-link:hover {
 }
 
 .cg-msgbox {
+    font-size: 1rem;
     display: inline-block;
     padding:  1ch;
     -ms-word-break: break-all;
@@ -865,7 +841,7 @@ a.cg-link:hover {
     height: 2ch;
     position: relative;
     border-width: thin thin 0.0rem;
-    font-size: small;
+    font-size: 0.9rem;
     border-radius:0.4rem;
     border-bottom-left-radius:0ch;
     border-bottom-right-radius:0ch;
@@ -910,7 +886,7 @@ a.cg-link:hover {
     border-radius:0.4rem;
     border-top-left-radius:0ch;
     border-top-right-radius:0ch;
-    font-size: x-small;
+    font-size: 0.75rem;
     border-color:gray;
     border-style: solid;
     box-shadow: 0rem 0.5rem 0.5rem -0.5rem rgba(0, 0, 0, 0.85);
@@ -957,7 +933,7 @@ a.cg-link:hover {
 }
 
 .cg-msgbody-tiny {
-    font-size: x-small;
+    font-size: 0.75rem;
 }
 
 .cg-msgbody-overflowed {
@@ -1029,3 +1005,4 @@ a.cg-link:hover {
     border: thin outset white;
     border-radius: 20%;
 }
+
