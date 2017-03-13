@@ -974,7 +974,7 @@ a.cg-link:hover {
     text-align: left;
 }
 
-.cg-save-order-table tr:last-child td:last-child {
+.cg-save-order-table tr:nth-child(5) td:last-child {
     text-align: right;
 }
 
@@ -996,6 +996,10 @@ a.cg-link:hover {
 .cg-save-order-input {
     /*max-width: 40ch;*/
     width: 100%;
+}
+
+#cg-save-order-details {
+    min-height: 192px;
 }
 
 .cg-captcha-answer-input {
