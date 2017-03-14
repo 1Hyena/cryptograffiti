@@ -29,7 +29,7 @@ function cg_construct_save(main) {
     var wrapper = document.createElement("div");
     wrapper.style.marginLeft="auto";
     wrapper.style.marginRight="auto";
-    wrapper.style.maxWidth="50rem";
+    wrapper.style.maxWidth="30rem";
 
     var order_nr      = document.createElement("input"); order_nr.id      = "cg-save-order-nr";
     var order_status  = document.createElement("input"); order_status.id  = "cg-save-order-status";
@@ -212,6 +212,9 @@ function cg_save_get_order() {
             else if (response === null ) status = sprintf(CG_TXT_SAVE_UPDATING_ORDER_TIMEOUT[CG_LANGUAGE], CG_SAVE_ORDER_NR);
             else {
                 var details_msg = null;
+                var order_addr_input = document.getElementById("cg-save-order-address");
+                var order_amnt_input = document.getElementById("cg-save-order-amount");
+
                 var json = JSON.parse(response);
                 if ("order"  in json       && "nr"     in json.order && "accepted" in json.order
                 &&  "filled" in json.order && "output" in json.order) {
@@ -251,9 +254,6 @@ function cg_save_get_order() {
                             var addr = output.address;
                             var amnt = output.amount;
 
-                            var order_addr_input = document.getElementById("cg-save-order-address");
-                            var order_amnt_input = document.getElementById("cg-save-order-amount");
-
                             if (order_addr_input.value !== addr) order_addr_input.value = addr;
                             if (order_amnt_input.value !== amnt) order_amnt_input.value = amnt;
 
@@ -286,6 +286,17 @@ function cg_save_get_order() {
                     var details = document.getElementById("cg-save-order-details");
                     while (details.hasChildNodes()) details.removeChild(details.lastChild);
                     details.appendChild(document.createTextNode(details_msg));
+                    if (accepted && !filled) {
+                        details.appendChild(document.createElement("br"));
+                        details.appendChild(document.createElement("br"));
+                        var addr = encodeURIComponent(order_addr_input.value);
+                        var amnt = encodeURIComponent(order_amnt_input.value);
+                        var img = document.createElement("img");
+                        img.src = "http://api.qrserver.com/v1/create-qr-code/?size=128x128&data=bitcoin:"+addr+"?amount="+amnt;
+                        img.width = "128";
+                        img.height = "128";
+                        details.appendChild(img);
+                    }
                 }
             }
 
