@@ -333,7 +333,37 @@ function remove_colours(bytes) {
 
 // Processes ANSI escape codes and adds css styling for colors.
 // While this ignores most codes, some might be improperly parsed!
-function process_colours(bytes) {
+function processColours(bytes) {
+    function changeState(state, numbers) {
+        var newState = state;
+        if (newState.attributes == null) newState.attributes = [];
+
+        for (var i = 0; i < numbers.length; i++) {
+            num = numbers[i];
+            if (num === 0) {
+                newState = {foreground: 0, background: 7, attributes: []};
+            } else if (num < 10) {
+                if (!newState.attributes.includes(num)) {
+                    newState.attributes.push(num);
+                }
+            } else if (num > 20 && num < 30) {
+                if (newState.attributes.includes(num % 10)) {
+                    newState.attributes.splice(newState.attributes.indexOf(num % 10), 1);
+                }
+            } else if (num >= 30 && num < 38) {
+                newState.foreground = num % 10;
+            } else if (num === 39) {
+                newState.foreground = 0;
+            } else if (num >= 40 && num < 48) {
+                newState.background = num % 10;
+            } else if (num === 48) {
+                newState.background = 7;
+            }
+        }
+
+        return newState;
+    }
+
     var output = "<span>";
 
     var lastEscape = null; // position of last escape character
@@ -344,17 +374,40 @@ function process_colours(bytes) {
         attributes: [] // things like bold or strikethrough
     };
 
+    var currentNumber = "";
+    var parsedNumbers = [];
+
     for (var k = 0; k < bytes.length; k++) {
         var char = bytes[k];
         if (inEscapeCode) {
-            if (k - lastEscape === 1 && char != "[") return; // return if it doesn't start with ESC-[
+            if (k - lastEscape === 1 && char != "[") { // return if it doesn't start with ESC-[
+                inEscapeCode = false;
+                continue;
+            }
 
-            // TODO: Process stuff
+            if (isNumeric(char)) { // parse number
+                currentNumber += char;
+            } else if (char == ";") {
+                if (currentNumber.length > 0) {
+                    parsedNumbers.push(parseInt(currentNumber));
+                }
+                currentNumber = "";
+            } else if (char == "m") {
+                if (currentNumber.length > 0) {
+                    parsedNumbers.push(parseInt(currentNumber));
+                }
+                state = changeState(state, parsedNumbers);
+            }
         } else {
             if (char === "\x1b" && lastEscape === null) {
+                // start escape code
                 lastEscape = k;
                 inEscapeCode = true;
+                currentNumber = "";
+                parsedNumbers = [];
                 continue;
+            } else {
+                output += char;
             }
         }
     }
