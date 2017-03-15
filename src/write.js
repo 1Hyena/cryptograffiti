@@ -24,7 +24,7 @@ function cg_construct_write(main) {
         return;
     }
 
-    div.classList.add("cg-write-tab");    
+    div.classList.add("cg-write-tab");
 
     /*
     var table = document.createElement("div");
@@ -45,7 +45,7 @@ function cg_construct_write(main) {
     table.appendChild(cell);
     div.appendChild(table);
     */
-    
+
     var main_area = document.createElement("div");
     var side_area = document.createElement("div");
     var addr_area = document.createElement("div");
@@ -154,7 +154,7 @@ function cg_construct_write(main) {
     side_area.appendChild(addr_area);
     side_area.appendChild(btns_area);
     main_area.appendChild(info_area);
-    
+
     var writecore = document.createElement("div");
     writecore.id = "cg-write-core";
     writecore.appendChild(payment_area);
@@ -341,7 +341,7 @@ function cg_write_update(instant) {
     for (var i = 0; i < sz; i++) {
         //text+=ascii2hex(Bitcoin.getAddressPayload(chunks[i]))+"\n";
         text+=chunks[i]+"\n";
-    }    
+    }
 
     while (addr.hasChildNodes()) addr.removeChild(addr.lastChild);
     addr.appendChild(document.createTextNode(text));
@@ -463,7 +463,7 @@ function cg_button_click_payment_next() {
         }, 2000);
         return;
     }
-    
+
     var amnt_value = amnt.value.trim();
     var msg = cg_write_check_amount(amnt_value);
     if (msg !== "") {
@@ -654,7 +654,7 @@ function cg_write_handle_file_select(evt) {
 
 function cg_write_estimate_fee() {
     xmlhttpGet('https://bitcoinfees.21.co/api/v1/fees/recommended', '',
-        function(json) {                
+        function(json) {
             var status = "???";
             var success = false;
 
@@ -709,7 +709,7 @@ function cg_write_create_msgbox(CG_WRITE_CHUNKS, mimetype) {
     var msgbody    = document.createElement("PRE");
     var msgfooter  = document.createElement("DIV");
     var msgfooterC = document.createElement("DIV");
-    
+
     var span = document.createElement('span');
     span.appendChild(document.createTextNode("("+CG_TXT_READ_MSG_NOT_DECODED_YET[CG_LANGUAGE]+")"));
     span.classList.add("cg-msgspan");
@@ -723,7 +723,7 @@ function cg_write_create_msgbox(CG_WRITE_CHUNKS, mimetype) {
     msgbox.appendChild(msgbody);
     msgbox.appendChild(msgfooter);
 
-    msgheader.classList.add("cg-msgheader");          
+    msgheader.classList.add("cg-msgheader");
     msgheaderL.classList.add("cg-msgheader-left");
     msgheaderR.classList.add("cg-msgheader-right");
     msgfooter.classList.add("cg-msgfooter");
@@ -765,8 +765,7 @@ function cg_write_create_msgbox(CG_WRITE_CHUNKS, mimetype) {
     else                           msg = msg_utf8;
 
     var txt = msg;
-    while (span.hasChildNodes()) span.removeChild(span.lastChild);
-    span.appendChild(document.createTextNode(txt));
+    span.innerHTML = processColours(escapeHtml(txt));
 
     var isRTL = checkRTL(txt);
     var dir = isRTL ? 'RTL' : 'LTR';
@@ -802,5 +801,3 @@ function cg_write_create_msgbox(CG_WRITE_CHUNKS, mimetype) {
     msgbody.style.height="calc(100% - 6.5ch)";
     return msgbox;
 }
-
-

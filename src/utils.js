@@ -238,8 +238,6 @@ function decode_utf8(bytes) {
         }
     }
 
-    msg = remove_colours(msg);
-
     try {
         msg = decodeURIComponent(escape(msg));
     } catch (ex) {
@@ -298,7 +296,7 @@ function decode_ascii(bytes) {
         }
     }
 
-    return remove_colours(msg);
+    return msg;
 }
 
 function remove_colours(bytes) {
@@ -364,6 +362,19 @@ function processColours(bytes) {
         return newState;
     }
 
+    function getClasses(state) {
+        var output = "";
+
+        output +=  "ansi-fg-" + state.foreground;
+        output += " ansi-bg-" + state.background;
+
+        for (var i = 0; i < state.attributes.length; i++) {
+            output += " ansi-format-" + state.attributes[i];
+        }
+
+        return output;
+    }
+
     var output = "<span>";
 
     var lastEscape = null; // position of last escape character
@@ -397,6 +408,12 @@ function processColours(bytes) {
                     parsedNumbers.push(parseInt(currentNumber));
                 }
                 state = changeState(state, parsedNumbers);
+
+                output += "</span>"
+                output += "<span class=\"" + getClasses(state) + "\">"
+
+                inEscapeCode = false;
+                lastEscape = null;
             }
         } else {
             if (char === "\x1b" && lastEscape === null) {
@@ -656,3 +673,10 @@ function formatBytes(bytes) {
     else if (bytes < 1073741824) return(bytes / 1048576).toFixed(2) + " MiB";
     else return (bytes / 1073741824).toFixed(2) + " GiB";
 }
+
+function escapeHtml(unsafe) {
+    return unsafe
+         .replace(/&/g, "&amp;")
+         .replace(/</g, "&lt;")
+         .replace(/>/g, "&gt;");
+ }
