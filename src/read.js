@@ -405,6 +405,7 @@ function cg_decode() {
                                       + op_return_msg + "\n----- END OP_RETURN MESSAGE BLOCK -----";
                         }
                         var txt = msg;
+                        processedTxt = processColours(txt);
 
                         if (timestamp != 0) {
                             while (msgheaderR.hasChildNodes()) msgheaderR.removeChild(msgheaderR.lastChild);
@@ -412,7 +413,11 @@ function cg_decode() {
                         }
 
                         msgbox.classList.add("cg-msgbox-decoded");
-                        msgspan.innerHTML = processColours(escapeHtml(txt));
+                        while (msgspan.hasChildNodes()) msgspan.removeChild(msgspan.lastChild);
+                        
+                        for (var i = 0; i < processedTxt.length; i++) {
+                            msgspan.appendChild(processedTxt[i])
+                        }
 
                         var isRTL = checkRTL(txt);
                         var dir = isRTL ? 'RTL' : 'LTR';

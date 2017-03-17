@@ -331,6 +331,7 @@ function remove_colours(bytes) {
 
 // Processes ANSI escape codes and adds css styling for colors.
 // While this ignores most codes, some might be improperly parsed!
+// Returns an array of elements to add
 function processColours(bytes) {
     function changeState(state, numbers) {
         var newState = state;
@@ -362,20 +363,18 @@ function processColours(bytes) {
         return newState;
     }
 
-    function getClasses(state) {
-        var output = "";
+    function createSpan(state) { // make empty span element with proper styling
+        var output = document.createElement("span");
 
-        output +=  "ansi-fg-" + state.foreground;
-        output += " ansi-bg-" + state.background;
+        output.classList.add("ansi-fg-" + state.foreground,
+                             "ansi-bg-" + state.background);
 
         for (var i = 0; i < state.attributes.length; i++) {
-            output += " ansi-format-" + state.attributes[i];
+            output.classList.add("ansi-format-" + state.attributes[i]);
         }
 
         return output;
     }
-
-    var output = "<span>";
 
     var lastEscape = null; // position of last escape character
     var inEscapeCode = false;
@@ -384,6 +383,10 @@ function processColours(bytes) {
         background: 7,
         attributes: [] // things like bold or strikethrough
     };
+    
+    var output = []; // future array of all elements
+    var currentElement = createSpan(state);
+    var currentText = ""
 
     var currentNumber = "";
     var parsedNumbers = [];
@@ -408,9 +411,12 @@ function processColours(bytes) {
                     parsedNumbers.push(parseInt(currentNumber));
                 }
                 state = changeState(state, parsedNumbers);
-
-                output += "</span>"
-                output += "<span class=\"" + getClasses(state) + "\">"
+                
+                currentElement.appendChild(document.createTextNode(currentText));
+                output.push(currentElement);
+                
+                currentElement = createSpan(state);
+                currentText = "";
 
                 inEscapeCode = false;
                 lastEscape = null;
@@ -424,12 +430,15 @@ function processColours(bytes) {
                 parsedNumbers = [];
                 continue;
             } else {
-                output += char;
+                currentText += char;
             }
         }
     }
 
-    output += "</span>";
+    if (currentText.length > 0) {
+        currentElement.appendChild(document.createTextNode(currentText));
+        output.push(currentElement);
+    }
     return output;
 }
 

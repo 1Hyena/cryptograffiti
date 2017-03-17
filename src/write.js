@@ -765,7 +765,13 @@ function cg_write_create_msgbox(CG_WRITE_CHUNKS, mimetype) {
     else                           msg = msg_utf8;
 
     var txt = msg;
-    span.innerHTML = processColours(escapeHtml(txt));
+    processedTxt = processColours(txt);
+    
+    while (span.hasChildNodes()) span.removeChild(span.lastChild);
+    
+    for (var i = 0; i < processedTxt.length; i++) {
+        span.appendChild(processedTxt[i])
+    }
 
     var isRTL = checkRTL(txt);
     var dir = isRTL ? 'RTL' : 'LTR';
