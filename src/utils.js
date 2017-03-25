@@ -392,21 +392,21 @@ function processColours(bytes) {
     var parsedNumbers = [];
 
     for (var k = 0; k < bytes.length; k++) {
-        var char = bytes[k];
+        var c = bytes[k];
         if (inEscapeCode) {
-            if (k - lastEscape === 1 && char != "[") { // return if it doesn't start with ESC-[
+            if (k - lastEscape === 1 && c != "[") { // return if it doesn't start with ESC-[
                 inEscapeCode = false;
                 continue;
             }
 
-            if (isNumeric(char)) { // parse number
-                currentNumber += char;
-            } else if (char == ";") {
+            if (isNumeric(c)) { // parse number
+                currentNumber += c;
+            } else if (c == ";") {
                 if (currentNumber.length > 0) {
                     parsedNumbers.push(parseInt(currentNumber));
                 }
                 currentNumber = "";
-            } else if (char == "m") {
+            } else if (c == "m") {
                 if (currentNumber.length > 0) {
                     parsedNumbers.push(parseInt(currentNumber));
                 }
@@ -422,7 +422,7 @@ function processColours(bytes) {
                 lastEscape = null;
             }
         } else {
-            if (char === "\x1b" && lastEscape === null) {
+            if (c === "\x1b" && lastEscape === null) {
                 // start escape code
                 lastEscape = k;
                 inEscapeCode = true;
@@ -430,7 +430,7 @@ function processColours(bytes) {
                 parsedNumbers = [];
                 continue;
             } else {
-                currentText += char;
+                currentText += c;
             }
         }
     }

@@ -47,7 +47,7 @@ while IFS='' read -r line || [[ -n "$line" ]]; do
         done
 
         printf "<script>\n" >> "$out"
-        cat ${files} | yui-compressor --type js --charset utf8 >> "$out"
+        cat ${files} | yui-compressor --type js --charset utf8 -v >> "$out"
         printf "\n</script>\n" >> "$out"
         continue
     fi
