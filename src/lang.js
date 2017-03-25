@@ -1120,11 +1120,11 @@ var CG_TXT_HELP_TODO = [
         et : "Lisada tugi ülekannetele, mis sisaldavad mitut nullbaidiga eraldatud sõnumit.",
         ru : "Добавить поддержку транзакций, содержащих несколько нуль-терминированных сообщений."
     },
-    {
-        en : "Add support for messages that cointain ANSI colours.",
-        et : "Lisada tugi sõnumitele, mis sisaldavad ANSI värve.",
-        ru : "Добавить поддержку сообщений, содержащих цвета в формате ANSI."
-    },
+    //{
+    //    en : "Add support for messages that cointain ANSI colours.",
+    //    et : "Lisada tugi sõnumitele, mis sisaldavad ANSI värve.",
+    //    ru : "Добавить поддержку сообщений, содержащих цвета в формате ANSI."
+    //},
     //{
     //    en : "Make it possible to attach all file types not just JPEG images.",
     //    et : "Võimaldada kõigi failitüüpide lisamist sõnumile.",
