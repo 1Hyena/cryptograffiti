@@ -61,18 +61,18 @@ var CG_READ_API_BLOCKCHAIN_INFO = 0; // Index of blockchain.info in the CG_READ_
 function cg_construct_read(main) {
     var div = cg_init_tab(main, 'cg-tab-read');
     if (div === null) return;
-    
+
     div.classList.add("cg-read-tab-premature");
-    
+
     var text = document.createTextNode(CG_TXT_READ_INITIALIZING[CG_LANGUAGE]);
-    
+
     var span = document.createElement('span');
     span.appendChild(text);
     span.id="cg-read-initializing-span";
     div.appendChild(span);
-    
+
     div.addEventListener("wheel", cg_read_scroll);
-    
+
     cg_read_loop();
 }
 
@@ -97,7 +97,7 @@ function cg_read_loop() {
 
         CG_READ_JOBS[key]--;
         if (CG_READ_JOBS[key] > 0) continue;
-        
+
         if (window[key]() === false) CG_READ_JOBS[key] = 1;
         else delete CG_READ_JOBS[key];
     }
@@ -112,7 +112,7 @@ function cg_read_loop() {
         var bottom = cg_read_scrolled_bottom(tab);
 
         CG_SCROLL_FIXED = false;
-        
+
         if (cg_read_scrolled_top(tab)) {
             var premature_count = 0;
             var sz = CG_GRAFFITI_NRS.length;
@@ -184,11 +184,11 @@ function cg_read_loop() {
         else if (cg_read_scroll_visible(tab) < 0.2 && !near_bottom) {
             cg_read_delete_graffiti_bottom(tab);
         }
-        
+
         if (CG_DECODING === null && (top || bottom)) {
             for (var repeat=0; repeat<2; repeat++) {
                 var children = tab.children;
-                
+
                 var i_val = 0;
                 var i_mod = 1;
                 var i_end = children.length;
@@ -202,9 +202,9 @@ function cg_read_loop() {
 
                 for (var i = i_val; i !== i_end; i += i_mod) {
                     var child = children[i];
-                    
+
                     if (child.classList.contains('cg-read-loadingbox')) continue;
-                    
+
                     if (!child.classList.contains('cg-hidden'  )
                     ||   child.classList.contains('cg-msgbox-decoding')
                     ||   child.classList.contains('cg-msgbox-decoded' )
@@ -212,7 +212,7 @@ function cg_read_loop() {
 
                     to_decode = child;
                 }
-                
+
                 if (to_decode !== null) {
                     var span = document.getElementById(to_decode.id+"-span");
                     if (span !== null) {
@@ -254,7 +254,7 @@ function cg_read_loop() {
             else if (bottom) cg_read_scroll_bottom(tab);
         }
     }
-    
+
     setTimeout(function(){
         cg_read_loop();
     }, 1000/CG_READ_PPS);
@@ -281,7 +281,7 @@ function cg_decode() {
 
     var msgbox  = document.getElementById("cg-msgbox-"+nr);
     var msgspan = document.getElementById("cg-msgbox-"+nr+"-span");
-    
+
     if (nr in CG_GRAFFITI == false || msgbox === null || msgspan === null) {
         CG_DECODING = null;
         CG_DECODE_ATTEMPTS = 0;
@@ -350,7 +350,7 @@ function cg_decode() {
             }
 
             msgbox.classList.remove("cg-msgbox-decoding");
-                
+
             var status = "???";
             var success = false;
 
@@ -367,7 +367,7 @@ function cg_decode() {
                     var timestamp=  0;
                     var op_return_msg = "";
                     var filehash = null;
-                    
+
                     var extract = window[CG_READ_APIS[api].extract](r);
                     if (extract !== null) {
                         out_bytes = extract[0];
@@ -401,10 +401,11 @@ function cg_decode() {
                         if (op_return_msg.length <= 1) op_return_msg = decode_ascii(op_return);
                         if (op_return_msg.length >  1) {
                             if (msg.length > 1) msg = msg + "\n";
-                            msg = msg + "-----BEGIN OP_RETURN MESSAGE BLOCK-----\n" 
+                            msg = msg + "-----BEGIN OP_RETURN MESSAGE BLOCK-----\n"
                                       + op_return_msg + "\n----- END OP_RETURN MESSAGE BLOCK -----";
                         }
                         var txt = msg;
+                        processedTxt = processColours(txt);
 
                         if (timestamp != 0) {
                             while (msgheaderR.hasChildNodes()) msgheaderR.removeChild(msgheaderR.lastChild);
@@ -413,7 +414,10 @@ function cg_decode() {
 
                         msgbox.classList.add("cg-msgbox-decoded");
                         while (msgspan.hasChildNodes()) msgspan.removeChild(msgspan.lastChild);
-                        msgspan.appendChild(document.createTextNode(txt));
+                        
+                        for (var i = 0; i < processedTxt.length; i++) {
+                            msgspan.appendChild(processedTxt[i])
+                        }
 
                         var isRTL = checkRTL(txt);
                         var dir = isRTL ? 'RTL' : 'LTR';
@@ -614,9 +618,9 @@ function cg_read_get_latest() {
         back: null
     }
     var json_str = encodeURIComponent(JSON.stringify(data_obj));
-    
+
     CG_STATUS.push(CG_TXT_READ_LOADING_GRAFFITI[CG_LANGUAGE]);
-    
+
     xmlhttpPost('http://cryptograffiti.info/database/', 'fun=get_btc_graffiti&data='+json_str,
         function(response) {
             var status = "???";
@@ -628,7 +632,7 @@ function cg_read_get_latest() {
                     if (json.txs.length > 0) {
                         CG_NEWEST_TX_NR = json.txs[0].nr;
                         CG_OLDEST_TX_NR = CG_NEWEST_TX_NR;
-                    
+
                         if (CG_NEWEST_TX_NR !== null) {
                             var obj = {
                                 type:  json.txs[0].type,
@@ -646,7 +650,7 @@ function cg_read_get_latest() {
                             }
 
                             status = sprintf(CG_TXT_READ_GRAFFITI_LOADED[CG_LANGUAGE], CG_NEWEST_TX_NR);
-                            
+
                             var tab = document.getElementById("cg-tab-read");
                             if (tab.hasChildNodes()) {
                                 tab.lastChild.classList.add("cg-disappear");
@@ -681,7 +685,7 @@ function cg_read_get_latest() {
             if (CG_NEWEST_TX_NR === null) CG_READ_JOBS["cg_read_get_latest"] = 10*CG_READ_PPS;
         }
     );
-    
+
     return true;
 }
 
@@ -731,7 +735,7 @@ function cg_read_load_new_txs() {
                     }
 
                     if (json.txs.length <= 1 || (delay && count > 0)) CG_READ_JOBS["cg_read_load_new_txs"] = 30*CG_READ_PPS;
-                    
+
                     status = sprintf(CG_TXT_READ_NEW_GRAFFITI_LOADED[CG_LANGUAGE], count, CG_GRAFFITI_NRS.length);
                 }
                 else {
@@ -756,7 +760,7 @@ function cg_read_load_old_txs() {
         back: "1"
     }
     var json_str = encodeURIComponent(JSON.stringify(data_obj));
-    
+
     CG_STATUS.push(CG_TXT_READ_LOADING_OLD_GRAFFITI[CG_LANGUAGE]);
 
     xmlhttpPost('http://cryptograffiti.info/database/', 'fun=get_btc_graffiti&data='+json_str,
@@ -804,7 +808,7 @@ function cg_read_load_old_txs() {
             CG_STATUS.push(status);
         }
     );
-    
+
     return true;
 }
 
@@ -865,7 +869,7 @@ function cg_read_delete_graffiti(div, top) {
 
     if (execute) {
         var sz = to_delete.length;
-        
+
         for (var i = 0; i<sz; i++) {
             var child_id = to_delete[i].id;
 
@@ -873,7 +877,7 @@ function cg_read_delete_graffiti(div, top) {
                 var nr = (top ? CG_GRAFFITI_NRS.pop() : CG_GRAFFITI_NRS.shift());
 
                 if (nr in CG_GRAFFITI) delete CG_GRAFFITI[nr];
-                
+
                 if (top) CG_NEWEST_TX_NR = nr;
                 else     CG_OLDEST_TX_NR = nr;
 
@@ -927,7 +931,7 @@ function cg_read_create_graffiti(div, nr, append) {
             // Some messsage has been already selected, deselect it first.
             mbx = document.getElementById("cg-msgbox-"+selected);
             if (mbx !== null) mbx.classList.remove("cg-msgbox-selected");
-            
+
             var old_msgbody_id = "cg-msgbody-"+selected; // Find its message body.
             var old_msgbody = document.getElementById(old_msgbody_id);
             if (old_msgbody !== null && old_msgbody.classList.contains('cg-msgbody-overflowed')) {
@@ -962,19 +966,19 @@ function cg_read_create_graffiti(div, nr, append) {
 
     msgheaderL.appendChild(a_nr);
     msgheaderR.appendChild(document.createTextNode(""));
-    
+
     var t_txid = document.createTextNode(t.txid);
     var a_txid = document.createElement("a"); a_txid.appendChild(t_txid);
     a_txid.id  = "cg-msgtxhash-"+nr;
     a_txid.title = CG_TXT_READ_TRANSACTION_DETAILS[CG_LANGUAGE];
     a_txid.href  = "https://blockchain.info/tx/"+t.txid;
     a_txid.target= "_blank";
-    
+
     var span = document.createElement('span');
     span.appendChild(document.createTextNode("("+CG_TXT_READ_MSG_NOT_DECODED_YET[CG_LANGUAGE]+")"));
     span.id="cg-msgbox-"+nr+"-span";
     span.classList.add("cg-msgspan");
-    
+
     msgheader.appendChild(msgheaderL);
     msgheader.appendChild(msgheaderR);
     msgbody.appendChild(span);
@@ -984,8 +988,8 @@ function cg_read_create_graffiti(div, nr, append) {
     msgbox.appendChild(msgheader);
     msgbox.appendChild(msgbody);
     msgbox.appendChild(msgfooter);
-      
-    msgheader.classList.add("cg-msgheader");          
+
+    msgheader.classList.add("cg-msgheader");
     msgheaderL.classList.add("cg-msgheader-left");
     msgheaderR.classList.add("cg-msgheader-right");
     msgfooter.classList.add("cg-msgfooter");
@@ -996,7 +1000,7 @@ function cg_read_create_graffiti(div, nr, append) {
     msgbox.classList.add("cg-hidden");
 
     if (nr.toString(10) === CG_TX_NR) msgbox.classList.add("cg-msgbox-selected");
-    
+
     msgbox.id = "cg-msgbox-"+nr;
     msgbody.id = "cg-msgbody-"+nr;
     msgheaderR.id = "cg-msgheader-right-"+nr;
@@ -1076,7 +1080,7 @@ function cg_read_mature(tab, near_bottom) {
     var loadingbars = [];
     var list = [];
     var mature_found = false;
-    
+
     for (var i = i_val; i !== i_end; i += i_mod) {
         var child = children[i];
 
@@ -1091,7 +1095,7 @@ function cg_read_mature(tab, near_bottom) {
         if (mature_found) continue;
 
         if (child.classList.contains('cg-msgbox-premature')
-        && (child.classList.contains('cg-msgbox-decoded') 
+        && (child.classList.contains('cg-msgbox-decoded')
          || child.classList.contains('cg-msgbox-failed'))) {
             list.unshift(child);
         }
@@ -1099,7 +1103,7 @@ function cg_read_mature(tab, near_bottom) {
             mature_found = true;
         }
     }
-    
+
     var row = [];
     var row_width = 0;
     var all_wide = false;
@@ -1153,7 +1157,7 @@ function cg_read_mature(tab, near_bottom) {
             if (CG_IMMATURE_ROW < row_width) CG_IMMATURE_TIME = 0;
             CG_IMMATURE_ROW = row_width;
         }
-        
+
         if (loadingbars.length > 0) {
             var barbox = loadingbars[0];
             if (barbox.hasChildNodes()) {
@@ -1163,7 +1167,7 @@ function cg_read_mature(tab, near_bottom) {
                 bar.style.width = p+"%";
             }
         }
-        
+
         return false;
     }
 
@@ -1197,7 +1201,7 @@ function cg_read_mature(tab, near_bottom) {
         if (loadingbars[i].classList.contains('cg-read-loadingbox-close')) {
             //if (i == sz-1) {
                 if (loadingbars[i].offsetTop+loadingbars[i].offsetHeight < tab.scrollTop
-                ||  loadingbars[i].offsetTop > tab.scrollTop + tab.clientHeight) {            
+                ||  loadingbars[i].offsetTop > tab.scrollTop + tab.clientHeight) {
                     if (!first_offscreen) first_offscreen = true;
                     else tab.removeChild(loadingbars[i]);
                 }
@@ -1214,7 +1218,7 @@ function cg_read_mature(tab, near_bottom) {
                     bar.style.width = "100%";
                     CG_READ_COOLDOWN = 1*CG_READ_PPS;
                 }
-            }            
+            }
         }
     }
 
@@ -1225,7 +1229,7 @@ function cg_read_create_loadingbar(tab, near_bottom, last) {
     last = typeof last !== 'undefined' ? last : null;
     var loadingbox = document.createElement("DIV");
     var loadingbar = document.createElement("DIV");
-    
+
     loadingbox.classList.add("cg-read-loadingbox");
     if (near_bottom) loadingbox.classList.add("cg-read-loadingbox-bottom");
     else             loadingbox.classList.add("cg-read-loadingbox-top");
@@ -1261,7 +1265,7 @@ function cg_read_msgbox_mature(msgbox_id) {
         msgbox.classList.add("cg-appear");
         msgbox.classList.remove("cg-hidden");
     }, 50+Math.floor((Math.random() * 150) + 1));
-    
+
     var pieces = msgbox_id.split("-");
     var nr = parseInt(pieces.pop(), 10);
 
@@ -1270,7 +1274,7 @@ function cg_read_msgbox_mature(msgbox_id) {
         t.premature = false;
     }
     else alert(sprintf(CG_TXT_READ_ERROR_2[CG_LANGUAGE], nr.toString(10)));
-    
+
     var msgbody_id = "cg-msgbody-"+nr;
     var msgbody    = document.getElementById(msgbody_id);
 
@@ -1279,7 +1283,7 @@ function cg_read_msgbox_mature(msgbox_id) {
         if (!msgbox.classList.contains('cg-msgbox-selected')) {
             msgbody.classList.add("cg-msgbody-clickable");
         }
-        
+
         if (CG_TX_NR !== nr.toString(10)) {
             msgbody.onclick = function(){
                 var a_nr = document.getElementById("cg-msgnr-"+nr);
@@ -1341,7 +1345,7 @@ function smoothScroll(div_id, by, steps, delay, key) {
         CG_READ_SCROLL_KEY = null;
         return;
     }
-    
+
     setTimeout(function(){
         smoothScroll(div_id, by, steps, delay, key);
     }, delay);
@@ -1357,7 +1361,7 @@ function scrollTo(div, to, duration) {
          if (div.scrollTop > to) by = -diff/steps;
     else if (div.scrollTop < to) by =  diff/steps;
 
-    //alert(div.id+" by: "+by+ " steps: "+steps+" delay: "+delay+" scrollTop: "+div.scrollTop+" to: "+to+" duration: "+duration);    
+    //alert(div.id+" by: "+by+ " steps: "+steps+" delay: "+delay+" scrollTop: "+div.scrollTop+" to: "+to+" duration: "+duration);
     smoothScroll(div.id, by, steps, delay, key);
 }
 
@@ -1399,7 +1403,6 @@ function cg_read_create_filetable(blockchain_file, type, filehash, fsz) {
     file_tr2_td2.appendChild(document.createTextNode((fsz/1024).toFixed(4)+" KiB"));
     file_tr3_td2.appendChild(document.createTextNode(filehash));
     file_tr4_td2.appendChild(file_link);
-    
+
     return file_table;
 }
-

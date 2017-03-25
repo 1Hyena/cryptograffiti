@@ -70,7 +70,7 @@ button {
     position: absolute;
 
     overflow: hidden;
-    margin-left: auto; 
+    margin-left: auto;
     margin-right: auto;
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
@@ -145,7 +145,7 @@ button {
 }
 
 .cg-borderbox {
-    margin-left: auto; 
+    margin-left: auto;
     margin-right: auto;
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
@@ -227,7 +227,7 @@ button {
     text-align: left;
     height: calc(100% - 3rem);
     overflow: auto;
-    
+
     border: medium inset rgba(212,212,212, 0.25);
     border-radius: 0.5rem;
     padding: 0.5rem;
@@ -235,7 +235,7 @@ button {
     background: -webkit-linear-gradient(rgba(0,0,0,0.0625), rgba(255,255,255,0.03125), rgba(0,0,0,0.0625));
     background: -o-linear-gradient(rgba(0,0,0,0.0625), rgba(255,255,255,0.03125), rgba(0,0,0,0.0625));
     background: -moz-linear-gradient(rgba(0,0,0,0.0625), rgba(255,255,255,0.03125), rgba(0,0,0,0.0625));
-    background: linear-gradient(rgba(0,0,0,0.0625), rgba(255,255,255,0.03125), rgba(0,0,0,0.0625));    
+    background: linear-gradient(rgba(0,0,0,0.0625), rgba(255,255,255,0.03125), rgba(0,0,0,0.0625));
 }
 
 #cg-write-infotable {
@@ -369,7 +369,7 @@ button {
     width:  calc(100% - 0.5rem);
     height: calc(100% - 3rem);
     border: medium dashed gray;
-    border-radius: 1.0rem;    
+    border-radius: 1.0rem;
 }
 
 #cg-tools-poe-drop-zone:hover {
@@ -421,17 +421,17 @@ button {
 
 #cg-tools-poe-file-table td {
     overflow: hidden;
-    text-overflow: ellipsis;  
+    text-overflow: ellipsis;
     white-space: nowrap;
     text-align: left;
 }
 
-#cg-tools-poe-file-table td:nth-child(2) {  
+#cg-tools-poe-file-table td:nth-child(2) {
     text-align: right;
     width: 12ch;
 }
 
-#cg-tools-poe-file-table td:nth-child(3) {  
+#cg-tools-poe-file-table td:nth-child(3) {
     max-width: 40ch;
     text-align: center;
 }
@@ -543,7 +543,7 @@ button {
     border-color: rgba(212, 212, 212, 0.5);
     border-width: thin;
     background-color: rgba(224,224,224, 0.5);
-    border-radius: 1rem;    
+    border-radius: 1rem;
 }
 
 @-webkit-keyframes cg-btn-anim {
@@ -557,8 +557,8 @@ button {
 
 .cg-tabs {
     display: flex;
-    flex-direction: row; 
-    flex-wrap: wrap; 
+    flex-direction: row;
+    flex-wrap: wrap;
     justify-content: center;
     align-items: center;
     overflow: hidden;
@@ -644,7 +644,7 @@ button {
     transition: color 250ms linear;
 
     white-space: nowrap;
-    text-overflow: ellipsis;  
+    text-overflow: ellipsis;
 }
 
 .cg-appear {
@@ -711,7 +711,7 @@ button {
     display: block;
     max-width: 80ch;
     margin: 0 auto 1ch;
-    
+
     border: medium outset rgba(255,255,255, 0.4);
     border-radius: 1.0ch;
     padding: 0.5ch;
@@ -730,11 +730,11 @@ a.cg-link:hover {
     margin: auto;
     padding-bottom: 1ch;
 }
-.cg-table td:nth-child(1) {  
+.cg-table td:nth-child(1) {
     text-align: right;
     padding-right: 1ch;
 }
-.cg-table td:nth-child(2) {  
+.cg-table td:nth-child(2) {
     text-align: left;
 }
 
@@ -867,7 +867,7 @@ a.cg-link:hover {
     left: 1ch;
     white-space: nowrap;
     position: absolute;
-    text-overflow: ellipsis;  
+    text-overflow: ellipsis;
     overflow: hidden;
 }
 
@@ -876,7 +876,7 @@ a.cg-link:hover {
     width: calc(75% - 1ch);
     white-space: nowrap;
     position: absolute;
-    text-overflow: ellipsis;  
+    text-overflow: ellipsis;
     overflow: hidden;
     left: 25%;
 }
@@ -901,8 +901,8 @@ a.cg-link:hover {
 .cg-msgfooter-content {
     white-space: nowrap;
     position: absolute;
-    text-overflow: ellipsis;  
-    overflow: hidden;  
+    text-overflow: ellipsis;
+    overflow: hidden;
     width: calc(100% - 1ch);
     padding-left: 1ch;
     color:rgb(150,200,255);
@@ -942,13 +942,13 @@ a.cg-link:hover {
 }
 
 .cg-msgbody-overflowed {
-    
+
 }
 
 .cg-msgbody-clickable {
     overflow: hidden;
     text-overflow: ellipsis;
-    
+
     white-space: pre-wrap;
     white-space: -moz-pre-wrap;
     white-space: -pre-wrap;
@@ -1015,3 +1015,25 @@ a.cg-link:hover {
     border-radius: 20%;
 }
 
+.ansi-fg-0 { /* default font color */ }
+.ansi-fg-1 { color: red }
+.ansi-fg-2 { color: green }
+.ansi-fg-3 { color: yellow }
+.ansi-fg-4 { color: blue }
+.ansi-fg-5 { color: magenta }
+.ansi-fg-6 { color: cyan }
+.ansi-fg-7 { color: white }
+
+.ansi-bg-0 { background-color: black }
+.ansi-bg-1 { background-color: red }
+.ansi-bg-2 { background-color: green }
+.ansi-bg-3 { background-color: yellow }
+.ansi-bg-4 { background-color: blue }
+.ansi-bg-5 { background-color: magenta }
+.ansi-bg-6 { background-color: cyan }
+.ansi-bg-7 { /* default background color */ }
+
+.ansi-format-1 { font-weight: bold }
+.ansi-format-3 { font-style: italic }
+.ansi-format-4 { text-decoration: underline }
+.ansi-format-9 { text-decoration: line-through }
