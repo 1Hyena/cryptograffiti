@@ -366,7 +366,8 @@ function cg_load_constants() {
             else {
                 json = JSON.parse(response);
                 if ("constants" in json
-                &&  "TXS_PER_QUERY" in json.constants) {
+                &&  "TXS_PER_QUERY" in json.constants
+                &&  "ENCODER_FEE_AMPLIFIER" in json.constants) {
                    CG_CONSTANTS = json.constants;
                    status = CG_TXT_MAIN_CONSTANTS_LOADED[CG_LANGUAGE];
                 }

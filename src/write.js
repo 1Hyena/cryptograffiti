@@ -667,7 +667,9 @@ function cg_write_estimate_fee() {
                     var hourfee = Number(response.hourFee);
                     if (hourfee > 0) {
                         var new_fee = 0.00000001*(hourfee*1000);
-                        new_fee = new_fee * 2; // Compensate for the lower than dust outputs.
+                        var amp = CG_CONSTANTS.ENCODER_FEE_AMPLIFIER;
+                        if (typeof amp != 'number' || amp < 0.0) amp = 1.0;
+                        new_fee = new_fee * amp; // Compensate for the lower than dust outputs.
                         if (CG_WRITE_FEE_PER_KB !== new_fee) {
                             CG_WRITE_FEE_PER_KB = new_fee;
                             cg_write_update_now();

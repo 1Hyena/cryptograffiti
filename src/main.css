@@ -212,7 +212,7 @@ button {
     display: inline-block;
     vertical-align: top;
     height: 14rem;
-    width: calc(100% - 15rem);
+    width: calc(100% - 17rem);
 
     border: medium outset rgba(230,230,230, 0.80);
     border-radius: 1.0rem;
@@ -338,7 +338,7 @@ button {
 .cg-tools-list {
     display: inline-block;
     vertical-align: top;
-    width: 14rem;
+    width: 16rem;
     height: 8.0rem;
 
     border: medium outset rgba(230,230,230, 0.80);
