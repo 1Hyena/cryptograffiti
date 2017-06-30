@@ -21,6 +21,7 @@ var CG_READ_FILTER_KEY = null;
 var CG_READ_FILTER_ADDR= null;
 var CG_READ_FILTER_TXS = null;
 var CG_READ_CENSOR_TXS = {};
+var CG_READ_API_OK     = true;
 
 var CG_READ_JOBS = {
     "cg_read_get_filter" : 1,
@@ -354,9 +355,11 @@ function cg_decode() {
             var status = "???";
             var success = false;
 
+            CG_READ_API_OK = false;
                  if (json === false) status = sprintf(CG_TXT_MAIN_API_ERROR[CG_LANGUAGE], CG_READ_APIS[api].domain);
             else if (json === null ) status = sprintf(CG_TXT_MAIN_API_TIMEOUT[CG_LANGUAGE], CG_READ_APIS[api].domain);
             else {
+                CG_READ_API_OK = true;
                 var response = JSON.parse(json);
 
                 if (typeof response === 'object') {
@@ -414,7 +417,7 @@ function cg_decode() {
 
                         msgbox.classList.add("cg-msgbox-decoded");
                         while (msgspan.hasChildNodes()) msgspan.removeChild(msgspan.lastChild);
-                        
+
                         for (var i = 0; i < processedTxt.length; i++) {
                             msgspan.appendChild(processedTxt[i])
                         }
@@ -482,7 +485,7 @@ function cg_decode() {
             }
 
             CG_STATUS.push(status);
-        }
+        }, (CG_READ_API_OK ? 3000 : 20000)
     );
 
     return true;

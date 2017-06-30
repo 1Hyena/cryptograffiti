@@ -188,6 +188,11 @@ button {
     padding: 0.25rem;
 }
 
+.cg-view-tab {
+    overflow: hidden;
+    padding: 0rem;
+}
+
 .cg-write-main {
     min-height: 18rem; /* should be same as .cg-write-side's min-height */
     flex: 1.0;
@@ -1000,6 +1005,14 @@ a.cg-link:hover {
 
 #cg-save-order-details {
     min-height: 192px;
+}
+
+#cg-view-iframe {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 0px;
+    opacity: 0;
 }
 
 .cg-captcha-answer-input {

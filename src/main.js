@@ -6,8 +6,10 @@ var CG_ONLINE      = null;
 var CG_HOLD_STATUS = 0;
 var CG_HOLD_DELAY  = false;
 var CG_TX_NR       = null;
+var CG_TX_HASH     = null;
+var CG_TX_TYPE     = null;
 var CG_SCROLL_KEY  = false;
-var CG_VERSION     = "0.90";
+var CG_VERSION     = "0.91";
 var CG_ACTIVE_TAB  = null;
 var CG_DECODER_OK  = true; // Decoder is online?
 var CG_ENCODER_OK  = true; // Encoder is online?
@@ -46,6 +48,11 @@ function cg_main() {
         else if (hash === "ru") {CG_LANGUAGE = "ru"; lang_given = true;}
         else if (hash === "et") {CG_LANGUAGE = "et"; lang_given = true;}
         else if (isNormalInteger(hash)) CG_TX_NR = hash;
+        else if (isHex(hash) && hash.length === 64) CG_TX_HASH = hash.toLowerCase();
+        else if (hash.match(/[0-9A-Fa-f]{64}\.[a-zA-Z0-9_-]+/g)) {
+            CG_TX_HASH = hash.substr(0, 64).toLowerCase();
+            CG_TX_TYPE = hash.substr(65);
+        }
         else if (Bitcoin.testAddress(hash)) CG_READ_FILTER_ADDR = hash;
         else if (hash.indexOf(":") > -1) {
             var parts = hash.split(":");
@@ -124,6 +131,18 @@ function cg_main() {
 function cg_main_loop() {
     CG_SCROLL_KEY  = false;
 
+    var hashes = location.hash.substring(1).split("#");
+    CG_TX_HASH = null;
+    CG_TX_TYPE = null;
+    for (var i=0, sz=hashes.length; i<sz; ++i) {
+        var hash = decodeURIComponent(hashes[i]);
+        if (isHex(hash) && hash.length === 64) CG_TX_HASH = hash.toLowerCase();
+        else if (hash.match(/[0-9A-Fa-f]{64}\.[a-zA-Z0-9_-]+/g)) {
+            CG_TX_HASH = hash.substr(0, 64).toLowerCase();
+            CG_TX_TYPE = hash.substr(65);
+        }
+    }
+
     var spacer = document.getElementById("cg-tabs-spacer");
     var tabs   = document.getElementById("cg-tabs");
 
@@ -150,6 +169,11 @@ function cg_main_loop() {
     var tab_captcha = document.getElementById("cg-tab-captcha");
     if (tab_captcha && !tab_captcha.classList.contains("cg-inactive-tab")) {
         cg_captcha_update();
+    }
+
+    var tab_view = document.getElementById("cg-tab-view");
+    if (tab_view && !tab_view.classList.contains("cg-inactive-tab")) {
+        cg_view_update();
     }
 
     var tab_save = document.getElementById("cg-tab-save");
@@ -185,7 +209,7 @@ function cg_check_key(e) {
 
 function cg_construct(cg) {
     var text = document.createTextNode(CG_TXT_MAIN_PLEASE_WAIT[CG_LANGUAGE]);
-    
+
     while (cg.hasChildNodes()) {
         cg.removeChild(cg.lastChild);
     }
@@ -210,7 +234,7 @@ function cg_construct(cg) {
     setTimeout(function(){
         cg_construct_header();
     }, 100);
-    
+
     setTimeout(function(){
         cg_construct_footer();
     }, 500);
@@ -228,7 +252,7 @@ function cg_construct_footer() {
         alert(CG_TXT_MAIN_ERROR_3[CG_LANGUAGE]);
         return;
     }
-    
+
     credits.className = credits.className + " cg-disappear";
 
     setTimeout(function(){
@@ -241,7 +265,7 @@ function cg_construct_footer() {
         cg_load_constants();
 
         var languages = document.createElement("DIV");
-        
+
         var img_us = document.createElement("img");
         img_us.setAttribute('src', CG_IMG_US);
         img_us.setAttribute('alt', CG_TXT_MAIN_FLAG_OF_US[CG_LANGUAGE]);
@@ -251,7 +275,7 @@ function cg_construct_footer() {
         img_ru.setAttribute('src', CG_IMG_RU);
         img_ru.setAttribute('alt', CG_TXT_MAIN_FLAG_OF_RU[CG_LANGUAGE]);
         img_ru.style.verticalAlign="middle";
-        
+
         var img_ee = document.createElement("img");
         img_ee.setAttribute('src', CG_IMG_EE);
         img_ee.setAttribute('alt', CG_TXT_MAIN_FLAG_OF_EE[CG_LANGUAGE]);
@@ -278,24 +302,24 @@ function cg_construct_footer() {
         var a_ru = document.createElement("a"); a_ru.appendChild(img_ru);
         a_ru.title = CG_TXT_MAIN_TRANSLATE_TO_RU[CG_LANGUAGE];
         a_ru.href  = "#ru"+options;
-        a_ru.classList.add("hvr-glow");        
+        a_ru.classList.add("hvr-glow");
         a_ru.onclick=function(){fade_out(); setTimeout(function(){location.reload();}, 500); return true;};
         a_ru.style.margin="0ch 0.25ch";
-        
+
         var a_ee = document.createElement("a"); a_ee.appendChild(img_ee);
         a_ee.title = CG_TXT_MAIN_TRANSLATE_TO_EE[CG_LANGUAGE];
         a_ee.href  = "#et"+options;
-        a_ee.classList.add("hvr-glow");        
+        a_ee.classList.add("hvr-glow");
         a_ee.onclick=function(){fade_out(); setTimeout(function(){location.reload();}, 500); return true;};
         a_ee.style.margin="0ch 0.25ch";
-        
+
         if (CG_LANGUAGE !== "en") languages.appendChild(a_en);
         if (CG_LANGUAGE !== "ru") languages.appendChild(a_ru);
-        if (CG_LANGUAGE !== "et") languages.appendChild(a_ee);                
-        
+        if (CG_LANGUAGE !== "et") languages.appendChild(a_ee);
+
         languages.classList.add("cg-appear");
         languages.classList.add("cg-footer-languages");
-        
+
         footer.appendChild(languages);
     }, 1000);
 }
@@ -401,7 +425,7 @@ function cg_load_stats() {
             else if (response === null ) online = CG_TXT_MAIN_TIMEOUT[CG_LANGUAGE];
             else {
                 json = JSON.parse(response);
-                if ("stats" in json && json.stats.length === 1 
+                if ("stats" in json && json.stats.length === 1
                 &&  "sessions" in json.stats[0]
                 &&  "IPs" in json.stats[0]
                 &&  "decoder" in json.stats[0]
@@ -455,7 +479,7 @@ function cg_construct_header() {
         version = document.createElement("span");
         version.appendChild(document.createTextNode("v"+CG_VERSION));
         version.id="cg-version"
-        
+
         header.children[0].appendChild(version);
     }
 
@@ -469,7 +493,7 @@ function cg_construct_header() {
     tabs.className = tabs.className + " cg-tabs";
 
     header.appendChild(tabs);
-    
+
     setTimeout(function(){
         cg_construct_buttons(tabs);
         if (version) {
@@ -487,7 +511,7 @@ function cg_construct_buttons(tabs) {
     var btn_3 = document.createElement("BUTTON"); btn_3.classList.add("cg-btn");
     var btn_4 = document.createElement("BUTTON"); btn_4.classList.add("cg-btn");
     var btn_5 = document.createElement("BUTTON"); btn_5.classList.add("cg-btn");
-    
+
     btn_1.addEventListener("click", cg_button_click_read ); btn_1.disabled = true;
     btn_2.addEventListener("click", cg_button_click_write); btn_2.disabled = true;
     btn_3.addEventListener("click", cg_button_click_tools); btn_3.disabled = true;
@@ -523,7 +547,12 @@ function cg_construct_buttons(tabs) {
             cg.removeChild(cg.lastChild);
         }
 
-        if (CG_WRITE_TEXT === null) {
+        if (CG_TX_HASH !== null) {
+            var btn = document.getElementById("cg-btn-tab-read");
+            cg_button_click(btn, cg_construct_view);
+            btn_1.disabled = false;
+        }
+        else if (CG_WRITE_TEXT === null) {
             btn_1.disabled = false;
             btn_1.click();
         }
@@ -600,9 +629,9 @@ function cg_init_tab(main, tab_id) {
     div.id=tab_id;
     div.classList.add("cg-tab");
     div.classList.add("cg-borderbox");
-    
+
     main.appendChild(div);
-    
+
     return div;
 }
 

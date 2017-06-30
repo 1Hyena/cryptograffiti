@@ -2,8 +2,7 @@ var OPEN_HTTP_REQUESTS= 0;
 var HTTP_REQUESTS     = {};
 var NEXT_REQUEST_ID   = 1;
 
-function xmlhttpPost(strURL, strParams, fun) {
-    var timeout = 20000;
+function xmlhttpPost(strURL, strParams, fun, timeout = 20000) {
     //if (Math.random() > 0.5) timeout = 10;
 
     var self = { open : true,
@@ -50,8 +49,7 @@ function xmlhttpPost(strURL, strParams, fun) {
     self.xmlHttpReq.send(strParams);
 }
 
-function xmlhttpGet(strURL, strParams, fun) {
-    var timeout = 20000;
+function xmlhttpGet(strURL, strParams, fun, timeout = 20000) {
     //if (Math.random() > 0.5) timeout = 10;
 
     var self = { open : true,
@@ -383,7 +381,7 @@ function processColours(bytes) {
         background: 7,
         attributes: [] // things like bold or strikethrough
     };
-    
+
     var output = []; // future array of all elements
     var currentElement = createSpan(state);
     var currentText = ""
@@ -411,10 +409,10 @@ function processColours(bytes) {
                     parsedNumbers.push(parseInt(currentNumber));
                 }
                 state = changeState(state, parsedNumbers);
-                
+
                 currentElement.appendChild(document.createTextNode(currentText));
                 output.push(currentElement);
-                
+
                 currentElement = createSpan(state);
                 currentText = "";
 
