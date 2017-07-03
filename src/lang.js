@@ -174,28 +174,28 @@ var CG_TXT_MAIN_SESSIONS = {
     ru : "сессии"
 };
 
-var CG_TXT_MAIN_API_REQUEST = 
+var CG_TXT_MAIN_API_REQUEST =
 {
     en : "Querying %s.",
     et : "Pärin %s teenust.",
     ru : "Запрашиваем %s."
 };
 
-var CG_TXT_MAIN_API_ERROR = 
+var CG_TXT_MAIN_API_ERROR =
 {
     en : "Erroneous response from %s.",
     et : "Vigane vastus %s teenuselt.",
     ru : "Ошибочный ответ от %s."
 };
 
-var CG_TXT_MAIN_API_TIMEOUT = 
+var CG_TXT_MAIN_API_TIMEOUT =
 {
     en : "Timeout occurred when querying %s.",
     et : "Teenusele %s saadetud päring jäi vastuseta.",
     ru : "Превышен интервал ожидания при запросе %s."
 };
 
-var CG_TXT_MAIN_API_INVALID_RESPONSE = 
+var CG_TXT_MAIN_API_INVALID_RESPONSE =
 {
     en : "Invalid response from %s.",
     et : "Lubamatu vastus teenuselt %s.",
@@ -355,35 +355,35 @@ var CG_TXT_READ_OLD_GRAFFITI_LOADED =
     ru : "Загружено старых граффити %s (всего %s)."
 };
 
-var CG_TXT_READ_READING_BLOCKCHAIN = 
+var CG_TXT_READ_READING_BLOCKCHAIN =
 {
     en : "Querying the blockchain API.",
     et : "Pärin plokiahelat.",
     ru : "Запрашиваем blockchain API."
 };
 
-var CG_TXT_READ_BLOCKCHAIN_ERROR = 
+var CG_TXT_READ_BLOCKCHAIN_ERROR =
 {
     en : "Erroneous response from the blockchain API.",
     et : "Vigane vastus plokiahelalt.",
     ru : "Ошибочный ответ от blockchain API."
 };
 
-var CG_TXT_READ_BLOCKCHAIN_TIMEOUT = 
+var CG_TXT_READ_BLOCKCHAIN_TIMEOUT =
 {
     en : "Timeout occurred when querying the blockchain API.",
     et : "Plokiahela pärimiseks antud aeg sai täis.",
     ru : "Превышен интервал ожидания при запросе blockchain API."
 };
 
-var CG_TXT_READ_BLOCKCHAIN_INVALID = 
+var CG_TXT_READ_BLOCKCHAIN_INVALID =
 {
     en : "Invalid response from the blockchain API.",
     et : "Lubamatu vastus plokiahelalt.",
     ru : "Недопустимый ответ от blockchain API."
 };
 
-var CG_TXT_READ_BLOCKCHAIN_SUCCESS = 
+var CG_TXT_READ_BLOCKCHAIN_SUCCESS =
 {
     en : "Graffiti #%s decoded successfully.",
     et : "Graffiti #%s dekodeeriti edukalt.",
@@ -404,7 +404,7 @@ var CG_TXT_READ_MSG_NOT_DECODED_YET =
     ru : "Сообщение ещё не декодировано."
 };
 
-var CG_TXT_READ_LINK_TO_THIS_MSG = 
+var CG_TXT_READ_LINK_TO_THIS_MSG =
 {
     en : "Link to this message.",
     et : "Viide sellele sõnumile.",
@@ -497,6 +497,49 @@ var CG_TXT_READ_MESSAGE_CENSORED =
 
 ////////////////////////////////////////////////////////////////////////////////
 //  READ TAB TRANSLATIONS END                                                 //
+////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////
+//  VIEW TAB TRANSLATIONS BEGIN                                               //
+////////////////////////////////////////////////////////////////////////////////
+
+var CG_TXT_VIEW_TX_FORGOTTEN =
+{
+    en : "Transaction %s has now been forgotten.",
+    et : "Ülekanne %s on nüüd unustatud.",
+    ru : "(Transaction %s has now been forgotten.)"
+};
+
+var CG_TXT_VIEW_LOADING_TX_DATA =
+{
+    en : "Loading transaction %s from %s.",
+    et : "Laen ülekannet %s, kasutades teenust %s.",
+    ru : "(Loading transaction %s from %s.)"
+};
+
+var CG_TXT_VIEW_LOADING_TX_DATA_FAIL =
+{
+    en : "Failed to load %s from %s.",
+    et : "Ülekande %s laadimine %s teenuselt ebaõnnestus.",
+    ru : "(Failed to load %s from %s.)"
+};
+
+var CG_TXT_VIEW_DECODING_FAIL =
+{
+    en : "Failed to decode transaction %s.",
+    et : "Ülekande %s dekodeerimine ebaõnnestus.",
+    ru : "(Failed to decode transaction %s.)"
+};
+
+var CG_TXT_VIEW_FILE_NOT_FOUND =
+{
+    en : "Transaction %s does not contain a valid block chain file.",
+    et : "Ülekandest %s ei leitud valiidset plokiahela faili.",
+    ru : "(Transaction %s does not contain a valid block chain file.)"
+};
+
+////////////////////////////////////////////////////////////////////////////////
+//  VIEW TAB TRANSLATIONS END                                                 //
 ////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -878,14 +921,14 @@ var CG_TXT_SAVE_ORDER_STATUS_FILLED =
     ru : "ЗАПОЛНЕН"
 };
 
-var CG_TXT_SAVE_PAYMENT_DETAILS = 
+var CG_TXT_SAVE_PAYMENT_DETAILS =
 {
     en : "Please send exactly %s bitcoins to %s.",
     et : "Palun saatke täpselt %s bitimünti aadressile %s.",
     ru : "Пожалуйста, отправьте ровно %s биткойнов на %s."
 };
 
-var CG_TXT_SAVE_PAYMENT_NOTE = 
+var CG_TXT_SAVE_PAYMENT_NOTE =
 {
     en : "Sending a wrong number of bitcoins will not fill the order. By using this service you agree not to save anything illegal on the block chain. In case of abuse we may report your IP address to the police.",
     et : "Kui Te saadate vale summa bitimünte, siis Teie tellimust ei täideta. Seda teenust kasutades nõustute, et Te ei salvesta plokiahelasse midagi illegaalset. Rikkumise korral võime edastada Teie IP aadress politseisse.",
@@ -1112,7 +1155,7 @@ var CG_TXT_HELP_KNOWN_ISSUES = {
 var CG_TXT_HELP_TODO = [
     {
         en : "Add support for OP_RETURN messages.",
-        et : "Lisada tugi OP_RETURN sõnumitele.", 
+        et : "Lisada tugi OP_RETURN sõnumitele.",
         ru : "Добавить поддержку сообщений OP_RETURN."
     },
     {

@@ -329,6 +329,7 @@ button {
     display: flex;
     flex-direction: column;
     min-height: 18rem;
+    height: calc(100% - 1rem);
     flex: 99.0;
     max-width: 20rem;
 
