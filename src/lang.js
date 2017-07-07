@@ -524,6 +524,13 @@ var CG_TXT_VIEW_LOADING_TX_DATA_FAIL =
     ru : "(Failed to load %s from %s.)"
 };
 
+var CG_TXT_VIEW_OPEN_FAIL =
+{
+    en : "The selected file type cannot be displayed here.",
+    et : "Selekteeritud failitüüpi ei saa siin kuvada.",
+    ru : "(The selected file type cannot be displayed here.)"
+};
+
 var CG_TXT_VIEW_DECODING_FAIL =
 {
     en : "Failed to decode transaction %s.",
@@ -536,6 +543,20 @@ var CG_TXT_VIEW_FILE_NOT_FOUND =
     en : "Transaction %s does not contain a valid block chain file.",
     et : "Ülekandest %s ei leitud valiidset plokiahela faili.",
     ru : "(Transaction %s does not contain a valid block chain file.)"
+};
+
+var CG_TXT_VIEW_BTN_CLOSE =
+{
+    en : "CLOSE",
+    et : "SULGE",
+    ru : "(CLOSE)"
+};
+
+var CG_TXT_VIEW_BTN_OPEN =
+{
+    en : "OPEN",
+    et : "AVA",
+    ru : "(OPEN)"
 };
 
 ////////////////////////////////////////////////////////////////////////////////

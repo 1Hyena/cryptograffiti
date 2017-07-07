@@ -547,9 +547,31 @@ function cg_button_click_preview() {
 
         var previewarea = document.getElementById(CG_WRITE_STATE);
         while (previewarea.hasChildNodes()) previewarea.removeChild(previewarea.lastChild);
-
         var msgbox = cg_write_create_msgbox(CG_WRITE_CHUNKS, CG_WRITE_FILE_TYPE);
-        previewarea.appendChild(msgbox);
+        msgbox.cg_msgbody.classList.add("cg-write-msgbody");
+
+        {
+            var boxarea = document.createElement("div");
+            boxarea.style.height="calc(100% - 2.25rem)";
+            boxarea.style.width="100%";
+            boxarea.style.overflow="hidden";
+            var table = document.createElement("div");
+            table.style.width="100%";
+            table.style.height="100%";
+            table.style.display="table";
+            var cell = document.createElement("div");
+            cell.style.display="table-cell";
+            cell.style.verticalAlign="middle";
+            var wrapper = document.createElement("div");
+            wrapper.style.marginLeft="auto";
+            wrapper.style.marginRight="auto";
+
+            wrapper.appendChild(msgbox);
+            cell.appendChild(wrapper);
+            table.appendChild(cell);
+            boxarea.appendChild(table);
+            previewarea.appendChild(boxarea);
+        }
 
         var btn_container = document.createElement("DIV");
         btn_container.style = "font-size: 1rem; width: 12ch; display: inline-block;";
@@ -703,7 +725,7 @@ function cg_write_check_amount(str) {
     return "";
 }
 
-function cg_write_create_msgbox(CG_WRITE_CHUNKS, mimetype) {
+function cg_write_create_msgbox(chunks, mimetype) {
     var msgbox     = document.createElement("DIV");
     var msgheader  = document.createElement("DIV");
     var msgheaderL = document.createElement("DIV");
@@ -737,8 +759,8 @@ function cg_write_create_msgbox(CG_WRITE_CHUNKS, mimetype) {
 
     var msg = "";
     var out_bytes= "";
-    for (var j = 0, sz = CG_WRITE_CHUNKS.length; j < sz; j++) {
-        out_bytes = out_bytes + Bitcoin.getAddressPayload(CG_WRITE_CHUNKS[j]);
+    for (var j = 0, sz = chunks.length; j < sz; j++) {
+        out_bytes = out_bytes + Bitcoin.getAddressPayload(chunks[j]);
     }
 
     var fsz = (CG_WRITE_FILE_BYTES !== null ? CG_WRITE_FILE_BYTES.byteLength : 0);
@@ -768,9 +790,9 @@ function cg_write_create_msgbox(CG_WRITE_CHUNKS, mimetype) {
 
     var txt = msg;
     processedTxt = processColours(txt);
-    
+
     while (span.hasChildNodes()) span.removeChild(span.lastChild);
-    
+
     for (var i = 0; i < processedTxt.length; i++) {
         span.appendChild(processedTxt[i])
     }
@@ -791,10 +813,74 @@ function cg_write_create_msgbox(CG_WRITE_CHUNKS, mimetype) {
             msgbody.insertBefore(media, span);
         }
         else {
+            var media = document.createElement("DIV");
+            media.classList.add("cg-msgbody-media");
+
             var file_table = cg_read_create_filetable(blockchain_file, mimetype, filehash, fsz);
+            file_table.cg_type_select.disabled = true;
             file_table.classList.add("cg-read-filetable");
-            msgbody.insertBefore(file_table, span);
-            msgbody.insertBefore(document.createElement("BR"), span);
+
+            media.appendChild(file_table);
+            msgbody.insertBefore(media, span);
+
+            if (mimetype.indexOf("text/") === 0
+            ||  mimetype.indexOf("application/pgp") === 0) {
+                media = document.createElement("DIV");
+                media.classList.add("cg-msgbody-media");
+                //media.classList.add("cg-borderbox");
+
+                var utf8 = decode_utf8(blockchain_file);
+                var ta = document.createElement("textarea");
+                ta.readOnly = true;
+                ta.rows = 24;
+                ta.cols = 80;
+                ta.wrap = false;
+                ta.value = utf8;
+                ta.classList.add("cg-view-textarea");
+                //ta.classList.add("cg-borderbox");
+                media.appendChild(ta);
+
+                if (mimetype === "text/html"
+                ||  mimetype === "text/markdown") {
+                    var cover = document.createElement("div");
+                    cover.style.position = "absolute";
+                    cover.style.top = "0";
+                    cover.style.bottom = "0";
+                    cover.style.left = "0";
+                    cover.style.right = "0";
+                    cover.style.backgroundColor = "white";
+
+                    var b64Data = encode_base64(utf8);
+                    var obj = document.createElement('iframe');
+                    var safe_type = (mimetype === "text/html" ? mimetype : "text/plain");
+                    obj.style.width = "100%";
+                    obj.style.height = "100%";
+                    obj.src = "data:"+safe_type+";charset=utf8;base64,"+b64Data;
+                    obj.sandbox = '';
+                    obj.classList.add("cg-borderbox");
+
+                    cover.appendChild(obj);
+                    media.appendChild(cover);
+
+                    if (mimetype === "text/markdown") {
+                        var data_obj = {
+                            text: utf8,
+                            mode: "markdown",
+                            context: "none"
+                        }
+                        var json_str = JSON.stringify(data_obj);
+                        xmlhttpPost('https://api.github.com/markdown', json_str,
+                            function(response) {
+                                if (response === false || response === null) return;
+                                var b64 = encode_base64(response);
+                                obj.src = "data:text/html;charset=utf8;base64,"+b64;
+                            }
+                        );
+                    }
+                }
+
+                msgbody.insertBefore(media, span);
+            }
         }
     }
 
@@ -802,10 +888,7 @@ function cg_write_create_msgbox(CG_WRITE_CHUNKS, mimetype) {
         msgbody.classList.add("cg-msgbody-tiny");
     }
 
-    msgbox.style.width="100%";
-    msgbox.style.height="calc(100% - 2.25rem)";
     msgbox.style.backgroundColor="transparent";
-    msgbody.style.maxHeight="none";
-    msgbody.style.height="calc(100% - 6.5ch)";
+    msgbox.cg_msgbody = msgbody;
     return msgbox;
 }

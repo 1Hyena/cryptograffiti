@@ -103,6 +103,10 @@ function isEmpty(obj) {
     return true;
 }
 
+function encode_base64(str) {
+    return window.btoa(unescape(encodeURIComponent(str)));
+}
+
 function decode_utf8(bytes) {
     var len = bytes.length;
     var msg = "";

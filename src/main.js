@@ -13,6 +13,7 @@ var CG_VERSION     = "0.91";
 var CG_ACTIVE_TAB  = null;
 var CG_DECODER_OK  = true; // Decoder is online?
 var CG_ENCODER_OK  = true; // Encoder is online?
+var CG_LAST_HASH   = "";
 
 function cg_start() {
     if (window.attachEvent) {
@@ -128,20 +129,51 @@ function cg_main() {
     }, 500);
 }
 
+function cg_main_set_hash(update) {
+    var hash = {
+        tx_hash : CG_TX_HASH,
+        tx_type : CG_TX_TYPE,
+        tx_nr   : null
+    };
+
+    for (var key in update) {
+        if (update.hasOwnProperty(key)) hash[key] = update[key];
+    }
+
+    var remaining_hash = "";
+    if (hash.tx_nr !==null) remaining_hash += "#"+hash.tx_nr;
+    if (hash.tx_hash !== null) {
+        remaining_hash += "#"+hash.tx_hash;
+        if (hash.tx_type !== null) remaining_hash += "."+hash.tx_type;
+    }
+
+    if (CG_LAST_HASH  !== location.hash
+    ||  CG_LAST_HASH  !== remaining_hash) {
+        if (remaining_hash.length == 0) remaining_hash = "#";
+        if (history.pushState) history.pushState(null, null, remaining_hash);
+        else location.hash = remaining_hash;
+    }
+    CG_LAST_HASH = remaining_hash;
+}
+
 function cg_main_loop() {
     CG_SCROLL_KEY  = false;
 
     var hashes = location.hash.substring(1).split("#");
     CG_TX_HASH = null;
     CG_TX_TYPE = null;
+    var tx_nr  = null;
     for (var i=0, sz=hashes.length; i<sz; ++i) {
         var hash = decodeURIComponent(hashes[i]);
         if (isHex(hash) && hash.length === 64) CG_TX_HASH = hash.toLowerCase();
+        else if (isNormalInteger(hash)) tx_nr = hash;
         else if (hash.match(/[0-9A-Fa-f]{64}\.[a-zA-Z0-9_-]+/g)) {
             CG_TX_HASH = hash.substr(0, 64).toLowerCase();
             CG_TX_TYPE = hash.substr(65);
         }
     }
+
+    cg_main_set_hash({tx_nr : tx_nr});
 
     var spacer = document.getElementById("cg-tabs-spacer");
     var tabs   = document.getElementById("cg-tabs");
