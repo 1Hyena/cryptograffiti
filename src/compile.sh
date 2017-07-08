@@ -25,7 +25,8 @@ while IFS='' read -r line || [[ -n "$line" ]]; do
             fi
         done
 
-        cat ${files} | yui-compressor --type css --charset utf8 >> "$out"
+        printf "Compiling CSS...\n"
+        cat ${files} | yui-compressor --verbose --type css --charset utf8 >> "$out"
         printf "\n" >> "${out}"
         continue
     fi
@@ -47,7 +48,8 @@ while IFS='' read -r line || [[ -n "$line" ]]; do
         done
 
         printf "<script>\n" >> "$out"
-        cat ${files} | yui-compressor --type js --charset utf8 -v >> "$out"
+        printf "Compiling JavaScript...\n"
+        cat ${files} | yui-compressor --verbose --type js --charset utf8 -v >> "$out"
         printf "\n</script>\n" >> "$out"
         continue
     fi
