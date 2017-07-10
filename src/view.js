@@ -316,11 +316,14 @@ function cg_view_create_msgbox(chunks, mimetype, open, txhash, timestamp) {
                 msgbody.style.padding="0";
             }
             else {
+                var type = mimetype;
+                if (type.indexOf("text/") === 0
+                ||  type.indexOf("application/pgp") === 0) type = "text/plain";
                 var utf8 = decode_utf8(blockchain_file);
                 var b64Data = encode_base64(utf8);
                 obj = document.createElement('iframe');
                 obj.id = "cg-view-object";
-                obj.src = "data:"+mimetype+";charset=utf8;base64,"+b64Data;
+                obj.src = "data:"+type+";charset=utf8;base64,"+b64Data;
                 obj.sandbox = '';
                 if (mimetype === "text/markdown") {
                     var data_obj = {
