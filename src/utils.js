@@ -2,7 +2,8 @@ var OPEN_HTTP_REQUESTS= 0;
 var HTTP_REQUESTS     = {};
 var NEXT_REQUEST_ID   = 1;
 
-function xmlhttpPost(strURL, strParams, fun, timeout = 20000) {
+function xmlhttpPost(strURL, strParams, fun, timeout) {
+    timeout = typeof timeout !== 'undefined' ? timeout : (20000);
     //if (Math.random() > 0.5) timeout = 10;
 
     var self = { open : true,
@@ -49,7 +50,8 @@ function xmlhttpPost(strURL, strParams, fun, timeout = 20000) {
     self.xmlHttpReq.send(strParams);
 }
 
-function xmlhttpGet(strURL, strParams, fun, timeout = 20000) {
+function xmlhttpGet(strURL, strParams, fun, timeout) {
+    timeout = typeof timeout !== 'undefined' ? timeout : (20000);
     //if (Math.random() > 0.5) timeout = 10;
 
     var self = { open : true,
