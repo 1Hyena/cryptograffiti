@@ -132,7 +132,7 @@ function cg_view_do() {
                     if (mimetype !== "application/octet-stream") {
                         var body_msgbox = cg_view_create_msgbox(chunks, mimetype, true, txhash, timestamp);
                         body_msgbox.cg_msgbody.classList.add("cg-view-msgbody");
-                        body_msgbox.cg_msgbody.style.width  = "100vw";
+                        body_msgbox.cg_msgbody.style.width  = "calc(0.707*(100vh - 22rem))";
                         body_msgbox.cg_msgbody.style.height = "100vh";
                         body.appendChild(cg_view_create_wrapper(body_msgbox));
                         fail = false;
