@@ -37,7 +37,8 @@ var CG_READ_APIS = [
         delay     : 0,
         max_delay : 2*CG_READ_PPS,
         down      : false,
-        fails     : 0
+        fails     : 0,
+        fork      : "core"
     },
     {
         domain    : "blockexplorer.com",
@@ -47,7 +48,8 @@ var CG_READ_APIS = [
         delay     : 0,
         max_delay : 2*CG_READ_PPS,
         down      : false,
-        fails     : 0
+        fails     : 0,
+        fork      : "core"
     },
     {
         domain    : "blockr.io",
@@ -57,10 +59,59 @@ var CG_READ_APIS = [
         delay     : 0,
         max_delay : 2*CG_READ_PPS,
         down      : false,
-        fails     : 0
+        fails     : 0,
+        fork      : "core"
+    },
+    {
+        domain    : "bitcoincash.blockexplorer.com",
+        request   : "https://bitcoincash.blockexplorer.com/api/tx/%s",
+        link      : "https://bitcoincash.blockexplorer.com/tx/%s",
+        extract   : "cg_read_extract_blockexplorer",
+        delay     : 0,
+        max_delay : 2*CG_READ_PPS,
+        down      : false,
+        fails     : 0,
+        fork      : "cash"
+    },
+    /*{ // commented out because some CORS issues
+        domain    : "bccblock.info",
+        request   : "https://bccblock.info/api/tx/%s",
+        link      : "https://bccblock.info/tx/%s",
+        extract   : "cg_read_extract_blockexplorer",
+        delay     : 0,
+        max_delay : 2*CG_READ_PPS,
+        down      : false,
+        fails     : 0,
+        fork      : "cash"
+    },*/
+    {
+        domain    : "bch-bitcore2.trezor.io",
+        request   : "https://bch-bitcore2.trezor.io/api/tx/%s",
+        link      : "https://bch-bitcore2.trezor.io/tx/%s",
+        extract   : "cg_read_extract_blockexplorer",
+        delay     : 0,
+        max_delay : 2*CG_READ_PPS,
+        down      : false,
+        fails     : 0,
+        fork      : "cash"
+    },
+    {
+        domain    : "blockdozer.com",
+        request   : "http://blockdozer.com/insight-api/tx/%s",
+        link      : "http://blockdozer.com/insight/tx/%s",
+        extract   : "cg_read_extract_blockexplorer",
+        delay     : 0,
+        max_delay : 2*CG_READ_PPS,
+        down      : false,
+        fails     : 0,
+        fork      : "cash"
     }
 ];
-var CG_READ_API_BLOCKCHAIN_INFO = 0; // Index of blockchain.info in the CG_READ_APIS array.
+
+var CG_READ_API = {
+    core : 0, // Index of blockchain.info in the CG_READ_APIS array.
+    cash : 3  // Index of bitcoincash.blockexplorer.com
+};
 
 function cg_construct_read(main) {
     var div = cg_init_tab(main, 'cg-tab-read');
@@ -272,6 +323,7 @@ function cg_decode() {
     var apis = [];
     var api = null;
     for (var i=0, sz = CG_READ_APIS.length; i<sz; i++) {
+        if (CG_READ_APIS[i].fork !== CG_BTC_FORK) continue;
              if (CG_READ_APIS[i].delay ===  0) apis.push(i);
         else if (CG_READ_APIS[i].delay === -1) return false; // Already requested.
     }
@@ -545,10 +597,10 @@ function cg_decode() {
             if (success) {
                 var msgtxhash_id = "cg-msgtxhash-"+nr;
                 var msgtxhash    = document.getElementById(msgtxhash_id);
-                if (CG_READ_APIS[CG_READ_API_BLOCKCHAIN_INFO].down) {
+                if (CG_READ_APIS[CG_READ_API[CG_BTC_FORK]].down) {
                     msgtxhash.href = sprintf(CG_READ_APIS[api].link, txid);
                 }
-                else msgtxhash.href = sprintf(CG_READ_APIS[CG_READ_API_BLOCKCHAIN_INFO].link, txid);
+                else msgtxhash.href = sprintf(CG_READ_APIS[CG_READ_API[CG_BTC_FORK]].link, txid);
                 CG_READ_APIS[api].fails = 0;
             }
 

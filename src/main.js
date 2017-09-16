@@ -14,6 +14,7 @@ var CG_ACTIVE_TAB  = null;
 var CG_DECODER_OK  = true; // Decoder is online?
 var CG_ENCODER_OK  = true; // Encoder is online?
 var CG_LAST_HASH   = "";
+var CG_BTC_FORK    = "core";
 
 function cg_start() {
     if (window.attachEvent) {
@@ -48,6 +49,8 @@ function cg_main() {
              if (hash === "en") {CG_LANGUAGE = "en"; lang_given = true;}
         else if (hash === "ru") {CG_LANGUAGE = "ru"; lang_given = true;}
         else if (hash === "et") {CG_LANGUAGE = "et"; lang_given = true;}
+        else if (hash === "core") CG_BTC_FORK = "core";
+        else if (hash === "cash") CG_BTC_FORK = "cash";
         else if (isNormalInteger(hash)) CG_TX_NR = hash;
         else if (isHex(hash) && hash.length === 64) CG_TX_HASH = hash.toLowerCase();
         else if (hash.match(/[0-9A-Fa-f]{64}\.[a-zA-Z0-9_-]+/g)) {

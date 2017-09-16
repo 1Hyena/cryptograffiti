@@ -18,7 +18,7 @@ function cg_construct_save(main) {
     }
 
     //div.classList.add("cg-save-tab");
-    
+
     var table = document.createElement("div");
     table.style.width="100%";
     table.style.height="100%";
@@ -82,7 +82,7 @@ function cg_construct_save(main) {
     btn_wallet.appendChild(txt_wallet);
     btn_wallet.addEventListener("click", cg_save_wallet);
     btn_wallet.id = "cg-save-btn-wallet";
-    
+
     td9.appendChild(btn_back);
     td10.appendChild(btn_wallet);
 
@@ -131,12 +131,12 @@ function cg_save_back() {
 
 function cg_save_wallet() {
    if (CG_SAVE_MAKING_ORDER) return;
-   
+
    var addr = document.getElementById("cg-save-order-address").value;
    var amnt = document.getElementById("cg-save-order-amount").value;
    if (addr.length === 0 || amnt.length === 0) return;
 
-   var url = "bitcoin:" + addr + "?amount=" + amnt;
+   var url = (CG_BTC_FORK === "cash" ? "bitcoincash:" : "bitcoin:" ) + addr + "?amount=" + amnt;
    window.open(url, "theUriFrame");
 }
 
@@ -178,7 +178,7 @@ function cg_save_update() {
     btn = document.getElementById("cg-save-btn-wallet");
     if (btn) {
         if (addr.length > 0 && amnt.length > 0 && !CG_SAVE_ORDER_FILLED) {
-            var url = "bitcoin:" + addr + "?amount=" + amnt;
+            var url = (CG_BTC_FORK === "cash" ? "bitcoincash:" : "bitcoin:") + addr + "?amount=" + amnt;
             btn.href  = url;
             btn.title = url;
         }
@@ -202,7 +202,7 @@ function cg_save_get_order() {
 
     var data_obj = {
         nr : CG_SAVE_ORDER_NR.toString()
-    };    
+    };
 
     var json_str = encodeURIComponent(JSON.stringify(data_obj));
     xmlhttpPost('http://cryptograffiti.info/database/', 'fun=get_order&data='+json_str,
@@ -233,7 +233,7 @@ function cg_save_get_order() {
                         details_msg = CG_TXT_SAVE_ORDER_FILLED[CG_LANGUAGE];
                         CG_SAVE_ORDER_FILLED = true;
                     }
-                    else order_status = "";                    
+                    else order_status = "";
 
                     if (accepted && CG_SAVE_ORDER_TIMEOUT > 0) {
                         CG_SAVE_ORDER_TIMEOUT = 0; // Disable order timeout counter.
@@ -292,7 +292,8 @@ function cg_save_get_order() {
                         var addr = encodeURIComponent(order_addr_input.value);
                         var amnt = encodeURIComponent(order_amnt_input.value);
                         var img = document.createElement("img");
-                        img.src = "http://api.qrserver.com/v1/create-qr-code/?size=128x128&data=bitcoin:"+addr+"?amount="+amnt;
+                        var fork = (CG_BTC_FORK === "cash" ? "bitcoincash:" : "bitcoin:");
+                        img.src = "http://api.qrserver.com/v1/create-qr-code/?size=128x128&data="+fork+addr+"?amount="+amnt;
                         img.width = "128";
                         img.height = "128";
                         details.appendChild(img);
@@ -303,20 +304,20 @@ function cg_save_get_order() {
             CG_STATUS.push(status);
             if (CG_SAVE_UPDATING_ORDER < 0) CG_SAVE_UPDATING_ORDER = 10;
         }
-    );    
+    );
 }
 
 function cg_save_make_order() {
     if (CG_SAVE_MAKING_ORDER || CG_SAVE_ORDER_NR) return;
-    
+
     if (CG_CAPTCHA_TOKEN === null) {
         CG_STATUS.push(CG_TXT_SAVE_NO_TOKEN[CG_LANGUAGE]);
         return;
     }
-    
+
     CG_SAVE_MAKING_ORDER = true;
     CG_STATUS.push(CG_TXT_SAVE_MAKING_ORDER[CG_LANGUAGE]);
-    
+
     var order = {
         addr   : "",
         amount : "",
@@ -366,7 +367,7 @@ function cg_save_make_order() {
                 if ("nr" in json) {
                     status = sprintf(CG_TXT_SAVE_MAKING_ORDER_OK[CG_LANGUAGE], json.nr);
                     CG_SAVE_ORDER_NR = json.nr;
-                    
+
                     var details = document.getElementById("cg-save-order-details");
                     while (details.hasChildNodes()) details.removeChild(details.lastChild);
                     details.appendChild(document.createTextNode(CG_TXT_SAVE_ORDER_PENDING[CG_LANGUAGE]));
@@ -374,10 +375,10 @@ function cg_save_make_order() {
                 }
                 else {
                     status = CG_TXT_SAVE_MAKING_ORDER_ERROR[CG_LANGUAGE];
-                    
+
                     var details = document.getElementById("cg-save-order-details");
                     while (details.hasChildNodes()) details.removeChild(details.lastChild);
-                    details.appendChild(document.createTextNode(CG_TXT_SAVE_MAKING_ORDER_ERROR[CG_LANGUAGE]));                    
+                    details.appendChild(document.createTextNode(CG_TXT_SAVE_MAKING_ORDER_ERROR[CG_LANGUAGE]));
 
                     cg_handle_error(json);
                 }
