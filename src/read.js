@@ -31,7 +31,7 @@ var CG_READ_JOBS = {
 var CG_READ_APIS = [
     {
         domain    : "blockchain.info",
-        request   : "https://blockchain.info/tx-index/%s?format=json&cors=true",
+        request   : "https://blockchain.info/rawtx/%s?format=json&cors=true",
         link      : "https://blockchain.info/tx/%s",
         extract   : "cg_read_extract_blockchaininfo",
         delay     : 0,
@@ -73,17 +73,17 @@ var CG_READ_APIS = [
         fails     : 0,
         fork      : "cash"
     },
-    /*{ // commented out because some CORS issues
-        domain    : "bccblock.info",
-        request   : "https://bccblock.info/api/tx/%s",
-        link      : "https://bccblock.info/tx/%s",
-        extract   : "cg_read_extract_blockexplorer",
-        delay     : 0,
-        max_delay : 2*CG_READ_PPS,
-        down      : false,
-        fails     : 0,
-        fork      : "cash"
-    },*/
+    //{ // commented out because some CORS issues
+    //    domain    : "bccblock.info",
+    //    request   : "https://bccblock.info/api/tx/%s",
+    //    link      : "https://bccblock.info/tx/%s",
+    //    extract   : "cg_read_extract_blockexplorer",
+    //    delay     : 0,
+    //    max_delay : 2*CG_READ_PPS,
+    //    down      : false,
+    //    fails     : 0,
+    //    fork      : "cash"
+    //},
     {
         domain    : "bch-bitcore2.trezor.io",
         request   : "https://bch-bitcore2.trezor.io/api/tx/%s",
@@ -1105,7 +1105,7 @@ function cg_read_create_graffiti(div, nr, append) {
     var a_txid = document.createElement("a"); a_txid.appendChild(t_txid);
     a_txid.id  = "cg-msgtxhash-"+nr;
     a_txid.title = CG_TXT_READ_TRANSACTION_DETAILS[CG_LANGUAGE];
-    a_txid.href  = "https://blockchain.info/tx/"+t.txid;
+    a_txid.href  = sprintf(CG_READ_APIS[CG_READ_API[CG_BTC_FORK]].link, t.txid);
     a_txid.target= "_blank";
 
     var span = document.createElement('span');

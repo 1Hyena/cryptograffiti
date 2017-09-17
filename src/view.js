@@ -107,38 +107,46 @@ function cg_view_do() {
 
     var txhash = CG_VIEW_TX_HASH;
     var txtype = CG_VIEW_TX_TYPE;
+    var api = CG_READ_API[CG_BTC_FORK];
+    var link = sprintf(CG_READ_APIS[api].link, txhash);
 
-    CG_STATUS.push(sprintf(CG_TXT_VIEW_LOADING_TX_DATA[CG_LANGUAGE], txhash, "blockchain.info"));
-    xmlhttpGet("https://blockchain.info/rawtx/"+txhash+"?cors=true&format=json", '',
+    CG_STATUS.push(sprintf(CG_TXT_VIEW_LOADING_TX_DATA[CG_LANGUAGE], txhash, CG_READ_APIS[api].domain));
+    xmlhttpGet(sprintf(CG_READ_APIS[api].request, txhash), '',
         function(response) {
             if (response === false || response === null) {
-                CG_STATUS.push(sprintf("!"+CG_TXT_VIEW_LOADING_TX_DATA_FAIL[CG_LANGUAGE], txhash, "blockchain.info"));
+                CG_STATUS.push(sprintf("!"+CG_TXT_VIEW_LOADING_TX_DATA_FAIL[CG_LANGUAGE], txhash, CG_READ_APIS[api].domain));
             }
             else {
                 var json = JSON.parse(response);
                 var fail = true;
-                if ("out" in json && json.out.length > 0) {
-                    var outs = json.out.length;
-                    var chunks = [];
-                    for (var j = 0; j < outs; j++) {
-                        if ("addr" in json.out[j]) chunks.push(json.out[j].addr);
-                    }
-                    var timestamp = ("time" in json ? json.time : null);
-                    var mimetype = cg_view_get_mimetype(txtype);
-                    var head_msgbox = cg_view_create_msgbox(chunks, mimetype, false, txhash, timestamp);
-                    head_msgbox.cg_msgbody.classList.add("cg-view-msgbody");
-                    head.appendChild(cg_view_create_wrapper(head_msgbox));
 
-                    if (mimetype !== "application/octet-stream") {
-                        var body_msgbox = cg_view_create_msgbox(chunks, mimetype, true, txhash, timestamp);
-                        body_msgbox.cg_msgbody.classList.add("cg-view-msgbody");
-                        body_msgbox.cg_msgbody.style.width  = "calc(0.707*(100vh - 22rem))";
-                        body_msgbox.cg_msgbody.style.height = "100vh";
-                        body.appendChild(cg_view_create_wrapper(body_msgbox));
-                        fail = false;
-                        CG_VIEW_TX_DONE_TYPE = txtype;
+                if (typeof json === 'object') {
+                    var out_bytes= "";
+                    var op_return= "";
+                    var timestamp=  0;
+
+                    var extract = window[CG_READ_APIS[api].extract](json);
+                    if (extract !== null) {
+                        out_bytes = extract[0];
+                        op_return = extract[1];
+                        timestamp = extract[2];
+
+                        var mimetype = cg_view_get_mimetype(txtype);
+                        var head_msgbox = cg_view_create_msgbox(out_bytes, mimetype, false, txhash, timestamp, link);
+                        head_msgbox.cg_msgbody.classList.add("cg-view-msgbody");
+                        head.appendChild(cg_view_create_wrapper(head_msgbox));
+
+                        if (mimetype !== "application/octet-stream") {
+                            var body_msgbox = cg_view_create_msgbox(out_bytes, mimetype, true, txhash, timestamp, link);
+                            body_msgbox.cg_msgbody.classList.add("cg-view-msgbody");
+                            body_msgbox.cg_msgbody.style.width  = "calc(1.0*(100vh - 22rem))";
+                            body_msgbox.cg_msgbody.style.height = "100vh";
+                            body.appendChild(cg_view_create_wrapper(body_msgbox));
+                            fail = false;
+                            CG_VIEW_TX_DONE_TYPE = txtype;
+                        }
+                        else if (txtype === null) fail = false;
                     }
-                    else if (txtype === null) fail = false;
                 }
                 if (fail) CG_STATUS.push(sprintf("!"+CG_TXT_VIEW_DECODING_FAIL[CG_LANGUAGE], txhash));
             }
@@ -240,7 +248,7 @@ function cg_view_update() {
     return cg_view_update_end(again);
 }
 
-function cg_view_create_msgbox(chunks, mimetype, open, txhash, timestamp) {
+function cg_view_create_msgbox(out_bytes, mimetype, open, txhash, timestamp, link) {
     txhash    = typeof txhash    !== 'undefined' ? txhash    : (null);
     timestamp = typeof timestamp !== 'undefined' ? timestamp : (null);
     var msgbox     = document.createElement("DIV");
@@ -255,7 +263,7 @@ function cg_view_create_msgbox(chunks, mimetype, open, txhash, timestamp) {
     var a_txid = document.createElement("a");
     a_txid.appendChild(t_txid);
     a_txid.title = CG_TXT_READ_TRANSACTION_DETAILS[CG_LANGUAGE];
-    a_txid.href  = "https://blockchain.info/tx/"+txhash;
+    a_txid.href  = link;
     a_txid.target= "_blank";
     msgfooterC.appendChild(a_txid)
 
@@ -280,11 +288,6 @@ function cg_view_create_msgbox(chunks, mimetype, open, txhash, timestamp) {
     msgbox.classList.add("cg-borderbox");
 
     var msg = "";
-    var out_bytes= "";
-    for (var j = 0, sz = chunks.length; j < sz; j++) {
-        out_bytes = out_bytes + Bitcoin.getAddressPayload(chunks[j]);
-    }
-
     var fsz = is_blockchain_file(out_bytes);
     var blockchain_file = null;
     var filehash = null;
