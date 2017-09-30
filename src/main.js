@@ -14,7 +14,8 @@ var CG_ACTIVE_TAB  = null;
 var CG_DECODER_OK  = true; // Decoder is online?
 var CG_ENCODER_OK  = true; // Encoder is online?
 var CG_LAST_HASH   = "";
-var CG_BTC_FORK    = "core";
+var CG_BTC_FORK    = ""; // Taken from the application-name meta tag's data-fork attribute.
+var CG_API         = ""; // Taken from the application-name meta tag's data-api attribute.
 
 function cg_start() {
     if (window.attachEvent) {
@@ -34,6 +35,15 @@ function cg_start() {
 }
 
 function cg_main() {
+    var metas = document.getElementsByTagName("META");
+    for (var i=0; i < metas.length; ++i) {
+        if (metas[i].name === "application-name") {
+            CG_BTC_FORK = metas[i].getAttribute('data-fork');
+            CG_API      = metas[i].getAttribute('data-api');
+            break;
+        }
+    }
+
     var cg = document.getElementById("cg-main");
     if (cg == null) {
         alert(CG_TXT_MAIN_ERROR_1[CG_LANGUAGE]);
@@ -49,8 +59,6 @@ function cg_main() {
              if (hash === "en") {CG_LANGUAGE = "en"; lang_given = true;}
         else if (hash === "ru") {CG_LANGUAGE = "ru"; lang_given = true;}
         else if (hash === "et") {CG_LANGUAGE = "et"; lang_given = true;}
-        else if (hash === "core") CG_BTC_FORK = "core";
-        else if (hash === "cash") CG_BTC_FORK = "cash";
         else if (isNormalInteger(hash)) CG_TX_NR = hash;
         else if (isHex(hash) && hash.length === 64) CG_TX_HASH = hash.toLowerCase();
         else if (hash.match(/[0-9A-Fa-f]{64}\.[a-zA-Z0-9_-]+/g)) {
@@ -416,7 +424,7 @@ function cg_load_constants() {
     var json_str = encodeURIComponent(JSON.stringify(data_obj));
 
     CG_STATUS.push(CG_TXT_MAIN_LOADING_CONSTANTS[CG_LANGUAGE]);
-    xmlhttpPost('http://cryptograffiti.info/database/', 'fun=get_constants&data='+json_str,
+    xmlhttpPost(CG_API, 'fun=get_constants&data='+json_str,
         function(response) {
             var status = "";
 
@@ -452,7 +460,7 @@ function cg_load_stats() {
     var json_str = encodeURIComponent(JSON.stringify(data_obj));
 
     CG_STATUS.push(CG_TXT_MAIN_ONLINE[CG_LANGUAGE]+": ...");
-    xmlhttpPost('http://cryptograffiti.info/database/', 'fun=get_stats&data='+json_str,
+    xmlhttpPost(CG_API, 'fun=get_stats&data='+json_str,
         function(response) {
             var online = "???";
 

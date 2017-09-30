@@ -205,7 +205,7 @@ function cg_save_get_order() {
     };
 
     var json_str = encodeURIComponent(JSON.stringify(data_obj));
-    xmlhttpPost('http://cryptograffiti.info/database/', 'fun=get_order&data='+json_str,
+    xmlhttpPost(CG_API, 'fun=get_order&data='+json_str,
         function(response) {
             var status = "???";
                  if (response === false) status = sprintf(CG_TXT_SAVE_UPDATING_ORDER_ERROR[CG_LANGUAGE], CG_SAVE_ORDER_NR);
@@ -357,7 +357,7 @@ function cg_save_make_order() {
 
     json_str = encodeURIComponent(json_str);
 
-    xmlhttpPost('http://cryptograffiti.info/database/', 'fun=make_order&data='+json_str,
+    xmlhttpPost(CG_API, 'fun=make_order&data='+json_str,
         function(response) {
             var status = "???";
                  if (response === false) status = CG_TXT_SAVE_MAKING_ORDER_ERROR[CG_LANGUAGE];

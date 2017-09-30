@@ -744,7 +744,7 @@ function cg_read_get_latest() {
 
     CG_STATUS.push(CG_TXT_READ_LOADING_GRAFFITI[CG_LANGUAGE]);
 
-    xmlhttpPost('http://cryptograffiti.info/database/', 'fun=get_btc_graffiti&data='+json_str,
+    xmlhttpPost(CG_API, 'fun=get_btc_graffiti&data='+json_str,
         function(response) {
             var status = "???";
                  if (response === false) status = CG_TXT_READ_LOADING_ERROR[CG_LANGUAGE];
@@ -824,7 +824,7 @@ function cg_read_load_new_txs() {
 
     CG_STATUS.push(CG_TXT_READ_LOADING_NEW_GRAFFITI[CG_LANGUAGE]);
 
-    xmlhttpPost('http://cryptograffiti.info/database/', 'fun=get_btc_graffiti&data='+json_str,
+    xmlhttpPost(CG_API, 'fun=get_btc_graffiti&data='+json_str,
         function(response) {
             var status = "???";
 
@@ -886,7 +886,7 @@ function cg_read_load_old_txs() {
 
     CG_STATUS.push(CG_TXT_READ_LOADING_OLD_GRAFFITI[CG_LANGUAGE]);
 
-    xmlhttpPost('http://cryptograffiti.info/database/', 'fun=get_btc_graffiti&data='+json_str,
+    xmlhttpPost(CG_API, 'fun=get_btc_graffiti&data='+json_str,
         function(response) {
             var status = "???";
 

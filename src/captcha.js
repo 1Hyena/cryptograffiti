@@ -36,13 +36,13 @@ function cg_construct_captcha(main) {
     btn_next.appendChild(txt_next);
     btn_next.addEventListener("click", cg_captcha_next);
     btn_next.id="cg-captcha-btn-next";
-    
+
     var btn_back = document.createElement("BUTTON"); btn_back.classList.add("cg-captcha-btn"); btn_back.disabled = false;
     var txt_back = document.createTextNode(CG_TXT_CAPTCHA_BTN_BACK[CG_LANGUAGE]);
     btn_back.appendChild(txt_back);
     btn_back.addEventListener("click", cg_captcha_back);
     btn_back.id="cg-captcha-btn-back";
-    
+
     var img = document.createElement("img");
     img.setAttribute("src", CG_CAPTCHA_IMAGE_SRC);
     img.setAttribute("width", 160);
@@ -83,7 +83,7 @@ function cg_construct_captcha(main) {
     cell.appendChild(wrapper);
     table.appendChild(cell);
     div.appendChild(table);
-    
+
     //CG_CAPTCHA_TOKEN = true;
 }
 
@@ -110,7 +110,7 @@ function cg_captcha_update() {
     if (CG_CAPTCHA_COOLDOWN > 0) CG_CAPTCHA_COOLDOWN--;
     cg_captcha_get_challenge();
     if (CG_CAPTCHA_TOKEN !== null) cg_captcha_next();
-    
+
     var btn = document.getElementById("cg-captcha-btn-back");
     btn.disabled = true;
     btn = document.getElementById("cg-captcha-btn-next");
@@ -122,14 +122,14 @@ function cg_captcha_update() {
 
         btn = document.getElementById("cg-captcha-btn-next");
         if (document.getElementById("cg-captcha-answer").value.length > 0) btn.disabled = false;
-    }    
+    }
 }
 
 function cg_captcha_get_challenge() {
     if (CG_CAPTCHA_C_LOADING || CG_CAPTCHA_IMAGE || CG_CAPTCHA_COOLDOWN > 0) return;
     CG_CAPTCHA_C_LOADING = true;
     CG_STATUS.push(CG_TXT_CAPTCHA_LOADING_CHALLENGE[CG_LANGUAGE]);
-    xmlhttpPost('http://cryptograffiti.info/database/', 'fun=get_captcha',
+    xmlhttpPost(CG_API, 'fun=get_captcha',
         function(response) {
             var status = "???";
                  if (response === false) status = CG_TXT_CAPTCHA_LOADING_CHALLENGE_ERROR[CG_LANGUAGE];
@@ -153,7 +153,7 @@ function cg_captcha_get_challenge() {
                     cg_handle_error(json);
                 }
             }
-            
+
             CG_STATUS.push(status);
             CG_CAPTCHA_C_LOADING = false;
             CG_CAPTCHA_COOLDOWN = 5;
@@ -170,7 +170,7 @@ function cg_captcha_get_token() {
     var img_str  = encodeURIComponent(CG_CAPTCHA_IMAGE);
     var code_str = encodeURIComponent(code);
 
-    xmlhttpPost('http://cryptograffiti.info/database/', 'fun=get_token&img='+img_str+'&code='+code_str,
+    xmlhttpPost(CG_API, 'fun=get_token&img='+img_str+'&code='+code_str,
         function(response) {
             var status = "???";
                  if (response === false) status = CG_TXT_CAPTCHA_LOADING_TOKEN_ERROR[CG_LANGUAGE];
@@ -190,7 +190,7 @@ function cg_captcha_get_token() {
                     cg_handle_error(json);
                 }
             }
-            
+
             CG_STATUS.push(status);
             CG_CAPTCHA_T_LOADING = false;
             CG_CAPTCHA_COOLDOWN = 5;
