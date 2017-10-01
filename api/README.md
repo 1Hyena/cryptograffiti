@@ -84,19 +84,21 @@ These values can be received with an API call of `get_constants` function.
 ##### PUBLIC FUNCTIONS #########################################################
 * __Latest Block (Proxy)__
     `GET https://cryptograffiti.info/api/latestblock`
+
     Returns JSON dictionary containing metadata of the latest block as given by
     Blockchain.info's latestblock API call: https://blockchain.info/latestblock.
 
 
 * __Security Handshake__
     `POST https://cryptograffiti.info/database/`
+
     Used when the user is visiting the site for the first time. This is the 1st
     and only time when the session is prone to Man In The Middle attacks. The
     user generates a strong key and sends it to the server. The server remembers
     the key and starts using it for encryption. The key is always sent as a
     64-byte hex string. If the result was `FAILURE` the client is ought to
-    generate a new key and try again. On SUCCESS the client should store the key
-    and use it for all its further requests.
+    generate a new key and try again. On `SUCCESS` the client should store the
+    key and use it for all its further requests.
 
     _POST Parameters:_
     * `fun`            --- `handshake`
@@ -113,6 +115,7 @@ These values can be received with an API call of `get_constants` function.
 
 * __Initialize__
     `POST https://cryptograffiti.info/database/`
+
     Used to register a whole new session identifier. The GUID should be a random
     256 bit number and is sent to the server as 64 byte hex string. Any old
     session can be restored when the client knows its GUID (except that when ALS
@@ -142,7 +145,7 @@ These values can be received with an API call of `get_constants` function.
         * `result`     --- `SUCCESS` or `FAILURE`
         * `error`      --- error dictionary if `result` was `FAILURE` (optional)
         * `TLS`        --- `true` if request was HTTPS (mandatory on `SUCCESS`)
-        * `ALS`        --- `true` if ALS is being used (mandatory on SUCCESS)
+        * `ALS`        --- `true` if ALS is being used (mandatory on `SUCCESS`)
         * `nonce`      --- replay protection, forces synchronized requests (ALS)
         * `seed`       --- used for finding the next `nonce` (ALS)
                            `next_nonce` = SHA256(`nonce`+`seed`)
@@ -152,6 +155,7 @@ These values can be received with an API call of `get_constants` function.
 
 * __Get Statistics__
     `POST https://cryptograffiti.info/database/`
+
     Returns the statistics for the asked timespan. Maximum of `STATS_PER_QUERY`
     entries will be returned as a result of a single call to this function. When
     `start_date` and `end_date` are both omitted or `null` the current state of
@@ -180,6 +184,7 @@ These values can be received with an API call of `get_constants` function.
 
 * __Get Bitcoin Graffiti__
     `POST https://cryptograffiti.info/database/`
+
     Returns the graffiti in the defined date range.  If `nr` is not sent or is
     invalid then newest `count` of graffiti transactions (TXs) are returned.
     `count` cannot exceed `TXS_PER_QUERY`.
@@ -208,6 +213,7 @@ These values can be received with an API call of `get_constants` function.
 
 * __Get Bitcoin Donations__
     `POST https://cryptograffiti.info/database/`
+
     Returns the graffiti TXs that have donations included in the defined range.
     If `nr` is not sent or is invalid then the newest `count` of graffiti TXs
     are returned. `count` cannot exceed `TXS_PER_QUERY`.
@@ -236,6 +242,7 @@ These values can be received with an API call of `get_constants` function.
 
 * __Get Constants__
     `POST https://cryptograffiti.info/database/`
+
     Returns the constants used by the server.
 
     _POST Parameters:_
@@ -259,6 +266,7 @@ These values can be received with an API call of `get_constants` function.
 
 * __Get CAPTCHA__
     `POST https://cryptograffiti.info/database/`
+
     Returns the CAPTCHA to be solved. Additionally it may return a `token`
     variable in a 64-byte hex string format that can be used as Proof of Work in
     other functions. Token is not given if it is excessively used (abused) by
@@ -276,6 +284,7 @@ These values can be received with an API call of `get_constants` function.
 
 * __Get Token__
     `POST https://cryptograffiti.info/database/`
+
     Returns the token as a reward for solving a CAPTCHA. Please note that
     providing a wrong answer to a CAPTCHA will invalidate the CAPTCHA. Calling
     this function more than once will also invalidate the token.
@@ -294,6 +303,7 @@ These values can be received with an API call of `get_constants` function.
 
 * __Make Order__
     `POST https://cryptograffiti.info/database/`
+
     Add a new order for an executive bitbroker to fill.
 
     _POST Parameters:_
@@ -320,8 +330,9 @@ These values can be received with an API call of `get_constants` function.
 
 * __Get Orders__
     `POST https://cryptograffiti.info/database/`
-    Get a list of orders. No more than ORDERS_PER_QUERY rows can be returned as
-    a result of a single call to this function. If `nr` is not sent or is
+
+    Get a list of orders. No more than `ORDERS_PER_QUERY` rows can be returned
+    as a result of a single call to this function. If `nr` is not sent or is
     invalid then a list of newest orders is returned. If `accepted` is not sent
     or is invalid the result will include both accepted and not accepted orders.
     If `accepted` is '1' only accepted orders will be returned. If `accepted` is
@@ -366,6 +377,7 @@ These values can be received with an API call of `get_constants` function.
 
 * __Get Order__
     `POST https://cryptograffiti.info/database/`
+
     Get a single order. By default the `input` field of the order is not
     returned to save bandwidth. However, when `inclusive` is set to '1' original
     `input` will be included in the response as a JSON object. Due to privacy
@@ -395,6 +407,7 @@ These values can be received with an API call of `get_constants` function.
 ##### PROTECTED FUNCTIONS ######################################################
 * __Get Session Variables__
     `POST https://cryptograffiti.info/database/`
+
     Returns the list of variables associated to the current session.
 
     _POST Parameters:_
@@ -419,6 +432,7 @@ These values can be received with an API call of `get_constants` function.
 ##### PRIVATE FUNCTIONS ########################################################
 * __Get Log__
     `POST https://cryptograffiti.info/database/`
+
     Returns the server log lines in the defined range. If `nr` is not sent or is
     invalid then last `count` of log lines are returned. `count` cannot exceed
     `LOGS_PER_QUERY`.
@@ -446,6 +460,7 @@ These values can be received with an API call of `get_constants` function.
 
 * __Set BTC Transactions__
     `POST https://cryptograffiti.info/database/`
+
     Add a list of Bitcoin transactions. No more than `TXS_PER_QUERY` TXs can be
     sent with this function. If that limit is exceeded the function returns
     `FAILURE` without changing anything. Remember that all dictionary values
@@ -477,10 +492,11 @@ These values can be received with an API call of `get_constants` function.
 
 * __Accept Order__
     `POST https://cryptograffiti.info/database/`
+
     Accepts a new order. Only orders that have not yet been accepted can be
     accepted. The latter is to prevent multiple executives from processing the
     same order. If and only if the defined order has been accepted as a result
-    of this request SUCCESS is returned as a result.
+    of this request `SUCCESS` is returned as a result.
 
     _POST Parameters:_
     * `fun`            --- `accept_order`
@@ -503,6 +519,7 @@ These values can be received with an API call of `get_constants` function.
 
 * __Set Order__
     `POST https://cryptograffiti.info/database/`
+
     Set the output and status of an accepted order. This can only be done if the
     order is accepted and not filled. The executive session must be the same
     that of the caller of this function. If `filled` is invalid or not sent then
@@ -531,6 +548,7 @@ These values can be received with an API call of `get_constants` function.
 
 * __Send E-Mail__
     `POST https://cryptograffiti.info/database/`
+
     Sends an e-mail to the defined list of recipients.
 
     _POST Parameters:_
