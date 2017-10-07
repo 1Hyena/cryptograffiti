@@ -1626,16 +1626,6 @@ function cron_tick($link, $T) {
     for ($t = 0; $t < $T; $t++) {
         $time_start = microtime(true);
 
-        {
-            // Refresh simple API responses:
-            $response = http_get("https://blockchain.info/latestblock?cors=true&format=json");
-            if ($response === false) $response = json_encode(array('error' => 'Blockchain.info is not responding to CryptoGraffiti.info.'));
-
-            $filename = "../api/latestblock";
-            $file = fopen($filename, "w") or set_critical_error($link, "Unable to open file: ".$filename."!");
-            fwrite($file, $response);
-            fclose($file);
-        }
         $IPs    = 0;
         $result = $link->query("SELECT COUNT(`ip`) AS `IPs` FROM `address` WHERE `rpm` > 0");
 

@@ -1,4 +1,4 @@
-PUBLIC API, 01. 10. 2017
+PUBLIC API, 07. 10. 2017
 --------------------------------------------------------------------------------
 
 ##### TERMS OF USE #############################################################
@@ -82,13 +82,6 @@ These values can be received with an API call of `get_constants` function.
 
 
 ##### PUBLIC FUNCTIONS #########################################################
-* __Latest Block (Proxy)__
-    `GET https://cryptograffiti.info/api/latestblock`
-
-    Returns JSON dictionary containing metadata of the latest block as given by
-    Blockchain.info's latestblock API call: https://blockchain.info/latestblock.
-
-
 * __Security Handshake__
     `POST https://cryptograffiti.info/database/`
 

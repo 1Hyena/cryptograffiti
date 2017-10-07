@@ -28,9 +28,7 @@ for ($i=0; $i < 3; $i++) {
 
 // using a mixture of TTF fonts
 $fonts = array();
-$fonts[] = "ttf-dejavu/DejaVuSerif-Bold.ttf";
-$fonts[] = "ttf-dejavu/DejaVuSans-Bold.ttf";
-$fonts[] = "ttf-dejavu/DejaVuSansMono-Bold.ttf";
+$fonts[] = "captcha.ttf";
 
 $pos = 0;
 for ($x = 10; $pos < 5; $x += 30, $pos++) {
@@ -39,7 +37,7 @@ for ($x = 10; $pos < 5; $x += 30, $pos++) {
     $dir = rand(-30,30);
     $y = rand(20, 42);
     $f = array_rand($fonts);
-    
+
     for ($k=0; $k<7; $k++) {
         $tc = $textcolor;
         if ($k % 2 === 0) $tc = ($textcolor === $textcolor1 ? $textcolor2 : $textcolor1);
