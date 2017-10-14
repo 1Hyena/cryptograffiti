@@ -83,7 +83,7 @@ These values can be received with an API call of `get_constants` function.
 
 ##### PUBLIC FUNCTIONS #########################################################
 * __Security Handshake__
-    `POST https://cryptograffiti.info/database/`
+    `POST https://cryptograffiti.info/api/`
 
     Used when the user is visiting the site for the first time. This is the 1st
     and only time when the session is prone to Man In The Middle attacks. The
@@ -107,7 +107,7 @@ These values can be received with an API call of `get_constants` function.
 
 
 * __Initialize__
-    `POST https://cryptograffiti.info/database/`
+    `POST https://cryptograffiti.info/api/`
 
     Used to register a whole new session identifier. The GUID should be a random
     256 bit number and is sent to the server as 64 byte hex string. Any old
@@ -147,7 +147,7 @@ These values can be received with an API call of `get_constants` function.
 
 
 * __Get Statistics__
-    `POST https://cryptograffiti.info/database/`
+    `POST https://cryptograffiti.info/api/`
 
     Returns the statistics for the asked timespan. Maximum of `STATS_PER_QUERY`
     entries will be returned as a result of a single call to this function. When
@@ -176,7 +176,7 @@ These values can be received with an API call of `get_constants` function.
 
 
 * __Get Bitcoin Graffiti__
-    `POST https://cryptograffiti.info/database/`
+    `POST https://cryptograffiti.info/api/`
 
     Returns the graffiti in the defined date range.  If `nr` is not sent or is
     invalid then newest `count` of graffiti transactions (TXs) are returned.
@@ -205,7 +205,7 @@ These values can be received with an API call of `get_constants` function.
 
 
 * __Get Bitcoin Donations__
-    `POST https://cryptograffiti.info/database/`
+    `POST https://cryptograffiti.info/api/`
 
     Returns the graffiti TXs that have donations included in the defined range.
     If `nr` is not sent or is invalid then the newest `count` of graffiti TXs
@@ -234,7 +234,7 @@ These values can be received with an API call of `get_constants` function.
 
 
 * __Get Constants__
-    `POST https://cryptograffiti.info/database/`
+    `POST https://cryptograffiti.info/api/`
 
     Returns the constants used by the server.
 
@@ -258,7 +258,7 @@ These values can be received with an API call of `get_constants` function.
 
 
 * __Get CAPTCHA__
-    `POST https://cryptograffiti.info/database/`
+    `POST https://cryptograffiti.info/api/`
 
     Returns the CAPTCHA to be solved. Additionally it may return a `token`
     variable in a 64-byte hex string format that can be used as Proof of Work in
@@ -276,7 +276,7 @@ These values can be received with an API call of `get_constants` function.
 
 
 * __Get Token__
-    `POST https://cryptograffiti.info/database/`
+    `POST https://cryptograffiti.info/api/`
 
     Returns the token as a reward for solving a CAPTCHA. Please note that
     providing a wrong answer to a CAPTCHA will invalidate the CAPTCHA. Calling
@@ -295,7 +295,7 @@ These values can be received with an API call of `get_constants` function.
 
 
 * __Make Order__
-    `POST https://cryptograffiti.info/database/`
+    `POST https://cryptograffiti.info/api/`
 
     Add a new order for an executive bitbroker to fill.
 
@@ -322,7 +322,7 @@ These values can be received with an API call of `get_constants` function.
 
 
 * __Get Orders__
-    `POST https://cryptograffiti.info/database/`
+    `POST https://cryptograffiti.info/api/`
 
     Get a list of orders. No more than `ORDERS_PER_QUERY` rows can be returned
     as a result of a single call to this function. If `nr` is not sent or is
@@ -369,7 +369,7 @@ These values can be received with an API call of `get_constants` function.
 
 
 * __Get Order__
-    `POST https://cryptograffiti.info/database/`
+    `POST https://cryptograffiti.info/api/`
 
     Get a single order. By default the `input` field of the order is not
     returned to save bandwidth. However, when `inclusive` is set to '1' original
@@ -399,7 +399,7 @@ These values can be received with an API call of `get_constants` function.
 
 ##### PROTECTED FUNCTIONS ######################################################
 * __Get Session Variables__
-    `POST https://cryptograffiti.info/database/`
+    `POST https://cryptograffiti.info/api/`
 
     Returns the list of variables associated to the current session.
 
@@ -424,7 +424,7 @@ These values can be received with an API call of `get_constants` function.
 
 ##### PRIVATE FUNCTIONS ########################################################
 * __Get Log__
-    `POST https://cryptograffiti.info/database/`
+    `POST https://cryptograffiti.info/api/`
 
     Returns the server log lines in the defined range. If `nr` is not sent or is
     invalid then last `count` of log lines are returned. `count` cannot exceed
@@ -452,7 +452,7 @@ These values can be received with an API call of `get_constants` function.
 
 
 * __Set BTC Transactions__
-    `POST https://cryptograffiti.info/database/`
+    `POST https://cryptograffiti.info/api/`
 
     Add a list of Bitcoin transactions. No more than `TXS_PER_QUERY` TXs can be
     sent with this function. If that limit is exceeded the function returns
@@ -484,7 +484,7 @@ These values can be received with an API call of `get_constants` function.
 
 
 * __Accept Order__
-    `POST https://cryptograffiti.info/database/`
+    `POST https://cryptograffiti.info/api/`
 
     Accepts a new order. Only orders that have not yet been accepted can be
     accepted. The latter is to prevent multiple executives from processing the
@@ -511,7 +511,7 @@ These values can be received with an API call of `get_constants` function.
 
 
 * __Set Order__
-    `POST https://cryptograffiti.info/database/`
+    `POST https://cryptograffiti.info/api/`
 
     Set the output and status of an accepted order. This can only be done if the
     order is accepted and not filled. The executive session must be the same
@@ -540,7 +540,7 @@ These values can be received with an API call of `get_constants` function.
 
 
 * __Send E-Mail__
-    `POST https://cryptograffiti.info/database/`
+    `POST https://cryptograffiti.info/api/`
 
     Sends an e-mail to the defined list of recipients.
 
