@@ -149,7 +149,7 @@ if ($l = init_sql()) {
                 db_log($l, $USER, 'Created a new CAPTCHA #'.$nr.'.', LOG_NORMAL);
             }
 
-            $url = 'https://amaraca.com/db/captcha.php?img='.$img;
+            $url = 'https://amaraca.com/api/captcha.php?img='.$img;
             $result = make_success(array('captcha' => array('url' => $url,'img' => $img, 'token' => $ftoken)));
             echo json_encode($result);
         }
