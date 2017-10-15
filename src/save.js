@@ -291,12 +291,31 @@ function cg_save_get_order() {
                         details.appendChild(document.createElement("br"));
                         var addr = encodeURIComponent(order_addr_input.value);
                         var amnt = encodeURIComponent(order_amnt_input.value);
-                        var img = document.createElement("img");
                         var fork = (CG_BTC_FORK === "cash" ? "bitcoincash:" : "bitcoin:");
-                        img.src = "http://api.qrserver.com/v1/create-qr-code/?size=128x128&data="+fork+addr+"?amount="+amnt;
-                        img.width = "128";
-                        img.height = "128";
-                        details.appendChild(img);
+
+                        if (addr.length > 0) {
+                            var img = document.createElement("img");
+                            img.src = "http://api.qrserver.com/v1/create-qr-code/?size=128x128&data="+fork+addr+"?amount="+amnt;
+                            img.width = "128";
+                            img.height = "128";
+
+                            if (CG_BTC_FORK === "cash") {
+                                var cash_img = document.createElement("img");
+                                cash_img.src = document.getElementById("gfx_cash").src;
+                                cash_img.width = "128";
+                                cash_img.height= "128";
+
+                                var core_img = document.createElement("img");
+                                core_img.src = document.getElementById("gfx_core").src;
+                                core_img.width = "128";
+                                core_img.height= "128";
+
+                                details.appendChild(cash_img);
+                                details.appendChild(img);
+                                details.appendChild(core_img);
+                            }
+                            else details.appendChild(img);
+                        }
                     }
                 }
             }

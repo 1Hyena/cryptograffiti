@@ -728,6 +728,10 @@ button {
     background-color: rgba(255,255,255, 0.5);
 }
 
+.cg-contact>img {
+    display: inline-block;
+}
+
 .cg-note {
     color: #154d10;
 }
@@ -737,8 +741,12 @@ a.cg-link:hover {
 }
 
 .cg-table {
+    display: inline-block;
     margin: auto;
     padding-bottom: 1ch;
+    font-size: medium;
+    vertical-align: top;
+    max-width: calc(100% - 256px);
 }
 .cg-table td:nth-child(1) {
     text-align: right;
