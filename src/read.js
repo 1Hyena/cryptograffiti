@@ -95,10 +95,32 @@ var CG_READ_APIS = [
         fails     : 0,
         fork      : "cash"
     },
+    //{ // commented out because it does not have HTTPS
+    //    domain    : "blockdozer.com",
+    //    request   : "http://blockdozer.com/insight-api/tx/%s",
+    //    link      : "http://blockdozer.com/insight/tx/%s",
+    //    extract   : "cg_read_extract_blockexplorer",
+    //    delay     : 0,
+    //    max_delay : 2*CG_READ_PPS,
+    //    down      : false,
+    //    fails     : 0,
+    //    fork      : "cash"
+    //},
     {
-        domain    : "blockdozer.com",
-        request   : "http://blockdozer.com/insight-api/tx/%s",
-        link      : "http://blockdozer.com/insight/tx/%s",
+        domain    : "bch-insight.bitpay.com",
+        request   : "https://bch-insight.bitpay.com/api/tx/%s",
+        link      : "https://bch-insight.bitpay.com/tx/%s",
+        extract   : "cg_read_extract_blockexplorer",
+        delay     : 0,
+        max_delay : 2*CG_READ_PPS,
+        down      : false,
+        fails     : 0,
+        fork      : "cash"
+    },
+    {
+        domain    : "cashexplorer.bitcoin.com",
+        request   : "https://cashexplorer.bitcoin.com/api/tx/%s",
+        link      : "https://cashexplorer.bitcoin.com/tx/%s",
         extract   : "cg_read_extract_blockexplorer",
         delay     : 0,
         max_delay : 2*CG_READ_PPS,
