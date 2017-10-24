@@ -338,29 +338,33 @@ function remove_colours(bytes) {
 // Returns an array of elements to add
 function processColours(bytes) {
     function changeState(state, numbers) {
-        var newState = state;
+        var resetState = {foreground: null, background: null, attributes: []};
+        var newState = (numbers.length === 0 ? resetState : state);
         if (newState.attributes == null) newState.attributes = [];
 
         for (var i = 0; i < numbers.length; i++) {
             num = numbers[i];
             if (num === 0) {
-                newState = {foreground: 0, background: 7, attributes: []};
+                newState = {foreground: null, background: null, attributes: []};
             } else if (num < 10) {
                 if (!newState.attributes.includes(num)) {
                     newState.attributes.push(num);
                 }
-            } else if (num > 20 && num < 30) {
-                if (newState.attributes.includes(num % 10)) {
-                    newState.attributes.splice(newState.attributes.indexOf(num % 10), 1);
+            } else if (num === 22) {
+                var remaining = [];
+                for (var j = 0; j < newState.attributes.length; j++) {
+                    if (newState.attributes[j] === 1) continue;
+                    remaining.push(newState.attributes[j]);
                 }
+                newState.attributes = remaining;
             } else if (num >= 30 && num < 38) {
                 newState.foreground = num % 10;
             } else if (num === 39) {
-                newState.foreground = 0;
+                newState.foreground = null;
             } else if (num >= 40 && num < 48) {
                 newState.background = num % 10;
-            } else if (num === 48) {
-                newState.background = 7;
+            } else if (num === 49) {
+                newState.background = null;
             }
         }
 
@@ -370,8 +374,8 @@ function processColours(bytes) {
     function createSpan(state) { // make empty span element with proper styling
         var output = document.createElement("span");
 
-        output.classList.add("ansi-fg-" + state.foreground,
-                             "ansi-bg-" + state.background);
+        if (state.foreground !== null) output.classList.add("ansi-fg-" + state.foreground);
+        if (state.background !== null) output.classList.add("ansi-bg-" + state.background);
 
         for (var i = 0; i < state.attributes.length; i++) {
             output.classList.add("ansi-format-" + state.attributes[i]);
@@ -383,8 +387,8 @@ function processColours(bytes) {
     var lastEscape = null; // position of last escape character
     var inEscapeCode = false;
     var state = {
-        foreground: 0,
-        background: 7,
+        foreground: null,
+        background: null,
         attributes: [] // things like bold or strikethrough
     };
 
