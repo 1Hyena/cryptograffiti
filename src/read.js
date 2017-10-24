@@ -537,7 +537,7 @@ function cg_decode() {
                                 var ta = document.createElement("textarea");
                                 ta.readOnly = true;
                                 ta.rows = 24;
-                                ta.cols = 80;
+                                ta.cols = 81;
                                 ta.wrap = false;
                                 ta.value = utf8;
                                 ta.classList.add("cg-view-textarea");
