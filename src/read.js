@@ -720,7 +720,7 @@ function cg_read_get_filter() {
     if (key !== CG_READ_FILTER_KEY) key = key+"...";
 
     CG_STATUS.push(sprintf(CG_TXT_READ_LOADING_FILTER[CG_LANGUAGE], key));
-    xmlhttpGet("http://btc.blockr.io/api/v1/address/txs/"+CG_READ_FILTER_ADDR, '',
+    xmlhttpGet("https://btc.blockr.io/api/v1/address/txs/"+CG_READ_FILTER_ADDR, '',
         function(response) {
             var status = "???";
             var success = false;

@@ -284,37 +284,46 @@ function cg_save_get_order() {
 
                 if (details_msg !== null) {
                     var details = document.getElementById("cg-save-order-details");
-                    while (details.hasChildNodes()) details.removeChild(details.lastChild);
-                    details.appendChild(document.createTextNode(details_msg));
-                    if (accepted && !filled) {
-                        details.appendChild(document.createElement("br"));
-                        details.appendChild(document.createElement("br"));
-                        var addr = encodeURIComponent(order_addr_input.value);
-                        var amnt = encodeURIComponent(order_amnt_input.value);
-                        var fork = (CG_BTC_FORK === "cash" ? "bitcoincash:" : "bitcoin:");
+                    var content = details_msg+order_addr_input.value
+                                 +order_amnt_input.value+json.order.nr
+                                 +json.order.filled+json.order.accepted;
+                    var ripemd160 = CryptoJS.algo.RIPEMD160.create();
+                    ripemd160.update(content);
+                    var hash = ""+ripemd160.finalize();
+                    if (hash !== details.getAttribute('data-hash')) {
+                        details.setAttribute('data-hash', hash);
+                        while (details.hasChildNodes()) details.removeChild(details.lastChild);
+                        details.appendChild(document.createTextNode(details_msg));
+                        if (accepted && !filled) {
+                            details.appendChild(document.createElement("br"));
+                            details.appendChild(document.createElement("br"));
+                            var addr = encodeURIComponent(order_addr_input.value);
+                            var amnt = encodeURIComponent(order_amnt_input.value);
+                            var fork = (CG_BTC_FORK === "cash" ? "bitcoincash:" : "bitcoin:");
 
-                        if (addr.length > 0) {
-                            var img = document.createElement("img");
-                            img.src = "http://api.qrserver.com/v1/create-qr-code/?size=128x128&data="+fork+addr+"?amount="+amnt;
-                            img.width = "128";
-                            img.height = "128";
+                            if (addr.length > 0) {
+                                var img = document.createElement("img");
+                                img.src = "https://api.qrserver.com/v1/create-qr-code/?size=128x128&data="+fork+addr+"?amount="+amnt;
+                                img.width = "128";
+                                img.height = "128";
 
-                            if (CG_BTC_FORK === "cash") {
-                                var cash_img = document.createElement("img");
-                                cash_img.src = document.getElementById("gfx_cash").src;
-                                cash_img.width = "128";
-                                cash_img.height= "128";
+                                if (CG_BTC_FORK === "cash") {
+                                    var cash_img = document.createElement("img");
+                                    cash_img.src = document.getElementById("gfx_cash").src;
+                                    cash_img.width = "128";
+                                    cash_img.height= "128";
 
-                                var core_img = document.createElement("img");
-                                core_img.src = document.getElementById("gfx_core").src;
-                                core_img.width = "128";
-                                core_img.height= "128";
+                                    var core_img = document.createElement("img");
+                                    core_img.src = document.getElementById("gfx_core").src;
+                                    core_img.width = "128";
+                                    core_img.height= "128";
 
-                                details.appendChild(cash_img);
-                                details.appendChild(img);
-                                details.appendChild(core_img);
+                                    details.appendChild(cash_img);
+                                    details.appendChild(img);
+                                    details.appendChild(core_img);
+                                }
+                                else details.appendChild(img);
                             }
-                            else details.appendChild(img);
                         }
                     }
                 }
