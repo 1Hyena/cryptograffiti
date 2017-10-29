@@ -953,7 +953,7 @@ var CG_TXT_SAVE_PAYMENT_NOTE =
 {
     en : "Sending a wrong number or wrong type of bitcoins will not fill the order. By using this service you agree not to save anything illegal on the block chain. In case of abuse we may report your IP address to the police.",
     et : "Kui Te saadate vale arvu või vale tüüpi bitimünte, siis Teie tellimust ei täideta. Seda teenust kasutades nõustute, et Te ei salvesta plokiahelasse midagi illegaalset. Rikkumise korral võime edastada Teie IP aadress politseisse.",
-    ru : "Отправка неверного количества биткойнов приведёт к не заполнению ордера. Используя данный сервис вы соглашаетесь не сохранять что-либо нелегальное в цепочку блоков. В случае злоупотребления мы можем сообщить ваш IP адрес полиции."
+    ru : "Отправка неверного количества или неправильный тип биткойнов приведёт к не заполнению ордера. Используя данный сервис вы соглашаетесь не сохранять что-либо нелегальное в цепочку блоков. В случае злоупотребления мы можем сообщить ваш IP адрес полиции."
 };
 
 var CG_TXT_SAVE_MAX_DATA_SIZE_EXCEEDED =

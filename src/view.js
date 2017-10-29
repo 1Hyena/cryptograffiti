@@ -318,6 +318,14 @@ function cg_view_create_msgbox(out_bytes, mimetype, open, txhash, timestamp, lin
                 obj.data = "data:"+mimetype+";base64,"+b64Data;
                 msgbody.style.padding="0";
             }
+            else if (mimetype.indexOf("image/") === 0) {
+                var b64Data = btoa(blockchain_file);
+                obj = document.createElement('img');
+                obj.id = "cg-view-object";
+                obj.type = mimetype;
+                obj.src = "data:"+mimetype+";base64,"+b64Data;
+                msgbody.style.padding="0";
+            }
             else {
                 var type = mimetype;
                 if (type.indexOf("text/") === 0

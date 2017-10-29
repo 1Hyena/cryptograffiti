@@ -306,21 +306,58 @@ function cg_save_get_order() {
                                 img.src = "https://api.qrserver.com/v1/create-qr-code/?size=128x128&data="+fork+addr+"?amount="+amnt;
                                 img.width = "128";
                                 img.height = "128";
+                                img.style = "display: none; width: 0%;";
+                                img.onload = function () {
+                                    img.classList.add("widen");
+                                    img.style = "display: initial; max-width: 128px;";
+                                    var cash = document.getElementById("cg-cash-img");
+                                    var core = document.getElementById("cg-core-img");
+                                    if (cash !== null) cash.classList.remove("appear");
+                                    if (core !== null) core.classList.remove("appear");
+                                    if (cash !== null) cash.classList.add("glow");
+                                    if (core !== null) core.classList.add("glow");
+                                };
 
                                 if (CG_BTC_FORK === "cash") {
+                                    var link_core_rejected = document.createElement("a");
+                                    var link_cash_accepted = document.createElement("a");
+                                    link_core_rejected.href="http://www.newsbtc.com/2017/10/16/cryptograffiti-rejects-bitcoin-core-bch-now-available-payment-method/";
+                                    link_core_rejected.target="_blank";
+                                    link_core_rejected.onclick = function() {
+                                        var img = document.getElementById("cg-core-img");
+                                        if (img !== null && img.classList.contains("glow")) {
+                                            img.classList.remove("glow");
+                                        }
+                                    };
+                                    link_cash_accepted.href="https://www.bitcoincash.org/";
+                                    link_cash_accepted.target="_blank";
+                                    link_cash_accepted.onclick = function() {
+                                        var img = document.getElementById("cg-cash-img");
+                                        if (img !== null && img.classList.contains("glow")) {
+                                            img.classList.remove("glow");
+                                        }
+                                    };
+
                                     var cash_img = document.createElement("img");
                                     cash_img.src = document.getElementById("gfx_cash").src;
                                     cash_img.width = "128";
                                     cash_img.height= "128";
+                                    cash_img.classList.add("appear");
+                                    cash_img.id = "cg-cash-img";
 
                                     var core_img = document.createElement("img");
                                     core_img.src = document.getElementById("gfx_core").src;
                                     core_img.width = "128";
                                     core_img.height= "128";
+                                    core_img.classList.add("appear");
+                                    core_img.id = "cg-core-img";
 
-                                    details.appendChild(cash_img);
+                                    link_core_rejected.appendChild(core_img);
+                                    link_cash_accepted.appendChild(cash_img);
+
+                                    details.appendChild(link_cash_accepted);
                                     details.appendChild(img);
-                                    details.appendChild(core_img);
+                                    details.appendChild(link_core_rejected);
                                 }
                                 else details.appendChild(img);
                             }
