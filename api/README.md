@@ -566,3 +566,28 @@ These values can be received with an API call of `get_constants` function.
     * `checksum`       --- 32-byte hex string (ALS)
 
 
+* __Set Stat__
+    `POST https://cryptograffiti.info/api/`
+
+    Set a new value to a global stat such as `sat_byte`.
+
+    _POST Parameters:_
+    * `fun`            --- `set_order`
+    * `data`           --- JSON string with the following structure
+        * `guid`       --- 64 bytes random hex string
+        * `name`       --- name of the stat to modify
+        * `value`      --- string value to assign to the stat
+        * `nonce`      --- 64 bytes hex string (ALS)
+    * `sec_hash`       --- SHA256(`sec_key`) as a 64-byte hex string (ALS)
+    * `salt`           --- 32-byte hex string, must differ on each request (ALS)
+    * `checksum`       --- 32-byte hex string (ALS)
+    * `token`          --- 64 bytes hex string (optional)
+
+    _Returns a JSON dictionary:_
+    * `data`
+        * `result`     --- `SUCCESS` or `FAILURE`
+        * `error`      --- error dictionary if result was `FAILURE` (optional)
+    * `iv`             --- 32-byte hex string (ALS)
+    * `checksum`       --- 32-byte hex string (ALS)
+
+

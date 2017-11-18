@@ -283,6 +283,7 @@ function assure_stats($link) {
  `time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last time this record was updated.',
  `decoder` tinyint(1) NOT NULL DEFAULT '1' COMMENT 'TRUE when CryptoGraffiti Decoder is online.',
  `encoder` tinyint(1) NOT NULL DEFAULT '1' COMMENT 'TRUE when CryptoGraffiti Encoder is online.',
+ `sat_byte` bigint(20) unsigned NOT NULL COMMENT 'Currently estimated fee (satoshis per byte).',
  `btc_donations` bigint(20) unsigned NOT NULL DEFAULT '0' COMMENT 'Number of satoshis received as donations.',
  `steps` int(10) unsigned NOT NULL COMMENT 'Number of steps made with cron_second task calls.',
  `overload` int(10) unsigned NOT NULL COMMENT 'Number of times cron_second task iteration exceeded the time limit.',
@@ -473,6 +474,8 @@ function extract_args($data) {
     extract_str      ('subj',        $args, $result); // Vulnerable to SQL injection by default.
     extract_str      ('msg',         $args, $result); // Vulnerable to SQL injection by default.
     extract_str      ('headers',     $args, $result); // Vulnerable to SQL injection by default.
+    extract_str      ('name',        $args, $result); // Vulnerable to SQL injection by default.
+    extract_str      ('value',       $args, $result); // Vulnerable to SQL injection by default.
     return $result;
 }
 
@@ -1199,6 +1202,33 @@ function fun_set_order($link, $user, $guid, $nr, $output, $filled) {
     db_log($link, $user, 'Session #'.$session_nr.' updated order #'.$nr.'.');
 
     return make_success();
+}
+
+function fun_set_stat($link, $user, $guid, $name, $value) {
+    if ($guid   === null) return make_failure(ERROR_INVALID_ARGUMENTS, '`guid` is invalid.');
+    if ($name   === null) return make_failure(ERROR_INVALID_ARGUMENTS, '`name` is invalid.');
+    if ($value  === null) return make_failure(ERROR_INVALID_ARGUMENTS, '`value` is invalid.');
+    if (!has_access($link, $guid, ROLE_EXECUTIVE)) return make_failure(ERROR_MISUSE, 'Access denied!');
+    if (is_paralyzed($link, $guid)) return make_failure(ERROR_NO_CHANGE, 'Failed to set stat, session is paralyzed!');
+
+    $result = array();
+    $args   = array();
+    $args["sat_byte"] = $value;
+
+    $success = false;
+    switch ($name) {
+        case 'sat_byte' : $success = extract_num($name, $args, $result); break;
+        default         : return make_failure(ERROR_NO_CHANGE, 'Failed to set stat, unknown stat!');
+    }
+
+    if ($success) {
+        if (set_stat($link, $name, $result[$name])) {
+            db_log($link, $user, 'Session #'.$session_nr.' changed the '.$name.' stat to '.$value.'.');
+        }
+        return make_success();
+    }
+
+    return make_failure(ERROR_NO_CHANGE, 'Failed to set stat, value extraction failed.');
 }
 
 function fun_set_btc_txs($link, $user, $guid, $txs) {

@@ -293,6 +293,7 @@ if ($l = init_sql()) {
                                                            ($ARGS['accepted']===null ? $ARGS['inclusive'] : $ARGS['accepted']), $ARGS['filled'],
                                                            $ARGS['executive']);                                                                   break;
         case 'send_mail'         : $r=fun_send_mail        ($l, $USER, $GUID, $ARGS['to'], $ARGS['subj'], $ARGS['msg'], $ARGS['headers']);        break;
+        case 'set_stat'          : $r=fun_set_stat         ($l, $USER, $GUID, $ARGS['name'], $ARGS['value']);                                     break;
         default                  : $r=fun_default          ($l, $USER); $no_fun = true;                                                           break;
       }
     }
