@@ -1223,7 +1223,7 @@ function fun_set_stat($link, $user, $guid, $name, $value) {
 
     if ($success) {
         if (set_stat($link, $name, $result[$name])) {
-            db_log($link, $user, 'Session #'.$session_nr.' changed the '.$name.' stat to '.$value.'.');
+            db_log($link, $user, 'Session #'.$user['session'].' changed the '.$name.' stat to '.$value.'.');
         }
         return make_success();
     }
