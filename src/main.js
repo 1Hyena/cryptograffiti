@@ -3,6 +3,7 @@ var CG_CONSTANTS   = null;
 var CG_STATUS      = [];
 var CG_LAST_STATUS = "";
 var CG_ONLINE      = null;
+var CG_SAT_BYTE    = 0;
 var CG_HOLD_STATUS = 0;
 var CG_HOLD_DELAY  = false;
 var CG_TX_NR       = null;
@@ -478,21 +479,23 @@ function cg_load_stats() {
                 &&  "sessions" in json.stats[0]
                 &&  "IPs" in json.stats[0]
                 &&  "decoder" in json.stats[0]
-                &&  "encoder" in json.stats[0]) {
-                   var units = (json.stats[0].sessions == 1 ? CG_TXT_MAIN_SESSION[CG_LANGUAGE] : CG_TXT_MAIN_SESSIONS[CG_LANGUAGE]);
-                   online = json.stats[0].IPs/*+" ("+json.stats[0].sessions+" "+units+")"*/;
-                   var decoder_ok = (json.stats[0].decoder !== "0");
-                   var encoder_ok = (json.stats[0].encoder !== "0");
-                   if (decoder_ok != CG_DECODER_OK) {
+                &&  "encoder" in json.stats[0]
+                &&  "sat_byte" in json.stats[0]) {
+                    CG_SAT_BYTE = json.stats[0].sat_byte;
+                    var units = (json.stats[0].sessions == 1 ? CG_TXT_MAIN_SESSION[CG_LANGUAGE] : CG_TXT_MAIN_SESSIONS[CG_LANGUAGE]);
+                    online = json.stats[0].IPs/*+" ("+json.stats[0].sessions+" "+units+")"*/;
+                    var decoder_ok = (json.stats[0].decoder !== "0");
+                    var encoder_ok = (json.stats[0].encoder !== "0");
+                    if (decoder_ok != CG_DECODER_OK) {
                        if (!decoder_ok) CG_STATUS.push("!"+CG_TXT_MAIN_DECODER_APPEARS_OFFLINE[CG_LANGUAGE]);
                        else CG_STATUS.push("_"+CG_TXT_MAIN_DECODER_APPEARS_ONLINE[CG_LANGUAGE]);
-                   }
-                   if (encoder_ok != CG_ENCODER_OK) {
+                    }
+                    if (encoder_ok != CG_ENCODER_OK) {
                        if (!encoder_ok) CG_STATUS.push("!"+CG_TXT_MAIN_ENCODER_APPEARS_OFFLINE[CG_LANGUAGE]);
                        else CG_STATUS.push("_"+CG_TXT_MAIN_ENCODER_APPEARS_ONLINE[CG_LANGUAGE]);
-                   }
-                   CG_DECODER_OK = decoder_ok;
-                   CG_ENCODER_OK = encoder_ok;
+                    }
+                    CG_DECODER_OK = decoder_ok;
+                    CG_ENCODER_OK = encoder_ok;
                 }
                 else cg_handle_error(json);
             }

@@ -8,8 +8,8 @@ var CG_WRITE_FILE_TYPE  = null;
 var CG_WRITE_FILE_BYTES = null;
 var CG_WRITE_FILE_CHUNKS = [];
 var CG_WRITE_FILE_HASH = null;
-var CG_WRITE_FEE_PER_KB = 0.0001;
-var CG_WRITE_FEE_API_DELAY = 5;
+//var CG_WRITE_FEE_PER_KB = 0.0001;
+//var CG_WRITE_FEE_API_DELAY = 5;
 var CG_WRITE_STATE = "cg-write-textarea";
 var CG_WRITE_PAY_TO = null;
 var CG_WRITE_PAY_AMOUNT = null;
@@ -299,10 +299,10 @@ function cg_write_update_now() {
 function cg_write_update(instant) {
     if (!instant) {
         CG_WRITE_ENCODE_TIME--;
-        CG_WRITE_FEE_API_DELAY--;
-        if (CG_WRITE_FEE_API_DELAY === 0) {
-            cg_write_estimate_fee();
-        }
+        //CG_WRITE_FEE_API_DELAY--;
+        //if (CG_WRITE_FEE_API_DELAY === 0) {
+        //    cg_write_estimate_fee();
+        //}
     }
 
     var btn_preview = document.getElementById("cg-write-btn-preview");
@@ -349,8 +349,11 @@ function cg_write_update(instant) {
     var inputs  = 1;
     var outputs = sz;
     var tx_size = inputs*181 + outputs*34 + 10;
-    var tx_fee  = Math.ceil(tx_size/1000) * CG_WRITE_FEE_PER_KB;
+    //var tx_fee  = Math.ceil(tx_size/1000) * CG_WRITE_FEE_PER_KB;
+    var tx_fee  = (tx_size*CG_SAT_BYTE)/100000000.0;
     var tx_cost = CG_WRITE_MIN_BTC_OUTPUT*outputs + tx_fee;
+    tx_cost += CG_WRITE_MIN_BTC_OUTPUT + 0.00009999;
+    tx_cost *= 1.1; // Encoder service fee is 10% of the TX cost.
 
     if (outputs === 0) {
         tx_size = 0;
@@ -674,6 +677,9 @@ function cg_write_handle_file_select(evt) {
     }
 }
 
+/*
+ * this function is not needed anymore because we are now reading the estimated
+ * TX fee from the server stats.
 function cg_write_estimate_fee() {
     xmlhttpGet('https://bitcoinfees.21.co/api/v1/fees/recommended', '',
         function(json) {
@@ -711,6 +717,7 @@ function cg_write_estimate_fee() {
         }
     );
 }
+*/
 
 function cg_write_check_amount(str) {
     var val = parseFloat(str);

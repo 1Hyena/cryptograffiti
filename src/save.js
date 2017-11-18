@@ -389,9 +389,7 @@ function cg_save_make_order() {
         chunks : ""
     };
 
-    var donation = 0.001;
-    if (CG_WRITE_CHUNKS.length < 10) donation = 0.0001;
-
+    var donation = CG_WRITE_MIN_BTC_OUTPUT;
     order.addr   = "1MVpQJA7FtcDrwKC6zATkZvZcxqma4JixS";
     order.amount = Math.floor(donation * 100000000);
     order.chunks = CG_WRITE_CHUNKS;
