@@ -2,24 +2,24 @@ var OPEN_HTTP_REQUESTS= 0;
 var HTTP_REQUESTS     = {};
 var NEXT_REQUEST_ID   = 1;
 
-function xmlhttpPost(strURL, strParams, fun) {
-    var timeout = 20000;
+function xmlhttpPost(strURL, strParams, fun, timeout) {
+    timeout = typeof timeout !== 'undefined' ? timeout : (20000);
     //if (Math.random() > 0.5) timeout = 10;
 
-    var self = { open : true, 
+    var self = { open : true,
                  id   : NEXT_REQUEST_ID
                };
     HTTP_REQUESTS[NEXT_REQUEST_ID] = self;
     NEXT_REQUEST_ID++;
 
-    // Mozilla/Safari        
+    // Mozilla/Safari
     if (window.XMLHttpRequest) {
         self.xmlHttpReq = new XMLHttpRequest();
     }
     // IE
     else if (window.ActiveXObject) {
         self.xmlHttpReq = new ActiveXObject("Microsoft.XMLHTTP");
-    }    
+    }
 
     self.xmlHttpReq.open('POST', strURL, true);
 
@@ -50,16 +50,16 @@ function xmlhttpPost(strURL, strParams, fun) {
     self.xmlHttpReq.send(strParams);
 }
 
-function xmlhttpGet(strURL, strParams, fun) {
-    var timeout = 20000;
+function xmlhttpGet(strURL, strParams, fun, timeout) {
+    timeout = typeof timeout !== 'undefined' ? timeout : (20000);
     //if (Math.random() > 0.5) timeout = 10;
-    
-    var self = { open : true, 
+
+    var self = { open : true,
                  id   : NEXT_REQUEST_ID
                };
     HTTP_REQUESTS[NEXT_REQUEST_ID] = self;
     NEXT_REQUEST_ID++;
-    
+
     // Mozilla/Safari
     if (window.XMLHttpRequest) {
         self.xmlHttpReq = new XMLHttpRequest();
@@ -68,7 +68,7 @@ function xmlhttpGet(strURL, strParams, fun) {
     else if (window.ActiveXObject) {
         self.xmlHttpReq = new ActiveXObject("Microsoft.XMLHTTP");
     }
-    
+
     self.xmlHttpReq.open('GET', strURL, true);
 
     var requestTimer = setTimeout(function() {
@@ -105,6 +105,10 @@ function isEmpty(obj) {
     return true;
 }
 
+function encode_base64(str) {
+    return window.btoa(unescape(encodeURIComponent(str)));
+}
+
 function decode_utf8(bytes) {
     var len = bytes.length;
     var msg = "";
@@ -120,9 +124,9 @@ function decode_utf8(bytes) {
     var chunks = [];
     var text = "";
     for (var k = 0; k < len; k++) {
-        var c = bytes.charCodeAt(k); 
+        var c = bytes.charCodeAt(k);
         text = text+bytes.charAt(k);
-        
+
         if (k % 20 === 19) {
             chunks.push(text);
             text = "";
@@ -142,10 +146,10 @@ function decode_utf8(bytes) {
         var chunk = "";
         var chunk_has_newline = false;
         var chunk_is_null_terminated = false;
-        
+
         for (var k = 0; k < sz; k++) {
             var c = chunks[j].charCodeAt(k);
-            
+
             if (c <= 127
             &&  c !==  0
             &&  c !==  9 // horizontal tab
@@ -156,7 +160,7 @@ function decode_utf8(bytes) {
                 valid = false;
                 break;
             }
-            
+
             if (c === 10) chunk_has_newline = true;
             if (c === 0) {
                 chunk_is_null_terminated = true;
@@ -166,7 +170,7 @@ function decode_utf8(bytes) {
             chunk_is_null_terminated = false;
             chunk = chunk + String.fromCharCode(c);
         }
-        
+
         if (valid) {
             var buf2="";
             var buf_before = buf;
@@ -203,7 +207,7 @@ function decode_utf8(bytes) {
                         address_newlines = false;
                         break;
                     }
-                    
+
                     if (ok) {
                         // Current chunk alone was invalid but when we appended
                         // a part from the next chunk to it the result turned out
@@ -238,13 +242,11 @@ function decode_utf8(bytes) {
         }
     }
 
-    msg = remove_colours(msg);
-
     try {
         msg = decodeURIComponent(escape(msg));
     } catch (ex) {
         msg = "";
-    }    
+    }
 
     return msg;
 }
@@ -256,7 +258,7 @@ function decode_ascii(bytes) {
     var visible = 0;
     var len     = bytes.length;
     var msg     = "";
-    
+
     if (len % 20 !== 0) {
         var zeroes = 20 - len % 20;
         for (var i=0; i < zeroes; i++) {
@@ -265,7 +267,7 @@ function decode_ascii(bytes) {
     }
 
     for (var k = 0; k < len; k++) {
-        var c = bytes.charCodeAt(k); 
+        var c = bytes.charCodeAt(k);
         chars++;
         if (c === 0) {
             valid++;
@@ -286,7 +288,7 @@ function decode_ascii(bytes) {
                 text = text+"?";
             }
         }
-        
+
         if (k % 20 === 19) {
             if (valid/chars > 0.9 && visible > 0) {
                 msg = msg + text;
@@ -297,18 +299,18 @@ function decode_ascii(bytes) {
             visible = 0;
         }
     }
-    
-    return remove_colours(msg);
+
+    return msg;
 }
 
 function remove_colours(bytes) {
     var len = bytes.length;
     var ansi= null;
     var buf = "";
-    
+
     for (var k = 0; k < len; k++) {
         var c = bytes.charCodeAt(k);
-        
+
         if (c === 27 && ansi === null) {
             ansi = k;
             continue;
@@ -324,11 +326,128 @@ function remove_colours(bytes) {
             buf += String.fromCharCode(27);
             continue;
         }
-        
+
         if (ansi === null) buf += String.fromCharCode(c);
     }
-    
+
     return buf;
+}
+
+// Processes ANSI escape codes and adds css styling for colors.
+// While this ignores most codes, some might be improperly parsed!
+// Returns an array of elements to add
+function processColours(bytes) {
+    function changeState(state, numbers) {
+        var resetState = {foreground: null, background: null, attributes: []};
+        var newState = (numbers.length === 0 ? resetState : state);
+        if (newState.attributes == null) newState.attributes = [];
+
+        for (var i = 0; i < numbers.length; i++) {
+            num = numbers[i];
+            if (num === 0) {
+                newState = {foreground: null, background: null, attributes: []};
+            } else if (num < 10) {
+                if (!newState.attributes.includes(num)) {
+                    newState.attributes.push(num);
+                }
+            } else if (num === 22) {
+                var remaining = [];
+                for (var j = 0; j < newState.attributes.length; j++) {
+                    if (newState.attributes[j] === 1) continue;
+                    remaining.push(newState.attributes[j]);
+                }
+                newState.attributes = remaining;
+            } else if (num >= 30 && num < 38) {
+                newState.foreground = num % 10;
+            } else if (num === 39) {
+                newState.foreground = null;
+            } else if (num >= 40 && num < 48) {
+                newState.background = num % 10;
+            } else if (num === 49) {
+                newState.background = null;
+            }
+        }
+
+        return newState;
+    }
+
+    function createSpan(state) { // make empty span element with proper styling
+        var output = document.createElement("span");
+
+        if (state.foreground !== null) output.classList.add("ansi-fg-" + state.foreground);
+        if (state.background !== null) output.classList.add("ansi-bg-" + state.background);
+
+        for (var i = 0; i < state.attributes.length; i++) {
+            output.classList.add("ansi-format-" + state.attributes[i]);
+        }
+
+        return output;
+    }
+
+    var lastEscape = null; // position of last escape character
+    var inEscapeCode = false;
+    var state = {
+        foreground: null,
+        background: null,
+        attributes: [] // things like bold or strikethrough
+    };
+
+    var output = []; // future array of all elements
+    var currentElement = createSpan(state);
+    var currentText = ""
+
+    var currentNumber = "";
+    var parsedNumbers = [];
+
+    for (var k = 0; k < bytes.length; k++) {
+        var c = bytes[k];
+        if (inEscapeCode) {
+            if (k - lastEscape === 1 && c != "[") { // return if it doesn't start with ESC-[
+                inEscapeCode = false;
+                continue;
+            }
+
+            if (isNumeric(c)) { // parse number
+                currentNumber += c;
+            } else if (c == ";") {
+                if (currentNumber.length > 0) {
+                    parsedNumbers.push(parseInt(currentNumber));
+                }
+                currentNumber = "";
+            } else if (c == "m") {
+                if (currentNumber.length > 0) {
+                    parsedNumbers.push(parseInt(currentNumber));
+                }
+                state = changeState(state, parsedNumbers);
+
+                currentElement.appendChild(document.createTextNode(currentText));
+                output.push(currentElement);
+
+                currentElement = createSpan(state);
+                currentText = "";
+
+                inEscapeCode = false;
+                lastEscape = null;
+            }
+        } else {
+            if (c === "\x1b" && lastEscape === null) {
+                // start escape code
+                lastEscape = k;
+                inEscapeCode = true;
+                currentNumber = "";
+                parsedNumbers = [];
+                continue;
+            } else {
+                currentText += c;
+            }
+        }
+    }
+
+    if (currentText.length > 0) {
+        currentElement.appendChild(document.createTextNode(currentText));
+        output.push(currentElement);
+    }
+    return output;
 }
 
 function isNormalInteger(str) {
@@ -385,7 +504,7 @@ function timeConverter(UNIX_timestamp) {
     var a = new Date(UNIX_timestamp*1000);
     var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     var year = a.getFullYear();
-    var month = months[a.getMonth()]; 
+    var month = months[a.getMonth()];
     var date = a.getDate();           date = pad(date, 2, '0');
     var hour = a.getHours();          hour = pad(hour, 2, '0');
     var min = a.getMinutes();         min  = pad(min,  2, '0');
@@ -499,10 +618,10 @@ function is_blockchain_file(bytes) {
 
     var start = new Date().getTime();
     if (size >= 40 && (size % 20) == 0) {
-        var ripemd160 = CryptoJS.algo.RIPEMD160.create(); 
+        var ripemd160 = CryptoJS.algo.RIPEMD160.create();
         var i = 0;
         while ((i+20) < size) {
-            { 
+            {
                 // HACK: Return when this function takes more than 250 ms to run.
                 var end = new Date().getTime();
                 var time = end - start;
@@ -572,3 +691,9 @@ function formatBytes(bytes) {
     else return (bytes / 1073741824).toFixed(2) + " GiB";
 }
 
+function escapeHtml(unsafe) {
+    return unsafe
+         .replace(/&/g, "&amp;")
+         .replace(/</g, "&lt;")
+         .replace(/>/g, "&gt;");
+ }

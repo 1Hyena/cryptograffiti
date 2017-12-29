@@ -87,6 +87,7 @@ function cg_tools_poe_create_browse_btn() {
     browse_btn.name = "files[]";
     browse_btn.multiple = true;
     browse_btn.addEventListener('change',  cg_tools_poe_handle_file_select, false);
+    //browse_btn.classList.add("cg-borderbox");
     return browse_btn;
 }
 
@@ -122,7 +123,11 @@ function cg_tools_create_proof_of_existence() {
     footer_cell.id = "cg-tools-poe-browse-cell";
     footer_cell.classList.add("cg-tools-poe-footer-cell");
 
-    footer_cell.appendChild(cg_tools_poe_create_browse_btn());
+    var footer_button_div = document.createElement("div");
+    footer_button_div.id = "cg-tools-poe-browse-div";
+    footer_button_div.appendChild(cg_tools_poe_create_browse_btn());
+
+    footer_cell.appendChild(footer_button_div);
     footer_table.appendChild(footer_cell);
     file_selection_div.appendChild(footer_table);
 
@@ -178,9 +183,9 @@ function cg_tools_poe_try_to_cancel() {
     CG_TOOLS_POE_HASHER= null;
     CG_TOOLS_POE_ITEMS = [];
 
-    var browse_cell = document.getElementById("cg-tools-poe-browse-cell");
-    while (browse_cell.hasChildNodes()) browse_cell.removeChild(browse_cell.lastChild);
-    browse_cell.appendChild(cg_tools_poe_create_browse_btn());
+    var browse_div = document.getElementById("cg-tools-poe-browse-div");
+    while (browse_div.hasChildNodes()) browse_div.removeChild(browse_div.lastChild);
+    browse_div.appendChild(cg_tools_poe_create_browse_btn());
 
     setTimeout(function(){
         d.classList.remove("cg-poofin");
@@ -298,20 +303,28 @@ function cg_tools_poe_read_files() {
                 };
                 CG_TOOLS_POE_ITEMS.push(item);
                 CG_TOOLS_POE_CHECKING = true;
-                xmlhttpGet("https://blockchain.info/multiaddr?active="+addr+"&cors=true&format=json", '',
+
+                var cash_api = "https://bitcoincash.blockexplorer.com/api/addr/"+addr+"?noTxList=1";
+                var cash_url = "https://bitcoincash.blockexplorer.com/address/"+addr;
+                var core_api = "https://blockexplorer.com/api/addr/"+addr+"?noTxList=1";
+                var core_url = "https://blockexplorer.com/address/"+addr;
+                var api = (CG_BTC_FORK === "cash" ? cash_api : core_api );
+                var url = (CG_BTC_FORK === "cash" ? cash_url : core_url );
+
+                xmlhttpGet(api, '',
                     function(response) {
                         CG_TOOLS_POE_CHECKING = false;
                              if (response === false);
                         else if (response === null );
                         else {
                             var json = JSON.parse(response);
-                            if ("txs" in json && json.txs.length > 0) {
+                            if ("txApperances" in json && json.txApperances > 0) {
                                 while (status.hasChildNodes()) status.removeChild(status.lastChild);
 
                                 var a_proof   = document.createElement("a");
                                 a_proof.appendChild(document.createTextNode(addr));
                                 a_proof.title = CG_TXT_TOOLS_POE_PROOF_LINK[CG_LANGUAGE];
-                                a_proof.href  = "https://blockchain.info/address/"+addr;
+                                a_proof.href  = url;
                                 a_proof.target= "_blank";
 
                                 status.appendChild(a_proof);

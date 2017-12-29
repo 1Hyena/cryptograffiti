@@ -21,6 +21,7 @@ var CG_READ_FILTER_KEY = null;
 var CG_READ_FILTER_ADDR= null;
 var CG_READ_FILTER_TXS = null;
 var CG_READ_CENSOR_TXS = {};
+var CG_READ_API_OK     = true;
 
 var CG_READ_JOBS = {
     "cg_read_get_filter" : 1,
@@ -30,12 +31,14 @@ var CG_READ_JOBS = {
 var CG_READ_APIS = [
     {
         domain    : "blockchain.info",
-        request   : "https://blockchain.info/tx-index/%s/?cors=true&format=json",
+        request   : "https://blockchain.info/rawtx/%s?format=json&cors=true",
         link      : "https://blockchain.info/tx/%s",
         extract   : "cg_read_extract_blockchaininfo",
         delay     : 0,
         max_delay : 2*CG_READ_PPS,
-        down      : false
+        down      : false,
+        fails     : 0,
+        fork      : "core"
     },
     {
         domain    : "blockexplorer.com",
@@ -44,35 +47,109 @@ var CG_READ_APIS = [
         extract   : "cg_read_extract_blockexplorer",
         delay     : 0,
         max_delay : 2*CG_READ_PPS,
-        down      : false
+        down      : false,
+        fails     : 0,
+        fork      : "core"
     },
+    //{ // commented out because it doesn't have HTTPS
+    //    domain    : "blockr.io",
+    //    request   : "http://btc.blockr.io/api/v1/tx/info/%s",
+    //    link      : "http://blockr.io/tx/info/%s",
+    //    extract   : "cg_read_extract_blockr",
+    //    delay     : 0,
+    //    max_delay : 2*CG_READ_PPS,
+    //    down      : false,
+    //    fails     : 0,
+    //    fork      : "core"
+    //},
     {
-        domain    : "blockr.io",
-        request   : "http://btc.blockr.io/api/v1/tx/info/%s",
-        link      : "http://blockr.io/tx/info/%s",
-        extract   : "cg_read_extract_blockr",
+        domain    : "bitcoincash.blockexplorer.com",
+        request   : "https://bitcoincash.blockexplorer.com/api/tx/%s",
+        link      : "https://bitcoincash.blockexplorer.com/tx/%s",
+        extract   : "cg_read_extract_blockexplorer",
         delay     : 0,
         max_delay : 2*CG_READ_PPS,
-        down      : false
+        down      : false,
+        fails     : 0,
+        fork      : "cash"
+    },
+    //{ // commented out because some CORS issues
+    //    domain    : "bccblock.info",
+    //    request   : "https://bccblock.info/api/tx/%s",
+    //    link      : "https://bccblock.info/tx/%s",
+    //    extract   : "cg_read_extract_blockexplorer",
+    //    delay     : 0,
+    //    max_delay : 2*CG_READ_PPS,
+    //    down      : false,
+    //    fails     : 0,
+    //    fork      : "cash"
+    //},
+    {
+        domain    : "bch-bitcore2.trezor.io",
+        request   : "https://bch-bitcore2.trezor.io/api/tx/%s",
+        link      : "https://bch-bitcore2.trezor.io/tx/%s",
+        extract   : "cg_read_extract_blockexplorer",
+        delay     : 0,
+        max_delay : 2*CG_READ_PPS,
+        down      : false,
+        fails     : 0,
+        fork      : "cash"
+    },
+    //{ // commented out because it does not have HTTPS
+    //    domain    : "blockdozer.com",
+    //    request   : "http://blockdozer.com/insight-api/tx/%s",
+    //    link      : "http://blockdozer.com/insight/tx/%s",
+    //    extract   : "cg_read_extract_blockexplorer",
+    //    delay     : 0,
+    //    max_delay : 2*CG_READ_PPS,
+    //    down      : false,
+    //    fails     : 0,
+    //    fork      : "cash"
+    //},
+    {
+        domain    : "bch-insight.bitpay.com",
+        request   : "https://bch-insight.bitpay.com/api/tx/%s",
+        link      : "https://bch-insight.bitpay.com/tx/%s",
+        extract   : "cg_read_extract_blockexplorer",
+        delay     : 0,
+        max_delay : 2*CG_READ_PPS,
+        down      : false,
+        fails     : 0,
+        fork      : "cash"
+    },
+    {
+        domain    : "cashexplorer.bitcoin.com",
+        request   : "https://cashexplorer.bitcoin.com/api/tx/%s",
+        link      : "https://cashexplorer.bitcoin.com/tx/%s",
+        extract   : "cg_read_extract_blockexplorer",
+        delay     : 0,
+        max_delay : 2*CG_READ_PPS,
+        down      : false,
+        fails     : 0,
+        fork      : "cash"
     }
 ];
-var CG_READ_API_BLOCKCHAIN_INFO = 0; // Index of blockchain.info in the CG_READ_APIS array.
+
+var CG_READ_API = {
+    core : 0, // Index of blockchain.info in the CG_READ_APIS array.
+    cash : 2  // Index of bitcoincash.blockexplorer.com
+};
 
 function cg_construct_read(main) {
     var div = cg_init_tab(main, 'cg-tab-read');
     if (div === null) return;
-    
+
     div.classList.add("cg-read-tab-premature");
-    
+
     var text = document.createTextNode(CG_TXT_READ_INITIALIZING[CG_LANGUAGE]);
-    
+
     var span = document.createElement('span');
     span.appendChild(text);
     span.id="cg-read-initializing-span";
     div.appendChild(span);
-    
+
     div.addEventListener("wheel", cg_read_scroll);
-    
+
     cg_read_loop();
 }
 
@@ -97,7 +174,7 @@ function cg_read_loop() {
 
         CG_READ_JOBS[key]--;
         if (CG_READ_JOBS[key] > 0) continue;
-        
+
         if (window[key]() === false) CG_READ_JOBS[key] = 1;
         else delete CG_READ_JOBS[key];
     }
@@ -112,7 +189,7 @@ function cg_read_loop() {
         var bottom = cg_read_scrolled_bottom(tab);
 
         CG_SCROLL_FIXED = false;
-        
+
         if (cg_read_scrolled_top(tab)) {
             var premature_count = 0;
             var sz = CG_GRAFFITI_NRS.length;
@@ -184,11 +261,11 @@ function cg_read_loop() {
         else if (cg_read_scroll_visible(tab) < 0.2 && !near_bottom) {
             cg_read_delete_graffiti_bottom(tab);
         }
-        
+
         if (CG_DECODING === null && (top || bottom)) {
             for (var repeat=0; repeat<2; repeat++) {
                 var children = tab.children;
-                
+
                 var i_val = 0;
                 var i_mod = 1;
                 var i_end = children.length;
@@ -202,9 +279,9 @@ function cg_read_loop() {
 
                 for (var i = i_val; i !== i_end; i += i_mod) {
                     var child = children[i];
-                    
+
                     if (child.classList.contains('cg-read-loadingbox')) continue;
-                    
+
                     if (!child.classList.contains('cg-hidden'  )
                     ||   child.classList.contains('cg-msgbox-decoding')
                     ||   child.classList.contains('cg-msgbox-decoded' )
@@ -212,7 +289,7 @@ function cg_read_loop() {
 
                     to_decode = child;
                 }
-                
+
                 if (to_decode !== null) {
                     var span = document.getElementById(to_decode.id+"-span");
                     if (span !== null) {
@@ -254,7 +331,7 @@ function cg_read_loop() {
             else if (bottom) cg_read_scroll_bottom(tab);
         }
     }
-    
+
     setTimeout(function(){
         cg_read_loop();
     }, 1000/CG_READ_PPS);
@@ -268,6 +345,7 @@ function cg_decode() {
     var apis = [];
     var api = null;
     for (var i=0, sz = CG_READ_APIS.length; i<sz; i++) {
+        if (CG_READ_APIS[i].fork !== CG_BTC_FORK) continue;
              if (CG_READ_APIS[i].delay ===  0) apis.push(i);
         else if (CG_READ_APIS[i].delay === -1) return false; // Already requested.
     }
@@ -281,7 +359,7 @@ function cg_decode() {
 
     var msgbox  = document.getElementById("cg-msgbox-"+nr);
     var msgspan = document.getElementById("cg-msgbox-"+nr+"-span");
-    
+
     if (nr in CG_GRAFFITI == false || msgbox === null || msgspan === null) {
         CG_DECODING = null;
         CG_DECODE_ATTEMPTS = 0;
@@ -350,13 +428,15 @@ function cg_decode() {
             }
 
             msgbox.classList.remove("cg-msgbox-decoding");
-                
+
             var status = "???";
             var success = false;
 
+            CG_READ_API_OK = false;
                  if (json === false) status = sprintf(CG_TXT_MAIN_API_ERROR[CG_LANGUAGE], CG_READ_APIS[api].domain);
             else if (json === null ) status = sprintf(CG_TXT_MAIN_API_TIMEOUT[CG_LANGUAGE], CG_READ_APIS[api].domain);
             else {
+                CG_READ_API_OK = true;
                 var response = JSON.parse(json);
 
                 if (typeof response === 'object') {
@@ -367,7 +447,7 @@ function cg_decode() {
                     var timestamp=  0;
                     var op_return_msg = "";
                     var filehash = null;
-                    
+
                     var extract = window[CG_READ_APIS[api].extract](r);
                     if (extract !== null) {
                         out_bytes = extract[0];
@@ -401,10 +481,11 @@ function cg_decode() {
                         if (op_return_msg.length <= 1) op_return_msg = decode_ascii(op_return);
                         if (op_return_msg.length >  1) {
                             if (msg.length > 1) msg = msg + "\n";
-                            msg = msg + "-----BEGIN OP_RETURN MESSAGE BLOCK-----\n" 
+                            msg = msg + "-----BEGIN OP_RETURN MESSAGE BLOCK-----\n"
                                       + op_return_msg + "\n----- END OP_RETURN MESSAGE BLOCK -----";
                         }
                         var txt = msg;
+                        processedTxt = processColours(txt);
 
                         if (timestamp != 0) {
                             while (msgheaderR.hasChildNodes()) msgheaderR.removeChild(msgheaderR.lastChild);
@@ -413,7 +494,10 @@ function cg_decode() {
 
                         msgbox.classList.add("cg-msgbox-decoded");
                         while (msgspan.hasChildNodes()) msgspan.removeChild(msgspan.lastChild);
-                        msgspan.appendChild(document.createTextNode(txt));
+
+                        for (var i = 0; i < processedTxt.length; i++) {
+                            msgspan.appendChild(processedTxt[i])
+                        }
 
                         var isRTL = checkRTL(txt);
                         var dir = isRTL ? 'RTL' : 'LTR';
@@ -425,6 +509,7 @@ function cg_decode() {
 
                         if (type.indexOf("image/") === 0) {
                             var media = document.createElement("DIV");
+                            media.classList.add("cg-msgbody-media");
 
                             var b64imgData = btoa(blockchain_file == null ? out_bytes : blockchain_file);
                             var img = new Image();
@@ -434,10 +519,71 @@ function cg_decode() {
                             msgbody.insertBefore(media, msgspan);
                         }
                         else if (blockchain_file !== null) {
+                            var media = document.createElement("DIV");
+                            media.classList.add("cg-msgbody-media");
+
                             var file_table = cg_read_create_filetable(blockchain_file, type, filehash, fsz);
                             file_table.classList.add("cg-read-filetable");
-                            msgbody.insertBefore(file_table, msgspan);
-                            msgbody.insertBefore(document.createElement("BR"), msgspan);
+
+                            media.appendChild(file_table);
+                            msgbody.insertBefore(media, msgspan);
+
+                             if (type.indexOf("text/") === 0
+                             ||  type.indexOf("application/pgp") === 0) {
+                                media = document.createElement("DIV");
+                                media.classList.add("cg-msgbody-media");
+
+                                var utf8 = decode_utf8(blockchain_file);
+                                var ta = document.createElement("textarea");
+                                ta.readOnly = true;
+                                ta.rows = 24;
+                                ta.cols = 81;
+                                ta.wrap = false;
+                                ta.value = utf8;
+                                ta.classList.add("cg-view-textarea");
+                                media.appendChild(ta);
+
+                                if (type === "text/html"
+                                ||  type === "text/markdown") {
+                                    var cover = document.createElement("div");
+                                    cover.style.position = "absolute";
+                                    cover.style.top = "0";
+                                    cover.style.bottom = "0";
+                                    cover.style.left = "0";
+                                    cover.style.right = "0";
+                                    cover.style.backgroundColor = "white";
+
+                                    var b64Data = encode_base64(utf8);
+                                    var obj = document.createElement('iframe');
+                                    var safe_type = (type === "text/html" ? type : "text/plain");
+                                    obj.style.width = "100%";
+                                    obj.style.height = "100%";
+                                    obj.src = "data:"+safe_type+";charset=utf8;base64,"+b64Data;
+                                    obj.sandbox = '';
+                                    obj.classList.add("cg-borderbox");
+
+                                    cover.appendChild(obj);
+                                    media.appendChild(cover);
+
+                                    if (type === "text/markdown") {
+                                        var data_obj = {
+                                            text: utf8,
+                                            mode: "markdown",
+                                            context: "none"
+                                        }
+                                        var json_str = JSON.stringify(data_obj);
+                                        xmlhttpPost('https://api.github.com/markdown', json_str,
+                                            function(response) {
+                                                if (response === false || response === null) return;
+                                                var b64 = encode_base64(response);
+                                                obj.src = "data:text/html;charset=utf8;base64,"+b64;
+                                            }
+                                        );
+                                    }
+                                }
+
+                                msgbody.insertBefore(media, msgspan);
+                            }
                         }
 
                         if (isOverflowed(msgbody)) {
@@ -454,6 +600,8 @@ function cg_decode() {
 
             if (!success) {
                 CG_READ_APIS[api].down = true;
+                CG_READ_APIS[api].fails++;
+                CG_READ_APIS[api].delay = CG_READ_APIS[api].fails * CG_READ_APIS[api].max_delay;
                 msgbox.classList.add("cg-msgbox-failed");
                 while (msgspan.hasChildNodes()) msgspan.removeChild(msgspan.lastChild);
                 msgspan.appendChild(document.createTextNode("("+CG_TXT_READ_DECODING_FAILED[CG_LANGUAGE]+")"));
@@ -471,14 +619,15 @@ function cg_decode() {
             if (success) {
                 var msgtxhash_id = "cg-msgtxhash-"+nr;
                 var msgtxhash    = document.getElementById(msgtxhash_id);
-                if (CG_READ_APIS[CG_READ_API_BLOCKCHAIN_INFO].down) {
+                if (CG_READ_APIS[CG_READ_API[CG_BTC_FORK]].down) {
                     msgtxhash.href = sprintf(CG_READ_APIS[api].link, txid);
                 }
-                else msgtxhash.href = sprintf(CG_READ_APIS[CG_READ_API_BLOCKCHAIN_INFO].link, txid);
+                else msgtxhash.href = sprintf(CG_READ_APIS[CG_READ_API[CG_BTC_FORK]].link, txid);
+                CG_READ_APIS[api].fails = 0;
             }
 
             CG_STATUS.push(status);
-        }
+        }, (CG_READ_API_OK ? 3000 : 20000)
     );
 
     return true;
@@ -511,10 +660,17 @@ function cg_read_extract_blockexplorer(r) {
     var outs = r.vout.length;
 
     for (var j = 0; j < outs; j++) {
-        if ("scriptPubKey" in r.vout[j]
-        &&  "addresses" in r.vout[j].scriptPubKey
+        if (!("scriptPubKey" in r.vout[j])) continue;
+
+        if ("addresses" in r.vout[j].scriptPubKey
         &&  r.vout[j].scriptPubKey.addresses.length > 0) {
             out_bytes = out_bytes + Bitcoin.getAddressPayload(r.vout[j].scriptPubKey.addresses[0]);
+        }
+        else if ("asm" in r.vout[j].scriptPubKey
+        && r.vout[j].scriptPubKey.asm.substr(0, 10) == "OP_RETURN ") {
+            // OP_RETURN detected
+            var hex_body = r.vout[j].scriptPubKey.asm.substr(10);
+            op_return = op_return + hex2ascii(hex_body);
         }
     }
     var time = 0;
@@ -525,15 +681,25 @@ function cg_read_extract_blockexplorer(r) {
 function cg_read_extract_blockr(r) {
     var out_bytes= "";
     var op_return= "";
-    
+
     if ("status" in r && r.status === "success" && "data" in r
     &&  "vouts" in r.data) {
         var outs = r.data.vouts.length;
 
         for (var j = 0; j < outs; j++) {
-            if ("address" in r.data.vouts[j]) {
-                out_bytes = out_bytes + Bitcoin.getAddressPayload(r.data.vouts[j].address);
+            if (!("address" in r.data.vouts[j])) continue;
+            if (r.data.vouts[j].address === "NONSTANDARD") {
+                if ("extras" in r.data.vouts[j]
+                &&  "asm" in r.data.vouts[j].extras
+                && r.data.vouts[j].extras.asm.substr(0, 10) == "OP_RETURN ") {
+                    // OP_RETURN detected
+                    var hex_body = r.data.vouts[j].extras.asm.substr(10);
+                    op_return = op_return + hex2ascii(hex_body);
+                }
+                continue;
             }
+
+            out_bytes = out_bytes + Bitcoin.getAddressPayload(r.data.vouts[j].address);
         }
     }
     else return null;
@@ -554,7 +720,7 @@ function cg_read_get_filter() {
     if (key !== CG_READ_FILTER_KEY) key = key+"...";
 
     CG_STATUS.push(sprintf(CG_TXT_READ_LOADING_FILTER[CG_LANGUAGE], key));
-    xmlhttpGet("http://btc.blockr.io/api/v1/address/txs/"+CG_READ_FILTER_ADDR, '',
+    xmlhttpGet("https://btc.blockr.io/api/v1/address/txs/"+CG_READ_FILTER_ADDR, '',
         function(response) {
             var status = "???";
             var success = false;
@@ -597,10 +763,10 @@ function cg_read_get_latest() {
         back: null
     }
     var json_str = encodeURIComponent(JSON.stringify(data_obj));
-    
+
     CG_STATUS.push(CG_TXT_READ_LOADING_GRAFFITI[CG_LANGUAGE]);
-    
-    xmlhttpPost('http://cryptograffiti.info/database/', 'fun=get_btc_graffiti&data='+json_str,
+
+    xmlhttpPost(CG_API, 'fun=get_btc_graffiti&data='+json_str,
         function(response) {
             var status = "???";
                  if (response === false) status = CG_TXT_READ_LOADING_ERROR[CG_LANGUAGE];
@@ -611,7 +777,7 @@ function cg_read_get_latest() {
                     if (json.txs.length > 0) {
                         CG_NEWEST_TX_NR = json.txs[0].nr;
                         CG_OLDEST_TX_NR = CG_NEWEST_TX_NR;
-                    
+
                         if (CG_NEWEST_TX_NR !== null) {
                             var obj = {
                                 type:  json.txs[0].type,
@@ -629,7 +795,7 @@ function cg_read_get_latest() {
                             }
 
                             status = sprintf(CG_TXT_READ_GRAFFITI_LOADED[CG_LANGUAGE], CG_NEWEST_TX_NR);
-                            
+
                             var tab = document.getElementById("cg-tab-read");
                             if (tab.hasChildNodes()) {
                                 tab.lastChild.classList.add("cg-disappear");
@@ -664,7 +830,7 @@ function cg_read_get_latest() {
             if (CG_NEWEST_TX_NR === null) CG_READ_JOBS["cg_read_get_latest"] = 10*CG_READ_PPS;
         }
     );
-    
+
     return true;
 }
 
@@ -680,7 +846,7 @@ function cg_read_load_new_txs() {
 
     CG_STATUS.push(CG_TXT_READ_LOADING_NEW_GRAFFITI[CG_LANGUAGE]);
 
-    xmlhttpPost('http://cryptograffiti.info/database/', 'fun=get_btc_graffiti&data='+json_str,
+    xmlhttpPost(CG_API, 'fun=get_btc_graffiti&data='+json_str,
         function(response) {
             var status = "???";
 
@@ -714,7 +880,7 @@ function cg_read_load_new_txs() {
                     }
 
                     if (json.txs.length <= 1 || (delay && count > 0)) CG_READ_JOBS["cg_read_load_new_txs"] = 30*CG_READ_PPS;
-                    
+
                     status = sprintf(CG_TXT_READ_NEW_GRAFFITI_LOADED[CG_LANGUAGE], count, CG_GRAFFITI_NRS.length);
                 }
                 else {
@@ -739,10 +905,10 @@ function cg_read_load_old_txs() {
         back: "1"
     }
     var json_str = encodeURIComponent(JSON.stringify(data_obj));
-    
+
     CG_STATUS.push(CG_TXT_READ_LOADING_OLD_GRAFFITI[CG_LANGUAGE]);
 
-    xmlhttpPost('http://cryptograffiti.info/database/', 'fun=get_btc_graffiti&data='+json_str,
+    xmlhttpPost(CG_API, 'fun=get_btc_graffiti&data='+json_str,
         function(response) {
             var status = "???";
 
@@ -787,7 +953,7 @@ function cg_read_load_old_txs() {
             CG_STATUS.push(status);
         }
     );
-    
+
     return true;
 }
 
@@ -848,7 +1014,7 @@ function cg_read_delete_graffiti(div, top) {
 
     if (execute) {
         var sz = to_delete.length;
-        
+
         for (var i = 0; i<sz; i++) {
             var child_id = to_delete[i].id;
 
@@ -856,7 +1022,7 @@ function cg_read_delete_graffiti(div, top) {
                 var nr = (top ? CG_GRAFFITI_NRS.pop() : CG_GRAFFITI_NRS.shift());
 
                 if (nr in CG_GRAFFITI) delete CG_GRAFFITI[nr];
-                
+
                 if (top) CG_NEWEST_TX_NR = nr;
                 else     CG_OLDEST_TX_NR = nr;
 
@@ -901,7 +1067,18 @@ function cg_read_create_graffiti(div, nr, append) {
     var t_nr = document.createTextNode("#"+nr);
     var a_nr = document.createElement("a"); a_nr.appendChild(t_nr);
     a_nr.title = CG_TXT_READ_LINK_TO_THIS_MSG[CG_LANGUAGE];
-    a_nr.href  = "#"+nr;
+    a_nr.href  = "#"+t.txid;
+    if ("type" in CG_GRAFFITI[nr]) {
+        for (var key in CG_VIEW_TYPES) {
+            if (CG_VIEW_TYPES.hasOwnProperty(key)) {
+                if (CG_VIEW_TYPES[key] === CG_GRAFFITI[nr].type) {
+                    if (key.length > 0) a_nr.href += "."+key;
+                    break;
+                }
+            }
+        }
+    }
+
     a_nr.id    = "cg-msgnr-"+nr;
     a_nr.onclick=function(){
         var selected = cg_get_tx_nr();
@@ -910,7 +1087,7 @@ function cg_read_create_graffiti(div, nr, append) {
             // Some messsage has been already selected, deselect it first.
             mbx = document.getElementById("cg-msgbox-"+selected);
             if (mbx !== null) mbx.classList.remove("cg-msgbox-selected");
-            
+
             var old_msgbody_id = "cg-msgbody-"+selected; // Find its message body.
             var old_msgbody = document.getElementById(old_msgbody_id);
             if (old_msgbody !== null && old_msgbody.classList.contains('cg-msgbody-overflowed')) {
@@ -945,19 +1122,19 @@ function cg_read_create_graffiti(div, nr, append) {
 
     msgheaderL.appendChild(a_nr);
     msgheaderR.appendChild(document.createTextNode(""));
-    
+
     var t_txid = document.createTextNode(t.txid);
     var a_txid = document.createElement("a"); a_txid.appendChild(t_txid);
     a_txid.id  = "cg-msgtxhash-"+nr;
     a_txid.title = CG_TXT_READ_TRANSACTION_DETAILS[CG_LANGUAGE];
-    a_txid.href  = "https://blockchain.info/tx/"+t.txid;
+    a_txid.href  = sprintf(CG_READ_APIS[CG_READ_API[CG_BTC_FORK]].link, t.txid);
     a_txid.target= "_blank";
-    
+
     var span = document.createElement('span');
     span.appendChild(document.createTextNode("("+CG_TXT_READ_MSG_NOT_DECODED_YET[CG_LANGUAGE]+")"));
     span.id="cg-msgbox-"+nr+"-span";
     span.classList.add("cg-msgspan");
-    
+
     msgheader.appendChild(msgheaderL);
     msgheader.appendChild(msgheaderR);
     msgbody.appendChild(span);
@@ -967,19 +1144,20 @@ function cg_read_create_graffiti(div, nr, append) {
     msgbox.appendChild(msgheader);
     msgbox.appendChild(msgbody);
     msgbox.appendChild(msgfooter);
-      
-    msgheader.classList.add("cg-msgheader");          
+
+    msgheader.classList.add("cg-msgheader");
     msgheaderL.classList.add("cg-msgheader-left");
     msgheaderR.classList.add("cg-msgheader-right");
     msgfooter.classList.add("cg-msgfooter");
     msgfooterC.classList.add("cg-msgfooter-content");
     msgbody.classList.add("cg-msgbody");
+    msgbody.classList.add("cg-read-msgbody");
     msgbox.classList.add("cg-msgbox");
     msgbox.classList.add("cg-borderbox");
     msgbox.classList.add("cg-hidden");
 
     if (nr.toString(10) === CG_TX_NR) msgbox.classList.add("cg-msgbox-selected");
-    
+
     msgbox.id = "cg-msgbox-"+nr;
     msgbody.id = "cg-msgbody-"+nr;
     msgheaderR.id = "cg-msgheader-right-"+nr;
@@ -1059,7 +1237,7 @@ function cg_read_mature(tab, near_bottom) {
     var loadingbars = [];
     var list = [];
     var mature_found = false;
-    
+
     for (var i = i_val; i !== i_end; i += i_mod) {
         var child = children[i];
 
@@ -1074,7 +1252,7 @@ function cg_read_mature(tab, near_bottom) {
         if (mature_found) continue;
 
         if (child.classList.contains('cg-msgbox-premature')
-        && (child.classList.contains('cg-msgbox-decoded') 
+        && (child.classList.contains('cg-msgbox-decoded')
          || child.classList.contains('cg-msgbox-failed'))) {
             list.unshift(child);
         }
@@ -1082,7 +1260,7 @@ function cg_read_mature(tab, near_bottom) {
             mature_found = true;
         }
     }
-    
+
     var row = [];
     var row_width = 0;
     var all_wide = false;
@@ -1136,7 +1314,7 @@ function cg_read_mature(tab, near_bottom) {
             if (CG_IMMATURE_ROW < row_width) CG_IMMATURE_TIME = 0;
             CG_IMMATURE_ROW = row_width;
         }
-        
+
         if (loadingbars.length > 0) {
             var barbox = loadingbars[0];
             if (barbox.hasChildNodes()) {
@@ -1146,7 +1324,7 @@ function cg_read_mature(tab, near_bottom) {
                 bar.style.width = p+"%";
             }
         }
-        
+
         return false;
     }
 
@@ -1180,7 +1358,7 @@ function cg_read_mature(tab, near_bottom) {
         if (loadingbars[i].classList.contains('cg-read-loadingbox-close')) {
             //if (i == sz-1) {
                 if (loadingbars[i].offsetTop+loadingbars[i].offsetHeight < tab.scrollTop
-                ||  loadingbars[i].offsetTop > tab.scrollTop + tab.clientHeight) {            
+                ||  loadingbars[i].offsetTop > tab.scrollTop + tab.clientHeight) {
                     if (!first_offscreen) first_offscreen = true;
                     else tab.removeChild(loadingbars[i]);
                 }
@@ -1197,7 +1375,7 @@ function cg_read_mature(tab, near_bottom) {
                     bar.style.width = "100%";
                     CG_READ_COOLDOWN = 1*CG_READ_PPS;
                 }
-            }            
+            }
         }
     }
 
@@ -1208,7 +1386,7 @@ function cg_read_create_loadingbar(tab, near_bottom, last) {
     last = typeof last !== 'undefined' ? last : null;
     var loadingbox = document.createElement("DIV");
     var loadingbar = document.createElement("DIV");
-    
+
     loadingbox.classList.add("cg-read-loadingbox");
     if (near_bottom) loadingbox.classList.add("cg-read-loadingbox-bottom");
     else             loadingbox.classList.add("cg-read-loadingbox-top");
@@ -1244,7 +1422,7 @@ function cg_read_msgbox_mature(msgbox_id) {
         msgbox.classList.add("cg-appear");
         msgbox.classList.remove("cg-hidden");
     }, 50+Math.floor((Math.random() * 150) + 1));
-    
+
     var pieces = msgbox_id.split("-");
     var nr = parseInt(pieces.pop(), 10);
 
@@ -1253,7 +1431,7 @@ function cg_read_msgbox_mature(msgbox_id) {
         t.premature = false;
     }
     else alert(sprintf(CG_TXT_READ_ERROR_2[CG_LANGUAGE], nr.toString(10)));
-    
+
     var msgbody_id = "cg-msgbody-"+nr;
     var msgbody    = document.getElementById(msgbody_id);
 
@@ -1262,7 +1440,7 @@ function cg_read_msgbox_mature(msgbox_id) {
         if (!msgbox.classList.contains('cg-msgbox-selected')) {
             msgbody.classList.add("cg-msgbody-clickable");
         }
-        
+
         if (CG_TX_NR !== nr.toString(10)) {
             msgbody.onclick = function(){
                 var a_nr = document.getElementById("cg-msgnr-"+nr);
@@ -1324,7 +1502,7 @@ function smoothScroll(div_id, by, steps, delay, key) {
         CG_READ_SCROLL_KEY = null;
         return;
     }
-    
+
     setTimeout(function(){
         smoothScroll(div_id, by, steps, delay, key);
     }, delay);
@@ -1340,15 +1518,16 @@ function scrollTo(div, to, duration) {
          if (div.scrollTop > to) by = -diff/steps;
     else if (div.scrollTop < to) by =  diff/steps;
 
-    //alert(div.id+" by: "+by+ " steps: "+steps+" delay: "+delay+" scrollTop: "+div.scrollTop+" to: "+to+" duration: "+duration);    
+    //alert(div.id+" by: "+by+ " steps: "+steps+" delay: "+delay+" scrollTop: "+div.scrollTop+" to: "+to+" duration: "+duration);
     smoothScroll(div.id, by, steps, delay, key);
 }
 
-function cg_read_create_filetable(blockchain_file, type, filehash, fsz) {
+function cg_read_create_filetable(blockchain_file, type, filehash, fsz, type_id) {
+    type_id = typeof type_id !== 'undefined' ? type_id : (null);
     var b64Data = btoa(blockchain_file);
 
     var file_link = document.createElement("A");
-    file_link.href = "data:"+type+";base64,"+b64Data;
+    file_link.href = "data:"+type+";charset=utf8;base64,"+b64Data;
     if (filehash !== null) file_link.download = filehash;
     file_link.title = CG_TXT_READ_FILE_TITLE[CG_LANGUAGE];
     file_link.target = "_blank";
@@ -1378,11 +1557,44 @@ function cg_read_create_filetable(blockchain_file, type, filehash, fsz) {
     file_tr3_td1.appendChild(document.createTextNode(CG_TXT_WRITE_NEW_MSG_HASH[CG_LANGUAGE]));
     file_tr4_td1.appendChild(document.createTextNode(CG_TXT_READ_FILE_LINK[CG_LANGUAGE]));
 
-    file_tr1_td2.appendChild(document.createTextNode(type));
+    var type_select = document.createElement("select");
+    file_table.cg_type_select = type_select;
+    if (type_id !== null) type_select.id = type_id;
+    type_select.classList.add("cg-view-select");
+    type_select.file_link = file_link;
+    type_select.onchange = function(){
+        this.file_link.href = "data:"+this.value+";base64,"+b64Data;
+        while (this.file_link.hasChildNodes()) this.file_link.removeChild(this.file_link.lastChild);
+        var link_text = document.createTextNode(CG_TXT_READ_FILE_DOWNLOAD[CG_LANGUAGE]);
+        this.file_link.title = CG_TXT_READ_FILE_TITLE[CG_LANGUAGE];
+        this.file_link.appendChild(link_text);
+        if (filehash !== null) this.file_link.download = filehash;
+        this.file_link.type = this.value;
+    };
+    var all_types = {};
+    all_types[type] = true;
+    for (var key in CG_VIEW_TYPES) {
+        if (CG_VIEW_TYPES.hasOwnProperty(key)) {
+            all_types[CG_VIEW_TYPES[key]] = true;
+        }
+    }
+    for (var key in all_types) {
+        if (all_types.hasOwnProperty(key)) {
+            var opt = document.createElement("option");
+            opt.classList.add("cg-view-option");
+            opt.value = key;
+            opt.label = key;
+            if (key === type) opt.selected = true;
+            var txt = document.createTextNode(key);
+            opt.appendChild(txt);
+            type_select.appendChild(opt);
+        }
+    }
+
+    file_tr1_td2.appendChild(type_select);
     file_tr2_td2.appendChild(document.createTextNode((fsz/1024).toFixed(4)+" KiB"));
     file_tr3_td2.appendChild(document.createTextNode(filehash));
     file_tr4_td2.appendChild(file_link);
-    
+
     return file_table;
 }
-

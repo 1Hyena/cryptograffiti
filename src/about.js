@@ -1,22 +1,22 @@
 function cg_construct_about(main) {
     var div = cg_init_tab(main, 'cg-tab-about');
     if (div === null) return;
-    
+
     div.classList.add("cg-about-tab");
-    
+
     var t1 = document.createTextNode(CG_TXT_ABOUT_P1[CG_LANGUAGE]);
     var t2 = document.createTextNode(CG_TXT_ABOUT_P2[CG_LANGUAGE]);
     var t3 = document.createTextNode(CG_TXT_ABOUT_P3[CG_LANGUAGE]);
-    
+
     var p1 = document.createElement("p"); p1.appendChild(t1);
     var p2 = document.createElement("p"); p2.appendChild(t2);
     var p3 = document.createElement("p"); p3.appendChild(t3);
 
     div.classList.add("cg-about-tab");
-    
+
     var contact = document.createElement("div");
     contact.classList.add("cg-contact");
-    
+
     var table = document.createElement("table");
     var tr1   = document.createElement("tr");
     var tr2   = document.createElement("tr");
@@ -38,7 +38,7 @@ function cg_construct_about(main) {
     tr1.appendChild(td1_2);
     table.appendChild(tr2);
     tr2.appendChild(td2_1);
-    tr2.appendChild(td2_2);    
+    tr2.appendChild(td2_2);
     table.appendChild(tr3);
     tr3.appendChild(td3_1);
     tr3.appendChild(td3_2);
@@ -53,7 +53,7 @@ function cg_construct_about(main) {
     var t_email  = document.createTextNode("hyena@");
     var t_donate = document.createTextNode("1MVpQJA7FtcDrwKC6zATkZvZcxqma4JixS");
     var t_source = document.createTextNode("github.com/1Hyena/cryptograffiti");
-    
+
     var a_topic   = document.createElement("a"); a_topic.appendChild(t_topic);
     a_topic.title = CG_TXT_ABOUT_TOPIC[CG_LANGUAGE];
     a_topic.href  = "https://bitcointalk.org/index.php?topic=524877.0";
@@ -69,11 +69,12 @@ function cg_construct_about(main) {
     img_domain.setAttribute('alt', CG_TXT_ABOUT_EMAIL_ALT[CG_LANGUAGE]);
     img_domain.style.verticalAlign="bottom";
 
+    var fork = (CG_BTC_FORK === "cash" ? "bitcoincash:" : "bitcoin:");
     var a_donate = document.createElement("a"); a_donate.appendChild(t_donate);
     a_donate.title = CG_TXT_ABOUT_DONATE_ALT[CG_LANGUAGE];
-    a_donate.href  = "bitcoin:1MVpQJA7FtcDrwKC6zATkZvZcxqma4JixS";
+    a_donate.href  = fork+"1MVpQJA7FtcDrwKC6zATkZvZcxqma4JixS";
     a_donate.target= "_blank";
-    
+
     var t_note = document.createTextNode(CG_TXT_ABOUT_NOTE[CG_LANGUAGE]);
     var p_note = document.createElement("p");
     p_note.appendChild(t_note);
@@ -81,7 +82,7 @@ function cg_construct_about(main) {
 
     a_topic.classList.add('cg-link');
     a_donate.classList.add('cg-link');
-    
+
     td1_1.appendChild(document.createTextNode(CG_TXT_ABOUT_FORUM_TOPIC[CG_LANGUAGE])); td1_2.appendChild(a_topic);
     td2_1.appendChild(document.createTextNode(CG_TXT_ABOUT_SOURCE_CODE[CG_LANGUAGE])); td2_2.appendChild(a_source);
     td3_1.appendChild(document.createTextNode(CG_TXT_ABOUT_CONTACT_US [CG_LANGUAGE])); td3_2.appendChild(t_email); td3_2.appendChild(img_domain);
@@ -105,10 +106,26 @@ function cg_construct_about(main) {
     }
 
     table.classList.add('cg-table');
-    contact.appendChild(table);
+
+    if (CG_BTC_FORK === "cash") {
+        var cash_img = document.createElement("img");
+        cash_img.src = document.getElementById("gfx_cash").src;
+        cash_img.width = "128";
+        cash_img.height= "128";
+
+        var core_img = document.createElement("img");
+        core_img.src = document.getElementById("gfx_core").src;
+        core_img.width = "128";
+        core_img.height= "128";
+
+        contact.appendChild(cash_img);
+        contact.appendChild(table);
+        contact.appendChild(core_img);
+    }
+    else contact.appendChild(table);
 
     contact.appendChild(p_note);
-    
+
     p1.style.opacity = "0";
     p2.style.opacity = "0";
     p3.style.opacity = "0";
@@ -118,7 +135,7 @@ function cg_construct_about(main) {
     div.appendChild(p2);
     div.appendChild(p3);
     div.appendChild(contact);
-        
+
     setTimeout(function(){p1.classList.add("cg-appear");      cg_sfx_spray();},  750);
     setTimeout(function(){p2.classList.add("cg-appear");      cg_sfx_spray();}, 1000);
     setTimeout(function(){p3.classList.add("cg-appear");      cg_sfx_spray();}, 1250);
