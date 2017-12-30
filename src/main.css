@@ -163,7 +163,7 @@ button {
 }
 
 #cg-version {
-    display: inline;
+    display: inline-block;
     width: 0ch;
     opacity: 0;
     font-size: 0.5rem;
@@ -171,6 +171,7 @@ button {
     overflow: hidden;
     -webkit-transition: width 1s;
     transition: width 1s;
+    margin-bottom:2px;
 }
 
 .cg-borderbox {
