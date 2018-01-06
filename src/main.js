@@ -10,7 +10,7 @@ var CG_TX_NR       = null;
 var CG_TX_HASH     = null;
 var CG_TX_TYPE     = null;
 var CG_SCROLL_KEY  = false;
-var CG_VERSION     = "0.92";
+var CG_VERSION     = "0.93";
 var CG_ACTIVE_TAB  = null;
 var CG_DECODER_OK  = true; // Decoder is online?
 var CG_ENCODER_OK  = true; // Encoder is online?
@@ -50,6 +50,14 @@ function cg_main() {
         alert(CG_TXT_MAIN_ERROR_1[CG_LANGUAGE]);
         return;
     }
+
+    (function() {
+        var link = document.querySelector("link[rel*='icon']") || document.createElement('link');
+        link.type = 'image/gif';
+        link.rel = 'shortcut icon';
+        link.href = document.getElementById("gfx_icon").src;
+        document.getElementsByTagName('head')[0].appendChild(link);
+    })();
 
     cg_init_sound();
 
@@ -526,35 +534,56 @@ function cg_construct_header() {
         return;
     }
 
-    var version = null;
-    if (header.hasChildNodes()) {
-        version = document.createElement("span");
-        version.appendChild(document.createTextNode("v"+CG_VERSION));
-        version.id="cg-version"
-
-        header.children[0].appendChild(version);
-    }
-
-    var spacer = document.createElement("DIV");
-    spacer.id="cg-tabs-spacer";
-    spacer.classList.add("cg-spacer-poofin");
-    header.appendChild(spacer);
-
-    var tabs = document.createElement("DIV");
-    tabs.id="cg-tabs";
-    tabs.className = tabs.className + " cg-tabs";
-
-    header.appendChild(tabs);
+    header.classList.add("cg-disappear");
 
     setTimeout(function(){
-        cg_construct_buttons(tabs);
-        if (version) {
-            version.style.width="5ch";
-            setTimeout(function(){
-                version.classList.add("cg-appear");
-            }, 1000);
+        var version = null;
+        if (header.hasChildNodes()) {
+            while (header.children[0].hasChildNodes()) {
+                header.children[0].removeChild(header.children[0].lastChild);
+            }
+
+            var title_link = document.createElement("a");
+            var title_img  = document.createElement("img");
+            title_link.href = "https://cryptograffiti.info/";
+            title_link.title= "CryptoGraffiti.info";
+            title_link.id   = "cg-title-link";
+            title_img.id    = "cg-title-img";
+            title_img.src   = document.getElementById("gfx_title").src;
+            title_link.appendChild(title_img);
+            header.children[0].appendChild(title_link);
+
+            version = document.createElement("span");
+            version.appendChild(document.createTextNode("v"+CG_VERSION));
+            version.id="cg-version"
+
+            header.children[0].appendChild(version);
         }
-    }, 100);
+
+        var spacer = document.createElement("DIV");
+        spacer.id="cg-tabs-spacer";
+        spacer.classList.add("cg-spacer-poofin");
+        header.appendChild(spacer);
+
+        var tabs = document.createElement("DIV");
+        tabs.id="cg-tabs";
+        tabs.className = tabs.className + " cg-tabs";
+
+        header.appendChild(tabs);
+
+        header.classList.remove("cg-disappear");
+        header.classList.add("cg-appear");
+
+        setTimeout(function(){
+            cg_construct_buttons(tabs);
+            if (version) {
+                version.style.width="5ch";
+                setTimeout(function(){
+                    version.classList.add("cg-appear");
+                }, 1000);
+            }
+        }, 100);
+    }, 500);
 }
 
 function cg_construct_buttons(tabs) {

@@ -720,7 +720,12 @@ function cg_read_get_filter() {
     if (key !== CG_READ_FILTER_KEY) key = key+"...";
 
     CG_STATUS.push(sprintf(CG_TXT_READ_LOADING_FILTER[CG_LANGUAGE], key));
-    xmlhttpGet("https://btc.blockr.io/api/v1/address/txs/"+CG_READ_FILTER_ADDR, '',
+    var api_url = "https://bitcoincash.blockexplorer.com/api/addr/"+CG_READ_FILTER_ADDR;
+    if (CG_BTC_FORK === "core") {
+        api_url = "https://blockexplorer.com/api/addr/"+CG_READ_FILTER_ADDR;
+    }
+
+    xmlhttpGet(api_url, '',
         function(response) {
             var status = "???";
             var success = false;
@@ -729,14 +734,11 @@ function cg_read_get_filter() {
             else if (response === null ) status = CG_TXT_READ_BLOCKCHAIN_TIMEOUT[CG_LANGUAGE];
             else {
                 var json = JSON.parse(response);
-                if ("status" in json && json.status === "success"
-                &&  "data" in json && "txs" in json.data) {
-                    var outs = json.data.txs.length;
+                if ("transactions" in json) {
+                    var outs = json.transactions.length;
                     CG_READ_FILTER_TXS = {};
                     for (var j = 0; j < outs; j++) {
-                        if ("tx" in json.data.txs[j]) {
-                            CG_READ_FILTER_TXS[json.data.txs[j].tx] = true;
-                        }
+                        CG_READ_FILTER_TXS[json.transactions[j]] = true;
                     }
                     success = true;
                     status  = null;

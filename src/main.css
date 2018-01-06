@@ -162,6 +162,18 @@ button {
     border-radius: 0.64rem;
 }
 
+#cg-title-link {
+    display: inline-block;
+    vertical-align: bottom;
+    font-size: 0.5rem;
+    width: calc(100% - 5ch);
+}
+
+#cg-title-img {
+    vertical-align: bottom;
+    width: 100%;
+}
+
 #cg-version {
     display: inline;
     width: 0ch;
