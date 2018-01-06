@@ -16,7 +16,8 @@ to you. Below is a list of examples for the hashtag API.
 
   The above link would redirect the user to a payment form for saving a message
   `M` under the category `CT` on the Bitcoin's block chain. Also, 1 bitcoin will
-  be sent to `1MVpQJA7FtcDrwKC6zATkZvZcxqma4JixS`.
+  be sent to `1MVpQJA7FtcDrwKC6zATkZvZcxqma4JixS`. The category specifier is
+  optional and can be omitted.
 * `https://cryptograffiti.info/#wedding`
 
   The above link will open the CryptoGraffiti's interface in a way that only
