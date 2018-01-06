@@ -13,10 +13,12 @@ Bitcoin receiving address in the message so that a part of the payment is sent
 to you. Below is a list of examples for the hashtag API.
 
 * `https://cryptograffiti.info/#write:M#CT#1MVpQJA7FtcDrwKC6zATkZvZcxqma4JixS:1`
+
   The above link would redirect the user to a payment form for saving a message
   `M` under the category `CT` on the Bitcoin's block chain. Also, 1 bitcoin will
   be sent to `1MVpQJA7FtcDrwKC6zATkZvZcxqma4JixS`.
 * `https://cryptograffiti.info/#wedding`
+
   The above link will open the CryptoGraffiti's interface in a way that only
   messages under the `wedding` category will be decoded and displayed in the
   read tab. Category can be any word or even a Bitcoin address. In case of an
