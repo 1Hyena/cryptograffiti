@@ -171,6 +171,7 @@ button {
     overflow: hidden;
     -webkit-transition: width 1s;
     transition: width 1s;
+    vertical-align: middle;
 }
 
 .cg-borderbox {
