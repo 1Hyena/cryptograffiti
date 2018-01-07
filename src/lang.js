@@ -507,56 +507,56 @@ var CG_TXT_VIEW_TX_FORGOTTEN =
 {
     en : "Transaction %s has now been forgotten.",
     et : "Ülekanne %s on nüüd unustatud.",
-    ru : "(Transaction %s has now been forgotten.)"
+    ru : "Транзакция %s была забыта."
 };
 
 var CG_TXT_VIEW_LOADING_TX_DATA =
 {
     en : "Loading transaction %s from %s.",
     et : "Laen ülekannet %s, kasutades teenust %s.",
-    ru : "(Loading transaction %s from %s.)"
+    ru : "Загружается транзакция %s из %s."
 };
 
 var CG_TXT_VIEW_LOADING_TX_DATA_FAIL =
 {
     en : "Failed to load %s from %s.",
     et : "Ülekande %s laadimine %s teenuselt ebaõnnestus.",
-    ru : "(Failed to load %s from %s.)"
+    ru : "Не удалось загрузить %s из %s."
 };
 
 var CG_TXT_VIEW_OPEN_FAIL =
 {
     en : "The selected file type cannot be displayed here.",
     et : "Selekteeritud failitüüpi ei saa siin kuvada.",
-    ru : "(The selected file type cannot be displayed here.)"
+    ru : "Выбранный тип файла не может быть здесь отображён."
 };
 
 var CG_TXT_VIEW_DECODING_FAIL =
 {
     en : "Failed to decode transaction %s.",
     et : "Ülekande %s dekodeerimine ebaõnnestus.",
-    ru : "(Failed to decode transaction %s.)"
+    ru : "Не удалось декодировать транзакцию %s."
 };
 
 var CG_TXT_VIEW_FILE_NOT_FOUND =
 {
     en : "Transaction %s does not contain a valid block chain file.",
     et : "Ülekandest %s ei leitud valiidset plokiahela faili.",
-    ru : "(Transaction %s does not contain a valid block chain file.)"
+    ru : "Транзакция %s не содержит валидный файл цепочки блоков."
 };
 
 var CG_TXT_VIEW_BTN_CLOSE =
 {
     en : "CLOSE",
     et : "SULGE",
-    ru : "(CLOSE)"
+    ru : "ЗАКРЫТЬ"
 };
 
 var CG_TXT_VIEW_BTN_OPEN =
 {
     en : "OPEN",
     et : "AVA",
-    ru : "(OPEN)"
+    ru : "ОТКРЫТЬ"
 };
 
 ////////////////////////////////////////////////////////////////////////////////
