@@ -93,6 +93,11 @@ These values can be received with an API call of `get_constants` function.
     generate a new key and try again. On `SUCCESS` the client should store the
     key and use it for all its further requests.
 
+    __Please note that the security handshake is only a prerequisite for calling
+    protected and private functions. Private functions are used internally by
+    CryptoGraffiti.info services so unless you are part of our development team
+    you most likely do not need to conduct a security handshake.__
+
     _POST Parameters:_
     * `fun`            --- `handshake`
     * `data`           --- JSON string with the structure of an empty object
@@ -122,6 +127,11 @@ These values can be received with an API call of `get_constants` function.
     to restore a session when `nonce` has been lost. If the client wishes to
     restore the existing session it is advised to provide the `restore`
     parameter as '1' so that the server would not return an error.
+
+    __Please note that session initialization is only a prerequisite for calling
+    protected and private functions. Private functions are used internally by
+    CryptoGraffiti.info services so unless you are part of our development team
+    you most likely do not need to initialize a session.__
 
     _POST Parameters_
     * `fun`            --- `init`
@@ -589,5 +599,4 @@ These values can be received with an API call of `get_constants` function.
         * `error`      --- error dictionary if result was `FAILURE` (optional)
     * `iv`             --- 32-byte hex string (ALS)
     * `checksum`       --- 32-byte hex string (ALS)
-
 
