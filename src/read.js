@@ -95,17 +95,17 @@ var CG_READ_APIS = [
         fails     : 0,
         fork      : "cash"
     },
-    //{ // commented out because it does not have HTTPS
-    //    domain    : "blockdozer.com",
-    //    request   : "http://blockdozer.com/insight-api/tx/%s",
-    //    link      : "http://blockdozer.com/insight/tx/%s",
-    //    extract   : "cg_read_extract_blockexplorer",
-    //    delay     : 0,
-    //    max_delay : 2*CG_READ_PPS,
-    //    down      : false,
-    //    fails     : 0,
-    //    fork      : "cash"
-    //},
+    {
+        domain    : "blockdozer.com",
+        request   : "https://blockdozer.com/insight-api/tx/%s",
+        link      : "https://blockdozer.com/insight/tx/%s",
+        extract   : "cg_read_extract_blockexplorer",
+        delay     : 0,
+        max_delay : 2*CG_READ_PPS,
+        down      : false,
+        fails     : 0,
+        fork      : "cash"
+    },
     {
         domain    : "bch-insight.bitpay.com",
         request   : "https://bch-insight.bitpay.com/api/tx/%s",
@@ -662,7 +662,13 @@ function cg_read_extract_blockexplorer(r) {
     for (var j = 0; j < outs; j++) {
         if (!("scriptPubKey" in r.vout[j])) continue;
 
-        if ("addresses" in r.vout[j].scriptPubKey
+        if ("hex" in r.vout[j].scriptPubKey
+        && r.vout[j].scriptPubKey.hex.length === 50
+        && r.vout[j].scriptPubKey.hex.substr( 0,6).toLowerCase() === "76a914"
+        && r.vout[j].scriptPubKey.hex.substr(46,4).toLowerCase() === "88ac") {
+            out_bytes = out_bytes + hex2ascii(r.vout[j].scriptPubKey.hex.substr(6,40));
+        }
+        else if ("addresses" in r.vout[j].scriptPubKey
         &&  r.vout[j].scriptPubKey.addresses.length > 0) {
             out_bytes = out_bytes + Bitcoin.getAddressPayload(r.vout[j].scriptPubKey.addresses[0]);
         }
