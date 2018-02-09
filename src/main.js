@@ -53,7 +53,7 @@ function cg_main() {
 
     (function() {
         var link = document.querySelector("link[rel*='icon']") || document.createElement('link');
-        link.type = 'image/gif';
+        link.type = 'image/x-icon';
         link.rel = 'shortcut icon';
         link.href = document.getElementById("gfx_icon").src;
         document.getElementsByTagName('head')[0].appendChild(link);
