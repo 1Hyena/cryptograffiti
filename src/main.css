@@ -171,7 +171,8 @@ button {
 
 #cg-title-img {
     vertical-align: bottom;
-    width: 100%;
+    max-width: 100%;
+    height: 2rem;
 }
 
 #cg-version {
@@ -448,6 +449,7 @@ button {
     bottom: 0.25rem;
     left: 0.25rem;
     width: 100%;
+    font-size: 1rem;
 }
 
 #cg-tools-poe-browse-div {
@@ -772,6 +774,8 @@ button {
 
 .cg-contact>img {
     display: inline-block;
+    height: 8rem;
+    width: auto;
 }
 
 .cg-note {
@@ -786,9 +790,9 @@ a.cg-link:hover {
     display: inline-block;
     margin: auto;
     padding-bottom: 1ch;
-    font-size: medium;
+    font-size: 0.75rem;
     vertical-align: top;
-    max-width: calc(100% - 256px);
+    max-width: calc(100% - 16rem);
 }
 .cg-table td:nth-child(1) {
     text-align: right;
@@ -796,6 +800,10 @@ a.cg-link:hover {
 }
 .cg-table td:nth-child(2) {
     text-align: left;
+}
+
+.cg-table img {
+    height: 1rem;
 }
 
 .hvr-glow {
@@ -1163,7 +1171,8 @@ a.cg-link:hover {
 .cg-footer-languages {
     white-space: nowrap;
 }
-.hvr-glow>img {
+.cg-footer-languages img {
+    height: 1rem;
     border: thin outset white;
     border-radius: 20%;
 }
