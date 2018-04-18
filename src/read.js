@@ -132,7 +132,7 @@ var CG_READ_APIS = [
 
 var CG_READ_API = {
     core : 0, // Index of blockchain.info in the CG_READ_APIS array.
-    cash : 6  // Index of bitcoincash.blockexplorer.com
+    cash : 6  // Index of cashexplorer.bitcoin.com
 };
 
 function cg_construct_read(main) {
