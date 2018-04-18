@@ -132,12 +132,12 @@ function cg_view_do() {
                         timestamp = extract[2];
 
                         var mimetype = cg_view_get_mimetype(txtype);
-                        var head_msgbox = cg_view_create_msgbox(out_bytes, mimetype, false, txhash, timestamp, link);
+                        var head_msgbox = cg_view_create_msgbox(out_bytes, op_return, mimetype, false, txhash, timestamp, link);
                         head_msgbox.cg_msgbody.classList.add("cg-view-msgbody");
                         head.appendChild(cg_view_create_wrapper(head_msgbox));
 
                         if (mimetype !== "application/octet-stream") {
-                            var body_msgbox = cg_view_create_msgbox(out_bytes, mimetype, true, txhash, timestamp, link);
+                            var body_msgbox = cg_view_create_msgbox(out_bytes, op_return, mimetype, true, txhash, timestamp, link);
                             body_msgbox.cg_msgbody.classList.add("cg-view-msgbody");
                             body_msgbox.cg_msgbody.style.width  = "calc(1.0*(100vh - 22rem))";
                             body_msgbox.cg_msgbody.style.height = "100vh";
@@ -248,7 +248,7 @@ function cg_view_update() {
     return cg_view_update_end(again);
 }
 
-function cg_view_create_msgbox(out_bytes, mimetype, open, txhash, timestamp, link) {
+function cg_view_create_msgbox(out_bytes, op_return, mimetype, open, txhash, timestamp, link) {
     txhash    = typeof txhash    !== 'undefined' ? txhash    : (null);
     timestamp = typeof timestamp !== 'undefined' ? timestamp : (null);
     var msgbox     = document.createElement("DIV");
@@ -373,6 +373,16 @@ function cg_view_create_msgbox(out_bytes, mimetype, open, txhash, timestamp, lin
              if (len_utf8 <=        1) msg = msg_ascii;
         else if (len_utf8 < len_ascii) msg = msg_ascii;
         else                           msg = msg_utf8;
+
+        var op_return_msg = decode_utf8(op_return);
+        if (op_return_msg.length <= 1) op_return_msg = decode_ascii(op_return);
+        if (op_return_msg.length >  1) {
+            if (msg.length > 1) {msg = msg + "\n";
+                msg = msg + "-----BEGIN OP_RETURN MESSAGE BLOCK-----\n"
+                          + op_return_msg + "\n----- END OP_RETURN MESSAGE BLOCK -----";
+            }
+            else msg = op_return_msg;
+        }
 
         var txt = msg;
         processedTxt = processColours(txt);

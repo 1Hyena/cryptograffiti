@@ -342,6 +342,7 @@ function processColours(bytes) {
         var newState = (numbers.length === 0 ? resetState : state);
         if (newState.attributes == null) newState.attributes = [];
 
+        var num = 0;
         for (var i = 0; i < numbers.length; i++) {
             num = numbers[i];
             if (num === 0) {

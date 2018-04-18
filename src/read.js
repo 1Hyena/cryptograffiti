@@ -480,9 +480,11 @@ function cg_decode() {
                         op_return_msg = decode_utf8(op_return);
                         if (op_return_msg.length <= 1) op_return_msg = decode_ascii(op_return);
                         if (op_return_msg.length >  1) {
-                            if (msg.length > 1) msg = msg + "\n";
-                            msg = msg + "-----BEGIN OP_RETURN MESSAGE BLOCK-----\n"
-                                      + op_return_msg + "\n----- END OP_RETURN MESSAGE BLOCK -----";
+                            if (msg.length > 1) {msg = msg + "\n";
+                                msg = msg + "-----BEGIN OP_RETURN MESSAGE BLOCK-----\n"
+                                          + op_return_msg + "\n----- END OP_RETURN MESSAGE BLOCK -----";
+                            }
+                            else msg = op_return_msg;
                         }
                         var txt = msg;
                         processedTxt = processColours(txt);
@@ -675,7 +677,7 @@ function cg_read_extract_blockexplorer(r) {
         else if ("asm" in r.vout[j].scriptPubKey
         && r.vout[j].scriptPubKey.asm.substr(0, 10) == "OP_RETURN ") {
             // OP_RETURN detected
-            var hex_body = r.vout[j].scriptPubKey.asm.substr(10);
+            var hex_body = r.vout[j].scriptPubKey.asm.split(" ").pop();
             op_return = op_return + hex2ascii(hex_body);
         }
     }
