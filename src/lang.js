@@ -1335,7 +1335,7 @@ var CG_TXT_ABOUT_DONOR_LIST =
         ru  : "Cтраница химиков на bitcointalk.org"
     },
    "Maxim"  : {
-        website : "https://depthsofsun.com/",
+        website : "http://bitcoin-quest.com/",
         en  : "Maxim's bitcoin art",
         et  : "Maximi bitimündi kunst",
         ru  : "Биткойн искусство Максима"
