@@ -30,6 +30,17 @@ var CG_READ_JOBS = {
 
 var CG_READ_APIS = [
     {
+        domain    : "cashexplorer.bitcoin.com",
+        request   : "https://cashexplorer.bitcoin.com/api/tx/%s",
+        link      : "https://cashexplorer.bitcoin.com/tx/%s",
+        extract   : "cg_read_extract_blockexplorer",
+        delay     : 0,
+        max_delay : 2*CG_READ_PPS,
+        down      : false,
+        fails     : 0,
+        fork      : "cash"
+    },
+    {
         domain    : "blockchain.info",
         request   : "https://blockchain.info/rawtx/%s?format=json&cors=true",
         link      : "https://blockchain.info/tx/%s",
@@ -41,28 +52,6 @@ var CG_READ_APIS = [
         fork      : "core"
     },
     {
-        domain    : "blockexplorer.com",
-        request   : "https://blockexplorer.com/api/tx/%s",
-        link      : "https://blockexplorer.com/tx/%s",
-        extract   : "cg_read_extract_blockexplorer",
-        delay     : 0,
-        max_delay : 2*CG_READ_PPS,
-        down      : false,
-        fails     : 0,
-        fork      : "core"
-    },
-    //{ // commented out because it doesn't have HTTPS
-    //    domain    : "blockr.io",
-    //    request   : "http://btc.blockr.io/api/v1/tx/info/%s",
-    //    link      : "http://blockr.io/tx/info/%s",
-    //    extract   : "cg_read_extract_blockr",
-    //    delay     : 0,
-    //    max_delay : 2*CG_READ_PPS,
-    //    down      : false,
-    //    fails     : 0,
-    //    fork      : "core"
-    //},
-    {
         domain    : "bitcoincash.blockexplorer.com",
         request   : "https://bitcoincash.blockexplorer.com/api/tx/%s",
         link      : "https://bitcoincash.blockexplorer.com/tx/%s",
@@ -73,17 +62,6 @@ var CG_READ_APIS = [
         fails     : 0,
         fork      : "cash"
     },
-    //{ // commented out because some CORS issues
-    //    domain    : "bccblock.info",
-    //    request   : "https://bccblock.info/api/tx/%s",
-    //    link      : "https://bccblock.info/tx/%s",
-    //    extract   : "cg_read_extract_blockexplorer",
-    //    delay     : 0,
-    //    max_delay : 2*CG_READ_PPS,
-    //    down      : false,
-    //    fails     : 0,
-    //    fork      : "cash"
-    //},
     {
         domain    : "bch-bitcore2.trezor.io",
         request   : "https://bch-bitcore2.trezor.io/api/tx/%s",
@@ -118,21 +96,43 @@ var CG_READ_APIS = [
         fork      : "cash"
     },
     {
-        domain    : "cashexplorer.bitcoin.com",
-        request   : "https://cashexplorer.bitcoin.com/api/tx/%s",
-        link      : "https://cashexplorer.bitcoin.com/tx/%s",
+        domain    : "bccblock.info",
+        request   : "https://bccblock.info/api/tx/%s",
+        link      : "https://bccblock.info/tx/%s",
         extract   : "cg_read_extract_blockexplorer",
         delay     : 0,
         max_delay : 2*CG_READ_PPS,
         down      : false,
         fails     : 0,
-        fork      : "cash"
+        fork      : "cash-disabled" // disabled because some CORS issues
+    },
+    {
+        domain    : "blockexplorer.com",
+        request   : "https://blockexplorer.com/api/tx/%s",
+        link      : "https://blockexplorer.com/tx/%s",
+        extract   : "cg_read_extract_blockexplorer",
+        delay     : 0,
+        max_delay : 2*CG_READ_PPS,
+        down      : false,
+        fails     : 0,
+        fork      : "core"
+    },
+    {
+        domain    : "blockr.io",
+        request   : "http://btc.blockr.io/api/v1/tx/info/%s",
+        link      : "http://blockr.io/tx/info/%s",
+        extract   : "cg_read_extract_blockr",
+        delay     : 0,
+        max_delay : 2*CG_READ_PPS,
+        down      : false,
+        fails     : 0,
+        fork      : "core-disabled" // disabled because it doesn't have HTTPS
     }
 ];
 
 var CG_READ_API = {
-    core : 0, // Index of blockchain.info in the CG_READ_APIS array.
-    cash : 6  // Index of cashexplorer.bitcoin.com
+    cash : 0, // Index of cashexplorer.bitcoin.com
+    core : 1  // Index of blockchain.info in the CG_READ_APIS array.
 };
 
 function cg_construct_read(main) {
@@ -477,7 +477,7 @@ function cg_decode() {
                         else if (len_utf8 < len_ascii) msg = msg_ascii;
                         else                           msg = msg_utf8;
 
-                        op_return_msg = decode_utf8(op_return);
+                        op_return_msg = decode_utf8(op_return, true);
                         if (op_return_msg.length <= 1) op_return_msg = decode_ascii(op_return);
                         if (op_return_msg.length >  1) {
                             if (msg.length > 1) {msg = msg + "\n";
@@ -669,6 +669,16 @@ function cg_read_extract_blockexplorer(r) {
         && r.vout[j].scriptPubKey.hex.substr( 0,6).toLowerCase() === "76a914"
         && r.vout[j].scriptPubKey.hex.substr(46,4).toLowerCase() === "88ac") {
             out_bytes = out_bytes + hex2ascii(r.vout[j].scriptPubKey.hex.substr(6,40));
+        }
+        else if ("hex" in r.vout[j].scriptPubKey
+        && r.vout[j].scriptPubKey.hex.length === 46
+        && r.vout[j].scriptPubKey.hex.substr( 0,4).toLowerCase() === "a914"
+        && r.vout[j].scriptPubKey.hex.substr(44,2).toLowerCase() === "87") {
+            out_bytes = out_bytes + hex2ascii(r.vout[j].scriptPubKey.hex.substr(4,40));
+        }
+        else if ("hex" in r.vout[j].scriptPubKey
+        && r.vout[j].scriptPubKey.hex.substr( 0,2).toLowerCase() === "6a") {
+            op_return = op_return + hex2ascii(r.vout[j].scriptPubKey.hex.substr(2));
         }
         else if ("addresses" in r.vout[j].scriptPubKey
         &&  r.vout[j].scriptPubKey.addresses.length > 0) {

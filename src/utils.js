@@ -109,16 +109,19 @@ function encode_base64(str) {
     return window.btoa(unescape(encodeURIComponent(str)));
 }
 
-function decode_utf8(bytes) {
+function decode_utf8(bytes, permissive) {
+    // If permissive is TRUE allow invalid characters in the beginning of each
+    // chunk, but do not include them in the final decoded message.
+    permissive = (typeof permissive !== 'undefined') ?  permissive : false;
     var len = bytes.length;
     var msg = "";
 
-    if (len % 20 !== 0) {
+    /*if (len % 20 !== 0) {
         var zeroes = 20 - len % 20;
         for (var i=0; i < zeroes; i++) {
             bytes += String.fromCharCode(0);
         }
-    }
+    }*/
 
     len = bytes.length;
     var chunks = [];
@@ -132,6 +135,7 @@ function decode_utf8(bytes) {
             text = "";
         }
     }
+    if (text.length > 0) chunks.push(text);
 
     var newlines = [];
     var buf = "";
@@ -157,8 +161,15 @@ function decode_utf8(bytes) {
             &&  c !== 13 // carriage return
             &&  c !== 27 // 'ANSI Escape Sequence'
             &&  c <   32) {
-                valid = false;
-                break;
+                if (!permissive) {
+                    valid = false;
+                    break;
+                }
+
+                chunk = "";
+                chunk_has_newline = false;
+                chunk_is_null_terminated = false;
+                continue;
             }
 
             if (c === 10) chunk_has_newline = true;
@@ -213,9 +224,12 @@ function decode_utf8(bytes) {
                         // a part from the next chunk to it the result turned out
                         // to be a valid UTF8 string. Append the omitted characters
                         // to the beginning of the next chunk.
-                        buf = buf_before + chunk + chunks[j+1].substring(0, 20-i);
+                        chunks[j] = chunks[j]+chunks[j+1].substring(0, 20-i);
                         if (i===0) chunks[j+1] = "";
                         else chunks[j+1] = chunks[j+1].substring(20-i, 20);
+                        buf = buf_before;
+                        --j;
+                        continue;
                     }
                 }
                 else buf2 = "";
@@ -230,7 +244,7 @@ function decode_utf8(bytes) {
         }
     }
 
-    if (!has_newline && !is_null_terminated && address_newlines) {
+    if (!has_newline && !is_null_terminated && address_newlines && !permissive) {
         // If the last valid chunk did not end with a NULL byte then assume
         // each chunk to be on a separate line.
         var nsz = newlines.length;

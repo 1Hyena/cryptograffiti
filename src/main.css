@@ -1001,7 +1001,7 @@ a.cg-link:hover {
 }
 
 .cg-read-msgbody {
-    min-width: 28ch;
+    min-width: 32ch;
 }
 
 .cg-write-msgbody {
