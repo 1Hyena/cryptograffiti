@@ -130,14 +130,25 @@ function cg_save_back() {
 }
 
 function cg_save_wallet() {
-   if (CG_SAVE_MAKING_ORDER) return;
+    if (CG_SAVE_MAKING_ORDER) return;
 
-   var addr = document.getElementById("cg-save-order-address").value;
-   var amnt = document.getElementById("cg-save-order-amount").value;
-   if (addr.length === 0 || amnt.length === 0) return;
+    var addr = document.getElementById("cg-save-order-address").value;
+    var amnt = document.getElementById("cg-save-order-amount").value;
+    if (addr.length === 0 || amnt.length === 0) return;
 
-   var url = (CG_BTC_FORK === "cash" ? "bitcoincash:" : "bitcoin:" ) + addr + "?amount=" + amnt;
-   window.open(url, "theUriFrame");
+    var addr_value = addr;
+    try {
+        addr_value = addr_value.split(":").pop().toLowerCase();
+        cashaddr_parseAndConvertCashAddress("bitcoincash", addr_value);
+    }
+    catch (ex) {
+        // Was not in CashAddr format...
+        addr_value = addr;
+    }
+    addr = addr_value;
+
+    var url = (CG_BTC_FORK === "cash" ? "bitcoincash:" : "bitcoin:" ) + addr + "?amount=" + amnt;
+    window.open(url, "theUriFrame");
 }
 
 function cg_save_update() {
