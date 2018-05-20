@@ -374,8 +374,7 @@ function cg_view_create_msgbox(out_bytes, op_return, mimetype, open, txhash, tim
         else if (len_utf8 < len_ascii) msg = msg_ascii;
         else                           msg = msg_utf8;
 
-        var op_return_msg = decode_utf8(op_return, true);
-        if (op_return_msg.length <= 1) op_return_msg = decode_ascii(op_return);
+        var op_return_msg = decode_opreturn(op_return);
         if (op_return_msg.length >  1) {
             if (msg.length > 1) {msg = msg + "\n";
                 msg = msg + "-----BEGIN OP_RETURN MESSAGE BLOCK-----\n"

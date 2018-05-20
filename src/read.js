@@ -63,17 +63,6 @@ var CG_READ_APIS = [
         fork      : "cash"
     },
     {
-        domain    : "bch-bitcore2.trezor.io",
-        request   : "https://bch-bitcore2.trezor.io/api/tx/%s",
-        link      : "https://bch-bitcore2.trezor.io/tx/%s",
-        extract   : "cg_read_extract_blockexplorer",
-        delay     : 0,
-        max_delay : 2*CG_READ_PPS,
-        down      : false,
-        fails     : 0,
-        fork      : "cash"
-    },
-    {
         domain    : "blockdozer.com",
         request   : "https://blockdozer.com/insight-api/tx/%s",
         link      : "https://blockdozer.com/insight/tx/%s",
@@ -104,7 +93,18 @@ var CG_READ_APIS = [
         max_delay : 2*CG_READ_PPS,
         down      : false,
         fails     : 0,
-        fork      : "cash-disabled" // disabled because some CORS issues
+        fork      : "cash-disabled" // disabled because CORS
+    },
+    {
+        domain    : "bch-bitcore2.trezor.io",
+        request   : "https://bch-bitcore2.trezor.io/api/tx/%s",
+        link      : "https://bch-bitcore2.trezor.io/tx/%s",
+        extract   : "cg_read_extract_blockexplorer",
+        delay     : 0,
+        max_delay : 2*CG_READ_PPS,
+        down      : false,
+        fails     : 0,
+        fork      : "cash-disabled" // disabled because CORS
     },
     {
         domain    : "blockexplorer.com",
@@ -477,8 +477,7 @@ function cg_decode() {
                         else if (len_utf8 < len_ascii) msg = msg_ascii;
                         else                           msg = msg_utf8;
 
-                        op_return_msg = decode_utf8(op_return, true);
-                        if (op_return_msg.length <= 1) op_return_msg = decode_ascii(op_return);
+                        op_return_msg = decode_opreturn(op_return);
                         if (op_return_msg.length >  1) {
                             if (msg.length > 1) {msg = msg + "\n";
                                 msg = msg + "-----BEGIN OP_RETURN MESSAGE BLOCK-----\n"

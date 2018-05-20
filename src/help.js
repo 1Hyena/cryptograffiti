@@ -16,14 +16,14 @@ function cg_construct_help(main) {
     var a_protocol = document.createElement("article");
     var h_protocol = document.createElement("h1");
     var p_protocol_1 = document.createElement("p");
-    var p_protocol_2 = document.createElement("p");
+    //var p_protocol_2 = document.createElement("p");
 
     h_protocol.appendChild(document.createTextNode(CG_TXT_HELP_PROTOCOL_HEAD[CG_LANGUAGE]));
     p_protocol_1.appendChild(document.createTextNode(CG_TXT_HELP_PROTOCOL_BODY[CG_LANGUAGE]));
-    p_protocol_2.appendChild(document.createTextNode(CG_TXT_HELP_PROTOCOL_FOOT[CG_LANGUAGE]));
+    //p_protocol_2.appendChild(document.createTextNode(CG_TXT_HELP_PROTOCOL_FOOT[CG_LANGUAGE]));
     a_protocol.appendChild(h_protocol);
     a_protocol.appendChild(p_protocol_1);
-    a_protocol.appendChild(p_protocol_2);
+    //a_protocol.appendChild(p_protocol_2);
 
     wrapper.appendChild(a_protocol);
     wrapper.appendChild(document.createElement("BR"));
@@ -46,11 +46,11 @@ function cg_help_create_list(table, caption) {
         var li = document.createElement("li");
         li.appendChild(document.createTextNode(table[i][CG_LANGUAGE]));
         l_todo.appendChild(li);
-    }   
+    }
 
     h_todo.appendChild(document.createTextNode(caption));
     p_todo.appendChild(l_todo);
-    
+
     a_todo.appendChild(h_todo);
     a_todo.appendChild(p_todo);
     return a_todo;

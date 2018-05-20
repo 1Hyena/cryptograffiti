@@ -35,10 +35,10 @@ function cg_construct_save(main) {
     var order_status  = document.createElement("input"); order_status.id  = "cg-save-order-status";
     var order_address = document.createElement("input"); order_address.id = "cg-save-order-address";
     var order_amount  = document.createElement("input"); order_amount.id  = "cg-save-order-amount";
-    order_nr     .classList.add("cg-save-order-input"); order_nr.readOnly      = true; order_nr.size      = "40";
-    order_status .classList.add("cg-save-order-input"); order_status.readOnly  = true; order_status.size  = "40";
-    order_address.classList.add("cg-save-order-input"); order_address.readOnly = true; order_address.size = "40";
-    order_amount .classList.add("cg-save-order-input"); order_amount.readOnly  = true; order_amount.size  = "40";
+    order_nr     .classList.add("cg-save-order-input"); order_nr.readOnly      = true; order_nr.size      = "44";
+    order_status .classList.add("cg-save-order-input"); order_status.readOnly  = true; order_status.size  = "44";
+    order_address.classList.add("cg-save-order-input"); order_address.readOnly = true; order_address.size = "44";
+    order_amount .classList.add("cg-save-order-input"); order_amount.readOnly  = true; order_amount.size  = "44";
 
     var t  = document.createElement("table");
     var tr1 = document.createElement("tr"); // order
@@ -178,6 +178,17 @@ function cg_save_update() {
     btn = document.getElementById("cg-save-btn-wallet");
     if (btn) {
         if (addr.length > 0 && amnt.length > 0 && !CG_SAVE_ORDER_FILLED) {
+            var addr_value = addr;
+            try {
+                addr_value = addr_value.split(":").pop().toLowerCase();
+                cashaddr_parseAndConvertCashAddress("bitcoincash", addr_value);
+            }
+            catch (ex) {
+                // Was not in CashAddr format...
+                addr_value = addr;
+            }
+            addr = addr_value;
+
             var url = (CG_BTC_FORK === "cash" ? "bitcoincash:" : "bitcoin:") + addr + "?amount=" + amnt;
             btn.href  = url;
             btn.title = url;
@@ -251,13 +262,13 @@ function cg_save_get_order() {
                         if (output !== null && "address" in output && "amount" in output) {
                             status = sprintf(CG_TXT_SAVE_UPDATING_ORDER_OK[CG_LANGUAGE], json.order.nr);
 
-                            var addr = output.address;
+                            var addr = format_btc_addr(output.address);
                             var amnt = output.amount;
 
                             if (order_addr_input.value !== addr) order_addr_input.value = addr;
                             if (order_amnt_input.value !== amnt) order_amnt_input.value = amnt;
 
-                            if (!filled) details_msg = sprintf(CG_TXT_SAVE_PAYMENT_DETAILS[CG_LANGUAGE], amnt, addr);
+                            if (!filled) details_msg = sprintf(CG_TXT_SAVE_PAYMENT_DETAILS[CG_LANGUAGE], amnt, addr, btc_base58(output.address));
                         }
                         else if (output !== null && "error" in output) {
                             status = sprintf(CG_TXT_SAVE_ORDER_REJECTED[CG_LANGUAGE], json.order.nr);
@@ -295,15 +306,25 @@ function cg_save_get_order() {
                         while (details.hasChildNodes()) details.removeChild(details.lastChild);
                         details.appendChild(document.createTextNode(details_msg));
                         if (accepted && !filled) {
+                            var addr_value = order_addr_input.value;
+                            try {
+                                addr_value = addr_value.split(":").pop().toLowerCase();
+                                cashaddr_parseAndConvertCashAddress("bitcoincash", addr_value);
+                            }
+                            catch (ex) {
+                                // Was not in CashAddr format...
+                                addr_value = order_addr_input.value;
+                            }
+
                             details.appendChild(document.createElement("br"));
                             details.appendChild(document.createElement("br"));
-                            var addr = encodeURIComponent(order_addr_input.value);
+                            var addr = encodeURIComponent(addr_value);
                             var amnt = encodeURIComponent(order_amnt_input.value);
                             var fork = (CG_BTC_FORK === "cash" ? "bitcoincash:" : "bitcoin:");
 
                             if (addr.length > 0) {
                                 var img = document.createElement("img");
-                                img.src = "https://api.qrserver.com/v1/create-qr-code/?size=128x128&data="+fork+addr+"?amount="+amnt;
+                                img.src = "https://api.qrserver.com/v1/create-qr-code/?size=128x128&qzone=4&data="+fork+addr+"?amount="+amnt;
                                 img.width = "128";
                                 img.height = "128";
                                 img.style = "display: none; width: 0%;";
@@ -395,7 +416,7 @@ function cg_save_make_order() {
     order.chunks = CG_WRITE_CHUNKS;
 
     if (CG_WRITE_PAY_TO !== null && CG_WRITE_PAY_AMOUNT !== null) {
-        order.addr   = CG_WRITE_PAY_TO;
+        order.addr   = btc_base58(CG_WRITE_PAY_TO);
         order.amount = Math.floor(CG_WRITE_PAY_AMOUNT * 100000000);
     }
 

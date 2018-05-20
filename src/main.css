@@ -362,7 +362,7 @@ button {
 
 #cg-write-paymenttable {
     width: 100%;
-    max-width: 30rem;
+    max-width: 32rem;
     margin: auto;
     border-spacing: 0;
 }
@@ -499,7 +499,7 @@ button {
 }
 
 .cg-write-addr {
-    font-size: 0.75rem;
+    font-size: 0.70rem;
     width: 100%;
     flex: 1.0;
     overflow-x: hidden;

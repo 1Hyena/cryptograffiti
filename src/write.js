@@ -108,6 +108,7 @@ function cg_construct_write(main) {
     var td2_tr4    = document.createElement("td");
     var span_size  = document.createElement("span"); span_size.id="cg-write-msg-size";
     var span_cost  = document.createElement("span"); span_cost.id="cg-write-msg-cost";
+    var span_denom = document.createElement("span"); span_denom.id="cg-write-msg-denom";
     var span_file  = document.createElement("span"); span_file.id="cg-write-msg-file";
     var span_hash  = document.createElement("span"); span_hash.id="cg-write-msg-hash";
     caption.appendChild(document.createTextNode(CG_TXT_WRITE_NEW_MSG[CG_LANGUAGE]));
@@ -115,6 +116,7 @@ function cg_construct_write(main) {
     td2_tr1.appendChild(span_size);
     td1_tr2.appendChild(document.createTextNode(CG_TXT_WRITE_NEW_MSG_COST[CG_LANGUAGE]));
     td2_tr2.appendChild(span_cost);
+    td2_tr2.appendChild(span_denom);
     td1_tr3.appendChild(document.createTextNode(CG_TXT_WRITE_NEW_MSG_FILE[CG_LANGUAGE]));
     td2_tr3.appendChild(span_file);
     td1_tr4.appendChild(document.createTextNode(CG_TXT_WRITE_NEW_MSG_HASH[CG_LANGUAGE]));
@@ -230,7 +232,7 @@ function create_payment_table(id) {
 
     addr.classList.add("cg-save-order-input"); addr.size = "40"; addr.id="cg-write-payment-addr-input";
     amnt.classList.add("cg-save-order-input"); amnt.size = "40"; amnt.id="cg-write-payment-amnt-input";
-    addr.maxLength = "34";
+    addr.maxLength = "64";
     amnt.maxLength = "17";
     amnt.type = "number";
     amnt.min  = ""+CG_WRITE_MIN_BTC_OUTPUT;
@@ -297,12 +299,19 @@ function cg_write_update_now() {
 }
 
 function cg_write_update(instant) {
+    var denom_span = document.getElementById("cg-write-msg-denom");
+
     if (!instant) {
         CG_WRITE_ENCODE_TIME--;
         //CG_WRITE_FEE_API_DELAY--;
         //if (CG_WRITE_FEE_API_DELAY === 0) {
         //    cg_write_estimate_fee();
         //}
+
+        if (!denom_span.hasChildNodes() || Math.random() < 0.666) {
+            while (denom_span.hasChildNodes()) denom_span.removeChild(denom_span.lastChild);
+            denom_span.appendChild(document.createTextNode(Math.random() > 0.5 ? " BTC" : " BCH"));
+        }
     }
 
     var btn_preview = document.getElementById("cg-write-btn-preview");
@@ -340,7 +349,7 @@ function cg_write_update(instant) {
     text = "";
     for (var i = 0; i < sz; i++) {
         //text+=ascii2hex(Bitcoin.getAddressPayload(chunks[i]))+"\n";
-        text+=chunks[i]+"\n";
+        text+=format_btc_addr(chunks[i])+"\n";
     }
 
     while (addr.hasChildNodes()) addr.removeChild(addr.lastChild);
@@ -365,7 +374,10 @@ function cg_write_update(instant) {
     size_span.appendChild(document.createTextNode((tx_size/1024).toFixed(8)+" KiB"));
 
     while (cost_span.hasChildNodes()) cost_span.removeChild(cost_span.lastChild);
-    cost_span.appendChild(document.createTextNode((tx_cost).toFixed(8)+" BTC"));
+    cost_span.appendChild(document.createTextNode((tx_cost).toFixed(8)));
+
+    while (denom_span.hasChildNodes()) denom_span.removeChild(denom_span.lastChild);
+    denom_span.appendChild(document.createTextNode(" BTC"));
 
     if (tx_size > CG_WRITE_MAX_TX_SIZE) {
         btn.disabled = true;
@@ -459,13 +471,28 @@ function cg_button_click_payment_next() {
         return;
     }
 
-    if (!Bitcoin.testAddress(addr_value)) {
-        CG_STATUS.push("!"+sprintf(CG_TXT_WRITE_INVALID_BTC_ADDRESS[CG_LANGUAGE], addr_value));
-        btn.disabled = true;
-        setTimeout(function(){
-            btn.disabled = false;
-        }, 2000);
-        return;
+    var cashaddr = null;
+    var base58   = null;
+
+    try {
+        cashaddr = addr_value.split(":").pop().toUpperCase();
+        base58 = cashaddr_parseAndConvertCashAddress("bitcoincash", cashaddr);
+    }
+    catch (ex) {
+        // Was not in CashAddr format...
+        try {
+            base58   = addr_value;
+            cashaddr = cashaddr_parseAndConvertOldAddress(base58).split(":").pop().toUpperCase();
+        }
+        catch (ex) {
+            // Was also not in Base58 format...
+            CG_STATUS.push("!"+sprintf(CG_TXT_WRITE_INVALID_BTC_ADDRESS[CG_LANGUAGE], addr_value));
+            btn.disabled = true;
+            setTimeout(function(){
+                btn.disabled = false;
+            }, 2000);
+            return;
+        }
     }
 
     var amnt_value = amnt.value.trim();
@@ -479,7 +506,7 @@ function cg_button_click_payment_next() {
         return;
     }
 
-    CG_WRITE_PAY_TO     = addr_value;
+    CG_WRITE_PAY_TO     = cashaddr;
     CG_WRITE_PAY_AMOUNT = Math.floor(parseFloat(amnt_value)*100000000)/100000000;
 
     var payment_btn = document.getElementById("cg-write-btn-payment");
@@ -488,7 +515,7 @@ function cg_button_click_payment_next() {
 
     var payment_span = document.getElementById("cg-write-msg-payment");
     while (payment_span.hasChildNodes()) payment_span.removeChild(payment_span.lastChild);
-    msg = sprintf(CG_TXT_WRITE_MSG_PAYMENT[CG_LANGUAGE], CG_WRITE_PAY_AMOUNT.toFixed(8), addr_value);
+    msg = sprintf(CG_TXT_WRITE_MSG_PAYMENT[CG_LANGUAGE], CG_WRITE_PAY_AMOUNT.toFixed(8), cashaddr);
     payment_span.appendChild(document.createTextNode( msg ));
 
     cg_button_click_payment_back();

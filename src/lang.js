@@ -944,9 +944,9 @@ var CG_TXT_SAVE_ORDER_STATUS_FILLED =
 
 var CG_TXT_SAVE_PAYMENT_DETAILS =
 {
-    en : "Please send exactly %s bitcoins to %s.",
-    et : "Palun saatke täpselt %s bitimünti aadressile %s.",
-    ru : "Пожалуйста, отправьте ровно %s биткойнов на %s."
+    en : "Please send exactly %s bitcoins to %s (%s).",
+    et : "Palun saatke täpselt %s bitimünti aadressile %s (%s).",
+    ru : "Пожалуйста, отправьте ровно %s биткойнов на %s (%s)."
 };
 
 var CG_TXT_SAVE_PAYMENT_NOTE =
@@ -1161,11 +1161,13 @@ var CG_TXT_HELP_PROTOCOL_BODY = {
     ru : "Каждая Биткойн транзакция содержит число исходящих адресов. Обычно мы видим эти адреса в их Base58 формате. Однако, по своей сути, они всего лишь 20-байтные двоичные строки. Что бы сохранить файл в цепочку блоков, он должен быть поделён на 20-байтные фрагменты (добавляя нули в конец последнего фрагмента при необходимости). Затем, для обозначения конца файла, необходимо добавить RIPEMD-160 хеш оригинального файла к списку фрагментов файла. По желанию, можно добавить текстовый комментарий к файлу цепочки блоков сразу после хеша. Комментарий должен быть в UTF-8 кодировке и аналогично файлу, комментарий должен быть поделён на 20-байтные фрагменты. Однако, комментарий не должен заканчиваться своим хешем. Затем мы связываем фрагменты файла, хеш файла и фрагменты комментария в один массив. Все фрагменты должны быть сконвертированы в Base58 формат. В заключение, обычная Биткойн транзакция должна быть произведена, послав минимально возможную сумму биткойнов на каждый биткойн адрес в этом массиве."
 };
 
+/*
 var CG_TXT_HELP_PROTOCOL_FOOT = {
     en : "Warning! Bitcoin Core wallet might not allow duplicate output addresses in its createrawtransaction RPC. A workaround for this is to apply the named remote procedure on a list of unique addresses at first. Then, after receiving the hex string of the raw transaction, one should search and replace those unique addresses with the intended and possibly duplicate transaction outputs.",
     et : "Hoiatus! Bitcoin Core rahakotihaldur ei pruugi lubada teha ülekandeid, kus on duplitseeritud aadresseid, kui kasutada selleks createrawtransaction protseduuri. Probleemist saab mööda, kui teha esialgu ülekanne unikaalsetele aadressidele, kuid enne allkirjastamist unikaalsed väljundaadressid soovitud aadressidega asendada.",
     ru : "Осторожно! Bitcoin Core кошелёк может не позволить повторные исходящие адреса в его createrawtransaction RPC. В качестве временного решения данной ситуации необходимо, сперва, применить именованную удалённую процедуру к списку уникальных адресов. Затем, после получения шестнадцатиричной строки сырой транзакции, необходимо найти и заменить те уникальные адреса на целевые и возможно повторные выходы транзакции."
 };
+*/
 
 var CG_TXT_HELP_KNOWN_ISSUES = {
     en : "Known Issues",
@@ -1174,16 +1176,16 @@ var CG_TXT_HELP_KNOWN_ISSUES = {
 };
 
 var CG_TXT_HELP_TODO = [
-    {
-        en : "Add support for OP_RETURN messages.",
-        et : "Lisada tugi OP_RETURN sõnumitele.",
-        ru : "Добавить поддержку сообщений OP_RETURN."
-    },
-    {
-        en : "Add support for TXs that contain multiple null-terminated messages.",
-        et : "Lisada tugi ülekannetele, mis sisaldavad mitut nullbaidiga eraldatud sõnumit.",
-        ru : "Добавить поддержку транзакций, содержащих несколько нуль-терминированных сообщений."
-    },
+    //{
+    //    en : "Add support for OP_RETURN messages.",
+    //    et : "Lisada tugi OP_RETURN sõnumitele.",
+    //    ru : "Добавить поддержку сообщений OP_RETURN."
+    //},
+    //{
+    //    en : "Add support for TXs that contain multiple null-terminated messages.",
+    //    et : "Lisada tugi ülekannetele, mis sisaldavad mitut nullbaidiga eraldatud sõnumit.",
+    //    ru : "Добавить поддержку транзакций, содержащих несколько нуль-терминированных сообщений."
+    //},
     //{
     //    en : "Add support for messages that cointain ANSI colours.",
     //    et : "Lisada tugi sõnumitele, mis sisaldavad ANSI värve.",

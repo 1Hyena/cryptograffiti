@@ -75,6 +75,12 @@ function cg_construct_about(main) {
     a_donate.href  = fork+"1MVpQJA7FtcDrwKC6zATkZvZcxqma4JixS";
     a_donate.target= "_blank";
 
+    var cashaddr = cashaddr_parseAndConvertOldAddress("1MVpQJA7FtcDrwKC6zATkZvZcxqma4JixS").split(":").pop().toUpperCase();
+    var a_donate_cashaddr = document.createElement("a"); a_donate_cashaddr.appendChild(document.createTextNode(cashaddr));
+    a_donate_cashaddr.title = CG_TXT_ABOUT_DONATE_ALT[CG_LANGUAGE];
+    a_donate_cashaddr.href  = "bitcoincash:"+cashaddr.toLowerCase();
+    a_donate_cashaddr.target= "_blank";
+
     var t_note = document.createTextNode(CG_TXT_ABOUT_NOTE[CG_LANGUAGE]);
     var p_note = document.createElement("p");
     p_note.appendChild(t_note);
@@ -82,11 +88,15 @@ function cg_construct_about(main) {
 
     a_topic.classList.add('cg-link');
     a_donate.classList.add('cg-link');
+    a_donate_cashaddr.classList.add('cg-link');
 
     td1_1.appendChild(document.createTextNode(CG_TXT_ABOUT_FORUM_TOPIC[CG_LANGUAGE])); td1_2.appendChild(a_topic);
     td2_1.appendChild(document.createTextNode(CG_TXT_ABOUT_SOURCE_CODE[CG_LANGUAGE])); td2_2.appendChild(a_source);
     td3_1.appendChild(document.createTextNode(CG_TXT_ABOUT_CONTACT_US [CG_LANGUAGE])); td3_2.appendChild(t_email); td3_2.appendChild(img_domain);
-    td4_1.appendChild(document.createTextNode(CG_TXT_ABOUT_DONATE_BTC [CG_LANGUAGE])); td4_2.appendChild(a_donate);
+    td4_1.appendChild(document.createTextNode(CG_TXT_ABOUT_DONATE_BTC [CG_LANGUAGE]));
+        td4_2.appendChild(a_donate);
+        td4_2.appendChild(document.createElement("br"));
+        td4_2.appendChild(a_donate_cashaddr);
     td5_1.appendChild(document.createTextNode(CG_TXT_ABOUT_MEMORABLE_DONORS[CG_LANGUAGE]));
     var first_donor = true;
     for (var key in CG_TXT_ABOUT_DONOR_LIST) {

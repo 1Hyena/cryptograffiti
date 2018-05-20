@@ -109,12 +109,65 @@ function encode_base64(str) {
     return window.btoa(unescape(encodeURIComponent(str)));
 }
 
+function decode_opreturn(bytes) {
+    var len = bytes.length;
+    var buf = "";
+    var buf_escaped = "";
+    var utf8 = "";
+    var chunk_end = 0;
+    var i,j,k;
+    var msg = "";
+    var c = 0;
+    var valid = false;
+    var longest_valid_msg = "";
+
+    for (i=0; i<len; ++i) {
+        buf = "";
+        valid = false;
+        for (k=0; k<4 && (i+k < len); ++k) {
+            chunk_end = i+k;
+            c = bytes.charCodeAt(i+k);
+            buf = buf + String.fromCharCode(c);
+
+            buf_escaped = escape(buf);
+            utf8 = "";
+            try {
+                utf8 = decodeURIComponent(buf_escaped);
+            }
+            catch (ex) {
+                continue;
+            }
+
+            if (k ===  0
+            &&  c <= 127
+            &&  c !==  9 // horizontal tab
+            &&  c !== 10 // new line
+            &&  c !== 13 // carriage return
+            &&  c !== 27 // 'ANSI Escape Sequence'
+            &&  c <   32) {
+                // This is not a valid 1-byte UTF8 character.
+                break;
+            }
+
+            msg = msg + utf8;
+            i += k;
+            valid = true;
+            break;
+        }
+
+        if (msg.length > longest_valid_msg.length) longest_valid_msg = msg;
+        if (!valid) msg = "";
+    }
+    return longest_valid_msg;
+}
+
 function decode_utf8(bytes, permissive) {
     // If permissive is TRUE allow invalid characters in the beginning of each
     // chunk, but do not include them in the final decoded message.
     permissive = (typeof permissive !== 'undefined') ?  permissive : false;
     var len = bytes.length;
     var msg = "";
+    var chunk_len = 20;//(permissive ? 4 : 20);
 
     /*if (len % 20 !== 0) {
         var zeroes = 20 - len % 20;
@@ -130,7 +183,7 @@ function decode_utf8(bytes, permissive) {
         var c = bytes.charCodeAt(k);
         text = text+bytes.charAt(k);
 
-        if (k % 20 === 19) {
+        if (k % chunk_len === (chunk_len - 1)) {
             chunks.push(text);
             text = "";
         }
@@ -202,7 +255,7 @@ function decode_utf8(bytes, permissive) {
                     var i = 0;
                     for (i=0; i<3; i++) {
                         var next_chunk = chunks[j+1];
-                        next_chunk = next_chunk.substring(0, 20-i);
+                        next_chunk = next_chunk.substring(0, chunk_len-i);
                         next_chunk = escape(next_chunk);
                         try {
                             buf2 = decodeURIComponent(escaped+next_chunk);
@@ -224,9 +277,9 @@ function decode_utf8(bytes, permissive) {
                         // a part from the next chunk to it the result turned out
                         // to be a valid UTF8 string. Append the omitted characters
                         // to the beginning of the next chunk.
-                        chunks[j] = chunks[j]+chunks[j+1].substring(0, 20-i);
+                        chunks[j] = chunks[j]+chunks[j+1].substring(0, chunk_len-i);
                         if (i===0) chunks[j+1] = "";
-                        else chunks[j+1] = chunks[j+1].substring(20-i, 20);
+                        else chunks[j+1] = chunks[j+1].substring(chunk_len-i, chunk_len);
                         buf = buf_before;
                         --j;
                         continue;
@@ -419,6 +472,7 @@ function processColours(bytes) {
         if (inEscapeCode) {
             if (k - lastEscape === 1 && c != "[") { // return if it doesn't start with ESC-[
                 inEscapeCode = false;
+                currentText += c;
                 continue;
             }
 
@@ -586,7 +640,9 @@ function arrayBufferToWordArray(ab) {
   return CryptoJS.lib.WordArray.create(a, i8a.length);
 }
 
-function selectText(containerid) {
+function selectText(id) {
+    window.getSelection().selectAllChildren( document.getElementById( id ) );
+    /*
     if (document.selection) {
         var range = document.body.createTextRange();
         range.moveToElementText(document.getElementById(containerid));
@@ -596,6 +652,7 @@ function selectText(containerid) {
         range.selectNode(document.getElementById(containerid));
         window.getSelection().addRange(range);
     }
+    */
 }
 
 function shuffle(array) {
@@ -712,3 +769,49 @@ function escapeHtml(unsafe) {
          .replace(/</g, "&lt;")
          .replace(/>/g, "&gt;");
  }
+
+function format_btc_addr(addr) {
+    var cashaddr = null;
+    var base58   = null;
+
+    try {
+        cashaddr = addr.split(":").pop().toUpperCase();
+        base58 = cashaddr_parseAndConvertCashAddress("bitcoincash", cashaddr);
+    }
+    catch (ex) {
+        // Was not in CashAddr format...
+        try {
+            base58   = addr;
+            cashaddr = cashaddr_parseAndConvertOldAddress(base58).split(":").pop().toUpperCase();
+        }
+        catch (ex) {
+            // Was also not in Base58 format...
+            return addr;
+        }
+    }
+    if (cashaddr !== null) return cashaddr;
+    return base58;
+}
+
+function btc_base58(addr) {
+    var cashaddr = null;
+    var base58   = null;
+
+    try {
+        cashaddr = addr.split(":").pop().toUpperCase();
+        base58 = cashaddr_parseAndConvertCashAddress("bitcoincash", cashaddr);
+    }
+    catch (ex) {
+        // Was not in CashAddr format...
+        try {
+            base58   = addr;
+            cashaddr = cashaddr_parseAndConvertOldAddress(base58).split(":").pop().toUpperCase();
+        }
+        catch (ex) {
+            // Was also not in Base58 format...
+            return null;
+        }
+    }
+    return base58;
+}
+
