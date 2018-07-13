@@ -23,7 +23,7 @@ define("CAPTCHA_TIMEOUT",                                   600); // Number of s
 define("MAX_DATA_SIZE",                                  262144); // Maximum number of uncompressed and unencrypted data bytes accepted as valid input.
 define("TXS_PER_QUERY",                                     100); // Maximum number of transactions to be dealt with per single API call.
 define("MIN_BTC_DONATION",                                 1000); // Minimum number of satoshis that count for a donation.
-define("ENCODER_FEE_AMPLIFIER",                             1.2); // Amplifier for the estimatefee results.
+define("ENCODER_FEE_AMPLIFIER",                            10.0); // Amplifier for the estimatefee results.
 
 // SECURITY ROLES:
 define("ROLE_DECODER",                                        1); // Decoder (Can submit transactions containing plaintext.)
