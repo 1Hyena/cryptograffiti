@@ -918,16 +918,28 @@ function cg_read_load_new_txs() {
 function cg_read_load_old_txs() {
     if (CG_OLDEST_TX_NR === null) return false;
 
+    var fun = "get_btc_graffiti";
     var data_obj = {
         nr: CG_OLDEST_TX_NR.toString(10),
         count: CG_CONSTANTS.TXS_PER_QUERY.toString(10),
         back: "1"
     }
+
+    if (CG_GRAFFITI_NRS.length === 1) {
+        // If this is the first time we are loading old TXs then make sure we
+        // always show the last 10 donations before displaying other messages.
+        // The reasoning behind this is to incentivize making a donation and to
+        // always include quality content such as pictures on the "front page"
+        // of the site to give a better first impression.
+        fun = "get_btc_donations";
+        data_obj.count = "10";
+    }
+
     var json_str = encodeURIComponent(JSON.stringify(data_obj));
 
     CG_STATUS.push(CG_TXT_READ_LOADING_OLD_GRAFFITI[CG_LANGUAGE]);
 
-    xmlhttpPost(CG_API, 'fun=get_btc_graffiti&data='+json_str,
+    xmlhttpPost(CG_API, 'fun='+fun+'&data='+json_str,
         function(response) {
             var status = "???";
 
@@ -939,7 +951,10 @@ function cg_read_load_old_txs() {
                 json = JSON.parse(response);
                 if ("txs" in json) {
                     if (json.txs.length > 0) {
-                        CG_OLDEST_TX_NR = json.txs[json.txs.length-1].nr;
+                        if (fun === "get_btc_graffiti") {
+                            CG_OLDEST_TX_NR = json.txs[json.txs.length-1].nr;
+                        }
+
                         var sz = json.txs.length;
                         for (var i = 0; i < sz; i++) {
                             var obj = {
