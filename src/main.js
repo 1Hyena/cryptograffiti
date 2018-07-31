@@ -785,11 +785,18 @@ function cg_sfx(s, r) {
             audiochannels[a]['finished'] = thistime.getTime() + sfx.duration*(1000/r);
             audiochannels[a]['channel'].src = sfx.src;
             audiochannels[a]['channel'].load();
-            audiochannels[a]['channel'].play();
             audiochannels[a]['channel'].playbackRate=r;
             audiochannels[a]['channel'].preservesPitch=false;
             audiochannels[a]['channel'].mozPreservesPitch=false;
             audiochannels[a]['channel'].webkitPreservesPitch=false;
+            var audio = audiochannels[a]['channel'];
+            var promise = audio.play();
+            if (promise !== undefined) {
+                promise.then(
+                    function(){return;},
+                    function(){audiochannels[a]['finished'] = true;}
+                );
+            }
             break;
         }
     }

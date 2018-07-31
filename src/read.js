@@ -508,7 +508,7 @@ function cg_decode() {
                              if (type === "UTF8" || type === "ASCII") type = "application/octet-stream";
                         else if (type === "JPG")                      type = "image/jpeg";
 
-                        if (type.indexOf("image/") === 0) {
+                        if (type !== null && type.indexOf("image/") === 0) {
                             var media = document.createElement("DIV");
                             media.classList.add("cg-msgbody-media");
 

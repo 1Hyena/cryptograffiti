@@ -1311,6 +1311,7 @@ function fun_set_btc_txs($link, $user, $guid, $txs) {
                 }
             }
         }
+        else db_log($link, $user, "Message hash missing for graffiti TX `".$tx_hash."`.", LOG_ERROR);
 
         $nr = insert_hex_unique($link, 'btc_tx', array('hash' => $tx_hash));
         if ($nr !== null) {
@@ -1454,6 +1455,7 @@ function fun_get_btc_donations($link, $user, $guid, $graffiti_nr, $count, $back)
         while ($row = $result->fetch_assoc()) {
             $graffiti[] = array("nr"            => $row['nr'],
                                 "type"          => $row['type'],
+                                "fsize"         => $row['fsize'],
                                 "amount"        => $row['amount'],
                                 "txid"          => bin2hex($row['hash']),
                                 "confirmed"     => $row['confirmed'],
