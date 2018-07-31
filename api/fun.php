@@ -1316,16 +1316,17 @@ function fun_set_btc_txs($link, $user, $guid, $txs) {
         if ($nr !== null) {
             $added++;
 
-            $link->query("UPDATE `btc_tx` SET ".
+            $query_string = "UPDATE `btc_tx` SET ".
                          "`confirmed` = ".$confirmed.", ".
                          ($amount   !== null ? "`amount` = '".$amount."', "      : "").
                          ($msg_type !== null ? "`type` = '".$msg_type."', "      : "").
                          ($fsize    !== null ? "`fsize` = '".$fsize."', "        : "").
                          ($msg_hash !== null ? "`msg_hash` = X'".$msg_hash."', " : "").
-                         "`creation_time` = NOW() WHERE `nr` = '".$nr."'"
-                        );
+                         "`creation_time` = NOW() WHERE `nr` = '".$nr."'";
+            $link->query($query_string);
             $errno = $link->errno;
             $error = $link->error;
+            if ($fsize !== null && $msg_type === null) db_log($link, $user, "Query setting fsize without mime type: ".$query_string, LOG_ERROR);
             if ($link->affected_rows === 0) set_critical_error($link);
         }
         else {
