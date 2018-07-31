@@ -1311,7 +1311,6 @@ function fun_set_btc_txs($link, $user, $guid, $txs) {
                 }
             }
         }
-        else db_log($link, $user, "Message hash missing for graffiti TX `".$tx_hash."`.", LOG_ERROR);
 
         $nr = insert_hex_unique($link, 'btc_tx', array('hash' => $tx_hash));
         if ($nr !== null) {
