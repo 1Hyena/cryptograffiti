@@ -166,13 +166,14 @@ function is_type_str($var) {
     if (strlen($var)   >64) return false;
     for ($i=0;$i<strlen($var);$i++) {
         $ascii_code=ord($var[$i]);
-        if ( ($ascii_code >=48 && $ascii_code <=57)
-        ||   ($ascii_code >=65 && $ascii_code <=90)
-        ||   ($ascii_code >=97 && $ascii_code <=122)
-        ||    $ascii_code ==95
-        ||    $ascii_code ==46
-        ||    $ascii_code ==45
-        ||    $ascii_code ==47) continue;
+        if ( ($ascii_code >=48 && $ascii_code <=57)  //  0 - 9
+        ||   ($ascii_code >=65 && $ascii_code <=90)  //  A - Z
+        ||   ($ascii_code >=97 && $ascii_code <=122) //  a - z
+        ||    $ascii_code ==95                       //    _
+        ||    $ascii_code ==46                       //    .
+        ||    $ascii_code ==45                       //    -
+        ||    $ascii_code ==43                       //    +
+        ||    $ascii_code ==47) continue;            //    /
         else return false;
     }
     return true;
