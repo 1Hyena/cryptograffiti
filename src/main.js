@@ -143,10 +143,47 @@ function cg_main() {
             cg.removeChild(cg.lastChild);
         }
 
+        cg_load_constants();
+        cg_startup(cg);
+    }, 500);
+}
+
+function cg_startup(cg) {
+    if (CG_STATUS.length > 0) {
+        var text = document.createTextNode(CG_STATUS.shift());
+
+        while (cg.hasChildNodes()) {
+            cg.removeChild(cg.lastChild);
+        }
+
+        var table = document.createElement("div");
+        table.style.width="100%";
+        table.style.height="100%";
+        table.style.display="table";
+        var cell = document.createElement("div");
+        cell.style.display="table-cell";
+        cell.style.verticalAlign="middle";
+        var wrapper = document.createElement("div");
+        wrapper.style.marginLeft="auto";
+        wrapper.style.marginRight="auto";
+
+        wrapper.appendChild(text);
+        cell.appendChild(wrapper);
+        table.appendChild(cell);
+
+        cg.appendChild(table);
+    }
+
+    if (CG_CONSTANTS !== null) {
         cg_construct(cg);
         document.onkeydown = cg_check_key;
         cg_main_loop();
-    }, 500);
+    }
+    else {
+        setTimeout(function(){
+            cg_startup(cg);
+        }, 1000);
+    }
 }
 
 function cg_main_set_hash(update) {
@@ -320,7 +357,6 @@ function cg_construct_footer() {
         var status = document.createElement("DIV");
         footer.appendChild(status);
         cg_refresh_status(status);
-        cg_load_constants();
 
         var languages = document.createElement("DIV");
 
@@ -449,11 +485,17 @@ function cg_load_constants() {
                 json = JSON.parse(response);
                 if ("constants" in json
                 &&  "TXS_PER_QUERY" in json.constants
-                &&  "ENCODER_FEE_AMPLIFIER" in json.constants) {
+                &&  "ENCODER_FEE_AMPLIFIER" in json.constants
+                &&  "MIN_BTC_OUTPUT" in json.constants
+                &&  "SATOSHIS_PER_BITCOIN" in json.constants) {
                    CG_CONSTANTS = json.constants;
                    status = CG_TXT_MAIN_CONSTANTS_LOADED[CG_LANGUAGE];
+                   CG_WRITE_MIN_BTC_OUTPUT = CG_CONSTANTS["MIN_BTC_OUTPUT"] / CG_CONSTANTS["SATOSHIS_PER_BITCOIN"];
                 }
-                else cg_handle_error(json);
+                else {
+                    cg_handle_error(json);
+                    if (CG_STATUS.length === 0) status = CG_TXT_MAIN_ERROR[CG_LANGUAGE];
+                }
             }
 
             if (status.length > 0) CG_STATUS.push(status);
@@ -645,6 +687,8 @@ function cg_construct_buttons(tabs) {
 }
 
 function cg_button_click(btn, fun) {
+    if (CG_CONSTANTS === null) return;
+
     var x = document.getElementsByClassName("cg-btn");
     for (var i = 0; i < x.length; i++) {
         x[i].disabled = false;

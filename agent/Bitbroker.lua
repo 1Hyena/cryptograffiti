@@ -676,6 +676,19 @@ function is_connected()
             if (cgd.constants.SATOSHIS_PER_BITCOIN ~= nil) then
                 global.SPB = tonumber(cgd.constants.SATOSHIS_PER_BITCOIN);
             end;
+
+            if (cgd.constants.MIN_BTC_OUTPUT ~= nil) then
+                global.MIN_BTC_OUTPUT = tonumber(cgd.constants.MIN_BTC_OUTPUT) / global.SPB;
+                executive.MIN_BTC_OUTPUT = global.MIN_BTC_OUTPUT;
+            end;
+
+            if (cgd.constants.ENCODER_FEE_AMPLIFIER ~= nil and cgd.encode) then
+                local amp = tonumber(cgd.constants.ENCODER_FEE_AMPLIFIER);
+                if (type(amp) == "number" and amp > 0.0) then
+                    executive.FEE_AMPLIFIER = amp;
+                    log("Encoder fee amplifier is "..string.format("%.2f", amp)..".");
+                end
+            end
         end;
         return false;
     end;
@@ -2543,14 +2556,6 @@ function cgd_fun_get_constants()
     end
 
     log("Server Constants:\n"..serializeTable(cgd.constants));
-
-    if (cgd.constants.ENCODER_FEE_AMPLIFIER ~= nil and cgd.encode) then
-        local amp = tonumber(cgd.constants.ENCODER_FEE_AMPLIFIER);
-        if (type(amp) == "number" and amp > 0.0) then
-            executive.FEE_AMPLIFIER = amp;
-            log("Encoder fee amplifier is "..string.format("%.2f", amp)..".");
-        end
-    end
 
     return true;
 end;

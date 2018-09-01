@@ -45,6 +45,7 @@ These values can be received with an API call of `get_constants` function.
 * `MAX_DATA_SIZE`        - max number of uncompressed and unencrypted data bytes
 * `TXS_PER_QUERY`        - max number of TXs to be dealt with for each API call
 * `MIN_BTC_DONATION`     - min number of satoshis that count for a donation
+* `MIN_BTC_OUTPUT`       - min number of satoshis per TX output
 
 
 ##### APPLICATION LAYER SECURITY ###############################################

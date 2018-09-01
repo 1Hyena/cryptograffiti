@@ -23,6 +23,7 @@ define("CAPTCHA_TIMEOUT",                                   600); // Number of s
 define("MAX_DATA_SIZE",                                  262144); // Maximum number of uncompressed and unencrypted data bytes accepted as valid input.
 define("TXS_PER_QUERY",                                    1000); // Maximum number of transactions to be dealt with per single API call.
 define("MIN_BTC_DONATION",                                    1); // Minimum number of satoshis that count for a donation.
+define("MIN_BTC_OUTPUT",                                    546); // Minimum number of satoshis per TX output.
 define("ENCODER_FEE_AMPLIFIER",                             3.0); // Amplifier for the estimatefee results.
 
 // SECURITY ROLES:
@@ -1130,6 +1131,7 @@ function fun_get_constants($link, $user, $guid) {
                                             "SESSION_TIMEOUT"               => SESSION_TIMEOUT,
                                             "CAPTCHA_TIMEOUT"               => CAPTCHA_TIMEOUT,
                                             "MAX_DATA_SIZE"                 => MAX_DATA_SIZE,
+                                            "MIN_BTC_OUTPUT"                => MIN_BTC_OUTPUT,
                                             "TXS_PER_QUERY"                 => TXS_PER_QUERY ) );
 
     return make_success($response);
