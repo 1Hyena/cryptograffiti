@@ -21,7 +21,7 @@ define("ORDERS_PER_QUERY",                                   50); // Maximum num
 define("SESSION_TIMEOUT",                                    30); // Number of seconds for the session to timeout.
 define("CAPTCHA_TIMEOUT",                                   600); // Number of seconds unused captchas are kept in the database.
 define("MAX_DATA_SIZE",                                  262144); // Maximum number of uncompressed and unencrypted data bytes accepted as valid input.
-define("TXS_PER_QUERY",                                     100); // Maximum number of transactions to be dealt with per single API call.
+define("TXS_PER_QUERY",                                    1000); // Maximum number of transactions to be dealt with per single API call.
 define("MIN_BTC_DONATION",                                 1000); // Minimum number of satoshis that count for a donation.
 define("ENCODER_FEE_AMPLIFIER",                             3.0); // Amplifier for the estimatefee results.
 
