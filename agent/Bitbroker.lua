@@ -7,7 +7,7 @@ cgd = {
     },
 
     session = {
-        guid        = Hash.hash256(tostring(math.random())),
+        guid        = hash_SHA256(tostring(math.random()), false),
         token       = nil,
         TLS         = false,
         ALS         = false,
@@ -281,7 +281,7 @@ function init_bitbroker()
     if (args["sec_key"] ~= nil) then
         cgd.ALS.sec_key = args["sec_key"];
     else
-        local key = Hash.hash256(tostring(math.random()));
+        local key = hash_SHA256(tostring(math.random()), false);
         warn("`sec_key` not provided in program arguments. Using this:\n"..key);
         cgd.ALS.sec_key = key;
         handshake = true;
@@ -387,7 +387,7 @@ function init_bitbroker()
             cgd.session.active = true;
         else
             warn("Failed to initiate a session. Generating a new GUID.");
-            cgd.session.guid = Hash.hash256(tostring(math.random()));
+            cgd.session.guid = hash_SHA256(tostring(math.random()), false);
             if (cgd_fun_init(false) and cgd_fun_get_session()) then
                 log("GUID:  "..(cgd.session.guid or "nil"));
                 cgd.session.active = true;

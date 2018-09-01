@@ -10,6 +10,7 @@ function event_listen(event, callback)
 end;
 
 function event_trigger(event, ...)
+    local unpack = unpack or table.unpack;
     if (event_table[event] == nil) then return; end;
 
     for i=1,#event_table[event] do

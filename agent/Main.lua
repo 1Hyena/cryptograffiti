@@ -110,10 +110,10 @@ function load(plugins)
     local error = nil;
 
     local files = {
-                    "lib/Hash.lua",
-                    "lib/BigNum.lua",
-                    "lib/Base58.lua",
-                    "lib/Bitcoin.lua",
+--                  "lib/Hash.lua",
+--                  "lib/BigNum.lua",
+--                  "lib/Base58.lua",
+--                  "lib/Bitcoin.lua",
                     "Utils.lua",
                     "Comm.lua",
                     "Bitbroker.lua",
