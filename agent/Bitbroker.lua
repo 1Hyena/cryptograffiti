@@ -2668,7 +2668,12 @@ end;
 
 function cgd_fun_set_btc_txs(upload)
     local json = JSON:encode({guid = cgd.session.guid, txs = upload, nonce = cgd.ALS.nonce});
-    local response = cgd_url_request("set_btc_txs", json);
+    local curl_timeout_before = get_curl_timeout();
+    local response = nil;
+
+    set_curl_timeout(60);
+    response = cgd_url_request("set_btc_txs", json);
+    set_curl_timeout(curl_timeout_before);
 
     if (response == nil) then return false; end;
 
