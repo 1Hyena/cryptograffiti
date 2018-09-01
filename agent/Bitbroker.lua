@@ -1125,7 +1125,7 @@ function decode_graffiti()
     local tx         = nil;
     local last_token = nil;
     local cur        = 0;
-    local max        = 100;
+    local max        = cgd.TPS;
     local delete     = {};
     local decode     = {};
 
