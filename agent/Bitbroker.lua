@@ -1151,7 +1151,7 @@ function decode_graffiti()
         cur = cur + 1;
 
         delay = math.max(os.time()-time, os.clock()-clock);
-        if (delay > 1.0 or cur >= max) then
+        if (delay > 1.0 or cur > max) then
             break;
         end;
 
