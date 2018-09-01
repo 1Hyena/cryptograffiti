@@ -1356,7 +1356,9 @@ function decode_graffiti()
     local msg_hash = nil;
     local mimetype = nil;
     local upload_msg = false;
+    local spam_txs = 0;
     local fsize = 0;
+    local hashes = {};
     clock = os.clock();
     time  = os.time();
 
@@ -1478,7 +1480,16 @@ function decode_graffiti()
             end
         end
 
+        if (upload_msg and msg_hash ~= nil and hashes[msg_hash] ~= nil and bitcoin.donations[decode[j]] == nil) then
+            upload_msg = false;
+            spam_txs = spam_txs + 1;
+        end
+
         if (upload_msg) then
+            if (msg_hash ~= nil) then
+                hashes[msg_hash] = true;
+            end
+
             if (mimetype == nil) then
                 if (cgd.verbose) then
                     local msz = strlen(message) + strlen(op_return);
@@ -1551,6 +1562,10 @@ function decode_graffiti()
     if (cgd.verbose and dropped > 0) then
         log("Dropped "..dropped.." decoded TX"..(dropped == 1 and "." or "s."));
     end;
+
+    if (cgd.verbose and spam_txs > 0) then
+        log("Ignored "..spam_txs.." spam TX"..(spam_txs == 1 and "." or "s."));
+    end
 
     --new_txs_count = table_length(bitcoin.new_txs);
     --if (cgd.verbose and new_txs_count > 0) then
