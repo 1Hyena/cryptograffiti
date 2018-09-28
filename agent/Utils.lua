@@ -132,6 +132,9 @@ function hex2ascii(hex, chunk_size)
     
     if (chunk_size == nil or chunk_size <= 0) then
         chunk_size = string.len(bytes);
+        if (chunk_size <= 0) then
+            return "";
+        end
     end;
     
     local chunks = math.floor(string.len(bytes) / chunk_size);
