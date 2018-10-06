@@ -10,7 +10,7 @@ var CG_TX_NR       = null;
 var CG_TX_HASH     = null;
 var CG_TX_TYPE     = null;
 var CG_SCROLL_KEY  = false;
-var CG_VERSION     = "0.98";
+var CG_VERSION     = "0.99";
 var CG_ACTIVE_TAB  = null;
 var CG_DECODER_OK  = true; // Decoder is online?
 var CG_ENCODER_OK  = true; // Encoder is online?
@@ -236,7 +236,7 @@ function cg_main_loop() {
         }
     }
 
-    cg_main_set_hash({tx_nr : tx_nr, lang : lang});
+    if (CG_ACTIVE_TAB === 'cg-tab-view') cg_main_set_hash({tx_nr : tx_nr, lang : lang});
 
     var spacer = document.getElementById("cg-tabs-spacer");
     var tabs   = document.getElementById("cg-tabs");

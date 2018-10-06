@@ -55,7 +55,6 @@ function cg_construct_write(main) {
     var payment_area = document.createElement("div"); payment_area.style.display="none";
     var preview_area = document.createElement("div"); preview_area.style.display="none";
 
-    main_area.classList.add("cg-write-main");
     main_area.classList.add("cg-borderbox");
     side_area.classList.add("cg-write-side");
     side_area.classList.add("cg-borderbox");
@@ -67,6 +66,8 @@ function cg_construct_write(main) {
     info_area.classList.add("cg-write-info");
     info_area.classList.add("cg-borderbox");
 
+    main_area.id="cg-write-mainarea";
+    side_area.id="cg-write-sidearea";
     btns_area.id="cg-write-btnsarea";
     text_area.id="cg-write-textarea";
     addr_area.id="cg-write-addresses";
@@ -566,12 +567,26 @@ function cg_button_click_preview() {
     state.classList.add("cg-poofout");
     CG_WRITE_STATE = null;
 
-    var btnsarea = document.getElementById("cg-write-btnsarea");
-    btnsarea.classList.remove("cg-appear");
-    btnsarea.classList.add("cg-disappear");
+    var infoarea = document.getElementById("cg-write-infoarea");
+    infoarea.classList.remove("cg-appear");
+    infoarea.classList.add("cg-disappear");
+
+    var sidearea = document.getElementById("cg-write-sidearea");
+    sidearea.classList.remove("cg-appear");
+    sidearea.classList.add("cg-disappear");
+
     cg_write_update_now();
 
-    setTimeout(function(){
+    var banish_elements = [infoarea, sidearea];
+
+    setTimeout(function(banish){
+        for (var i=0; i<banish.length; ++i) {
+            banish[i].classList.add("cg-display-none");
+        }
+
+        var write_main_area = document.getElementById("cg-write-mainarea");
+        write_main_area.classList.add("cg-write-preview");
+
         CG_WRITE_STATE = "cg-write-previewarea";
         state.style.display = "none";
         state.classList.remove("cg-poofout");
@@ -615,7 +630,7 @@ function cg_button_click_preview() {
 
         previewarea.style.display = "block";
         previewarea.classList.add("cg-appear");
-    }, 200);
+    }, 500, banish_elements);
 }
 
 function cg_button_click_preview_back() {
@@ -626,11 +641,20 @@ function cg_button_click_preview_back() {
     state.classList.add("cg-disappear");
     CG_WRITE_STATE = null;
 
-    var btnsarea = document.getElementById("cg-write-btnsarea");
-    btnsarea.classList.remove("cg-disappear");
-    btnsarea.classList.add("cg-appear");
-
     setTimeout(function(){
+        var write_main_area = document.getElementById("cg-write-mainarea");
+        write_main_area.classList.remove("cg-write-preview");
+
+        var infoarea = document.getElementById("cg-write-infoarea");
+        infoarea.classList.remove("cg-disappear");
+        infoarea.classList.add("cg-appear");
+        infoarea.classList.remove("cg-display-none");
+
+        var sidearea = document.getElementById("cg-write-sidearea");
+        sidearea.classList.remove("cg-disappear");
+        sidearea.classList.add("cg-appear");
+        sidearea.classList.remove("cg-display-none");
+
         CG_WRITE_STATE = "cg-write-textarea";
         state.style.display = "none";
         state.classList.remove("cg-disappear");

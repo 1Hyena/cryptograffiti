@@ -139,8 +139,8 @@ function cg_view_do() {
                         if (mimetype !== "application/octet-stream") {
                             var body_msgbox = cg_view_create_msgbox(out_bytes, op_return, mimetype, true, txhash, timestamp, link);
                             body_msgbox.cg_msgbody.classList.add("cg-view-msgbody");
-                            body_msgbox.cg_msgbody.style.width  = "calc(1.0*(100vh - 22rem))";
-                            body_msgbox.cg_msgbody.style.height = "100vh";
+                            body_msgbox.cg_msgbody.style.width = "100vw";
+                            body_msgbox.cg_msgbody.style.height= "100vh";
                             body.appendChild(cg_view_create_wrapper(body_msgbox));
                             fail = false;
                             CG_VIEW_TX_DONE_TYPE = txtype;
