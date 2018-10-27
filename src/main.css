@@ -594,6 +594,15 @@ button {
 
 .cg-save-btn {
     width: 9ch;
+    vertical-align: middle;
+}
+
+#cg-save-btn-addrfmt:not(.cg-toggled)::after {
+    content: "Base58";
+}
+
+#cg-save-btn-addrfmt.cg-toggled::after {
+    content: "CashAddr";
 }
 
 .cg-captcha-img {

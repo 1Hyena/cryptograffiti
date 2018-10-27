@@ -944,9 +944,9 @@ var CG_TXT_SAVE_ORDER_STATUS_FILLED =
 
 var CG_TXT_SAVE_PAYMENT_DETAILS =
 {
-    en : "Please send exactly %s bitcoins to %s (%s).",
-    et : "Palun saatke täpselt %s bitimünti aadressile %s (%s).",
-    ru : "Пожалуйста, отправьте ровно %s биткойнов на %s (%s)."
+    en : "Please send exactly %s bitcoins to %s.",
+    et : "Palun saatke täpselt %s bitimünti aadressile %s.",
+    ru : "Пожалуйста, отправьте ровно %s биткойнов на %s."
 };
 
 var CG_TXT_SAVE_PAYMENT_NOTE =

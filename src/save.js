@@ -14,6 +14,8 @@ function cg_construct_save(main) {
         if (!btn.disabled) btn.disabled = true;
         btn = document.getElementById("cg-save-btn-wallet");
         if (!btn.disabled) btn.disabled = true;
+        btn = document.getElementById("cg-save-btn-format");
+        if (!btn.disabled) btn.disabled = true;
         return;
     }
 
@@ -77,6 +79,10 @@ function cg_construct_save(main) {
     btn_back.addEventListener("click", cg_save_back);
     btn_back.id = "cg-save-btn-back";
 
+    var btn_addrfmt = document.createElement("BUTTON"); btn_addrfmt.classList.add("cg-save-btn"); btn_addrfmt.disabled = true;
+    btn_addrfmt.addEventListener("click", cg_save_addrfmt);
+    btn_addrfmt.id = "cg-save-btn-addrfmt";
+
     var btn_wallet = document.createElement("BUTTON"); btn_wallet.classList.add("cg-save-btn"); btn_wallet.disabled = true;
     var txt_wallet = document.createTextNode(CG_TXT_SAVE_BTN_WALLET[CG_LANGUAGE]);
     btn_wallet.appendChild(txt_wallet);
@@ -84,6 +90,7 @@ function cg_construct_save(main) {
     btn_wallet.id = "cg-save-btn-wallet";
 
     td9.appendChild(btn_back);
+    td10.appendChild(btn_addrfmt);
     td10.appendChild(btn_wallet);
 
     var order_details = document.createElement("p");
@@ -129,6 +136,37 @@ function cg_save_back() {
     cg_button_click_write();
 }
 
+function cg_save_addrfmt() {
+    var btn = document.getElementById("cg-save-btn-addrfmt");
+    if (btn !== null) {
+        btn.classList.toggle("cg-toggled");
+
+        var addr_input = document.getElementById("cg-save-order-address");
+
+        if (btn.classList.contains("cg-toggled")) {
+            // Convert to Base58
+
+            if (addr_input !== null) {
+                addr_input.value = addr_input.getAttribute('data-base58');
+            }
+
+        }
+        else {
+            // Convert to CashAddr
+
+            if (addr_input !== null) {
+                addr_input.value = addr_input.getAttribute('data-cashaddr');
+            }
+        }
+
+        if (CG_SAVE_UPDATING_ORDER > 0) {
+            CG_SAVE_UPDATING_ORDER = 0;
+            cg_save_get_order();
+            btn.disabled = true;
+        }
+    }
+}
+
 function cg_save_wallet() {
     if (CG_SAVE_MAKING_ORDER) return;
 
@@ -171,9 +209,14 @@ function cg_save_update() {
     if (!btn.disabled) btn.disabled = true;
     btn = document.getElementById("cg-save-btn-wallet");
     if (!btn.disabled) btn.disabled = true;
+    btn = document.getElementById("cg-save-btn-addrfmt");
+    if (!btn.disabled) btn.disabled = true;
 
     if (!CG_SAVE_MAKING_ORDER) {
         btn = document.getElementById("cg-save-btn-back");
+        if (btn.disabled) btn.disabled = false;
+
+        btn = document.getElementById("cg-save-btn-addrfmt");
         if (btn.disabled) btn.disabled = false;
 
         var addr = document.getElementById("cg-save-order-address").value;
@@ -237,6 +280,12 @@ function cg_save_get_order() {
                 var order_addr_input = document.getElementById("cg-save-order-address");
                 var order_amnt_input = document.getElementById("cg-save-order-amount");
 
+                var base58 = false;
+                var fmtaddr_btn = document.getElementById("cg-save-btn-addrfmt");
+                if (fmtaddr_btn !== null) {
+                    if (fmtaddr_btn.classList.contains("cg-toggled")) base58 = true;
+                }
+
                 var json = JSON.parse(response);
                 if ("order"  in json       && "nr"     in json.order && "accepted" in json.order
                 &&  "filled" in json.order && "output" in json.order) {
@@ -276,10 +325,17 @@ function cg_save_get_order() {
                             var addr = format_btc_addr(output.address);
                             var amnt = output.amount;
 
-                            if (order_addr_input.value !== addr) order_addr_input.value = addr;
+                            if (order_addr_input.value !== addr) {
+                                order_addr_input.value = (base58 ? output.address : addr);
+                                order_addr_input.setAttribute('data-base58',   output.address);
+                                order_addr_input.setAttribute('data-cashaddr', addr);
+                            }
                             if (order_amnt_input.value !== amnt) order_amnt_input.value = amnt;
 
-                            if (!filled) details_msg = sprintf(CG_TXT_SAVE_PAYMENT_DETAILS[CG_LANGUAGE], amnt, addr, btc_base58(output.address));
+                            if (!filled) {
+                                var fmt = CG_TXT_SAVE_PAYMENT_DETAILS[CG_LANGUAGE];
+                                details_msg = sprintf(fmt, amnt, (base58 ? output.address : addr));
+                            }
                         }
                         else if (output !== null && "error" in output) {
                             status = sprintf(CG_TXT_SAVE_ORDER_REJECTED[CG_LANGUAGE], json.order.nr);
