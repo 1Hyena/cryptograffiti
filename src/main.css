@@ -589,11 +589,11 @@ button {
 }
 
 .cg-captcha-btn {
-    width: 7ch;
+    width: 8ch;
 }
 
 .cg-save-btn {
-    width: 9ch;
+    width: 10ch;
     vertical-align: middle;
 }
 
@@ -603,6 +603,7 @@ button {
 
 #cg-save-btn-addrfmt.cg-toggled::after {
     content: "CashAddr";
+    font-size: small;
 }
 
 .cg-captcha-img {
@@ -1105,10 +1106,6 @@ a.cg-link:hover {
 
 .cg-captcha-table td:nth-child(2) {
     width: 99%;
-}
-
-.cg-save-order-input {
-    width: 100%;
 }
 
 #cg-save-order-details {
