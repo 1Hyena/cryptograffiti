@@ -152,7 +152,9 @@ end
 
 function cgd_url_request(function_name, json_data)
     local response;
-    vlog("CGD URL REQUEST: "..function_name.." ("..cgd.api_usage.rpm.."/"..cgd.api_usage.max_rpm.." RPM)");
+    if (cgd.api_usage.rpm*2 >= cgd.api_usage.max_rpm) then
+        vlog("CGD URL REQUEST: "..function_name.." ("..cgd.api_usage.rpm.."/"..cgd.api_usage.max_rpm.." RPM)");
+    end
 
     if (cgd.api_usage.rpm+10 >= cgd.api_usage.max_rpm
     and cgd.api_usage.rpm    <  cgd.api_usage.max_rpm) then
