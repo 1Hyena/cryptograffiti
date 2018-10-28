@@ -262,7 +262,7 @@ button {
 .cg-tools-info {
     display: inline-block;
     vertical-align: top;
-    height: 14rem;
+    height: 8rem;
     width: calc(100% - 17rem);
 
     border: medium outset rgba(230,230,230, 0.80);
@@ -289,19 +289,41 @@ button {
     background: linear-gradient(rgba(0,0,0,0.0625), rgba(255,255,255,0.03125), rgba(0,0,0,0.0625));
 }
 
+#cg-write-infoarea > div:nth-child(1) {
+    display: inline-block;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 #cg-write-infotable {
     width: 100%;
     max-width: 30rem;
     margin: auto;
     border-spacing: 0;
+    table-layout: fixed;
+    white-space: nowrap;
+}
+
+#cg-write-infotable caption {
+    display: none;
+}
+
+#cg-write-infotable td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 #cg-write-infotable td:nth-child(1) {
     text-align: left;
+    width: 11ch;
 }
 
 #cg-write-infotable td:nth-child(2) {
     text-align: right;
+    width: calc(100% - 11ch);
 }
 
 #cg-tools-span-tool-name {
@@ -341,7 +363,8 @@ button {
 
 #cg-tools-core {
     width: 100%;
-    height: calc(100% - 14.75rem);
+    height: calc(100% - 9rem);
+    min-height: 7rem;
 }
 
 .cg-write-text {
@@ -362,9 +385,21 @@ button {
 }
 
 #cg-write-paymentarea, #cg-write-previewarea {
+    position: relative;
     width: 100%;
     height: 100%;
     overflow: hidden;
+}
+
+#cg-write-previewarea > div:nth-child(2) {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+    display: inline-block;
+    font-size: 1rem;
+    width: 12ch;
 }
 
 #cg-write-paymenttable {
@@ -377,6 +412,10 @@ button {
 #cg-write-paymenttable td:nth-child(1) {
     text-align: left;
     min-width: 12ch;
+}
+
+.cg-save-order-input {
+    width: 100%;
 }
 
 .cg-write-side {
@@ -453,7 +492,7 @@ button {
 
 #cg-tools-poe-browse-btn {
     position: absolute;
-    bottom: 0.25rem;
+    top: 0;
     left: 0.25rem;
     width: 100%;
     font-size: 1rem;
@@ -461,7 +500,6 @@ button {
 
 #cg-tools-poe-browse-div {
     position: relative;
-    height: 3rem;
     overflow: visible;
 }
 
@@ -502,7 +540,7 @@ button {
     #cg-write-mainarea:not(.cg-write-preview){min-width: 100%; height: calc(100% - 23rem);}
     .cg-tools-info{width:  calc(100% - 0.5rem);}
     .cg-tools-list{width:  calc(100% - 0.5rem);}
-    #cg-tools-core{height: calc(100% - 24.25rem);}
+    #cg-tools-core{height: calc(100% - 17rem); min-height: 7rem;}
 }
 
 .cg-write-addr {
@@ -593,7 +631,7 @@ button {
 }
 
 .cg-save-btn {
-    width: 10ch;
+    width: 11ch;
     vertical-align: middle;
 }
 
@@ -771,6 +809,24 @@ button {
     100% {transform: scale(0.1); opacity: 0;}
 }
 
+.cg-about-tab {
+    justify-content: space-around;
+}
+
+.cg-about-tab > div > span:first-child {
+    display: inline-block;
+    padding-top: 2ch;
+    padding-bottom: 1ch;
+    opacity: 0.5;
+}
+
+.cg-about-tab > div:nth-child(1) > span::after { content:   "I"; }
+.cg-about-tab > div:nth-child(2) > span::after { content:  "II"; }
+.cg-about-tab > div:nth-child(3) > span::after { content: "III"; }
+.cg-about-tab > div:nth-child(4) > span::after { content:  "IV"; }
+.cg-about-tab > div:nth-child(5) > span::after { content:   "V"; }
+.cg-about-tab > div:nth-child(6) > span::after { content:  "VI"; }
+
 .cg-about-tab p, .cg-help-tab p {
     display: block;
     max-width: 80ch;
@@ -780,8 +836,10 @@ button {
 
 .cg-contact {
     display: block;
-    max-width: 80ch;
     margin: 0 auto 1ch;
+    width: 80ch;
+    max-width: 100vw;
+    overflow: hidden;
 
     border: medium outset rgba(255,255,255, 0.4);
     border-radius: 1.0ch;
@@ -793,6 +851,13 @@ button {
     display: inline-block;
     height: 8rem;
     width: auto;
+    vertical-align: middle;
+}
+
+#cg-contact-table-wrapper {
+    display: inline-block;
+    width: calc(100% - 16rem);
+    vertical-align: middle;
 }
 
 .cg-note {
@@ -804,23 +869,58 @@ a.cg-link:hover {
 }
 
 .cg-table {
-    display: inline-block;
     margin: auto;
     padding-bottom: 1ch;
-    font-size: 0.75rem;
     vertical-align: top;
-    max-width: calc(100% - 16rem);
+    width: 100%;
+    table-layout: fixed;
+    white-space: nowrap;
 }
+
+.cg-table td {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .cg-table td:nth-child(1) {
+    width: 18ch;
     text-align: right;
     padding-right: 1ch;
 }
 .cg-table td:nth-child(2) {
+    width: calc(100% - 18ch);
     text-align: left;
 }
 
 .cg-table img {
     height: 1rem;
+}
+
+@media not all and (min-width: 50rem) {
+    .cg-table td {
+        font-size: small;
+    }
+    .cg-table td:nth-child(1) {
+        display: none;
+    }
+    .cg-table td:nth-child(2) {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+@media not all and (min-width: 35rem) {
+    .cg-table td {
+        font-size: normal;
+    }
+    .cg-contact > img:nth-child(1),
+    .cg-contact > img:nth-child(3)  {
+        display: none;
+    }
+    #cg-contact-table-wrapper {
+        width: 100%;
+    }
 }
 
 .hvr-glow {
@@ -1079,14 +1179,17 @@ a.cg-link:hover {
 .cg-msgbody-media {
     position: relative;
     padding-bottom: 0.5rem;
-    /*display: inline-block;
-    vertical-align: top;
-    padding-right: 1rem;*/
 }
 
 .cg-save-order-table {
-    display: inline-block;
+    margin: auto;
     text-align: left;
+    border-spacing: 0;
+    max-width: calc(100vw - 2rem);
+}
+
+.cg-save-order-table tr:nth-child(5) td:first-child {
+    vertical-align: bottom;
 }
 
 .cg-save-order-table tr:nth-child(5) td:last-child {
@@ -1109,13 +1212,37 @@ a.cg-link:hover {
 }
 
 #cg-save-order-details {
-    min-height: 192px;
+    min-height: 12rem;
+    max-width: calc(100vw - 2rem);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#cg-save-order-details img {
+    height: 8rem;
+    width: auto;
+}
+
+#cg-save-order-qrcode-img {
+    image-rendering: optimizeSpeed;             /* STOP SMOOTHING, GIVE ME SPEED  */
+    image-rendering: -moz-crisp-edges;          /* Firefox                        */
+    image-rendering: -o-crisp-edges;            /* Opera                          */
+    image-rendering: -webkit-optimize-contrast; /* Chrome (and eventually Safari) */
+    image-rendering: pixelated;                 /* Chrome */
+    image-rendering: optimize-contrast;         /* CSS3 Proposed                  */
+    -ms-interpolation-mode: nearest-neighbor;   /* IE8+                           */
 }
 
 #cg-cash-img,
 #cg-core-img {
     position: relative;
     z-index: 1;
+}
+
+@media not all and (min-width: 26rem) {
+    #cg-save-order-qrcode-img {
+        display: none;
+    }
 }
 
 #cg-view-main {
@@ -1126,14 +1253,12 @@ a.cg-link:hover {
 
 #cg-view-head {
     display: none;
-    /*opacity: 0;*/
     width: 100%;
     height: 100%;
 }
 
 #cg-view-body {
     display: none;
-    /*opacity: 0;*/
     width: 100%;
     height: 100%;
 }

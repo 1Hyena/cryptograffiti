@@ -26,26 +26,6 @@ function cg_construct_write(main) {
 
     div.classList.add("cg-write-tab");
 
-    /*
-    var table = document.createElement("div");
-    table.style.width="100%";
-    table.style.height="100%";
-    table.style.display="table";
-    var cell = document.createElement("div");
-    cell.style.display="table-cell";
-    cell.style.verticalAlign="middle";
-    var wrapper = document.createElement("div");
-    wrapper.style.marginLeft="auto";
-    wrapper.style.marginRight="auto";
-
-    var text = document.createTextNode(CG_TXT_WRITE_COMING_SOON[CG_LANGUAGE]);
-
-    wrapper.appendChild(text);
-    cell.appendChild(wrapper);
-    table.appendChild(cell);
-    div.appendChild(table);
-    */
-
     var main_area = document.createElement("div");
     var side_area = document.createElement("div");
     var addr_area = document.createElement("div");
@@ -94,7 +74,7 @@ function cg_construct_write(main) {
     payment_area.appendChild(helper_table);
 
     var info_table = document.createElement("table");
-    var caption    = document.createElement("caption");
+    var caption    = document.createElement("div");
     var tr1        = document.createElement("tr");
     var tr2        = document.createElement("tr");
     var tr3        = document.createElement("tr");
@@ -130,12 +110,12 @@ function cg_construct_write(main) {
     tr3.appendChild(td2_tr3);
     tr4.appendChild(td1_tr4);
     tr4.appendChild(td2_tr4);
-    info_table.appendChild(caption);
     info_table.appendChild(tr1);
     info_table.appendChild(tr2);
     info_table.appendChild(tr3);
     info_table.appendChild(tr4);
     info_table.id="cg-write-infotable";
+    info_area.appendChild(caption);
     info_area.appendChild(info_table);
 
     var span_payment=document.createElement("span"); span_payment.id="cg-write-msg-payment";
@@ -233,6 +213,8 @@ function create_payment_table(id) {
 
     addr.classList.add("cg-save-order-input"); addr.size = "40"; addr.id="cg-write-payment-addr-input";
     amnt.classList.add("cg-save-order-input"); amnt.size = "40"; amnt.id="cg-write-payment-amnt-input";
+    addr.classList.add("cg-borderbox");
+    amnt.classList.add("cg-borderbox");
     addr.maxLength = "64";
     amnt.maxLength = "17";
     amnt.type = "number";
@@ -600,7 +582,6 @@ function cg_button_click_preview() {
             var boxarea = document.createElement("div");
             boxarea.style.height="calc(100% - 2.25rem)";
             boxarea.style.width="100%";
-            boxarea.style.overflow="hidden";
             var table = document.createElement("div");
             table.style.width="100%";
             table.style.height="100%";
@@ -620,7 +601,6 @@ function cg_button_click_preview() {
         }
 
         var btn_container = document.createElement("DIV");
-        btn_container.style = "font-size: 1rem; width: 12ch; display: inline-block;";
 
         var btn = document.createElement("BUTTON"); btn.classList.add("cg-write-btn");
         btn.appendChild(document.createTextNode(CG_TXT_CAPTCHA_BTN_BACK[CG_LANGUAGE]));

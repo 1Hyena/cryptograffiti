@@ -14,7 +14,7 @@ function cg_construct_save(main) {
         if (!btn.disabled) btn.disabled = true;
         btn = document.getElementById("cg-save-btn-wallet");
         if (!btn.disabled) btn.disabled = true;
-        btn = document.getElementById("cg-save-btn-format");
+        btn = document.getElementById("cg-save-btn-addrfmt");
         if (!btn.disabled) btn.disabled = true;
         return;
     }
@@ -41,6 +41,11 @@ function cg_construct_save(main) {
     order_status .classList.add("cg-save-order-input"); order_status.readOnly  = true; order_status.size  = "44";
     order_address.classList.add("cg-save-order-input"); order_address.readOnly = true; order_address.size = "44";
     order_amount .classList.add("cg-save-order-input"); order_amount.readOnly  = true; order_amount.size  = "44";
+
+    order_nr     .classList.add("cg-borderbox");
+    order_status .classList.add("cg-borderbox");
+    order_address.classList.add("cg-borderbox");
+    order_amount .classList.add("cg-borderbox");
 
     var t  = document.createElement("table");
     var tr1 = document.createElement("tr"); // order
@@ -394,10 +399,11 @@ function cg_save_get_order() {
                                 img.src = "https://api.qrserver.com/v1/create-qr-code/?size=128x128&qzone=4&data="+fork+addr+"?amount="+amnt;
                                 img.width = "128";
                                 img.height = "128";
-                                img.style = "display: none; width: 0%;";
+                                img.style = "width: 0%;";
+                                img.id = "cg-save-order-qrcode-img";
                                 img.onload = function () {
                                     img.classList.add("widen");
-                                    img.style = "display: initial; max-width: 128px;";
+                                    img.style = "max-width: 8rem;";
                                     var cash = document.getElementById("cg-cash-img");
                                     var core = document.getElementById("cg-core-img");
                                     if (cash !== null) cash.classList.remove("appear");

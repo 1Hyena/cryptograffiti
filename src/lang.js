@@ -1161,14 +1161,6 @@ var CG_TXT_HELP_PROTOCOL_BODY = {
     ru : "Каждая Биткойн транзакция содержит число исходящих адресов. Обычно мы видим эти адреса в их Base58 формате. Однако, по своей сути, они всего лишь 20-байтные двоичные строки. Что бы сохранить файл в цепочку блоков, он должен быть поделён на 20-байтные фрагменты (добавляя нули в конец последнего фрагмента при необходимости). Затем, для обозначения конца файла, необходимо добавить RIPEMD-160 хеш оригинального файла к списку фрагментов файла. По желанию, можно добавить текстовый комментарий к файлу цепочки блоков сразу после хеша. Комментарий должен быть в UTF-8 кодировке и аналогично файлу, комментарий должен быть поделён на 20-байтные фрагменты. Однако, комментарий не должен заканчиваться своим хешем. Затем мы связываем фрагменты файла, хеш файла и фрагменты комментария в один массив. Все фрагменты должны быть сконвертированы в Base58 формат. В заключение, обычная Биткойн транзакция должна быть произведена, послав минимально возможную сумму биткойнов на каждый биткойн адрес в этом массиве."
 };
 
-/*
-var CG_TXT_HELP_PROTOCOL_FOOT = {
-    en : "Warning! Bitcoin Core wallet might not allow duplicate output addresses in its createrawtransaction RPC. A workaround for this is to apply the named remote procedure on a list of unique addresses at first. Then, after receiving the hex string of the raw transaction, one should search and replace those unique addresses with the intended and possibly duplicate transaction outputs.",
-    et : "Hoiatus! Bitcoin Core rahakotihaldur ei pruugi lubada teha ülekandeid, kus on duplitseeritud aadresseid, kui kasutada selleks createrawtransaction protseduuri. Probleemist saab mööda, kui teha esialgu ülekanne unikaalsetele aadressidele, kuid enne allkirjastamist unikaalsed väljundaadressid soovitud aadressidega asendada.",
-    ru : "Осторожно! Bitcoin Core кошелёк может не позволить повторные исходящие адреса в его createrawtransaction RPC. В качестве временного решения данной ситуации необходимо, сперва, применить именованную удалённую процедуру к списку уникальных адресов. Затем, после получения шестнадцатиричной строки сырой транзакции, необходимо найти и заменить те уникальные адреса на целевые и возможно повторные выходы транзакции."
-};
-*/
-
 var CG_TXT_HELP_KNOWN_ISSUES = {
     en : "Known Issues",
     et : "Teadaolevad probleemid",
@@ -1176,36 +1168,6 @@ var CG_TXT_HELP_KNOWN_ISSUES = {
 };
 
 var CG_TXT_HELP_TODO = [
-    //{
-    //    en : "Add support for OP_RETURN messages.",
-    //    et : "Lisada tugi OP_RETURN sõnumitele.",
-    //    ru : "Добавить поддержку сообщений OP_RETURN."
-    //},
-    //{
-    //    en : "Add support for TXs that contain multiple null-terminated messages.",
-    //    et : "Lisada tugi ülekannetele, mis sisaldavad mitut nullbaidiga eraldatud sõnumit.",
-    //    ru : "Добавить поддержку транзакций, содержащих несколько нуль-терминированных сообщений."
-    //},
-    //{
-    //    en : "Add support for messages that cointain ANSI colours.",
-    //    et : "Lisada tugi sõnumitele, mis sisaldavad ANSI värve.",
-    //    ru : "Добавить поддержку сообщений, содержащих цвета в формате ANSI."
-    //},
-    //{
-    //    en : "Make it possible to attach all file types not just JPEG images.",
-    //    et : "Võimaldada kõigi failitüüpide lisamist sõnumile.",
-    //    ru : "Добавить возможность прикрепления всех типов файлов, не только JPEG картинок."
-    //},
-    //{
-    //    en : "Do not decode addresses that are known to be part of the attached file.",
-    //    et : "Ära dekodeeri aadresseid, mille puhul on teada, et nad on osa sõnumi manusest.",
-    //    ru : "Не декодировать адреса о которых известно, что они являются частью прикреплённого файла."
-    //},
-    //{
-    //    en : "Add Proof of Existence widget under the tools tab.",
-    //    et : "Lisada notari vidin tööriistade kaardi alla.",
-    //    ru : "Добавить виджет Доказательство Существования в закладку инструменты."
-    //},
     {
         en : "Make it possible to view only the messages of a certain type, such as images.",
         et : "Võimaldada lugeda vaid kindlaksmääratud tüüpi sõnumeid nagu näiteks pilte.",
@@ -1232,22 +1194,43 @@ var CG_TXT_HELP_TODO = [
 ////////////////////////////////////////////////////////////////////////////////
 var CG_TXT_ABOUT_P1 =
 {
-    en : "Bitcoin's block chain is a decentralized database which main purpose is to secure and hold all Bitcoin transactions. It can be used to store other data too. CryptoGraffiti.info allows anyone to easily decode and read arbitrary messages saved into the block chain. No single entity has the power to alter or truncate these messages.",
+    en : "Bitcoin's block chain is a decentralized database which main purpose is to secure and hold all Bitcoin transactions. It can be used to store other data too. CryptoGraffiti.info allows anyone to easily decode and read arbitrary messages saved on the block chain. No single entity has the power to alter or truncate these messages.",
     et : "Bitimündi plokiahel on detsentraliseeritud andmebaas, mille peamine eesmärk on turvata ja talletada kõiki bitimündi ülekandeid. Ilmneb aga tõsiasi, et seda saab kasutada ka muude andmete talletamiseks. CryptoGraffiti.info lubab igaühel lihtsa vaevaga dekodeerida ja lugeda sõnumeid, mis on mittesihtpäraselt plokiahelasse salvestatud. Bitimündi protokolli omapäradest tulenevalt pole hiljem kellelgi võimalik neid sõnumeid muuta ega kustutada.",
     ru : "Цепочка блоков биткойна является децентрализованной базой данных, главной целью которой является обеспечение и проведение всех биткойн-транзакций. Она так же может быть использована для хранения других данных. CryptoGraffiti.info позволяет любому желающему легко расшифровывать и читать произвольные сообщения, сохраненные в цепочке блоков. Ни одна организация не имеет возможности изменить или обрезать эти сообщения."
 };
 
 var CG_TXT_ABOUT_P2 =
 {
-    en : "Millions of people using Bitcoin clients are storing the very same data on their computers. It is advisable to use this web service responsibly and with caution because all data saved into the block chain will remain there forever. CryptoGraffiti.info offers a functionality to encode custom messages as bitcoin addresses and import them to the wallet for storing text into block chain.",
-    et : "Miljonid inimesed, kes kasutavad Bitimündi rakendust, talletavad oma arvutites plokiahela koopiat. Seetõttu on soovitatav kasutada käesolevat veebiteenust vastutustundlikult ja ettevaatlikult, sest kõik andmed, mis kord juba plokiahelasse on salvestatud, jäävad sinna igaveseks. CryptoGraffiti.info pakub oma kasutajatele funktsionaalsust, mis võimaldab neil meelevaldselt konstrueeritud sõnumeid teisendada bitimündi aadressideks, et neid seejärel oma rahakoti rakendusega iseseisvalt plokiahelasse talletada.",
-    ru : "Миллионы людей, использующих биткойн-клиенты, хранят те же самые данные на своих компьютерах. Рекомендуется использовать этот сервис ответственно и с осторожностью, потому что все данные, сохраненные в цепочке блоков, останутся там навсегда. CryptoGraffiti.info предоставляет возможность кодирования определённых сообщений в биткойн-адреса и импорта их в кошелёк для хранения текста в цепочке блоков."
+    en : "CryptoGraffiti.info monitors the Bitcoin network in real-time and tries to detect transactions that contain either human-readable text messages or files of known formats. When it finds such a transaction, it will be published under the read tab after a miner has confirmed it. Our decoder is capable of finding even those messages that originate from third parties (such as memo.cash).",
+    et : "",
+    ru : ""
 };
 
 var CG_TXT_ABOUT_P3 =
 {
+    en : "Millions of people using Bitcoin clients are storing the very same data on their computers. CryptoGraffiti.info offers the functionality to store data permanently on the block chain by encoding it into a standard Bitcoin transaction. It is advisable to use this web service responsibly and with caution because all data saved on the block chain will remain there forever.",
+    et : "Miljonid inimesed, kes kasutavad Bitimündi rakendust, talletavad oma arvutites plokiahela koopiat. CryptoGraffiti.info pakub funktsionaalsust, mis võimaldab meelevaldselt konstrueeritud sõnumeid bitimündi aadressideks teisendada ja igaveseks plokiahelasse talletada. Seetõttu on soovitatav kasutada käesolevat veebiteenust vastutustundlikult ja ettevaatlikult, sest kõik andmed, mis kord juba plokiahelasse on salvestatud, jäävad sinna igaveseks.",
+    ru : "Миллионы людей, использующих биткойн-клиенты, хранят те же самые данные на своих компьютерах. CryptoGraffiti.info предоставляет возможность кодирования определённых сообщений в биткойн-адреса и импорта их в кошелёк для хранения текста в цепочке блоков. Рекомендуется использовать этот сервис ответственно и с осторожностью, потому что все данные, сохраненные в цепочке блоков, останутся там навсегда."
+};
+
+var CG_TXT_ABOUT_P4 =
+{
+    en : "When using our message encoding service (provided under the write tab), you will be asked to make a payment in Bitcoin Cash and Bitcoin Cash only. Our fully automated message encoder calculates the cost of your message based on its size, adding a service fee of 10%. We use the fees to maintain this service ad-free.",
+    et : "",
+    ru : ""
+};
+
+var CG_TXT_ABOUT_P5 =
+{
+    en : "As soon as the encoder detects an incoming payment, it will consume that particular payment for the creation of a new transaction as a host to your message. This means that your message can only be stored on the block chain after its respective payment has been confirmed by a miner. It also means that your message will be directly linked to the Bitcoin address that paid for the message.",
+    et : "",
+    ru : ""
+};
+
+var CG_TXT_ABOUT_P6 =
+{
     en : "This service operates automatically and is not moderated because the block chain cannot be moderated. Decoding and encoding is done solely in the user's web browser using JavaScript. The authors of this site are not responsible for the content it displays. Viewer discretion is advised.",
-    et : "Käesolev teenus toimib iseseisvalt ja ilma moderaatorite sekkumiseta, sest plokiahelat on tehniliselt võimatu modereerida. Dekodeerimise ja kodeerimise eest vastutab kasutaja isiklik veebilehitseja, kui sellel on JavaScripti tugi. Cryptograffiti.info autorid ei vastuta sisu eest, mida see teenus võimaldab lugeda. Kasutate seda teenust omal vastutusel.",
+    et : "Käesolev teenus toimib iseseisvalt ja ilma moderaatorite sekkumiseta, sest plokiahelat on tehniliselt võimatu modereerida. Dekodeerimise ja kodeerimise eest vastutab kasutaja isiklik veebilehitseja, kui sellel on JavaScripti tugi. CryptoGraffiti.info autorid ei vastuta sisu eest, mida see teenus võimaldab lugeda. Kasutate seda teenust omal vastutusel.",
     ru : "Данный сервис работает автоматически и не модерируется, потому что цепочка блоков не может модерироваться. Кодирование и декодирование происходит исключительно в веб-браузере пользователя при помощи JavaScript. Авторы данного сайта не несут ответственность за содержимое, которое он отображает. При просмотре Вы действуете на свое усмотрение."
 };
 
@@ -1272,27 +1255,6 @@ var CG_TXT_ABOUT_EMAIL_ALT =
     ru : "адрес электронной почты администратора"
 };
 
-var CG_TXT_ABOUT_DONATE_ALT =
-{
-    en : "donate bitcoins to cryptograffiti.info",
-    et : "anneta bitimünte cryptograffiti.info loojatele",
-    ru : "пожертвовать биткойны для cryptograffiti.info"
-};
-
-/*var CG_TXT_ABOUT_NOTE =
-{
-    en : "By sending a message that includes a payment to the donation address you are supporting the development of this free web service. In addition, your message will appear in the feed instantly while non-donators will have to wait for the first confirmation of the Bitcoin network.",
-    et : "Saates sõnumi, mis sisaldab makset annetuste jaoks mõeldud aadressile, toetate selle tasuta veebiteenuse arendust. Lisaks sellele ilmub Teie sõnum lehele koheselt, samal ajal kui annetust mittesisaldavad sõnumid peavad ootama Bitimündi võrgu esimest kinnitust.",
-    ru : "Отправляя сообщение, содержащее адрес для пожертвований, вы поддерживаете развитие данного свободного сервиса. Кроме того, ваше сообщение появится в списке мгновенно, тогда как тот, кто не пожертвовал, должен ожидать первого подтверждения сети Биткойн."
-};*/
-
-var CG_TXT_ABOUT_NOTE =
-{
-    en : "By sending a message that includes a payment to the donation address you are supporting the development of this free web service. Such a donation is added automatically to your message when you use the 'save to block chain' button under the write tab. Messages containing a donation will appear in the feed instantly while non-donators have to wait for the first confirmation of the Bitcoin network.",
-    et : "Saates sõnumi, mis sisaldab makset annetuste jaoks mõeldud aadressile, toetate selle tasuta veebiteenuse arendust. Annetus lisatakse Teie sõnumile automaatselt, kui kasutate 'salvesta plokiahelasse' nuppu sõnumi kirjutamise kaardil. Annetust sisaldavad sõnumid kuvatakse lehel koheselt, samal ajal kui annetust mittesisaldavad sõnumid peavad ära ootama Bitimündi võrgu esimese kinnituse.",
-    ru : "Отправляя сообщение, включающее платеж на наш адрес для пожертвований, вы помогаете разработке этого свободного веб сервиса. Такое пожертвование добавляется автоматически к вашему сообщению, когда вы используете кнопку 'СОХРАНИТЬ В БЛОКЧЕЙН' под полем для ввода. Сообщение, содержащее пожертвование, появится на сайте сразу, тогда как сообщения без пожертвования появятся только после первого подтверждения Биткойн сети."
-};
-
 var CG_TXT_ABOUT_FORUM_TOPIC =
 {
     en : "Forum topic:",
@@ -1309,40 +1271,11 @@ var CG_TXT_ABOUT_SOURCE_CODE =
 
 var CG_TXT_ABOUT_CONTACT_US =
 {
-    en : "Contact us by e-mail:",
-    et : "Võtke meiega ühendust e-posti teel:",
-    ru : "Свяжитесь с нами по электронной почте:"
+    en : "Contact us:",
+    et : "Meie kontakt:",
+    ru : "Свяжитесь с нами:"
 };
 
-var CG_TXT_ABOUT_DONATE_BTC =
-{
-    en : "Donate bitcoins:",
-    et : "Annetage meile bitimünte:",
-    ru : "Пожертвовать биткойны:"
-};
-
-var CG_TXT_ABOUT_MEMORABLE_DONORS =
-{
-    en : "Memorable donors:",
-    et : "Mälestusväärsed annetajad:",
-    ru : "Памятные жертвователи:"
-};
-
-var CG_TXT_ABOUT_DONOR_LIST =
-{
-   "xumuku" : {
-        website : "https://bitcointalk.org/index.php?action=profile;u=440239",
-        en  : "Xumuku's profile at bitcointalk.org",
-        et  : "Xumuku konto bitcointalk.org foorumis",
-        ru  : "Cтраница химиков на bitcointalk.org"
-    },
-   "Maxim"  : {
-        website : "http://bitcoin-quest.com/",
-        en  : "Maxim's bitcoin art",
-        et  : "Maximi bitimündi kunst",
-        ru  : "Биткойн искусство Максима"
-    }
-};
 ////////////////////////////////////////////////////////////////////////////////
 //  ABOUT TAB TRANSLATIONS END                                                //
 ////////////////////////////////////////////////////////////////////////////////
