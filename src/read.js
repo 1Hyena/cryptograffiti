@@ -131,7 +131,7 @@ var CG_READ_APIS = [
 ];
 
 var CG_READ_API = {
-    cash : 0, // Index of cashexplorer.bitcoin.com
+    cash : 2, // Index of the block explorer to use when linking transaction details.
     core : 1  // Index of blockchain.info in the CG_READ_APIS array.
 };
 
