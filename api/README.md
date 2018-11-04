@@ -186,6 +186,33 @@ These values can be received with an API call of `get_constants` function.
     * `checksum`       --- 32-byte hex string (ALS)
 
 
+* __TXs To NRs__
+    `POST https://cryptograffiti.info/api/`
+
+    Takes an array of transaction hashes as an argument. Returns a dictionary of
+    graffiti where TX hash is the key and its respective graffiti number is the
+    value. The length of the `txids` array cannot exceed `TXS_PER_QUERY`.
+
+    _POST Parameters:_
+    * `fun`            --- `txs_to_nrs`
+    * `data`           --- JSON string with the following structure
+        * `guid`       --- 64 bytes random hex string (optional)
+        * `txids`      --- array of transaction hashes
+        * `nonce`      --- 64 bytes hex string (ALS)
+    * `sec_hash`       --- SHA256(`sec_key`) as a 64-byte hex string (ALS)
+    * `salt`           --- 32-byte hex string, must differ on each request (ALS)
+    * `checksum`       --- 32-byte hex string (ALS)
+    * `token`          --- 64 bytes hex string (optional)
+
+    _Returns a JSON dictionary:_
+    * `data`
+        * `result`     --- `SUCCESS` or `FAILURE`
+        * `error`      --- error dictionary if result was `FAILURE` (optional)
+        * `nrs`        --- dictionary of graffiti numbers (optional)
+    * `iv`             --- 32-byte hex string (ALS),
+    * `checksum`       --- 32-byte hex string (ALS)
+
+
 * __Get Bitcoin Graffiti__
     `POST https://cryptograffiti.info/api/`
 

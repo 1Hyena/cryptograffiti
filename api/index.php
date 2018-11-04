@@ -280,6 +280,7 @@ if ($l = init_sql()) {
         case 'get_session'       : $r=fun_get_session      ($l, $USER, $GUID);                                                                    break;
         case 'get_stats'         : $r=fun_get_stats        ($l, $USER, $GUID, $ARGS['start_date'],  $ARGS['end_date']);                           break;
         case 'get_log'           : $r=fun_get_log          ($l, $USER, $GUID, $ARGS['nr'],  $ARGS['count']);                                      break;
+        case 'txs_to_nrs'        : $r=fun_txs_to_nrs       ($l, $USER, $GUID, $ARGS['txids']);                                                    break;
         case 'get_btc_graffiti'  : $r=fun_get_btc_graffiti ($l, $USER, $GUID, $ARGS['nr'],  $ARGS['count'], $ARGS['back']);                       break;
         case 'get_btc_donations' : $r=fun_get_btc_donations($l, $USER, $GUID, $ARGS['nr'],  $ARGS['count'], $ARGS['back']);                       break;
         case 'set_btc_txs'       : $r=fun_set_btc_txs      ($l, $USER, $GUID, $ARGS['txs']);                                                      break;

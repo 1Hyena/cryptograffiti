@@ -470,6 +470,7 @@ function extract_args($data) {
     extract_btc_addr ('btc_addr',    $args, $result);
     extract_email    ('email',       $args, $result);
     extract_txs      ('txs',         $args, $result);
+    extract_txids    ('txids',       $args, $result);
     extract_json     ('input',       $args, $result);
     extract_json     ('output',      $args, $result);
     extract_str      ('to',          $args, $result); // Vulnerable to SQL injection by default.
@@ -583,6 +584,25 @@ function extract_email($var, $args, &$result) {
     }
     $result[$var] = null;
     return false;
+}
+
+function extract_txids($var, $args, &$result) {
+    if (array_key_exists($var, $args)
+    &&  is_array($args[$var])) {
+        $result[$var] = array();
+        foreach ($args[$var] as $index => $hash) {
+            if (strlen($hash) === 64
+            &&  ctype_xdigit($hash)) {
+                $result[$var][] = $hash;
+            }
+            else {
+                $result[$var] = null;
+                return false;
+            }
+        }
+    }
+
+    return true;
 }
 
 function extract_txs($var, $args, &$result) {
@@ -1383,6 +1403,44 @@ function fun_set_btc_txs($link, $user, $guid, $txs) {
 
     if ($errno !== 0) return make_failure(ERROR_SQL, $error);
     return make_success();
+}
+
+function fun_txs_to_nrs($link, $user, $guid, $txids) {
+    if ($txids  === null) return make_failure(ERROR_INVALID_ARGUMENTS, '`txids` is invalid.');
+
+    $c = count($txids);
+    if ($c > TXS_PER_QUERY) return make_failure(ERROR_MISUSE, '`txids` contains '.$c.' elements exceeding the limit of '.TXS_PER_QUERY.'.');
+
+    $response = array();
+
+    if ($c <= 0) {
+        $response['nrs'] = json_decode("{}");
+        return make_success($response);
+    }
+
+    $nrs    = array();
+    $hashes = array();
+    foreach ($txids as $index => $hash) {
+        $hashes[] = "X'".$hash."'";
+    }
+
+    $query = "SELECT `hash`, `nr` FROM `btc_tx` WHERE `hash` IN (".implode(',',$hashes).")";
+
+    $result = $link->query($query);
+    if ($link->errno === 0) {
+        while ($row = $result->fetch_assoc()) {
+            $hash = bin2hex($row['hash']);
+            $nr   = $row['nr'];
+            $nrs[$hash] = $nr;
+        }
+        $result->free();
+        $response['nrs'] = $nrs;
+    }
+    else {
+        return make_failure(ERROR_SQL, $link->error);
+    }
+
+    return make_success($response);
 }
 
 function fun_get_btc_graffiti($link, $user, $guid, $graffiti_nr, $count, $back) {

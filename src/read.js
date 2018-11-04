@@ -725,6 +725,43 @@ function cg_read_extract_blockr(r) {
     return [out_bytes, op_return, timestamp];
 }
 
+function cg_read_txs_to_nrs(txs) {
+    if (CG_CONSTANTS === null) return;
+
+    var data_obj = {
+        txids: txs
+    }
+    var json_str = encodeURIComponent(JSON.stringify(data_obj));
+
+    CG_STATUS.push(CG_TXT_READ_LOADING_GRAFFITI[CG_LANGUAGE]);
+
+    xmlhttpPost(CG_API, 'fun=txs_to_nrs&data='+json_str,
+        function(response) {
+            var status = "???";
+                 if (response === false) status = CG_TXT_READ_LOADING_ERROR[CG_LANGUAGE];
+            else if (response === null ) status = CG_TXT_READ_LOADING_TIMEOUT[CG_LANGUAGE];
+            else {
+                json = JSON.parse(response);
+                if ("nrs" in json) {
+                    if (CG_READ_FILTER_TXS !== null) {
+                        for (var txid in json.nrs) {
+                            if (json.nrs.hasOwnProperty(txid)) {
+                                CG_READ_FILTER_TXS[txid] = json.nrs[txid];
+                            }
+                        }
+                    }
+                }
+                else {
+                    status = CG_TXT_READ_INVALID_RESPONSE[CG_LANGUAGE];
+                    cg_handle_error(json);
+                }
+            }
+
+            CG_STATUS.push(status);
+        }
+    );
+}
+
 function cg_read_get_filter() {
     if (CG_CONSTANTS === null) return false;
     if (CG_READ_FILTER_ADDR === null) {
