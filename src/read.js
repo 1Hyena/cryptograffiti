@@ -30,15 +30,16 @@ var CG_READ_JOBS = {
 
 var CG_READ_APIS = [
     {
-        domain    : "cashexplorer.bitcoin.com",
-        request   : "https://cashexplorer.bitcoin.com/api/tx/%s",
-        link      : "https://cashexplorer.bitcoin.com/tx/%s",
-        extract   : "cg_read_extract_blockexplorer",
-        delay     : 0,
-        max_delay : 2*CG_READ_PPS,
-        down      : false,
-        fails     : 0,
-        fork      : "cash"
+        domain       : "cashexplorer.bitcoin.com",
+        request      : "https://cashexplorer.bitcoin.com/api/tx/%s",
+        request_addr : "https://cashexplorer.bitcoin.com/api/addr/%s",
+        link         : "https://cashexplorer.bitcoin.com/tx/%s",
+        extract      : "cg_read_extract_blockexplorer",
+        delay        : 0,
+        max_delay    : 2*CG_READ_PPS,
+        down         : false,
+        fails        : 0,
+        fork         : "cash"
     },
     {
         domain    : "blockchain.info",
@@ -52,37 +53,40 @@ var CG_READ_APIS = [
         fork      : "core"
     },
     {
-        domain    : "bitcoincash.blockexplorer.com",
-        request   : "https://bitcoincash.blockexplorer.com/api/tx/%s",
-        link      : "https://bitcoincash.blockexplorer.com/tx/%s",
-        extract   : "cg_read_extract_blockexplorer",
-        delay     : 0,
-        max_delay : 2*CG_READ_PPS,
-        down      : false,
-        fails     : 0,
-        fork      : "cash"
+        domain       : "bitcoincash.blockexplorer.com",
+        request      : "https://bitcoincash.blockexplorer.com/api/tx/%s",
+        request_addr : "https://bitcoincash.blockexplorer.com/api/addr/%s",
+        link         : "https://bitcoincash.blockexplorer.com/tx/%s",
+        extract      : "cg_read_extract_blockexplorer",
+        delay        : 0,
+        max_delay    : 2*CG_READ_PPS,
+        down         : false,
+        fails        : 0,
+        fork         : "cash"
     },
     {
-        domain    : "blockdozer.com",
-        request   : "https://blockdozer.com/insight-api/tx/%s",
-        link      : "https://blockdozer.com/insight/tx/%s",
-        extract   : "cg_read_extract_blockexplorer",
-        delay     : 0,
-        max_delay : 2*CG_READ_PPS,
-        down      : false,
-        fails     : 0,
-        fork      : "cash"
+        domain       : "blockdozer.com",
+        request      : "https://blockdozer.com/insight-api/tx/%s",
+        request_addr : "https://blockdozer.com/insight-api/addr/%s",
+        link         : "https://blockdozer.com/insight/tx/%s",
+        extract      : "cg_read_extract_blockexplorer",
+        delay        : 0,
+        max_delay    : 2*CG_READ_PPS,
+        down         : false,
+        fails        : 0,
+        fork         : "cash"
     },
     {
-        domain    : "bch-insight.bitpay.com",
-        request   : "https://bch-insight.bitpay.com/api/tx/%s",
-        link      : "https://bch-insight.bitpay.com/tx/%s",
-        extract   : "cg_read_extract_blockexplorer",
-        delay     : 0,
-        max_delay : 2*CG_READ_PPS,
-        down      : false,
-        fails     : 0,
-        fork      : "cash"
+        domain       : "bch-insight.bitpay.com",
+        request      : "https://bch-insight.bitpay.com/api/tx/%s",
+        request_addr : "https://bch-insight.bitpay.com/api/addr/%s",
+        link         : "https://bch-insight.bitpay.com/tx/%s",
+        extract      : "cg_read_extract_blockexplorer",
+        delay        : 0,
+        max_delay    : 2*CG_READ_PPS,
+        down         : false,
+        fails        : 0,
+        fork         : "cash"
     },
     {
         domain    : "bccblock.info",
@@ -176,7 +180,7 @@ function cg_read_loop() {
         if (CG_READ_JOBS[key] > 0) continue;
 
         if (window[key]() === false) CG_READ_JOBS[key] = 1;
-        else delete CG_READ_JOBS[key];
+        else if (CG_READ_JOBS[key] === 0) delete CG_READ_JOBS[key];
     }
 
     if (tab !== null
@@ -195,20 +199,22 @@ function cg_read_loop() {
             var sz = CG_GRAFFITI_NRS.length;
             for (var k=sz-1; k>=0; k--) {
                 var nr = CG_GRAFFITI_NRS[k];
-                if (nr in CG_GRAFFITI == false) {
-                    alert(sprintf(CG_TXT_READ_ERROR_2[CG_LANGUAGE], nr.toString(10)));
+                var nr_key = nr.toString(10);
+                if (nr_key in CG_GRAFFITI == false) {
+                    alert(sprintf(CG_TXT_READ_ERROR_2[CG_LANGUAGE], nr_key));
                     continue;
                 }
 
-                if (CG_GRAFFITI[nr].premature === false) break;
-                if (CG_GRAFFITI[nr].premature === true) premature_count++;
+                if (CG_GRAFFITI[nr_key].premature === false) break;
+                if (CG_GRAFFITI[nr_key].premature === true) premature_count++;
             }
 
             while (CG_DECODING === null && premature_count < CG_ROW_BUFFER_SIZE) {
                 if (CG_GRAFFITI_NEWS.length > 0) {
                     var nr = CG_GRAFFITI_NEWS.shift();
-                    if (nr in CG_GRAFFITI) {
-                        cg_read_create_graffiti(tab, nr, false);
+                    var nr_key = nr.toString(10);
+                    if (nr_key in CG_GRAFFITI) {
+                        cg_read_create_graffiti(tab, nr_key, false);
                     }
                     else continue;
                 }
@@ -244,8 +250,9 @@ function cg_read_loop() {
             while (CG_DECODING === null && premature_count < CG_ROW_BUFFER_SIZE) {
                 if (CG_GRAFFITI_OLDS.length > 0) {
                     var nr = CG_GRAFFITI_OLDS.shift();
-                    if (nr in CG_GRAFFITI) {
-                        cg_read_create_graffiti(tab, nr, true);
+                    var nr_key = nr.toString(10);
+                    if (nr_key in CG_GRAFFITI) {
+                        cg_read_create_graffiti(tab, nr_key, true);
                     }
                     else continue;
                 }
@@ -725,8 +732,19 @@ function cg_read_extract_blockr(r) {
     return [out_bytes, op_return, timestamp];
 }
 
-function cg_read_txs_to_nrs(txs) {
+function cg_read_resolve_filter() {
     if (CG_CONSTANTS === null) return;
+
+    var txs = [];
+
+    for (var txid in CG_READ_FILTER_TXS) {
+        if (txs.length + 1 > CG_CONSTANTS.TXS_PER_QUERY) break;
+        if (CG_READ_FILTER_TXS.hasOwnProperty(txid)) {
+            if (CG_READ_FILTER_TXS[txid] === true) {
+                txs.push(txid);
+            }
+        }
+    }
 
     var data_obj = {
         txids: txs
@@ -735,31 +753,103 @@ function cg_read_txs_to_nrs(txs) {
 
     CG_STATUS.push(CG_TXT_READ_LOADING_GRAFFITI[CG_LANGUAGE]);
 
-    xmlhttpPost(CG_API, 'fun=txs_to_nrs&data='+json_str,
+    // Make sure we aren't called automatically again before the request is done
+    CG_READ_JOBS["cg_read_resolve_filter"] = -1;
+
+    xmlhttpPost(CG_API, 'fun=get_msg_metadata&data='+json_str,
         function(response) {
+            CG_READ_JOBS["cg_read_resolve_filter"] = 10;
+
             var status = "???";
                  if (response === false) status = CG_TXT_READ_LOADING_ERROR[CG_LANGUAGE];
             else if (response === null ) status = CG_TXT_READ_LOADING_TIMEOUT[CG_LANGUAGE];
             else {
+                delete CG_READ_JOBS["cg_read_resolve_filter"];
+
                 json = JSON.parse(response);
-                if ("nrs" in json) {
+                if ("payload" in json) {
+                    var count = 0;
                     if (CG_READ_FILTER_TXS !== null) {
-                        for (var txid in json.nrs) {
-                            if (json.nrs.hasOwnProperty(txid)) {
-                                CG_READ_FILTER_TXS[txid] = json.nrs[txid];
-                            }
+                        var sz = Math.min(json.payload.length, txs.length);
+                        for (var i=0; i<sz; ++i) {
+                            CG_READ_FILTER_TXS[txs[i]] = json.payload[i];
+                            if (json.payload[i] !== null) count ++;
                         }
                     }
+                    status = sprintf(CG_TXT_READ_NUMBER_OF_GRAFFITI_LOADED[CG_LANGUAGE], count);
                 }
                 else {
                     status = CG_TXT_READ_INVALID_RESPONSE[CG_LANGUAGE];
                     cg_handle_error(json);
                 }
+
+                for (var txid in CG_READ_FILTER_TXS) {
+                    if (CG_READ_FILTER_TXS.hasOwnProperty(txid)) {
+                        if (CG_READ_FILTER_TXS[txid] === true) {
+                            // Some still remain unresolved.
+                            CG_READ_JOBS["cg_read_resolve_filter"] = 3;
+                            break;
+                        }
+                    }
+                }
+
+                if ("cg_read_resolve_filter" in CG_READ_JOBS == false) {
+                    // We are finished resolving filters.
+
+                    var newest = null;
+                    var oldest = null;
+                    for (var txid in CG_READ_FILTER_TXS) {
+                        if (CG_READ_FILTER_TXS.hasOwnProperty(txid)) {
+                            if (CG_READ_FILTER_TXS[txid] === true
+                            ||  CG_READ_FILTER_TXS[txid] === null
+                            ||  CG_READ_FILTER_TXS[txid] === false) continue;
+
+                            var nr = parseInt(CG_READ_FILTER_TXS[txid].nr, 10);
+
+                            if (newest === null) newest = nr;
+                            if (oldest === null) oldest = nr;
+
+                            if (nr < oldest) oldest = nr;
+                            if (nr > newest) newest = nr;
+
+                            var obj = {
+                                type:  CG_READ_FILTER_TXS[txid].type,
+                                fsize: CG_READ_FILTER_TXS[txid].fsize,
+                                txid:  txid
+                            };
+
+                            var key = nr.toString(10);
+                            if (key in CG_GRAFFITI === false) {
+                                CG_GRAFFITI_NRS.unshift(nr);
+                                CG_GRAFFITI_OLDS.push(nr);
+                            }
+                            CG_GRAFFITI[key] = obj;
+                        }
+                    }
+
+                    CG_NEWEST_TX_NR = newest !== null ? newest.toString(10) : null;
+                    CG_OLDEST_TX_NR = oldest !== null ? oldest.toString(10) : null;
+
+                    var tab = document.getElementById("cg-tab-read");
+                    if (tab.hasChildNodes()) {
+                        tab.lastChild.classList.add("cg-disappear");
+                        setTimeout(function(){
+                            while (tab.hasChildNodes()) {
+                                tab.removeChild(tab.lastChild);
+                            }
+                            tab.classList.remove("cg-read-tab-premature");
+                            tab.classList.add("cg-read-tab");
+                            tab.classList.add("cg-appear");
+                        }, 500);
+                    }
+                }
             }
 
-            CG_STATUS.push(status);
+            if (status !== null) CG_STATUS.push(status);
         }
     );
+
+    return true;
 }
 
 function cg_read_get_filter() {
@@ -769,18 +859,36 @@ function cg_read_get_filter() {
         return true;
     }
 
+    var apis = [];
+    var api = null;
+    for (var i=0, sz = CG_READ_APIS.length; i<sz; i++) {
+        if (CG_READ_APIS[i].fork !== CG_BTC_FORK) continue;
+        if (CG_READ_APIS[i].delay ===  0) apis.push(i);
+    }
+
+    if (apis.length > 0) {
+        apis = shuffle(apis);
+        api = apis[0];
+    }
+
+    if (api === null) return false;
+
     var key = (CG_READ_FILTER_KEY !== null ? CG_READ_FILTER_KEY : CG_READ_FILTER_ADDR);
     key = key.substring(0, 64);
     if (key !== CG_READ_FILTER_KEY) key = key+"...";
 
-    CG_STATUS.push(sprintf(CG_TXT_READ_LOADING_FILTER[CG_LANGUAGE], key));
-    var api_url = "https://bitcoincash.blockexplorer.com/api/addr/"+CG_READ_FILTER_ADDR;
-    if (CG_BTC_FORK === "core") {
-        api_url = "https://blockexplorer.com/api/addr/"+CG_READ_FILTER_ADDR;
+    if ("request_addr" in CG_READ_APIS[api] == false) {
+        return true;
     }
 
-    xmlhttpGet(api_url, '',
+    CG_STATUS.push(sprintf(CG_TXT_READ_LOADING_FILTER[CG_LANGUAGE], key));
+
+    CG_READ_APIS[api].delay = -1;
+    xmlhttpGet(sprintf(CG_READ_APIS[api].request_addr, CG_READ_FILTER_ADDR), '',
         function(response) {
+            CG_READ_APIS[api].delay = CG_READ_APIS[api].max_delay;
+            CG_READ_APIS[api].down  = false;
+
             var status = "???";
             var success = false;
 
@@ -800,8 +908,14 @@ function cg_read_get_filter() {
                 else status = CG_TXT_READ_BLOCKCHAIN_INVALID[CG_LANGUAGE];
             }
 
-            if (success) CG_READ_JOBS["cg_read_get_latest"] = 1;
-            else         CG_READ_JOBS["cg_read_get_filter"] = 10*CG_READ_PPS;
+            if (success) CG_READ_JOBS["cg_read_resolve_filter"] = 1;
+            else {
+                CG_READ_APIS[api].down = true;
+                CG_READ_APIS[api].fails++;
+                CG_READ_APIS[api].delay = CG_READ_APIS[api].fails * CG_READ_APIS[api].max_delay;
+
+                CG_READ_JOBS["cg_read_get_filter"] = 1*CG_READ_PPS;
+            }
 
             if (status !== null) CG_STATUS.push(status);
         }
@@ -891,7 +1005,7 @@ function cg_read_get_latest() {
 }
 
 function cg_read_load_new_txs() {
-    if (CG_NEWEST_TX_NR === null) return false;
+    if (CG_NEWEST_TX_NR === null || CG_READ_FILTER_TXS !== null) return false;
 
     var data_obj = {
         nr: CG_NEWEST_TX_NR.toString(10),
@@ -902,8 +1016,12 @@ function cg_read_load_new_txs() {
 
     CG_STATUS.push(CG_TXT_READ_LOADING_NEW_GRAFFITI[CG_LANGUAGE]);
 
+    // Make sure we aren't called automatically again before the request is done
+    CG_READ_JOBS["cg_read_load_new_txs"] = -1;
+
     xmlhttpPost(CG_API, 'fun=get_btc_graffiti&data='+json_str,
         function(response) {
+            delete CG_READ_JOBS["cg_read_load_new_txs"];
             var status = "???";
 
                  if (response === false) status = CG_TXT_READ_LOADING_NEW_ERROR[CG_LANGUAGE];
@@ -953,7 +1071,7 @@ function cg_read_load_new_txs() {
 }
 
 function cg_read_load_old_txs() {
-    if (CG_OLDEST_TX_NR === null) return false;
+    if (CG_OLDEST_TX_NR === null  || CG_READ_FILTER_TXS !== null) return false;
 
     var fun = "get_btc_graffiti";
     var data_obj = {
@@ -976,8 +1094,12 @@ function cg_read_load_old_txs() {
 
     CG_STATUS.push(CG_TXT_READ_LOADING_OLD_GRAFFITI[CG_LANGUAGE]);
 
+    // Make sure we aren't called automatically again before the request is done
+    CG_READ_JOBS["cg_read_load_old_txs"] = -1;
+
     xmlhttpPost(CG_API, 'fun='+fun+'&data='+json_str,
         function(response) {
+            delete CG_READ_JOBS["cg_read_load_old_txs"];
             var status = "???";
 
                  if (response === false) status = CG_TXT_READ_LOADING_OLD_ERROR[CG_LANGUAGE];
@@ -1092,12 +1214,13 @@ function cg_read_delete_graffiti(div, top) {
             while (CG_GRAFFITI_NRS.length > 0) {
                 var nr = (top ? CG_GRAFFITI_NRS.pop() : CG_GRAFFITI_NRS.shift());
 
-                if (nr in CG_GRAFFITI) delete CG_GRAFFITI[nr];
+                var nr_key = nr.toString(10);
+                if (nr_key in CG_GRAFFITI) delete CG_GRAFFITI[nr_key];
 
-                if (top) CG_NEWEST_TX_NR = nr;
-                else     CG_OLDEST_TX_NR = nr;
+                if (top) CG_NEWEST_TX_NR = nr_key;
+                else     CG_OLDEST_TX_NR = nr_key;
 
-                if (child_id === "cg-msgbox-"+nr) break;
+                if (child_id === "cg-msgbox-"+nr_key) break;
             }
 
             div.removeChild(to_delete[i]);

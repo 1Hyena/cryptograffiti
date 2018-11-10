@@ -1405,7 +1405,7 @@ function fun_set_btc_txs($link, $user, $guid, $txs) {
     return make_success();
 }
 
-function fun_txs_to_nrs($link, $user, $guid, $txids) {
+function fun_get_msg_metadata($link, $user, $guid, $txids) {
     if ($txids  === null) return make_failure(ERROR_INVALID_ARGUMENTS, '`txids` is invalid.');
 
     $c = count($txids);
@@ -1414,27 +1414,39 @@ function fun_txs_to_nrs($link, $user, $guid, $txids) {
     $response = array();
 
     if ($c <= 0) {
-        $response['nrs'] = json_decode("{}");
+        $response['payload'] = json_decode("[]");
         return make_success($response);
     }
 
-    $nrs    = array();
-    $hashes = array();
+    $buffer =array();
+    $payload=array();
+    $hashes =array();
     foreach ($txids as $index => $hash) {
         $hashes[] = "X'".$hash."'";
     }
 
-    $query = "SELECT `hash`, `nr` FROM `btc_tx` WHERE `hash` IN (".implode(',',$hashes).")";
+    $query = "SELECT *, CONVERT_TZ(`creation_time`, @@session.time_zone, '+00:00') AS `utc_creation` ".
+             "FROM `btc_tx` WHERE `hash` IN (".implode(',',$hashes).")";
 
     $result = $link->query($query);
     if ($link->errno === 0) {
         while ($row = $result->fetch_assoc()) {
             $hash = bin2hex($row['hash']);
-            $nr   = $row['nr'];
-            $nrs[$hash] = $nr;
+            $buffer[$hash] = array("nr"            => $row['nr'],
+                                   "type"          => $row['type'],
+                                   "fsize"         => $row['fsize'],
+                                   "amount"        => $row['amount'],
+                                   "confirmed"     => $row['confirmed'],
+                                   "creation_UTC"  => $row['utc_creation']
+                                  );
         }
         $result->free();
-        $response['nrs'] = $nrs;
+
+        foreach ($txids as $index => $hash) {
+            if (array_key_exists($hash, $buffer)) $payload[] = $buffer[$hash];
+            else                                  $payload[] = null;
+        }
+        $response['payload'] = $payload;
     }
     else {
         return make_failure(ERROR_SQL, $link->error);

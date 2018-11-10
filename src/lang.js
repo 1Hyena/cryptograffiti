@@ -327,6 +327,13 @@ var CG_TXT_READ_NEW_GRAFFITI_LOADED =
     ru : "Загружено новых граффити: %s (всего %s)."
 };
 
+var CG_TXT_READ_NUMBER_OF_GRAFFITI_LOADED =
+{
+    en : "Loaded %s graffiti.",
+    et : "Laeti %s graffitit.",
+    ru : "Загружено граффити: %s."
+};
+
 var CG_TXT_READ_LOADING_OLD_GRAFFITI =
 {
     en : "Loading old graffiti.",

@@ -186,15 +186,17 @@ These values can be received with an API call of `get_constants` function.
     * `checksum`       --- 32-byte hex string (ALS)
 
 
-* __TXs To NRs__
+* __Get Message Metadata__
     `POST https://cryptograffiti.info/api/`
 
-    Takes an array of transaction hashes as an argument. Returns a dictionary of
-    graffiti where TX hash is the key and its respective graffiti number is the
-    value. The length of the `txids` array cannot exceed `TXS_PER_QUERY`.
+    Takes an array of transaction hashes as an argument. Returns an array of TX
+    metadata respectively to the input array. Each element is either an object
+    containing known graffiti metadata or `null` in case there is no metadata
+    available in the database. The length of the `txids` array cannot exceed
+    `TXS_PER_QUERY`.
 
     _POST Parameters:_
-    * `fun`            --- `txs_to_nrs`
+    * `fun`            --- `get_msg_metadata`
     * `data`           --- JSON string with the following structure
         * `guid`       --- 64 bytes random hex string (optional)
         * `txids`      --- array of transaction hashes
@@ -208,7 +210,7 @@ These values can be received with an API call of `get_constants` function.
     * `data`
         * `result`     --- `SUCCESS` or `FAILURE`
         * `error`      --- error dictionary if result was `FAILURE` (optional)
-        * `nrs`        --- dictionary of graffiti numbers (optional)
+        * `payload`    --- array of graffiti metadata (optional)
     * `iv`             --- 32-byte hex string (ALS),
     * `checksum`       --- 32-byte hex string (ALS)
 
