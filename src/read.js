@@ -398,6 +398,7 @@ function cg_decode() {
     var txid  = CG_GRAFFITI[nr].txid;
     var type  = CG_GRAFFITI[nr].type;
     var fsize = CG_GRAFFITI[nr].fsize;
+    var fun   = ("fun" in CG_GRAFFITI[nr] ? CG_GRAFFITI[nr].fun : null);
     if (fsize !== null) fsize = parseInt(fsize, 10);
 
     CG_READ_APIS[api].delay = -1;
@@ -435,6 +436,7 @@ function cg_decode() {
             }
 
             msgbox.classList.remove("cg-msgbox-decoding");
+            if (fun === "get_btc_donations") msgbox.classList.add("cg-msgbox-featured");
 
             var status = "???";
             var success = false;
@@ -1007,11 +1009,24 @@ function cg_read_get_latest() {
 function cg_read_load_new_txs() {
     if (CG_NEWEST_TX_NR === null || CG_READ_FILTER_TXS !== null) return false;
 
+    var fun = "get_btc_graffiti";
     var data_obj = {
         nr: CG_NEWEST_TX_NR.toString(10),
-        count: CG_CONSTANTS.TXS_PER_QUERY.toString(10),
+        count: Math.min(CG_CONSTANTS.TXS_PER_QUERY, 10).toString(10),
         back: "0"
     }
+
+    if (Math.random() < 0.5) {
+        fun = "get_btc_donations";
+        var sz = CG_GRAFFITI_NRS.length;
+        var nr = CG_NEWEST_TX_NR;
+        for (var i=0; i<sz; ++i) {
+            nr = Math.max(nr, CG_GRAFFITI_NRS[i]);
+        }
+        data_obj.nr = nr.toString(10);
+        data_obj.count = "4";
+    }
+
     var json_str = encodeURIComponent(JSON.stringify(data_obj));
 
     CG_STATUS.push(CG_TXT_READ_LOADING_NEW_GRAFFITI[CG_LANGUAGE]);
@@ -1019,7 +1034,7 @@ function cg_read_load_new_txs() {
     // Make sure we aren't called automatically again before the request is done
     CG_READ_JOBS["cg_read_load_new_txs"] = -1;
 
-    xmlhttpPost(CG_API, 'fun=get_btc_graffiti&data='+json_str,
+    xmlhttpPost(CG_API, 'fun='+fun+'&data='+json_str,
         function(response) {
             delete CG_READ_JOBS["cg_read_load_new_txs"];
             var status = "???";
@@ -1032,13 +1047,17 @@ function cg_read_load_new_txs() {
                 json = JSON.parse(response);
                 if ("txs" in json) {
                     if (json.txs.length > 0) {
-                        CG_NEWEST_TX_NR = json.txs[json.txs.length-1].nr;
+                        if (fun === "get_btc_graffiti") {
+                            CG_NEWEST_TX_NR = json.txs[json.txs.length-1].nr;
+                        }
+
                         var sz = json.txs.length;
                         for (var i = 0; i < sz; i++) {
                             var obj = {
                                 type:  json.txs[i].type,
                                 fsize: json.txs[i].fsize,
-                                txid:  json.txs[i].txid
+                                txid:  json.txs[i].txid,
+                                fun:   fun
                             };
                             if (CG_READ_FILTER_TXS === null || obj.txid in CG_READ_FILTER_TXS) {
                                 var key = parseInt(json.txs[i].nr, 10);
@@ -1076,18 +1095,27 @@ function cg_read_load_old_txs() {
     var fun = "get_btc_graffiti";
     var data_obj = {
         nr: CG_OLDEST_TX_NR.toString(10),
-        count: CG_CONSTANTS.TXS_PER_QUERY.toString(10),
+        count: Math.min(CG_CONSTANTS.TXS_PER_QUERY, 10).toString(10),
         back: "1"
     }
 
-    if (CG_GRAFFITI_NRS.length === 1) {
+    if (CG_GRAFFITI_NRS.length === 1 || Math.random() < 0.5) {
         // If this is the first time we are loading old TXs then make sure we
         // always show the last 10 donations before displaying other messages.
         // The reasoning behind this is to incentivize making a donation and to
         // always include quality content such as pictures on the "front page"
         // of the site to give a better first impression.
         fun = "get_btc_donations";
-        data_obj.count = "10";
+        if (CG_GRAFFITI_NRS.length === 1) data_obj.count = "10";
+        else {
+            var sz = CG_GRAFFITI_NRS.length;
+            var nr = CG_OLDEST_TX_NR;
+            for (var i=0; i<sz; ++i) {
+                nr = Math.min(nr, CG_GRAFFITI_NRS[i]);
+            }
+            data_obj.nr = nr.toString(10);
+            data_obj.count = "4";
+        }
     }
 
     var json_str = encodeURIComponent(JSON.stringify(data_obj));
@@ -1119,7 +1147,8 @@ function cg_read_load_old_txs() {
                             var obj = {
                                 type:  json.txs[i].type,
                                 fsize: json.txs[i].fsize,
-                                txid:  json.txs[i].txid
+                                txid:  json.txs[i].txid,
+                                fun:   fun
                             };
                             if (CG_READ_FILTER_TXS === null || obj.txid in CG_READ_FILTER_TXS) {
                                 var key = parseInt(json.txs[i].nr, 10);

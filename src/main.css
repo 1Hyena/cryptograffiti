@@ -1010,6 +1010,10 @@ a.cg-link:hover {
     background-color:rgba(255, 0, 0, 0.33);
 }
 
+.cg-msgbox-featured>.cg-msgheader>.cg-msgheader-left::after {
+    content: " 🌟";
+}
+
 .cg-read-loadingbox {
     position: relative;
     width: 100%;
