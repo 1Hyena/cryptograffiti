@@ -1011,28 +1011,29 @@ a.cg-link:hover {
 }
 
 .cg-read-loadingbox {
+    position: relative;
     width: 100%;
-    height: 0.5rem;
-    background-color: rgba(0, 0, 0, 0.25);
-    border-radius: 0.25rem;
-
-    /* Transition delay should be equal to CG_SCROLL_DELAY constant. */
-    -webkit-transition: height 0.25s ease-out 0.75s;
-    -moz-transition:    height 0.25s ease-out 0.75s;
-    -ms-transition:     height 0.25s ease-out 0.75s;
-    -o-transition:      height 0.25s ease-out 0.75s;
-    transition:         height 0.25s ease-out 0.75s;
+    height: 0;
 }
 
-.cg-read-loadingbox-close {
-    height: 0rem;
-}
-
+.cg-read-loadingbox-close  {}
 .cg-read-loadingbox-top    {}
 .cg-read-loadingbox-bottom {}
 
+.cg-read-loadingbar-bg {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -0.25rem;
+
+    width: 100%;
+    height: 0.5rem;
+    border-radius: 0.25rem;
+    background-color: rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+}
+
 .cg-read-loadingbar {
-    border-radius: 0.75rem;
     background-color: rgba(0, 255, 0, 0.75);
     width: 0%;
     height: 100%;

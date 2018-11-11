@@ -1512,7 +1512,7 @@ function cg_read_mature(tab, near_bottom) {
         if (loadingbars.length > 0) {
             var barbox = loadingbars[0];
             if (barbox.hasChildNodes()) {
-                var bar = barbox.children[0];
+                var bar = barbox.children[0].children[0];
                 var p = Math.min(Math.round(100.0 * row_width / max_width), 100).toString(10);
                 //alert(row_width+"/"+max_width+"; "+p);
                 bar.style.width = p+"%";
@@ -1565,7 +1565,7 @@ function cg_read_mature(tab, near_bottom) {
             if (loadingbars.length > 0) {
                 var barbox = loadingbars[0];
                 if (barbox.hasChildNodes()) {
-                    var bar = barbox.children[0];
+                    var bar = barbox.children[0].children[0];
                     bar.style.width = "100%";
                     CG_READ_COOLDOWN = 1*CG_READ_PPS;
                 }
@@ -1580,14 +1580,17 @@ function cg_read_create_loadingbar(tab, near_bottom, last) {
     last = typeof last !== 'undefined' ? last : null;
     var loadingbox = document.createElement("DIV");
     var loadingbar = document.createElement("DIV");
+    var loadingbg  = document.createElement("DIV");
 
     loadingbox.classList.add("cg-read-loadingbox");
     if (near_bottom) loadingbox.classList.add("cg-read-loadingbox-bottom");
     else             loadingbox.classList.add("cg-read-loadingbox-top");
 
+    loadingbg.classList.add("cg-read-loadingbar-bg");
     loadingbar.classList.add("cg-read-loadingbar");
     loadingbox.classList.add("cg-appear");
-    loadingbox.appendChild(loadingbar);
+    loadingbg.appendChild(loadingbar);
+    loadingbox.appendChild(loadingbg);
 
     if (last != null) {
         if (near_bottom) {
