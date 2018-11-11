@@ -107,18 +107,37 @@ function cg_view_do() {
 
     var txhash = CG_VIEW_TX_HASH;
     var txtype = CG_VIEW_TX_TYPE;
-    var api = CG_READ_API[CG_BTC_FORK];
+
+    var apis = [];
+    var api = null;
+    for (var i=0, sz = CG_READ_APIS.length; i<sz; i++) {
+        if (CG_READ_APIS[i].fork !== CG_BTC_FORK) continue;
+        if (CG_READ_APIS[i].delay ===  0) apis.push(i);
+    }
+
+    if (apis.length > 0) {
+        apis = shuffle(apis);
+        api = apis[0];
+    }
+
+    if (api === null) {
+        CG_VIEW_DOING = false;
+        CG_VIEW_DONE  = false;
+        return;
+    }
+
     var link = sprintf(CG_READ_APIS[api].link, txhash);
 
     CG_STATUS.push(sprintf(CG_TXT_VIEW_LOADING_TX_DATA[CG_LANGUAGE], txhash, CG_READ_APIS[api].domain));
     xmlhttpGet(sprintf(CG_READ_APIS[api].request, txhash), '',
         function(response) {
+            var fail = true;
+
             if (response === false || response === null) {
                 CG_STATUS.push(sprintf("!"+CG_TXT_VIEW_LOADING_TX_DATA_FAIL[CG_LANGUAGE], txhash, CG_READ_APIS[api].domain));
             }
             else {
                 var json = JSON.parse(response);
-                var fail = true;
 
                 if (typeof json === 'object') {
                     var out_bytes= "";
@@ -148,11 +167,25 @@ function cg_view_do() {
                         else if (txtype === null) fail = false;
                     }
                 }
-                if (fail) CG_STATUS.push(sprintf("!"+CG_TXT_VIEW_DECODING_FAIL[CG_LANGUAGE], txhash));
+
+                if (fail) {
+                    CG_STATUS.push(sprintf("!"+CG_TXT_VIEW_DECODING_FAIL[CG_LANGUAGE], txhash));
+                }
             }
-            CG_VIEW_DOING   = false;
-            CG_VIEW_DONE    = true;
-            CG_VIEW_TX_DONE = txhash;
+
+            if (fail) {
+                CG_READ_APIS[api].down = true;
+                CG_READ_APIS[api].fails++;
+                CG_READ_APIS[api].delay = CG_READ_APIS[api].fails * CG_READ_APIS[api].max_delay;
+                CG_VIEW_DOING   = false;
+                CG_VIEW_DONE    = false;
+                CG_VIEW_TX_DONE = null;
+            }
+            else {
+                CG_VIEW_DOING   = false;
+                CG_VIEW_DONE    = true;
+                CG_VIEW_TX_DONE = txhash;
+            }
         }
     );
 }
