@@ -37,17 +37,23 @@ function cg_construct_about(main) {
         var table = document.createElement("table");
         var tr2   = document.createElement("tr");
         var tr3   = document.createElement("tr");
+        var tr4   = document.createElement("tr");
         var td2_1 = document.createElement("td");
         var td2_2 = document.createElement("td");
         var td3_1 = document.createElement("td");
         var td3_2 = document.createElement("td");
+        var td4_1 = document.createElement("td");
+        var td4_2 = document.createElement("td");
         table.appendChild(tr2);
         tr2.appendChild(td2_1);
         tr2.appendChild(td2_2);
         table.appendChild(tr3);
         tr3.appendChild(td3_1);
         tr3.appendChild(td3_2);
-        table.classList.add("cg-table");
+        table.appendChild(tr4);
+        tr4.appendChild(td4_1);
+        tr4.appendChild(td4_2);
+        table.classList.add("cg-about-table");
 
         var table_wrapper = document.createElement("div");
         table_wrapper.id = "cg-contact-table-wrapper";
@@ -68,6 +74,24 @@ function cg_construct_about(main) {
 
         td2_1.appendChild(document.createTextNode(CG_TXT_ABOUT_SOURCE_CODE[CG_LANGUAGE])); td2_2.appendChild(a_source);
         td3_1.appendChild(document.createTextNode(CG_TXT_ABOUT_CONTACT_US [CG_LANGUAGE])); td3_2.appendChild(t_email); td3_2.appendChild(img_domain);
+        td4_1.appendChild(document.createTextNode(CG_TXT_ABOUT_FRIENDS[CG_LANGUAGE]));
+
+        var first_friend = true;
+        for (var key in CG_TXT_ABOUT_FRIEND_LIST) {
+            if (!CG_TXT_ABOUT_FRIEND_LIST.hasOwnProperty(key)) continue;
+            if (!first_friend) {
+                td4_2.appendChild(document.createTextNode(", "));
+            }
+
+            var t_friend = document.createTextNode(key);
+            var a_friend = document.createElement("a");
+            a_friend.appendChild(t_friend);
+            a_friend.title = CG_TXT_ABOUT_FRIEND_LIST[key][CG_LANGUAGE];
+            a_friend.href  = CG_TXT_ABOUT_FRIEND_LIST[key].website;
+            a_friend.target= "_blank";
+            td4_2.appendChild(a_friend);
+            first_friend = false;
+        }
 
         if (CG_BTC_FORK === "cash") {
             var cash_img = document.createElement("img");

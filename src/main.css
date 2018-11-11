@@ -882,7 +882,7 @@ a.cg-link:hover {
     font-weight: bold;
 }
 
-.cg-table {
+.cg-about-table {
     margin: auto;
     padding-bottom: 1ch;
     vertical-align: top;
@@ -891,41 +891,41 @@ a.cg-link:hover {
     white-space: nowrap;
 }
 
-.cg-table td {
+.cg-about-table td {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.cg-table td:nth-child(1) {
+.cg-about-table td:nth-child(1) {
     width: 18ch;
-    text-align: right;
+    text-align: center;
     padding-right: 1ch;
 }
-.cg-table td:nth-child(2) {
+.cg-about-table td:nth-child(2) {
     width: calc(100% - 18ch);
     text-align: left;
 }
 
-.cg-table img {
+.cg-about-table img {
     height: 1rem;
 }
 
 @media not all and (min-width: 50rem) {
-    .cg-table td {
+    .cg-about-table td {
         font-size: small;
     }
-    .cg-table td:nth-child(1) {
+    .cg-about-table td:nth-child(1) {
         display: none;
     }
-    .cg-table td:nth-child(2) {
+    .cg-about-table td:nth-child(2) {
         width: 100%;
         text-align: center;
     }
 }
 
 @media not all and (min-width: 35rem) {
-    .cg-table td {
+    .cg-about-table td {
         font-size: normal;
     }
     .cg-contact > img:nth-child(1),

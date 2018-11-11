@@ -150,9 +150,9 @@ var CG_TXT_MAIN_BTN_ABOUT =
 
 var CG_TXT_MAIN_TITLE =
 {
-    en : "CryptoGraffiti - Bitcoin Blockchain Messages as Text",
-    et : "KrüptoGraffiti - Bitimündi plokiahela sõnumid tekstikujul",
-    ru : "КриптоГраффити - Сообщения цепочки блоков Биткойн в виде текста"
+    en : "CryptoGraffiti - Bitcoin blockchain messages",
+    et : "KrüptoGraffiti - Bitimündi plokiahela sõnumid",
+    ru : "КриптоГраффити - Сообщения цепочки блоков Биткойн"
 };
 
 var CG_TXT_MAIN_CREDITS =
@@ -1281,6 +1281,30 @@ var CG_TXT_ABOUT_CONTACT_US =
     en : "Contact us:",
     et : "Meie kontakt:",
     ru : "Свяжитесь с нами:"
+};
+
+var CG_TXT_ABOUT_FRIENDS =
+{
+    en : "Our friends:",
+    et : "Meie sõbrad:",
+    ru : "Наши друзья:"
+};
+
+
+var CG_TXT_ABOUT_FRIEND_LIST =
+{
+   "Maxim"  : {
+        website : "http://bitcoin-quest.com/",
+        en  : "Maxim's bitcoin art",
+        et  : "Maximi bitimündi kunst",
+        ru  : "Биткойн искусство Максима"
+    },
+   "CoinGeek"  : {
+        website : "https://coingeek.com/",
+        en  : "Trusted source for all of the latest cryptocurrency news",
+        et  : "Usaldusväärne krüptovaluutadele orienteeritud uudistesait",
+        ru  : ""
+    }
 };
 
 ////////////////////////////////////////////////////////////////////////////////
