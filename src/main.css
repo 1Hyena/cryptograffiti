@@ -223,7 +223,10 @@ button {
 .cg-write-tab{
     overflow: auto;
     align-items: stretch;
-    padding: 0.25rem;
+    padding-top: 0;
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+    padding-bottom: 0;
 }
 
 .cg-tools-tab {
@@ -238,12 +241,14 @@ button {
 
 #cg-write-mainarea {
     flex: 1.0;
-    margin: 0.25rem;
-    height: calc(100% - 1rem);
+    margin: 0;
+    height: 100%;
     overflow: hidden;
 }
 
 #cg-write-mainarea:not(.cg-write-preview) {
+    margin: 0.25rem;
+    height: calc(100% - 1rem);
     min-height: 18rem; /* should be same as .cg-write-side's min-height */
 }
 
@@ -331,6 +336,7 @@ button {
 }
 
 .cg-read-filetable {
+    table-layout: fixed;
     width: 100%;
     max-width: 30rem;
     margin: auto;
@@ -338,11 +344,18 @@ button {
 }
 
 .cg-read-filetable td:nth-child(1) {
+    width: 4rem;
     text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .cg-read-filetable td:nth-child(2) {
     text-align: right;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .cg-read-iframe {
@@ -391,11 +404,12 @@ button {
     overflow: hidden;
 }
 
+#cg-view-btns,
 #cg-write-previewarea > div:nth-child(2) {
     position: absolute;
     left: 0;
     right: 0;
-    bottom: 0;
+    bottom: 0.25rem;
     margin: auto;
     display: inline-block;
     font-size: 1rem;
@@ -1247,7 +1261,7 @@ a.cg-link:hover {
 
 #cg-view-main {
     width: 100%;
-    height: calc(100% - 2.75rem);
+    height: 100%;
     opacity: 0;
 }
 
@@ -1264,9 +1278,6 @@ a.cg-link:hover {
 }
 
 #cg-view-btns {
-    font-size: 1rem;
-    width: 12ch;
-    display: inline-block;
     opacity: 0;
 }
 
