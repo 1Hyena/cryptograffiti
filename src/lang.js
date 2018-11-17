@@ -1293,13 +1293,13 @@ var CG_TXT_ABOUT_FRIENDS =
 
 var CG_TXT_ABOUT_FRIEND_LIST =
 {
-   "Maxim"  : {
+   "Jeff" : {
         website : "http://bitcoin-quest.com/",
-        en  : "Maxim's bitcoin art",
-        et  : "Maximi bitimündi kunst",
-        ru  : "Биткойн искусство Максима"
+        en  : "Jeff's bitcoin art",
+        et  : "Jeffi bitimündi kunst",
+        ru  : "Биткойн искусство Иефф"
     },
-   "CoinGeek"  : {
+   "CoinGeek" : {
         website : "https://coingeek.com/",
         en  : "Trusted source for all of the latest cryptocurrency news",
         et  : "Usaldusväärne krüptovaluutadele orienteeritud uudistesait",

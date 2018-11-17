@@ -34,6 +34,7 @@ function cg_construct_write(main) {
     var info_area = document.createElement("div");
     var payment_area = document.createElement("div"); payment_area.style.display="none";
     var preview_area = document.createElement("div"); preview_area.style.display="none";
+    var dialogue = document.createElement("div");
 
     main_area.classList.add("cg-borderbox");
     side_area.classList.add("cg-write-side");
@@ -54,6 +55,7 @@ function cg_construct_write(main) {
     info_area.id="cg-write-infoarea";
     payment_area.id="cg-write-paymentarea";
     preview_area.id="cg-write-previewarea";
+    dialogue.id="cg-write-dialogue";
 
     if (CG_WRITE_TEXT !== null) text_area.value = CG_WRITE_TEXT;
 
@@ -192,8 +194,23 @@ function cg_construct_write(main) {
     payment_wrap.appendChild(btn_8);
     payment_wrap.appendChild(btn_7);
 
+    var dialogue_container = document.createElement("div");
+    var dialogue_header    = document.createElement("div");
+    var dialogue_body      = document.createElement("div");
+    var dialogue_footer    = document.createElement("div");
+    dialogue_header.classList.add("cg-msgheader");
+    dialogue_body.classList.add("cg-msgbody");
+    dialogue_footer.classList.add("cg-msgfooter");
+    dialogue_body.id = "cg-write-dialogue-body";
+    dialogue_container.id = "cg-write-dialogue-container";
+    dialogue_container.appendChild(dialogue_header);
+    dialogue_container.appendChild(dialogue_body);
+    dialogue_container.appendChild(dialogue_footer);
+    dialogue.appendChild(cg_view_create_wrapper(dialogue_container));
+
     div.appendChild(main_area);
     div.appendChild(side_area);
+    div.appendChild(dialogue);
     cg_write_update_now();
     cg_write_reset_file_input();
 
@@ -371,6 +388,18 @@ function cg_write_update(instant) {
     }
 
     if (scroll) addr.scrollTop = addr.scrollHeight;
+}
+
+function cg_button_click_close_write_dialogue() {
+    var dialogue = document.getElementById("cg-write-dialogue");
+    dialogue.classList.remove("cg-appear");
+    dialogue.classList.add("cg-disappear");
+
+    setTimeout(function(d){
+        var tab = document.getElementById("cg-tab-write");
+        tab.classList.remove("cg-dialogue");
+        d.classList.remove("cg-disappear");
+    }, 500, dialogue);
 }
 
 function cg_button_click_save() {
@@ -675,13 +704,39 @@ function cg_write_attach_file(fname, type, bytes_arraybuffer) {
     cg_write_update_now();
 }
 
+function cg_write_show_dialogue(msg) {
+    var body = document.getElementById("cg-write-dialogue-body");
+    while (body.hasChildNodes()) body.removeChild(body.lastChild);
+
+    var message = document.createElement("span");
+    message.appendChild(document.createTextNode(msg));
+    body.appendChild(message);
+    body.appendChild(document.createElement("br"));
+    body.appendChild(document.createElement("br"));
+
+    var dialogue_btn_close = document.createElement("button");
+    dialogue_btn_close.classList.add("cg-write-btn");
+    dialogue_btn_close.appendChild(document.createTextNode(CG_TXT_VIEW_BTN_CLOSE[CG_LANGUAGE]));
+    dialogue_btn_close.addEventListener("click", cg_button_click_close_write_dialogue);
+    body.appendChild(dialogue_btn_close);
+
+    var tab = document.getElementById("cg-tab-write");
+    tab.classList.add("cg-dialogue");
+
+    var dialogue = document.getElementById("cg-write-dialogue");
+    dialogue.classList.remove("cg-disappear");
+    dialogue.classList.add("cg-appear");
+}
+
 function cg_write_handle_file_select(evt) {
     var files = evt.target.files;
     var output = [];
     for (var i = 0, f; f = files[i]; i++) {
         if (f.size > CG_WRITE_MAX_FILE_SIZE_KiB*1024) {
-            CG_STATUS.push("!"+sprintf(CG_TXT_WRITE_ERROR_FILE_SIZE[CG_LANGUAGE], f.name, CG_WRITE_MAX_FILE_SIZE_KiB+" KiB"));
+            var msg = sprintf(CG_TXT_WRITE_ERROR_FILE_SIZE[CG_LANGUAGE], f.name, CG_WRITE_MAX_FILE_SIZE_KiB+" KiB");
+            CG_STATUS.push("!"+msg);
             cg_write_reset_file_input();
+            cg_write_show_dialogue(msg);
             break;
         }
 

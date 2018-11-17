@@ -423,7 +423,7 @@ function cg_save_get_order() {
                                             img.classList.remove("glow");
                                         }
                                     };
-                                    link_cash_accepted.href="https://www.bitcoincash.org/";
+                                    link_cash_accepted.href="https://bitcoinsv.io/";
                                     link_cash_accepted.target="_blank";
                                     link_cash_accepted.onclick = function() {
                                         var img = document.getElementById("cg-cash-img");

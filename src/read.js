@@ -68,7 +68,7 @@ var CG_READ_APIS = [
         domain       : "blockdozer.com",
         request      : "https://blockdozer.com/insight-api/tx/%s",
         request_addr : "https://blockdozer.com/insight-api/addr/%s",
-        link         : "https://blockdozer.com/insight/tx/%s",
+        link         : "https://blockdozer.com/tx/%s",
         extract      : "cg_read_extract_blockexplorer",
         delay        : 0,
         max_delay    : 2*CG_READ_PPS,

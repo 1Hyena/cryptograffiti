@@ -221,6 +221,7 @@ button {
 }
 
 .cg-write-tab{
+    position: relative;
     overflow: auto;
     align-items: stretch;
     padding-top: 0;
@@ -446,6 +447,46 @@ button {
     margin: 0.25rem;
     background-color: rgba(240,240,240, 1.0);
     overflow: hidden;
+}
+
+#cg-write-dialogue {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0,0,0, 0.25);
+}
+
+#cg-tab-write:not(.cg-dialogue) > #cg-write-dialogue {
+    display: none;
+}
+
+#cg-write-dialogue-container {
+    display: inline-block;
+}
+
+#cg-write-dialogue-body {
+    max-width: calc(100vw - 3ch);
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    white-space: pre-wrap;
+    white-space: -moz-pre-wrap;
+    white-space: -pre-wrap;
+    white-space: -o-pre-wrap;
+    word-wrap: break-word;
+    text-align: center;
+}
+
+#cg-write-dialogue-body > button {
+    max-width: 10ch;
+}
+
+#cg-write-dialogue.cg-disappear button {
+    pointer-events: none;
 }
 
 .cg-tools-list {
@@ -915,6 +956,8 @@ a.cg-link:hover {
     .cg-about-table td {
         font-size: small;
     }
+    .cg-about-table tr:nth-child(3),
+    .cg-about-table tr:nth-child(4),
     .cg-about-table td:nth-child(1) {
         display: none;
     }
@@ -1067,7 +1110,8 @@ a.cg-link:hover {
 
 .cg-msgheader-left {
     text-align: left;
-    width: calc(25% - 1ch);
+    width: 10ch;
+    max-width: calc(100% - 1ch);
     left: 1ch;
     white-space: nowrap;
     position: absolute;
@@ -1077,12 +1121,12 @@ a.cg-link:hover {
 
 .cg-msgheader-right {
     text-align: right;
-    width: calc(75% - 1ch);
+    width: calc(100% - 13ch);
     white-space: nowrap;
     position: absolute;
     text-overflow: ellipsis;
     overflow: hidden;
-    left: 25%;
+    right: 1ch;
 }
 
 .cg-msgfooter {

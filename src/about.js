@@ -38,12 +38,15 @@ function cg_construct_about(main) {
         var tr2   = document.createElement("tr");
         var tr3   = document.createElement("tr");
         var tr4   = document.createElement("tr");
+        var tr5   = document.createElement("tr");
         var td2_1 = document.createElement("td");
         var td2_2 = document.createElement("td");
         var td3_1 = document.createElement("td");
         var td3_2 = document.createElement("td");
         var td4_1 = document.createElement("td");
         var td4_2 = document.createElement("td");
+        var td5_1 = document.createElement("td");
+        var td5_2 = document.createElement("td");
         table.appendChild(tr2);
         tr2.appendChild(td2_1);
         tr2.appendChild(td2_2);
@@ -53,6 +56,9 @@ function cg_construct_about(main) {
         table.appendChild(tr4);
         tr4.appendChild(td4_1);
         tr4.appendChild(td4_2);
+        table.appendChild(tr5);
+        tr5.appendChild(td5_1);
+        tr5.appendChild(td5_2);
         table.classList.add("cg-about-table");
 
         var table_wrapper = document.createElement("div");
@@ -67,6 +73,13 @@ function cg_construct_about(main) {
         a_source.href  = "https://github.com/1Hyena/cryptograffiti";
         a_source.target= "_blank";
 
+        var t_bchinfo  = document.createTextNode("https://bitcoinsv.io/");
+        var a_bchinfo  = document.createElement("a");
+        a_bchinfo.appendChild(t_bchinfo);
+        a_bchinfo.title = "Bitcoin Cash";
+        a_bchinfo.href  = "https://bitcoinsv.io/";
+        a_bchinfo.target= "_blank";
+
         var img_domain = document.createElement("img");
         img_domain.setAttribute('src', CG_IMG_DOMAIN);
         img_domain.setAttribute('title', CG_TXT_ABOUT_EMAIL_ALT[CG_LANGUAGE]);
@@ -75,6 +88,8 @@ function cg_construct_about(main) {
         td2_1.appendChild(document.createTextNode(CG_TXT_ABOUT_SOURCE_CODE[CG_LANGUAGE])); td2_2.appendChild(a_source);
         td3_1.appendChild(document.createTextNode(CG_TXT_ABOUT_CONTACT_US [CG_LANGUAGE])); td3_2.appendChild(t_email); td3_2.appendChild(img_domain);
         td4_1.appendChild(document.createTextNode(CG_TXT_ABOUT_FRIENDS[CG_LANGUAGE]));
+        td5_1.appendChild(document.createTextNode("Bitcoin Cash:"));
+        td5_2.appendChild(a_bchinfo);
 
         var first_friend = true;
         for (var key in CG_TXT_ABOUT_FRIEND_LIST) {
