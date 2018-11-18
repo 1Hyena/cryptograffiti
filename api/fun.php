@@ -24,7 +24,7 @@ define("MAX_DATA_SIZE",                                  262144); // Maximum num
 define("TXS_PER_QUERY",                                    1000); // Maximum number of transactions to be dealt with per single API call.
 define("MIN_BTC_DONATION",                                    1); // Minimum number of satoshis that count for a donation.
 define("MIN_BTC_OUTPUT",                                    546); // Minimum number of satoshis per TX output.
-define("ENCODER_FEE_AMPLIFIER",                             3.0); // Amplifier for the estimatefee results.
+define("ENCODER_FEE_AMPLIFIER",                             1.0); // Amplifier for the estimatefee results.
 
 // SECURITY ROLES:
 define("ROLE_DECODER",                                        1); // Decoder (Can submit transactions containing plaintext.)
