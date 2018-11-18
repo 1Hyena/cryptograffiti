@@ -1288,10 +1288,6 @@ function fun_set_btc_txs($link, $user, $guid, $txs) {
         if ($data['type']  !== null) $msg_type = $data['type'];
         if ($data['fsize'] !== null) $fsize    = $data['fsize'];
 
-        // Conversion hack for outdated decoders:
-             if ($msg_type === 'UTF8' || $msg_type === 'ASCII') $msg_type = 'application/octet-stream';
-        else if ($msg_type === 'JPG')                           $msg_type = 'image/jpeg';
-
         if ($data['hash'] !== null) {
             $msg_hash = $data['hash'];
 
