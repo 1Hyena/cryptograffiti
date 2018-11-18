@@ -473,6 +473,7 @@ function extract_args($data) {
     extract_txids    ('txids',       $args, $result);
     extract_json     ('input',       $args, $result);
     extract_json     ('output',      $args, $result);
+    extract_mimetype ('mimetype',    $args, $result);
     extract_str      ('to',          $args, $result); // Vulnerable to SQL injection by default.
     extract_str      ('subj',        $args, $result); // Vulnerable to SQL injection by default.
     extract_str      ('msg',         $args, $result); // Vulnerable to SQL injection by default.
@@ -480,6 +481,19 @@ function extract_args($data) {
     extract_str      ('name',        $args, $result); // Vulnerable to SQL injection by default.
     extract_str      ('value',       $args, $result); // Vulnerable to SQL injection by default.
     return $result;
+}
+
+function extract_mimetype($var, $args, &$result) {
+    if (array_key_exists($var, $args)
+    and is_string($args[$var])) {
+        $val = $args[$var];
+        if (is_type_str($val)) {
+            $result[$var] = $val;
+            return true;
+        }
+    }
+    $result[$var] = null;
+    return false;
 }
 
 function extract_str($var, $args, &$result) {
@@ -521,16 +535,6 @@ function extract_num($var, $args, &$result) {
     $result[$var] = null;
     return false;
 }
-
-
-/*function extract_str($var, $args, &$result) {
-    if (is_string($args[$var])) {
-        $result[$var] = $args[$var];
-        return true;
-    }
-    $result[$var] = null;
-    return false;
-}*/
 
 function extract_json($var, $args, &$result) {
     if (array_key_exists($var, $args)
@@ -1451,8 +1455,10 @@ function fun_get_msg_metadata($link, $user, $guid, $txids) {
     return make_success($response);
 }
 
-function fun_get_btc_graffiti($link, $user, $guid, $graffiti_nr, $count, $back) {
+function fun_get_btc_graffiti($link, $user, $guid, $graffiti_nr, $count, $back, $mimetype) {
     if ($count  === null) return make_failure(ERROR_INVALID_ARGUMENTS, '`count` is invalid.');
+
+    if ($mimetype !== null) $mimetype = $link->real_escape_string($mimetype);
 
     $limit = intval(min(intval($count), TXS_PER_QUERY));
 
@@ -1461,16 +1467,27 @@ function fun_get_btc_graffiti($link, $user, $guid, $graffiti_nr, $count, $back) 
 
     if ($limit <= 0) return make_success($response);
 
-    $query = "SELECT *, CONVERT_TZ(`creation_time`, @@session.time_zone, '+00:00') AS `utc_creation` ".
-             "FROM `btc_tx` WHERE `nr` >= '".$graffiti_nr."' ORDER BY `nr` ASC LIMIT ".$limit;
+    $where = "";
+    $query = null;
 
     if ($graffiti_nr === null) {
+        if ($mimetype !== null) $where = "WHERE `type` LIKE '".$mimetype."%'";
         $query = "SELECT *, CONVERT_TZ(`creation_time`, @@session.time_zone, '+00:00') AS `utc_creation` ".
-                 "FROM `btc_tx` ORDER BY `nr` DESC LIMIT ".$limit;
+                 "FROM `btc_tx` ".$where." ORDER BY `nr` DESC LIMIT ".$limit;
     }
     else if ($back === '1') {
+        if ($mimetype !== null) $where = "AND `type` LIKE '".$mimetype."%'";
         $query = "SELECT *, CONVERT_TZ(`creation_time`, @@session.time_zone, '+00:00') AS `utc_creation` ".
-                 "FROM `btc_tx` WHERE `nr` <= '".$graffiti_nr."' ORDER BY `nr` DESC LIMIT ".$limit;
+                 "FROM `btc_tx` WHERE `nr` <= '".$graffiti_nr."' ".$where." ORDER BY `nr` DESC LIMIT ".$limit;
+    }
+    else if ($back === '0') {
+        if ($mimetype !== null) $where = "AND `type` LIKE '".$mimetype."%'";
+        $query = "SELECT *, CONVERT_TZ(`creation_time`, @@session.time_zone, '+00:00') AS `utc_creation` ".
+                 "FROM `btc_tx` WHERE `nr` >= '".$graffiti_nr."' ".$where." ORDER BY `nr` ASC LIMIT ".$limit;
+    }
+
+    if ($query === null) {
+        return make_failure(ERROR_INTERNAL, 'Unexpected program flow.');
     }
 
     $result = $link->query($query);
