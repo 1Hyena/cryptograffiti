@@ -251,7 +251,9 @@ These values can be received with an API call of `get_constants` function.
 
     Returns the graffiti TXs that have donations included in the defined range.
     If `nr` is not sent or is invalid then the newest `count` of graffiti TXs
-    are returned. `count` cannot exceed `TXS_PER_QUERY`.
+    are returned. If `mimetype` is specified then only the graffiti matching
+    with the selected mime-type are returned. The value of the `count` argument
+    cannot exceed `TXS_PER_QUERY`.
 
     _POST Parameters:_
     * `fun`            --- `get_btc_donations`
@@ -260,6 +262,7 @@ These values can be received with an API call of `get_constants` function.
         * `nr`         --- the number of the first graffiti entry (optional)
         * `count`      --- the total number of graffiti entries to be returned
         * `back`       --- if '1' get `count` earlier than `nr` rows (optional)
+        * `mimetype`   --- expected file type, may be partial (optional)
         * `nonce`      --- 64 bytes hex string (ALS)
     * `sec_hash`       --- SHA256(`sec_key`) as a 64-byte hex string (ALS)
     * `salt`           --- 32-byte hex string, must differ on each request (ALS)

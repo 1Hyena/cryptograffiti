@@ -1514,8 +1514,10 @@ function fun_get_btc_graffiti($link, $user, $guid, $graffiti_nr, $count, $back, 
     return make_success($response);
 }
 
-function fun_get_btc_donations($link, $user, $guid, $graffiti_nr, $count, $back) {
+function fun_get_btc_donations($link, $user, $guid, $graffiti_nr, $count, $back, $mimetype) {
     if ($count  === null) return make_failure(ERROR_INVALID_ARGUMENTS, '`count` is invalid.');
+
+    if ($mimetype !== null) $mimetype = $link->real_escape_string($mimetype);
 
     $limit = intval(min(intval($count), TXS_PER_QUERY));
 
@@ -1524,16 +1526,25 @@ function fun_get_btc_donations($link, $user, $guid, $graffiti_nr, $count, $back)
 
     if ($limit <= 0) return make_success($response);
 
-    $query = "SELECT *, CONVERT_TZ(`creation_time`, @@session.time_zone, '+00:00') AS `utc_creation` ".
-             "FROM `btc_tx` WHERE `nr` >= '".$graffiti_nr."' AND `amount` >= '".MIN_BTC_DONATION."' ORDER BY `nr` ASC LIMIT ".$limit;
+    $where = "";
+    $query = null;
+    if ($mimetype !== null) $where = "AND `type` LIKE '".$mimetype."%'";
 
     if ($graffiti_nr === null) {
         $query = "SELECT *, CONVERT_TZ(`creation_time`, @@session.time_zone, '+00:00') AS `utc_creation` ".
-                 "FROM `btc_tx` WHERE `amount` >= '".MIN_BTC_DONATION."' ORDER BY `amount` DESC LIMIT ".$limit;
+                 "FROM `btc_tx` WHERE `amount` >= '".MIN_BTC_DONATION."' ".$where." ORDER BY `amount` DESC LIMIT ".$limit;
     }
     else if ($back === '1') {
         $query = "SELECT *, CONVERT_TZ(`creation_time`, @@session.time_zone, '+00:00') AS `utc_creation` ".
-                 "FROM `btc_tx` WHERE `nr` <= '".$graffiti_nr."' AND `amount` >= '".MIN_BTC_DONATION."' ORDER BY `nr` DESC LIMIT ".$limit;
+                 "FROM `btc_tx` WHERE `nr` <= '".$graffiti_nr."' AND `amount` >= '".MIN_BTC_DONATION."' ".$where." ORDER BY `nr` DESC LIMIT ".$limit;
+    }
+    else if ($back === '0') {
+        $query = "SELECT *, CONVERT_TZ(`creation_time`, @@session.time_zone, '+00:00') AS `utc_creation` ".
+                 "FROM `btc_tx` WHERE `nr` >= '".$graffiti_nr."' AND `amount` >= '".MIN_BTC_DONATION."' ".$where." ORDER BY `nr` ASC LIMIT ".$limit;
+    }
+
+    if ($query === null) {
+        return make_failure(ERROR_INTERNAL, 'Unexpected program flow.');
     }
 
     $result = $link->query($query);
