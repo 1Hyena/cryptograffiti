@@ -1480,7 +1480,7 @@ function fun_get_btc_graffiti($link, $user, $guid, $graffiti_nr, $count, $back, 
         $query = "SELECT *, CONVERT_TZ(`creation_time`, @@session.time_zone, '+00:00') AS `utc_creation` ".
                  "FROM `btc_tx` WHERE `nr` <= '".$graffiti_nr."' ".$where." ORDER BY `nr` DESC LIMIT ".$limit;
     }
-    else if ($back === '0') {
+    else if ($back === '0' || $back === null) {
         if ($mimetype !== null) $where = "AND `type` LIKE '".$mimetype."%'";
         $query = "SELECT *, CONVERT_TZ(`creation_time`, @@session.time_zone, '+00:00') AS `utc_creation` ".
                  "FROM `btc_tx` WHERE `nr` >= '".$graffiti_nr."' ".$where." ORDER BY `nr` ASC LIMIT ".$limit;
@@ -1538,7 +1538,7 @@ function fun_get_btc_donations($link, $user, $guid, $graffiti_nr, $count, $back,
         $query = "SELECT *, CONVERT_TZ(`creation_time`, @@session.time_zone, '+00:00') AS `utc_creation` ".
                  "FROM `btc_tx` WHERE `nr` <= '".$graffiti_nr."' AND `amount` >= '".MIN_BTC_DONATION."' ".$where." ORDER BY `nr` DESC LIMIT ".$limit;
     }
-    else if ($back === '0') {
+    else if ($back === '0' || $back === null) {
         $query = "SELECT *, CONVERT_TZ(`creation_time`, @@session.time_zone, '+00:00') AS `utc_creation` ".
                  "FROM `btc_tx` WHERE `nr` >= '".$graffiti_nr."' AND `amount` >= '".MIN_BTC_DONATION."' ".$where." ORDER BY `nr` ASC LIMIT ".$limit;
     }

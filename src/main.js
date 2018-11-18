@@ -100,6 +100,9 @@ function cg_main() {
                     }
                 }
             }
+            else if (parts.length === 2 && parts[0] === "mimetype") {
+                CG_READ_MIMETYPE = parts[1];
+            }
         }
         else if (hash.length > 0) {
             // Filter TXs only containing an address that is a hash of this argument.

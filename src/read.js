@@ -22,6 +22,7 @@ var CG_READ_FILTER_ADDR= null;
 var CG_READ_FILTER_TXS = null;
 var CG_READ_CENSOR_TXS = {};
 var CG_READ_API_OK     = true;
+var CG_READ_MIMETYPE   = null;
 
 var CG_READ_JOBS = {
     "cg_read_get_filter" : 1,
@@ -934,6 +935,9 @@ function cg_read_get_latest() {
         count: "1",
         back: null
     }
+
+    if (CG_READ_MIMETYPE !== null) data_obj["mimetype"] = CG_READ_MIMETYPE;
+
     var json_str = encodeURIComponent(JSON.stringify(data_obj));
 
     CG_STATUS.push(CG_TXT_READ_LOADING_GRAFFITI[CG_LANGUAGE]);
@@ -1015,6 +1019,8 @@ function cg_read_load_new_txs() {
         count: Math.min(CG_CONSTANTS.TXS_PER_QUERY, 10).toString(10),
         back: "0"
     }
+
+    if (CG_READ_MIMETYPE !== null) data_obj["mimetype"] = CG_READ_MIMETYPE;
 
     if (Math.random() < 0.5) {
         fun = "get_btc_donations";
@@ -1098,6 +1104,8 @@ function cg_read_load_old_txs() {
         count: Math.min(CG_CONSTANTS.TXS_PER_QUERY, 10).toString(10),
         back: "1"
     }
+
+    if (CG_READ_MIMETYPE !== null) data_obj["mimetype"] = CG_READ_MIMETYPE;
 
     if (CG_GRAFFITI_NRS.length === 1 || Math.random() < 0.5) {
         // If this is the first time we are loading old TXs then make sure we

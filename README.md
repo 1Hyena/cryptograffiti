@@ -26,3 +26,11 @@ to you. Below is a list of examples for the hashtag API.
   address only the messages including it will be shown to the user. For example,
   https://cryptograffiti.info/#1Ross5Np5doy4ajF9iGXzgKaC2Q3Pwwxv decodes only
   such block chain messages that contain a donation to Ross Ulbricht.
+
+* `https://cryptograffiti.info/#mimetype:image`
+
+  The `mimetype` hashtag parameter will make sure that only those graffiti are
+  displayed under the read tab which are known to contain a block chain file of
+  the specified type. In the example case, only image files will be decoded.
+  This parameter can be combined with other parameters but it only affects the
+  contents displayed under the read tab.
