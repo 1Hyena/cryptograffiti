@@ -679,12 +679,6 @@ function is_blockchain_file(bytes) {
     // zero padding to fill up the last 20-byte chunk. After that the next chunk
     // must be the RIPEMD-160 hash of the file (excluding the zero padding).
 
-    // HACK:
-    // Expect the file to end within the last 50 addresses. If it ends sooner,
-    // this function returns 0 as a false negative. This hack is here because
-    // ripemd160.clone().finalize() is way too slow and must be called as few
-    // times as possible.
-
     var filesize = 0;
     var size=bytes.length;
 
@@ -694,10 +688,10 @@ function is_blockchain_file(bytes) {
         var i = 0;
         while ((i+20) < size) {
             {
-                // HACK: Return when this function takes more than 250 ms to run.
+                // HACK: Return when this function takes more than 30 000 ms to run.
                 var end = new Date().getTime();
                 var time = end - start;
-                if (time > 250) return 0;
+                if (time > 30000) return 0;
             }
             var j;
             var this_chunk = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
@@ -718,7 +712,7 @@ function is_blockchain_file(bytes) {
                 var wordArray = CryptoJS.lib.WordArray.create(new Uint8Array(this_chunk));
                 ripemd160.update(wordArray);
                 var current_hash = null;
-                if (i+1000 >= size) current_hash = ripemd160.clone().finalize().toString(CryptoJS.enc.Hex); // Last 50 addresses here.
+                current_hash = ripemd160.clone().finalize().toString(CryptoJS.enc.Hex);
                 var expected_hash = CryptoJS.lib.WordArray.create(new Uint8Array(next_chunk)).toString(CryptoJS.enc.Hex);
 
                 if (current_hash === expected_hash) {
@@ -736,7 +730,7 @@ function is_blockchain_file(bytes) {
                     var wordArray = CryptoJS.lib.WordArray.create(new Uint8Array(arraybuf));
                     ripemd160.update(wordArray);
                     var current_hash = null;
-                    if (i+1000 >= size) current_hash = ripemd160.clone().finalize().toString(CryptoJS.enc.Hex); // Last 50 addresses here.
+                    current_hash = ripemd160.clone().finalize().toString(CryptoJS.enc.Hex);
                     var expected_hash = CryptoJS.lib.WordArray.create(new Uint8Array(next_chunk)).toString(CryptoJS.enc.Hex);
 
                     if (current_hash === expected_hash) {
