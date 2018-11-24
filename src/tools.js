@@ -304,34 +304,34 @@ function cg_tools_poe_read_files() {
                 CG_TOOLS_POE_ITEMS.push(item);
                 CG_TOOLS_POE_CHECKING = true;
 
-                var cash_api = "https://bitcoincash.blockexplorer.com/api/addr/"+addr+"?noTxList=1";
-                var cash_url = "https://bitcoincash.blockexplorer.com/address/"+addr;
-                var core_api = "https://blockexplorer.com/api/addr/"+addr+"?noTxList=1";
-                var core_url = "https://blockexplorer.com/address/"+addr;
-                var api = (CG_BTC_FORK === "cash" ? cash_api : core_api );
-                var url = (CG_BTC_FORK === "cash" ? cash_url : core_url );
+                if ("request_addr" in CG_READ_APIS[CG_READ_API[CG_BTC_FORK]]
+                &&  "link_addr"    in CG_READ_APIS[CG_READ_API[CG_BTC_FORK]]) {
+                    var api = sprintf(CG_READ_APIS[CG_READ_API[CG_BTC_FORK]].request_addr, addr)+"?noTxList=1";
+                    var url = sprintf(CG_READ_APIS[CG_READ_API[CG_BTC_FORK]].link_addr, addr);
 
-                xmlhttpGet(api, '',
-                    function(response) {
-                        CG_TOOLS_POE_CHECKING = false;
-                             if (response === false);
-                        else if (response === null );
-                        else {
-                            var json = JSON.parse(response);
-                            if ("txApperances" in json && json.txApperances > 0) {
-                                while (status.hasChildNodes()) status.removeChild(status.lastChild);
+                    xmlhttpGet(api, '',
+                        function(response) {
+                            CG_TOOLS_POE_CHECKING = false;
+                                 if (response === false);
+                            else if (response === null );
+                            else {
+                                var json = JSON.parse(response);
+                                if ("txApperances" in json && json.txApperances > 0) {
+                                    while (status.hasChildNodes()) status.removeChild(status.lastChild);
 
-                                var a_proof   = document.createElement("a");
-                                a_proof.appendChild(document.createTextNode(addr));
-                                a_proof.title = CG_TXT_TOOLS_POE_PROOF_LINK[CG_LANGUAGE];
-                                a_proof.href  = url;
-                                a_proof.target= "_blank";
+                                    var a_proof   = document.createElement("a");
+                                    a_proof.appendChild(document.createTextNode(addr));
+                                    a_proof.title = CG_TXT_TOOLS_POE_PROOF_LINK[CG_LANGUAGE];
+                                    a_proof.href  = url;
+                                    a_proof.target= "_blank";
 
-                                status.appendChild(a_proof);
+                                    status.appendChild(a_proof);
+                                }
                             }
                         }
-                    }
-                );
+                    );
+                }
+                else CG_TOOLS_POE_CHECKING = false;
             }
             else status.appendChild(document.createTextNode("---"));
         }
