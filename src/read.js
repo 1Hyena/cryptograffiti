@@ -54,6 +54,18 @@ var CG_READ_APIS = [
         fork      : "core"
     },
     {
+        domain       : "bchsvexplorer.com",
+        request      : "https://bchsvexplorer.com/api/tx/%s",
+        request_addr : "https://bchsvexplorer.com/api/addr/%s",
+        link         : "https://bchsvexplorer.com/tx/%s",
+        extract      : "cg_read_extract_blockexplorer",
+        delay        : 0,
+        max_delay    : 1*CG_READ_PPS,
+        down         : false,
+        fails        : 0,
+        fork         : "cash"
+    },
+    {
         domain       : "bitcoincash.blockexplorer.com",
         request      : "https://bitcoincash.blockexplorer.com/api/tx/%s",
         request_addr : "https://bitcoincash.blockexplorer.com/api/addr/%s",
