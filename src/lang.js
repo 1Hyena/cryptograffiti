@@ -1222,7 +1222,7 @@ var CG_TXT_ABOUT_P3 =
 
 var CG_TXT_ABOUT_P4 =
 {
-    en : "When using our message encoding service (provided under the write tab), you will be asked to make a payment in Bitcoin Cash and Bitcoin Cash only. Our fully automated message encoder calculates the cost of your message based on its size, adding a service fee of 10%. We use the fees to maintain this service ad-free.",
+    en : "When using our message encoding service (provided under the write tab), you will be asked to make a payment explicitly in the original Bitcoin (Satoshi's Vision). We will not accept payments originating from other token platforms that might have the word \"Bitcoin\" in their name (ABC, Core, Gold and so on). Our fully automated message encoder calculates the cost of your message based on its size, adding a service fee of 10%. We use the fees to maintain this service ad-free and free from Google Analytics.",
     et : "",
     ru : ""
 };

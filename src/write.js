@@ -349,7 +349,8 @@ function cg_write_update(instant) {
     text = "";
     for (var i = 0; i < sz; i++) {
         //text+=ascii2hex(Bitcoin.getAddressPayload(chunks[i]))+"\n";
-        text+=format_btc_addr(chunks[i])+"\n";
+        //text+=format_btc_addr(chunks[i])+"\n";
+        text+=chunks[i]+"\n";
     }
 
     while (addr.hasChildNodes()) addr.removeChild(addr.lastChild);

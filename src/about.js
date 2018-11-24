@@ -76,7 +76,7 @@ function cg_construct_about(main) {
         var t_bchinfo  = document.createTextNode("https://bitcoinsv.io/");
         var a_bchinfo  = document.createElement("a");
         a_bchinfo.appendChild(t_bchinfo);
-        a_bchinfo.title = "Bitcoin Cash";
+        a_bchinfo.title = "Bitcoin Satoshi Vision";
         a_bchinfo.href  = "https://bitcoinsv.io/";
         a_bchinfo.target= "_blank";
 
@@ -88,7 +88,7 @@ function cg_construct_about(main) {
         td2_1.appendChild(document.createTextNode(CG_TXT_ABOUT_SOURCE_CODE[CG_LANGUAGE])); td2_2.appendChild(a_source);
         td3_1.appendChild(document.createTextNode(CG_TXT_ABOUT_CONTACT_US [CG_LANGUAGE])); td3_2.appendChild(t_email); td3_2.appendChild(img_domain);
         td4_1.appendChild(document.createTextNode(CG_TXT_ABOUT_FRIENDS[CG_LANGUAGE]));
-        td5_1.appendChild(document.createTextNode("Bitcoin Cash:"));
+        td5_1.appendChild(document.createTextNode("Bitcoin:"));
         td5_2.appendChild(a_bchinfo);
 
         var first_friend = true;
