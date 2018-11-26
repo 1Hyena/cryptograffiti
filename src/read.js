@@ -6,6 +6,7 @@ var CG_GRAFFITI_NEWS   = [];
 var CG_GRAFFITI_OLDS   = [];
 var CG_DECODING        = null;
 var CG_DECODE_ATTEMPTS = 0;    // Number of times decoding has failed.
+var CG_MAX_ATTEMPTS    = 5;
 var CG_SCROLL_FIXED    = false;
 var CG_IMMATURE_DIV    = null;
 var CG_IMMATURE_TIME   = 0;
@@ -636,7 +637,7 @@ function cg_decode() {
                 msgbox.classList.remove("cg-msgbox-failed");
             }
 
-            if (success || CG_DECODE_ATTEMPTS > 3) {
+            if (success || CG_DECODE_ATTEMPTS >= CG_MAX_ATTEMPTS) {
                 CG_DECODING = null;
                 CG_DECODE_ATTEMPTS = 0;
             }
