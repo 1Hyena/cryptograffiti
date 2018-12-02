@@ -6,7 +6,7 @@ var CG_GRAFFITI_NEWS   = [];
 var CG_GRAFFITI_OLDS   = [];
 var CG_DECODING        = null;
 var CG_DECODE_ATTEMPTS = 0;    // Number of times decoding has failed.
-var CG_MAX_ATTEMPTS    = 5;
+var CG_MAX_ATTEMPTS    = 3;
 var CG_SCROLL_FIXED    = false;
 var CG_IMMATURE_DIV    = null;
 var CG_IMMATURE_TIME   = 0;
@@ -68,23 +68,25 @@ var CG_READ_APIS = [
         fails        : 0,
         fork         : "cash"
     },
-    {
+    /*{
         domain       : "bitcoincash.blockexplorer.com",
         request      : "https://bitcoincash.blockexplorer.com/api/tx/%s",
         request_addr : "https://bitcoincash.blockexplorer.com/api/addr/%s",
         link         : "https://bitcoincash.blockexplorer.com/tx/%s",
+        link_addr    : "https://bitcoincash.blockexplorer.com/address/%s",
         extract      : "cg_read_extract_blockexplorer",
         delay        : 0,
         max_delay    : 2*CG_READ_PPS,
         down         : false,
         fails        : 0,
         fork         : "cash"
-    },
+    },*/
     {
         domain       : "blockdozer.com",
         request      : "https://blockdozer.com/insight-api/tx/%s",
         request_addr : "https://blockdozer.com/insight-api/addr/%s",
         link         : "https://blockdozer.com/tx/%s",
+        link_addr    : "https://blockdozer.com/address/%s",
         extract      : "cg_read_extract_blockexplorer",
         delay        : 0,
         max_delay    : 2*CG_READ_PPS,
@@ -102,7 +104,7 @@ var CG_READ_APIS = [
         max_delay    : 2*CG_READ_PPS,
         down         : false,
         fails        : 0,
-        fork         : "cash"
+        fork         : "cash-disabled"
     },
     {
         domain    : "bccblock.info",
@@ -151,7 +153,7 @@ var CG_READ_APIS = [
 ];
 
 var CG_READ_API = {
-    cash : 2, // Index of the block explorer to use when linking transaction details.
+    cash : 3, // Index of the block explorer to use when linking transaction details.
     core : 1  // Index of blockchain.info in the CG_READ_APIS array.
 };
 
@@ -479,7 +481,7 @@ function cg_decode() {
                         op_return = extract[1];
                         timestamp = extract[2];
 
-                        var fsz = (fsize !== null ? fsize : is_blockchain_file(out_bytes));
+                        var fsz = (fsize !== null ? fsize : is_blockchain_file(out_bytes, type));
                         var blockchain_file = null;
                         if (fsz > 0) {
                             blockchain_file = out_bytes.substr(0, fsz);

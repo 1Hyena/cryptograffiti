@@ -321,7 +321,7 @@ function cg_view_create_msgbox(out_bytes, op_return, mimetype, open, txhash, tim
     msgbox.classList.add("cg-borderbox");
 
     var msg = "";
-    var fsz = is_blockchain_file(out_bytes);
+    var fsz = is_blockchain_file(out_bytes, null);
     var blockchain_file = null;
     var filehash = null;
     if (fsz > 0) {

@@ -310,7 +310,7 @@ function cg_write_update(instant) {
 
         if (!denom_span.hasChildNodes() || Math.random() < 0.666) {
             while (denom_span.hasChildNodes()) denom_span.removeChild(denom_span.lastChild);
-            denom_span.appendChild(document.createTextNode(Math.random() > 0.5 ? " BTC" : " BCH"));
+            denom_span.appendChild(document.createTextNode(Math.random() > 0.5 ? " BTC" : " BSV"));
         }
     }
 

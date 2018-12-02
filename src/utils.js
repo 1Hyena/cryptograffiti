@@ -673,7 +673,8 @@ function shuffle(array) {
     return array;
 }
 
-function is_blockchain_file(bytes) {
+function is_blockchain_file(bytes, mimetype) {
+    mimetype = typeof mimetype !== 'undefined' ? mimetype : null;
     // Returns the size of the file in case chunks contain a file. Returns zero
     // if bytes do not hold a file. A valid block chain file always ends with
     // zero padding to fill up the last 20-byte chunk. After that the next chunk
@@ -712,7 +713,14 @@ function is_blockchain_file(bytes) {
                 var wordArray = CryptoJS.lib.WordArray.create(new Uint8Array(this_chunk));
                 ripemd160.update(wordArray);
                 var current_hash = null;
-                current_hash = ripemd160.clone().finalize().toString(CryptoJS.enc.Hex);
+
+                var finalize = true;
+                if (mimetype !== null && mimetype !== "application/octet-stream") {
+                    finalize = false;
+                    if (i+1000 >= size) finalize = true;
+                }
+                if (finalize) current_hash = ripemd160.clone().finalize().toString(CryptoJS.enc.Hex);
+
                 var expected_hash = CryptoJS.lib.WordArray.create(new Uint8Array(next_chunk)).toString(CryptoJS.enc.Hex);
 
                 if (current_hash === expected_hash) {
@@ -730,7 +738,14 @@ function is_blockchain_file(bytes) {
                     var wordArray = CryptoJS.lib.WordArray.create(new Uint8Array(arraybuf));
                     ripemd160.update(wordArray);
                     var current_hash = null;
-                    current_hash = ripemd160.clone().finalize().toString(CryptoJS.enc.Hex);
+
+                    var finalize = true;
+                    if (mimetype !== null && mimetype !== "application/octet-stream") {
+                        finalize = false;
+                        if (i+1000 >= size) finalize = true;
+                    }
+                    if (finalize) current_hash = ripemd160.clone().finalize().toString(CryptoJS.enc.Hex);
+
                     var expected_hash = CryptoJS.lib.WordArray.create(new Uint8Array(next_chunk)).toString(CryptoJS.enc.Hex);
 
                     if (current_hash === expected_hash) {
@@ -746,6 +761,8 @@ function is_blockchain_file(bytes) {
             i = next_i;
         }
     }
+
+    if (mimetype !== null && mimetype !== "application/octet-stream" && filesize === 0) return is_blockchain_file(bytes, null);
 
     return filesize;
 }
