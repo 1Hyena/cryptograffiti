@@ -72,7 +72,7 @@ bitcoin = {
     propagate_txs        = {}, -- array of recently confirmed unpropagated transactions
     startup              = true,
     poll_blockchain      = false, -- true when blockchain should be polled ASAP
-    curl_timeout         = 10, -- RPCs must get answered in 10 seconds
+    curl_timeout         = 15, -- RPCs must get answered in 15 seconds
     unavailable_tx_count = 0
 };
 
@@ -1507,7 +1507,6 @@ function decode_graffiti()
 
                     log("Decoded"..(utf8 and " UTF-8 " or " ").."message of "..msz.." bytes:\n"..message.."\027[0m"..op_return);
                 end
-                mimetype = "application/octet-stream";
             end
 
             if (archive.enabled

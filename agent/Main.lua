@@ -79,7 +79,7 @@ function main_loop()
         global.doexit = true;
     end
 
-    log("Lua main loop started.");
+    log(_VERSION.." main loop started.");
     while (not global.doexit) do
         local signal = get_signal();
         if (signal ~= nil) then

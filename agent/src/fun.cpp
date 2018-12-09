@@ -801,7 +801,7 @@ static int fun_is_blockchain_file(lua_State *s) {
 #endif
     }
 
-    lua_pushnumber(s, filesize);
+    lua_pushinteger(s, filesize);
     return 1;
 }
 
