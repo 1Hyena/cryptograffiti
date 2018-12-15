@@ -304,10 +304,10 @@ function cg_tools_poe_read_files() {
                 CG_TOOLS_POE_ITEMS.push(item);
                 CG_TOOLS_POE_CHECKING = true;
 
-                if ("request_addr" in CG_READ_APIS[CG_READ_API[CG_BTC_FORK]]
-                &&  "link_addr"    in CG_READ_APIS[CG_READ_API[CG_BTC_FORK]]) {
-                    var api = sprintf(CG_READ_APIS[CG_READ_API[CG_BTC_FORK]].request_addr, addr)+"?noTxList=1";
-                    var url = sprintf(CG_READ_APIS[CG_READ_API[CG_BTC_FORK]].link_addr, addr);
+                if ("request_addr" in CG_READ_APIS[CG_READ_API]
+                &&  "link_addr"    in CG_READ_APIS[CG_READ_API]) {
+                    var api = sprintf(CG_READ_APIS[CG_READ_API].request_addr, addr)+"?noTxList=1";
+                    var url = sprintf(CG_READ_APIS[CG_READ_API].link_addr, addr);
 
                     xmlhttpGet(api, '',
                         function(response) {

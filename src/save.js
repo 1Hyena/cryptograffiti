@@ -190,7 +190,7 @@ function cg_save_wallet() {
     }
     addr = addr_value;
 
-    var url = (CG_BTC_FORK === "cash" ? "bitcoincash:" : "bitcoin:" ) + addr + "?amount=" + amnt;
+    var url = "bitcoincash:" + addr + "?amount=" + amnt;
     window.open(url, "theUriFrame");
 }
 
@@ -248,7 +248,7 @@ function cg_save_update() {
             }
             addr = addr_value;
 
-            var url = (CG_BTC_FORK === "cash" ? "bitcoincash:" : "bitcoin:") + addr + "?amount=" + amnt;
+            var url = "bitcoincash:" + addr + "?amount=" + amnt;
             btn.href  = url;
             btn.title = url;
         }
@@ -392,11 +392,11 @@ function cg_save_get_order() {
                             details.appendChild(document.createElement("br"));
                             var addr = encodeURIComponent(addr_value);
                             var amnt = encodeURIComponent(order_amnt_input.value);
-                            var fork = (CG_BTC_FORK === "cash" ? "bitcoincash:" : "bitcoin:");
+                            var pref = "bitcoincash:";
 
                             if (addr.length > 0) {
                                 var img = document.createElement("img");
-                                img.src = "https://api.qrserver.com/v1/create-qr-code/?size=128x128&qzone=4&data="+fork+addr+"?amount="+amnt;
+                                img.src = "https://api.qrserver.com/v1/create-qr-code/?size=128x128&qzone=4&data="+pref+addr+"?amount="+amnt;
                                 img.width = "128";
                                 img.height = "128";
                                 img.style = "width: 0%;";
@@ -412,7 +412,7 @@ function cg_save_get_order() {
                                     if (core !== null) core.classList.add("glow");
                                 };
 
-                                if (CG_BTC_FORK === "cash") {
+                                {
                                     var link_core_rejected = document.createElement("a");
                                     var link_cash_accepted = document.createElement("a");
                                     link_core_rejected.href="http://www.newsbtc.com/2017/10/16/cryptograffiti-rejects-bitcoin-core-bch-now-available-payment-method/";
@@ -453,7 +453,6 @@ function cg_save_get_order() {
                                     details.appendChild(img);
                                     details.appendChild(link_core_rejected);
                                 }
-                                else details.appendChild(img);
                             }
                         }
                     }

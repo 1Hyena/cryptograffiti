@@ -108,7 +108,7 @@ function cg_construct_about(main) {
             first_friend = false;
         }
 
-        if (CG_BTC_FORK === "cash") {
+        {
             var cash_img = document.createElement("img");
             cash_img.src = document.getElementById("gfx_cash").src;
             cash_img.width = "128";
@@ -123,7 +123,6 @@ function cg_construct_about(main) {
             contact.appendChild(table_wrapper);
             contact.appendChild(core_img);
         }
-        else contact.appendChild(table_wrapper);
 
         contact.style.opacity = "0";
         elements.push( { "parent" : "cg-tab-about", "child" : contact } );

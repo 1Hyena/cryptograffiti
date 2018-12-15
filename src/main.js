@@ -10,12 +10,11 @@ var CG_TX_NR       = null;
 var CG_TX_HASH     = null;
 var CG_TX_TYPE     = null;
 var CG_SCROLL_KEY  = false;
-var CG_VERSION     = "1.00";
+var CG_VERSION     = "1.01";
 var CG_ACTIVE_TAB  = null;
 var CG_DECODER_OK  = true; // Decoder is online?
 var CG_ENCODER_OK  = true; // Encoder is online?
 var CG_LAST_HASH   = "";
-var CG_BTC_FORK    = ""; // Taken from the application-name meta tag's data-fork attribute.
 var CG_API         = ""; // Taken from the application-name meta tag's data-api attribute.
 
 function cg_start() {
@@ -39,7 +38,6 @@ function cg_main() {
     var metas = document.getElementsByTagName("META");
     for (var i=0; i < metas.length; ++i) {
         if (metas[i].name === "application-name") {
-            CG_BTC_FORK = metas[i].getAttribute('data-fork');
             CG_API      = metas[i].getAttribute('data-api');
             break;
         }

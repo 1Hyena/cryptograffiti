@@ -111,7 +111,6 @@ function cg_view_do() {
     var apis = [];
     var api = null;
     for (var i=0, sz = CG_READ_APIS.length; i<sz; i++) {
-        if (CG_READ_APIS[i].fork !== CG_BTC_FORK) continue;
         if (CG_READ_APIS[i].delay ===  0) apis.push(i);
     }
 
