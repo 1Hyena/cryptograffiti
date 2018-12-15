@@ -662,11 +662,11 @@ function cg_construct_buttons(tabs) {
     var btn_4 = document.createElement("BUTTON"); btn_4.classList.add("cg-btn");
     var btn_5 = document.createElement("BUTTON"); btn_5.classList.add("cg-btn");
 
-    btn_1.addEventListener("click", cg_button_click_read ); btn_1.disabled = true;
-    btn_2.addEventListener("click", cg_button_click_write); btn_2.disabled = true;
-    btn_3.addEventListener("click", cg_button_click_tools); btn_3.disabled = true;
-    btn_4.addEventListener("click", cg_button_click_help ); btn_4.disabled = true;
-    btn_5.addEventListener("click", cg_button_click_about); btn_5.disabled = true;
+    btn_1.addEventListener("click", cg_button_click_read );
+    btn_2.addEventListener("click", cg_button_click_write);
+    btn_3.addEventListener("click", cg_button_click_tools);
+    btn_4.addEventListener("click", cg_button_click_help );
+    btn_5.addEventListener("click", cg_button_click_about);
 
     var txt_1 = document.createTextNode(CG_TXT_MAIN_BTN_READ [CG_LANGUAGE]);
     var txt_2 = document.createTextNode(CG_TXT_MAIN_BTN_WRITE[CG_LANGUAGE]);
