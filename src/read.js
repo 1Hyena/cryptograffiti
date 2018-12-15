@@ -37,31 +37,29 @@ var CG_READ_APIS = [
         request_addr : "https://bchsvexplorer.com/api/addr/%s",
         link         : "https://bchsvexplorer.com/tx/%s",
         link_addr    : "https://bchsvexplorer.com/address/%s",
-        extract      : "cg_read_extract_blockexplorer",
-        delay        : 0,
-        max_delay    : 1*CG_READ_PPS,
-        down         : false,
-        fails        : 0
-    },
-    {
-        domain       : "cashexplorer.bitcoin.com",
-        request      : "https://cashexplorer.bitcoin.com/api/tx/%s",
-        request_addr : "https://cashexplorer.bitcoin.com/api/addr/%s",
-        link         : "https://cashexplorer.bitcoin.com/tx/%s",
-        link_addr    : "https://cashexplorer.bitcoin.com/address/%s",
-        extract      : "cg_read_extract_blockexplorer",
+        extract      : "cg_read_extract_insight",
         delay        : 0,
         max_delay    : 2*CG_READ_PPS,
         down         : false,
         fails        : 0
     },
     {
-        domain       : "blockdozer.com",
-        request      : "https://blockdozer.com/insight-api/tx/%s",
-        request_addr : "https://blockdozer.com/insight-api/addr/%s",
-        link         : "https://blockdozer.com/tx/%s",
-        link_addr    : "https://blockdozer.com/address/%s",
-        extract      : "cg_read_extract_blockexplorer",
+        domain       : "blockchair.com",
+        request      : "https://api.blockchair.com/bitcoin-sv/raw/transaction/%s",
+        link         : "https://blockchair.com/bitcoin-sv/transaction/%s",
+        link_addr    : "https://blockchair.com/bitcoin-sv/address/%s",
+        extract      : "cg_read_extract_blockchair",
+        delay        : 0,
+        max_delay    : 2*CG_READ_PPS,
+        down         : false,
+        fails        : 0
+    },
+    {
+        domain       : "bsv.btc.com",
+        request      : "https://bsv-chain.api.btc.com/v3/tx/%s?verbose=3",
+        link         : "https://bsv.btc.com/%s",
+        link_addr    : "https://bsv.btc.com/%s",
+        extract      : "cg_read_extract_btc",
         delay        : 0,
         max_delay    : 2*CG_READ_PPS,
         down         : false,
@@ -595,7 +593,7 @@ function cg_read_extract_blockchaininfo(r) {
     return [out_bytes, op_return, r.time];
 }
 
-function cg_read_extract_blockexplorer(r) {
+function cg_read_extract_insight(r) {
     var out_bytes= "";
     var op_return= "";
     var outs = r.vout.length;
@@ -627,6 +625,97 @@ function cg_read_extract_blockexplorer(r) {
         && r.vout[j].scriptPubKey.asm.substr(0, 10) == "OP_RETURN ") {
             // OP_RETURN detected
             var hex_body = r.vout[j].scriptPubKey.asm.split(" ").pop();
+            op_return = op_return + hex2ascii(hex_body);
+        }
+    }
+    var time = 0;
+    if ("time" in r) time = r.time;
+    return [out_bytes, op_return, time];
+}
+
+function cg_read_extract_blockchair(r) {
+    var out_bytes= "";
+    var op_return= "";
+
+    var txid = null;
+    for (var key in r.data) {
+        if (r.data.hasOwnProperty(key)) {
+            txid = key;
+            break;
+        }
+    }
+    if (txid === null || (txid+"").length != 64) return null;
+
+    var outs = r.data[txid].decoded_raw_transaction.vout;
+    var size = outs.length;
+
+    for (var j = 0; j < size; j++) {
+        if (!("scriptPubKey" in outs[j])) continue;
+
+        if ("hex" in outs[j].scriptPubKey
+        && outs[j].scriptPubKey.hex.length === 50
+        && outs[j].scriptPubKey.hex.substr( 0,6).toLowerCase() === "76a914"
+        && outs[j].scriptPubKey.hex.substr(46,4).toLowerCase() === "88ac") {
+            out_bytes = out_bytes + hex2ascii(outs[j].scriptPubKey.hex.substr(6,40));
+        }
+        else if ("hex" in outs[j].scriptPubKey
+        && outs[j].scriptPubKey.hex.length === 46
+        && outs[j].scriptPubKey.hex.substr( 0,4).toLowerCase() === "a914"
+        && outs[j].scriptPubKey.hex.substr(44,2).toLowerCase() === "87") {
+            out_bytes = out_bytes + hex2ascii(outs[j].scriptPubKey.hex.substr(4,40));
+        }
+        else if ("hex" in outs[j].scriptPubKey
+        && outs[j].scriptPubKey.hex.substr( 0,2).toLowerCase() === "6a") {
+            op_return = op_return + hex2ascii(outs[j].scriptPubKey.hex.substr(2));
+        }
+        else if ("addresses" in outs[j].scriptPubKey
+        &&  outs[j].scriptPubKey.addresses.length > 0) {
+            out_bytes = out_bytes + Bitcoin.getAddressPayload(outs[j].scriptPubKey.addresses[0]);
+        }
+        else if ("asm" in outs[j].scriptPubKey
+        && outs[j].scriptPubKey.asm.substr(0, 10) == "OP_RETURN ") {
+            // OP_RETURN detected
+            var hex_body = outs[j].scriptPubKey.asm.split(" ").pop();
+            op_return = op_return + hex2ascii(hex_body);
+        }
+    }
+    var time = 0;
+    if ("time" in r) time = r.time;
+    return [out_bytes, op_return, time];
+}
+
+function cg_read_extract_btc(r) {
+    var out_bytes= "";
+    var op_return= "";
+
+    var outs = r.data.outputs;
+    var size = outs.length;
+
+    for (var j = 0; j < size; j++) {
+        if ("script_hex" in outs[j]
+        && outs[j].script_hex.length === 50
+        && outs[j].script_hex.substr( 0,6).toLowerCase() === "76a914"
+        && outs[j].script_hex.substr(46,4).toLowerCase() === "88ac") {
+            out_bytes = out_bytes + hex2ascii(outs[j].script_hex.substr(6,40));
+        }
+        else if ("script_hex" in outs[j]
+        && outs[j].script_hex.length === 46
+        && outs[j].script_hex.substr( 0,4).toLowerCase() === "a914"
+        && outs[j].script_hex.substr(44,2).toLowerCase() === "87") {
+            out_bytes = out_bytes + hex2ascii(outs[j].script_hex.substr(4,40));
+        }
+        else if ("script_hex" in outs[j]
+        && outs[j].script_hex.substr( 0,2).toLowerCase() === "6a") {
+            op_return = op_return + hex2ascii(outs[j].script_hex.substr(2));
+        }
+        else if ("addresses" in outs[j]
+        &&  outs[j].addresses.length > 0) {
+            out_bytes = out_bytes + Bitcoin.getAddressPayload(outs[j].addresses[0]);
+        }
+        else if ("script_asm" in outs[j]
+        && outs[j].script_asm.substr(0, 10) == "OP_RETURN ") {
+            // OP_RETURN detected
+            var hex_body = outs[j].script_asm.split(" ").pop();
             op_return = op_return + hex2ascii(hex_body);
         }
     }
@@ -795,6 +884,7 @@ function cg_read_get_filter() {
     var apis = [];
     var api = null;
     for (var i=0, sz = CG_READ_APIS.length; i<sz; i++) {
+        if ("request_addr" in CG_READ_APIS[i] == false) continue;
         if (CG_READ_APIS[i].delay ===  0) apis.push(i);
     }
 
@@ -808,10 +898,6 @@ function cg_read_get_filter() {
     var key = (CG_READ_FILTER_KEY !== null ? CG_READ_FILTER_KEY : CG_READ_FILTER_ADDR);
     key = key.substring(0, 64);
     if (key !== CG_READ_FILTER_KEY) key = key+"...";
-
-    if ("request_addr" in CG_READ_APIS[api] == false) {
-        return true;
-    }
 
     CG_STATUS.push(sprintf(CG_TXT_READ_LOADING_FILTER[CG_LANGUAGE], key));
 

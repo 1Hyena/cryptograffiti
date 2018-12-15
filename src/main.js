@@ -183,7 +183,7 @@ function cg_startup(cg) {
     else {
         setTimeout(function(){
             cg_startup(cg);
-        }, 1000);
+        }, 250);
     }
 }
 
@@ -629,6 +629,32 @@ function cg_construct_header() {
     }, 500);
 }
 
+function cg_click_initial_buttons(read_btn, write_btn) {
+    var cg = document.getElementById("cg-main");
+    if (cg == null) {
+        alert(CG_TXT_MAIN_ERROR_1[CG_LANGUAGE]);
+        return;
+    }
+
+    while (cg.hasChildNodes()) {
+        cg.removeChild(cg.lastChild);
+    }
+
+    if (CG_TX_HASH !== null) {
+        var btn = document.getElementById("cg-btn-tab-read");
+        cg_button_click(btn, cg_construct_view);
+        read_btn.disabled = false;
+    }
+    else if (CG_WRITE_TEXT === null) {
+        read_btn.disabled = false;
+        read_btn.click();
+    }
+    else {
+        write_btn.disabled = false;
+        write_btn.click();
+    }
+}
+
 function cg_construct_buttons(tabs) {
     var btn_1 = document.createElement("BUTTON"); btn_1.classList.add("cg-btn");
     var btn_2 = document.createElement("BUTTON"); btn_2.classList.add("cg-btn");
@@ -655,36 +681,14 @@ function cg_construct_buttons(tabs) {
     btn_5.appendChild(txt_5); btn_5.id = "cg-btn-tab-about";
 
     var spawn_delay = 200;
-    setTimeout(function(){tabs.appendChild(btn_1);}, 1*spawn_delay);
-    setTimeout(function(){tabs.appendChild(btn_2);}, 2*spawn_delay);
-    setTimeout(function(){tabs.appendChild(btn_3);}, 3*spawn_delay);
-    setTimeout(function(){tabs.appendChild(btn_4);}, 4*spawn_delay);
-    setTimeout(function(){tabs.appendChild(btn_5);}, 5*spawn_delay);
+    setTimeout(function(){tabs.appendChild(btn_1);}, 0*spawn_delay);
     setTimeout(function(){
-        var cg = document.getElementById("cg-main");
-        if (cg == null) {
-            alert(CG_TXT_MAIN_ERROR_1[CG_LANGUAGE]);
-            return;
-        }
-
-        while (cg.hasChildNodes()) {
-            cg.removeChild(cg.lastChild);
-        }
-
-        if (CG_TX_HASH !== null) {
-            var btn = document.getElementById("cg-btn-tab-read");
-            cg_button_click(btn, cg_construct_view);
-            btn_1.disabled = false;
-        }
-        else if (CG_WRITE_TEXT === null) {
-            btn_1.disabled = false;
-            btn_1.click();
-        }
-        else {
-            btn_2.disabled = false;
-            btn_2.click();
-        }
-    }, 6*spawn_delay);
+        tabs.appendChild(btn_2);
+        cg_click_initial_buttons(btn_1, btn_2);
+    }, 1*spawn_delay);
+    setTimeout(function(){tabs.appendChild(btn_3);}, 2*spawn_delay);
+    setTimeout(function(){tabs.appendChild(btn_4);}, 3*spawn_delay);
+    setTimeout(function(){tabs.appendChild(btn_5);}, 4*spawn_delay);
 }
 
 function cg_button_click(btn, fun) {

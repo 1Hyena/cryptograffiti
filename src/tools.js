@@ -280,6 +280,22 @@ function cg_tools_poe_read_files() {
         return;
     }
 
+    var apis = [];
+    var api = null;
+    for (var i=0, sz = CG_READ_APIS.length; i<sz; i++) {
+        if ("request_addr" in CG_READ_APIS[i] == false
+        ||  "link_addr"    in CG_READ_APIS[i] == false) {
+            continue;
+        }
+
+        if (CG_READ_APIS[i].delay === 0) apis.push(i);
+    }
+
+    if (apis.length > 0) {
+        apis = shuffle(apis);
+        api = apis[0];
+    }
+
     var status  = null;
     var refresh = false;
     var done    = (CG_TOOLS_POE_FPOS === CG_TOOLS_POE_FILES[0].size);
@@ -304,12 +320,11 @@ function cg_tools_poe_read_files() {
                 CG_TOOLS_POE_ITEMS.push(item);
                 CG_TOOLS_POE_CHECKING = true;
 
-                if ("request_addr" in CG_READ_APIS[CG_READ_API]
-                &&  "link_addr"    in CG_READ_APIS[CG_READ_API]) {
-                    var api = sprintf(CG_READ_APIS[CG_READ_API].request_addr, addr)+"?noTxList=1";
-                    var url = sprintf(CG_READ_APIS[CG_READ_API].link_addr, addr);
+                if (api !== null) {
+                    var api_url  = sprintf(CG_READ_APIS[api].request_addr, addr)+"?noTxList=1";
+                    var info_url = sprintf(CG_READ_APIS[api].link_addr, addr);
 
-                    xmlhttpGet(api, '',
+                    xmlhttpGet(api_url, '',
                         function(response) {
                             CG_TOOLS_POE_CHECKING = false;
                                  if (response === false);
@@ -322,7 +337,7 @@ function cg_tools_poe_read_files() {
                                     var a_proof   = document.createElement("a");
                                     a_proof.appendChild(document.createTextNode(addr));
                                     a_proof.title = CG_TXT_TOOLS_POE_PROOF_LINK[CG_LANGUAGE];
-                                    a_proof.href  = url;
+                                    a_proof.href  = info_url;
                                     a_proof.target= "_blank";
 
                                     status.appendChild(a_proof);
