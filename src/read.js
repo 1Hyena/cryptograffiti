@@ -558,10 +558,7 @@ function cg_decode() {
             if (success) {
                 var msgtxhash_id = "cg-msgtxhash-"+nr;
                 var msgtxhash    = document.getElementById(msgtxhash_id);
-                if (CG_READ_APIS[CG_READ_API].down) {
-                    msgtxhash.href = sprintf(CG_READ_APIS[api].link, txid);
-                }
-                else msgtxhash.href = sprintf(CG_READ_APIS[CG_READ_API].link, txid);
+                msgtxhash.href = sprintf(CG_READ_APIS[api].link, txid);
                 CG_READ_APIS[api].fails = 0;
             }
 
@@ -720,7 +717,7 @@ function cg_read_extract_btc(r) {
         }
     }
     var time = 0;
-    if ("time" in r) time = r.time;
+    if ("block_time" in r.data) time = r.data.block_time;
     return [out_bytes, op_return, time];
 }
 
