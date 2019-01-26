@@ -48,12 +48,14 @@ function cg_construct_tools(main) {
     var txt_2 = document.createTextNode(CG_TXT_TOOLS_BTN_ADDRESS_DECODER[CG_LANGUAGE]);
     btn_2.appendChild(txt_2); btn_2.addEventListener("click", cg_button_click_address_decoder);
     btn_2.disabled = true;
+    btn_2.classList.add("cg-hidden");
     btns_area.appendChild(btn_2);
 
     var btn_3 = document.createElement("BUTTON"); btn_3.classList.add("cg-tools-btn");
     var txt_3 = document.createTextNode(CG_TXT_TOOLS_BTN_TRANSACTION_DECODER[CG_LANGUAGE]);
     btn_3.appendChild(txt_3); btn_3.addEventListener("click", cg_button_click_transaction_decoder);
     btn_3.disabled = true;
+    btn_3.classList.add("cg-hidden");
     btns_area.appendChild(btn_3);
     list_area.appendChild(btns_area);
 
