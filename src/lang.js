@@ -802,6 +802,13 @@ var CG_TXT_SAVE_ORDER_GREETING =
     ru : "Ваш ордер отправляется."
 };
 
+var CG_TXT_SAVE_ORDER_RESTORE =
+{
+    en : "Your order is being restored.",
+    et : "Teie tellimust taastatakse.",
+    ru : ""
+};
+
 var CG_TXT_SAVE_ORDER_PENDING =
 {
     en : "Your order has been submitted and is pending now.",
@@ -828,6 +835,20 @@ var CG_TXT_SAVE_ORDER_FILLED =
     en : "Your order has been filled.",
     et : "Teie tellimus on täidetud.",
     ru : "Ваш ордер был заполнен."
+};
+
+var CG_TXT_SAVE_ORDER_PROOF =
+{
+    en : "Hash of the transaction that filled your order:",
+    et : "Ülekande räsi, mis täitis teie tellimuse:",
+    ru : "(Hash of the transaction that filled your order:)"
+};
+
+var CG_TXT_SAVE_ORDER_PROOF_LINK =
+{
+    en : "Link to your graffiti.",
+    et : "Viide Teie graffitile.",
+    ru : "(Link to your graffiti.)"
 };
 
 var CG_TXT_SAVE_ORDER_TIMEOUT =

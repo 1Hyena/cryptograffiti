@@ -100,7 +100,11 @@ function cg_construct_save(main) {
 
     var order_details = document.createElement("p");
     order_details.id = "cg-save-order-details";
-    order_details.appendChild(document.createTextNode(CG_TXT_SAVE_ORDER_GREETING[CG_LANGUAGE]));
+    var initial_message = CG_TXT_SAVE_ORDER_GREETING[CG_LANGUAGE];
+    if (CG_SAVE_ORDER_NR !== null) {
+        initial_message = CG_TXT_SAVE_ORDER_RESTORE[CG_LANGUAGE];
+    }
+    order_details.appendChild(document.createTextNode(initial_message));
 
     var order_note = document.createElement("p");
     order_note.id = "cg-save-order-note";
@@ -129,6 +133,7 @@ function cg_save_back() {
     CG_SAVE_ORDER_NR = null;
     CG_SAVE_SKIP_UPDATE = true;
     CG_SAVE_ORDER_FILLED = false;
+    cg_main_set_hash({order_nr : null});
 
     document.getElementById("cg-save-order-nr")     .value = "";
     document.getElementById("cg-save-order-status") .value = "";
@@ -258,6 +263,33 @@ function cg_save_update() {
             btn.disabled = true;
         }
     }
+
+    if (CG_SAVE_ORDER_FILLED) {
+        var note = document.getElementById("cg-save-order-note");
+        if (!note.classList.contains("disappear")
+        &&  !note.classList.contains("appear")
+        &&  !note.classList.contains("cg-hidden")) {
+            note.classList.add("disappear");
+
+            setTimeout(function(n){
+                n.classList.add("cg-hidden");
+                n.classList.remove("disappear");
+            }, 500, note);
+        }
+    }
+    else {
+        var note = document.getElementById("cg-save-order-note");
+        if (!note.classList.contains("disappear")
+        &&  !note.classList.contains("appear")
+        &&   note.classList.contains("cg-hidden")) {
+            note.classList.add("appear");
+            note.classList.remove("cg-hidden");
+
+            setTimeout(function(n){
+                n.classList.remove("appear");
+            }, 500, note);
+        }
+    }
 }
 
 function cg_save_get_order() {
@@ -284,6 +316,7 @@ function cg_save_get_order() {
                 var details_msg = null;
                 var order_addr_input = document.getElementById("cg-save-order-address");
                 var order_amnt_input = document.getElementById("cg-save-order-amount");
+                var delivery = "";
 
                 var base58 = false;
                 var fmtaddr_btn = document.getElementById("cg-save-btn-addrfmt");
@@ -341,6 +374,9 @@ function cg_save_get_order() {
                                 var fmt = CG_TXT_SAVE_PAYMENT_DETAILS[CG_LANGUAGE];
                                 details_msg = sprintf(fmt, amnt, (base58 ? output.address : addr));
                             }
+                            else if ("proof" in output) {
+                                delivery = ""+output.proof;
+                            }
                         }
                         else if (output !== null && "error" in output) {
                             status = sprintf(CG_TXT_SAVE_ORDER_REJECTED[CG_LANGUAGE], json.order.nr);
@@ -369,7 +405,7 @@ function cg_save_get_order() {
                     var details = document.getElementById("cg-save-order-details");
                     var content = details_msg+order_addr_input.value
                                  +order_amnt_input.value+json.order.nr
-                                 +json.order.filled+json.order.accepted;
+                                 +json.order.filled+json.order.accepted+delivery;
                     var ripemd160 = CryptoJS.algo.RIPEMD160.create();
                     ripemd160.update(content);
                     var hash = ""+ripemd160.finalize();
@@ -455,6 +491,20 @@ function cg_save_get_order() {
                                 }
                             }
                         }
+                        else if (accepted && filled && delivery.length === 64) {
+                            details.appendChild(document.createElement("br"));
+                            details.appendChild(document.createElement("br"));
+                            details.appendChild(document.createTextNode(CG_TXT_SAVE_ORDER_PROOF[CG_LANGUAGE]));
+                            details.appendChild(document.createElement("br"));
+
+                            var tx_link = document.createElement("a");
+                            var tx_text = document.createTextNode(delivery);
+                            tx_link.title = CG_TXT_SAVE_ORDER_PROOF_LINK[CG_LANGUAGE];
+                            tx_link.href  = "#"+delivery;
+                            tx_link.onclick=function(){fade_out(); setTimeout(function(){location.reload();}, 500); return true;};
+                            tx_link.appendChild(tx_text);
+                            details.appendChild(tx_link);
+                        }
                     }
                 }
             }
@@ -523,6 +573,7 @@ function cg_save_make_order() {
                 if ("nr" in json) {
                     status = sprintf(CG_TXT_SAVE_MAKING_ORDER_OK[CG_LANGUAGE], json.nr);
                     CG_SAVE_ORDER_NR = json.nr;
+                    cg_main_set_hash({order_nr : CG_SAVE_ORDER_NR});
 
                     var details = document.getElementById("cg-save-order-details");
                     while (details.hasChildNodes()) details.removeChild(details.lastChild);

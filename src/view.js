@@ -75,13 +75,13 @@ function cg_button_click_view_open() {
     }
     if (type !== null) btn_open.disabled  = true;
     else CG_STATUS.push("!"+CG_TXT_VIEW_OPEN_FAIL[CG_LANGUAGE]);
-    cg_main_set_hash({tx_type : type});
+    cg_main_set_hash({tx_hash : CG_VIEW_TX_HASH+(type === null ? "" : "."+type)});
 }
 
 function cg_button_click_view_close() {
     var btn_close = document.getElementById("cg-view-btn-close");
     btn_close.disabled = true;
-    cg_main_set_hash({tx_type : null});
+    cg_main_set_hash({tx_hash : CG_VIEW_TX_HASH});
 }
 
 function cg_view_get_mimetype(ext) {
@@ -193,11 +193,6 @@ function cg_view_update() {
     var again = false;
     if (CG_VIEW_LOCK || CG_VIEW_DOING) return;
 
-    if (CG_TX_TYPE !== CG_VIEW_TX_TYPE && CG_VIEW_TX_HASH !== null) {
-        CG_VIEW_TX_TYPE = CG_TX_TYPE;
-        CG_TX_HASH = null;
-    }
-
     if ((CG_VIEW_BODY !== CG_VIEW_BODY_LAST && CG_VIEW_BODY)
     ||  (CG_VIEW_HEAD !== CG_VIEW_HEAD_LAST && CG_VIEW_HEAD)) {
         var main = document.getElementById("cg-view-main");
@@ -251,8 +246,6 @@ function cg_view_update() {
         }
         again = true;
     }
-
-    if (CG_TX_HASH === CG_VIEW_TX_HASH) return cg_view_update_end(again);
 
     if (CG_TX_HASH !== CG_VIEW_TX_HASH
     ||  CG_TX_TYPE !== CG_VIEW_TX_TYPE) {

@@ -10,12 +10,13 @@ var CG_TX_NR       = null;
 var CG_TX_HASH     = null;
 var CG_TX_TYPE     = null;
 var CG_SCROLL_KEY  = false;
-var CG_VERSION     = "1.01";
+var CG_VERSION     = "1.02";
 var CG_ACTIVE_TAB  = null;
 var CG_DECODER_OK  = true; // Decoder is online?
 var CG_ENCODER_OK  = true; // Encoder is online?
 var CG_LAST_HASH   = "";
 var CG_API         = ""; // Taken from the application-name meta tag's data-api attribute.
+var CG_HASHTAG     = null;
 
 function cg_start() {
     if (window.attachEvent) {
@@ -59,60 +60,10 @@ function cg_main() {
 
     cg_init_sound();
 
-    var lang_given = false;
-    var hashes = location.hash.substring(1).split("#");
-    for (var i=0, sz=hashes.length; i<sz; ++i) {
-        var hash = decodeURIComponent(hashes[i]);
-             if (hash === "en") {CG_LANGUAGE = "en"; lang_given = true;}
-        else if (hash === "ru") {CG_LANGUAGE = "ru"; lang_given = true;}
-        else if (hash === "et") {CG_LANGUAGE = "et"; lang_given = true;}
-        else if (isNormalInteger(hash)) CG_TX_NR = hash;
-        else if (isHex(hash) && hash.length === 64) CG_TX_HASH = hash.toLowerCase();
-        else if (hash.match(/[0-9A-Fa-f]{64}\.[a-zA-Z0-9_-]+/g)) {
-            CG_TX_HASH = hash.substr(0, 64).toLowerCase();
-            CG_TX_TYPE = hash.substr(65);
-        }
-        else if (Bitcoin.testAddress(hash)) CG_READ_FILTER_ADDR = hash;
-        else if (hash.indexOf(":") > -1) {
-            var parts = hash.split(":");
-            if (parts.length === 2 && parts[0] === "censor") {
-                var censor_txs = {};
-                var txs = parts[1].split(",");
-                for (var j=0, txsz=txs.length; j<txsz; ++j) {
-                    if (txs[j].length === 64 && isHex(txs[j])) {
-                        censor_txs[txs[j].toLowerCase()] = true;
-                    }
-                }
-                if (Object.keys(censor_txs).length > 0) CG_READ_CENSOR_TXS = censor_txs;
-            }
-            else if (parts.length === 2 && parts[0] === "write") {
-                CG_WRITE_TEXT = parts[1];
-            }
-            else if (parts.length === 2 && parts[1].indexOf(".") > -1 && Bitcoin.testAddress(parts[0])) {
-                var nums = parts[1].split(".");
-                if (nums.length == 2 && isNumeric(nums[0]) && isNumeric(nums[1])) {
-                    var amount = nums[0]+"."+nums[1].substring(0,8);
-                    if (cg_write_check_amount(amount) === "") {
-                        CG_WRITE_PAY_TO     = parts[0];
-                        CG_WRITE_PAY_AMOUNT = Math.floor(parseFloat(amount)*100000000)/100000000;
-                    }
-                }
-            }
-            else if (parts.length === 2 && parts[0] === "mimetype") {
-                CG_READ_MIMETYPE = parts[1];
-            }
-        }
-        else if (hash.length > 0) {
-            // Filter TXs only containing an address that is a hash of this argument.
-            var ripemd160 = CryptoJS.algo.RIPEMD160.create();
-            ripemd160.update(hash);
-            var filter = Bitcoin.createAddressFromText(hex2ascii(ripemd160.finalize()));
-            CG_READ_FILTER_ADDR = filter;
-            CG_READ_FILTER_KEY  = hash;
-        }
-    }
+    cg_parse_hashtag();
+    cg_setup_parameters();
 
-    if (!lang_given) {
+    if (CG_HASHTAG.lang === null) {
         var lang = navigator.languages ? navigator.languages[0] : (navigator.language || navigator.userLanguage);
         lang = lang || (window.navigator.languages ? window.navigator.languages[0] : null);
         lang = lang || (window.navigator.language || window.navigator.browserLanguage || window.navigator.userLanguage);
@@ -147,6 +98,124 @@ function cg_main() {
         cg_load_constants();
         cg_startup(cg);
     }, 500);
+}
+
+function cg_setup_parameters(params) {
+    params = (typeof params !== 'undefined') ?  params : null;
+
+    for (var key in CG_HASHTAG) {
+        if (CG_HASHTAG.hasOwnProperty(key)) {
+            var val = CG_HASHTAG[key];
+            if (val === null) continue;
+            if (params !== null && key in params == false) continue;
+
+            switch (key) {
+                case "lang"       : CG_LANGUAGE         = val; break;
+                case "tx_nr"      : CG_TX_NR            = val; break;
+                case "filter_addr": CG_READ_FILTER_ADDR = val; break;
+                case "filter_key" : CG_READ_FILTER_KEY  = val; break;
+                case "write_txt"  : CG_WRITE_TEXT       = val; break;
+                case "order_nr"   : CG_SAVE_ORDER_NR    = val; break;
+                case "mimetype"   : CG_READ_MIMETYPE    = val; break;
+                case "tx_hash"    : {
+                                        if (val.match(/[0-9A-Fa-f]{64}\.[a-zA-Z0-9_-]+/g)) {
+                                            CG_TX_HASH = val.substr(0, 64).toLowerCase();
+                                            CG_TX_TYPE = val.substr(65);
+                                        }
+                                        else {
+                                            CG_TX_HASH = val;
+                                            CG_TX_TYPE = null;
+                                        }
+                                        break;
+                                    }
+                case "pay"        : {
+                                        var parts = val.split(":");
+                                        CG_WRITE_PAY_TO = parts[0];
+                                        CG_WRITE_PAY_AMOUNT = Math.floor(parseFloat(parts[1])*100000000)/100000000;
+                                        break;
+                                    }
+                case "censor_txs" : {
+                                        var array = val.split(",");
+                                        CG_READ_CENSOR_TXS = {};
+                                        for (var i=0; i<array.length; ++i) {
+                                            CG_READ_CENSOR_TXS[array[i]] = true;
+                                        }
+                                        break;
+                                    }
+                default           : break;
+            }
+        }
+    }
+}
+
+function cg_parse_hashtag() {
+    CG_HASHTAG = {
+        lang        : null,
+        tx_nr       : null,
+        tx_hash     : null,
+        filter_addr : null,
+        filter_key  : null,
+        censor_txs  : null,
+        write_txt   : null,
+        order_nr    : null,
+        pay         : null,
+        mimetype    : null
+    };
+
+    var hashes = location.hash.substring(1).split("#");
+    for (var i=0, sz=hashes.length; i<sz; ++i) {
+        var hash = decodeURIComponent(hashes[i]);
+             if (hash === "en")                     CG_HASHTAG.lang    = hash;
+        else if (hash === "ru")                     CG_HASHTAG.lang    = hash;
+        else if (hash === "et")                     CG_HASHTAG.lang    = hash;
+        else if (isNormalInteger(hash))             CG_HASHTAG.tx_nr   = hash;
+        else if (isHex(hash) && hash.length === 64) CG_HASHTAG.tx_hash = hash.toLowerCase();
+        else if (hash.match(/[0-9A-Fa-f]{64}\.[a-zA-Z0-9_-]+/g)) {
+            var h = hash.substr(0, 64).toLowerCase();
+            var t = hash.substr(65);
+            CG_HASHTAG.tx_hash = h+"."+t;
+        }
+        else if (Bitcoin.testAddress(hash)) CG_HASHTAG.filter_addr = hash;
+        else if (hash.indexOf(":") > -1) {
+            var parts = hash.split(":");
+            if (parts.length === 2 && parts[0] === "censor") {
+                var censor_txs = {};
+                var txs = parts[1].split(",");
+                var censor_txs_arr = [];
+                for (var j=0, txsz=txs.length; j<txsz; ++j) {
+                    if (txs[j].length === 64 && isHex(txs[j])) {
+                        var txhash = txs[j].toLowerCase();
+                        censor_txs[txhash] = true;
+                        censor_txs_arr.push(txhash);
+                    }
+                }
+                if (Object.keys(censor_txs).length > 0) {
+                    CG_HASHTAG.censor_txs = censor_txs_arr.join();
+                }
+            }
+            else if (parts.length === 2 && parts[0] === "write") {
+                CG_HASHTAG.write_txt = parts[1];
+            }
+            else if (parts.length === 2 && parts[0] === "order") {
+                if (isNormalInteger(parts[1])) CG_HASHTAG.order_nr = parts[1];
+            }
+            else if (parts.length === 2 && parts[1].indexOf(".") > -1 && Bitcoin.testAddress(parts[0])) {
+                var nums = parts[1].split(".");
+                if (nums.length == 2 && isNumeric(nums[0]) && isNumeric(nums[1])) {
+                    var amount = nums[0]+"."+nums[1].substring(0,8);
+                    if (cg_write_check_amount(amount) === "") {
+                        CG_HASHTAG.pay = parts[0]+":"+parts[1];
+                    }
+                }
+            }
+            else if (parts.length === 2 && parts[0] === "mimetype") {
+                CG_HASHTAG.mimetype = parts[1];
+            }
+        }
+        else if (hash.length > 0) {
+            CG_HASHTAG.filter_key = hash;
+        }
+    }
 }
 
 function cg_startup(cg) {
@@ -188,56 +257,52 @@ function cg_startup(cg) {
 }
 
 function cg_main_set_hash(update) {
-    var hash = {
-        tx_hash : CG_TX_HASH,
-        tx_type : CG_TX_TYPE,
-        lang    : null,
-        tx_nr   : null
-    };
-
+    var setup_params = {};
     for (var key in update) {
-        if (update.hasOwnProperty(key)) hash[key] = update[key];
+        if (update.hasOwnProperty(key)) {
+            CG_HASHTAG[key] = update[key];
+            setup_params[key] = true;
+        }
     }
 
-    var remaining_hash = "";
-    if (hash.lang !==null)  remaining_hash += "#"+hash.lang;
-    if (hash.tx_nr !==null) remaining_hash += "#"+hash.tx_nr;
-    if (hash.tx_hash !== null) {
-        remaining_hash += "#"+hash.tx_hash;
-        if (hash.tx_type !== null) remaining_hash += "."+hash.tx_type;
+    var hashtag = "";
+
+    for (var key in CG_HASHTAG) {
+        if (CG_HASHTAG.hasOwnProperty(key)) {
+            var val = CG_HASHTAG[key];
+            if (val === null) continue;
+
+            switch (key) {
+                case "lang"       : hashtag += "#"+val;          break;
+                case "tx_nr"      : hashtag += "#"+val;          break;
+                case "tx_hash"    : hashtag += "#"+val;          break;
+                case "filter_addr": hashtag += "#"+val;          break;
+                case "filter_key" : hashtag += "#"+val;          break;
+                case "censor_txs" : hashtag += "#censor:"+val;   break;
+                case "write_txt"  : hashtag += "#write:"+val;    break;
+                case "order_nr"   : hashtag += "#order:"+val;    break;
+                case "pay"        : hashtag += "#"+val;          break;
+                case "mimetype"   : hashtag += "#mimetype:"+val; break;
+                default           :                              break;
+            }
+        }
     }
 
     if (CG_LAST_HASH  !== location.hash
-    ||  CG_LAST_HASH  !== remaining_hash) {
-        if (remaining_hash.length == 0) remaining_hash = "#";
-        if (history.pushState) history.pushState(null, null, remaining_hash);
-        else location.hash = remaining_hash;
+    ||  CG_LAST_HASH  !== hashtag) {
+        if (hashtag.length == 0) hashtag = "#";
+        if (history.pushState) history.pushState(null, null, hashtag);
+        else location.hash = hashtag;
     }
-    CG_LAST_HASH = remaining_hash;
+    CG_LAST_HASH = hashtag;
+
+    cg_setup_parameters(setup_params);
 }
 
 function cg_main_loop() {
     CG_SCROLL_KEY  = false;
 
-    var hashes = location.hash.substring(1).split("#");
-    CG_TX_HASH = null;
-    CG_TX_TYPE = null;
-    var tx_nr  = null;
-    var lang   = null;
-    for (var i=0, sz=hashes.length; i<sz; ++i) {
-        var hash = decodeURIComponent(hashes[i]);
-             if (hash === "en") lang = hash;
-        else if (hash === "ru") lang = hash;
-        else if (hash === "et") lang = hash;
-        else if (isHex(hash) && hash.length === 64) CG_TX_HASH = hash.toLowerCase();
-        else if (isNormalInteger(hash)) tx_nr = hash;
-        else if (hash.match(/[0-9A-Fa-f]{64}\.[a-zA-Z0-9_-]+/g)) {
-            CG_TX_HASH = hash.substr(0, 64).toLowerCase();
-            CG_TX_TYPE = hash.substr(65);
-        }
-    }
-
-    if (CG_ACTIVE_TAB === 'cg-tab-view') cg_main_set_hash({tx_nr : tx_nr, lang : lang});
+    cg_parse_hashtag();
 
     var spacer = document.getElementById("cg-tabs-spacer");
     var tabs   = document.getElementById("cg-tabs");
@@ -645,7 +710,8 @@ function cg_click_initial_buttons(read_btn, write_btn) {
         cg_button_click(btn, cg_construct_view);
         read_btn.disabled = false;
     }
-    else if (CG_WRITE_TEXT === null) {
+    else if (CG_WRITE_TEXT    === null
+         &&  CG_SAVE_ORDER_NR === null) {
         read_btn.disabled = false;
         read_btn.click();
     }

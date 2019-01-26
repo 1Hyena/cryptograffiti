@@ -763,7 +763,9 @@ function poll_donations()
     end;
 
     local txs = bitcoin_fun_list_transactions(bitcoin.wallet_account, cgd.constants.TXS_PER_QUERY, bitcoin.txs_from);
-
+    -- This function seems as if it has become obsolete. Wallet will not contain
+    -- incoming transactions that also contain graffiti. The graffiti is always
+    -- in the outgoing transactions and thus we would never find any graffiti here.
     if (txs and #txs > 0) then
         local added = 0;
         local amount = 0;
