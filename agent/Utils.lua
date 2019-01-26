@@ -87,8 +87,8 @@ function random_hex(bytes)
     local hb;
     for i=1,bytes do
         hb  = num2hex(math.random(0, 255));
-        if (#hb < 2) then 
-            hb = '0' .. hb; 
+        if (#hb < 2) then
+            hb = '0' .. hb;
         end;
         str = str .. hb;
     end;
@@ -108,7 +108,7 @@ end;
 
 function shuffle(t)
     local n = #t;
-    
+
     while n >= 2 do
         -- n is now the last pertinent index
         local k = math.random(n); -- 1 <= k <= n
@@ -116,7 +116,7 @@ function shuffle(t)
         t[n], t[k] = t[k], t[n];
         n = n - 1;
     end;
-    
+
     return t;
 end;
 
@@ -129,20 +129,20 @@ end;
 
 function hex2ascii(hex, chunk_size)
     local bytes = string.fromhex(hex);
-    
+
     if (chunk_size == nil or chunk_size <= 0) then
         chunk_size = string.len(bytes);
         if (chunk_size <= 0) then
             return "";
         end
     end;
-    
+
     local chunks = math.floor(string.len(bytes) / chunk_size);
-    
+
     if (string.len(bytes) % chunk_size > 0) then
         chunks = chunks + 1;
     end;
-    
+
     local chunk;
     local pos;
     local c;
@@ -150,7 +150,7 @@ function hex2ascii(hex, chunk_size)
     local valid;
     local visible;
     local message = {};
-    
+
     for i=1,chunks do
         chunk = "";
         if (i == chunks) then
@@ -158,19 +158,19 @@ function hex2ascii(hex, chunk_size)
         else
             chunk = bytes:sub((i-1)*chunk_size+1, i*chunk_size);
         end;
-                
+
         chars   = 0;
         valid   = 0;
         visible = 0;
-        
+
         for pos = 1, #chunk do
             c = string.byte(chunk, pos);
             chars = chars + 1;
-            
+
             if (c == 0) then
                 chunk = replace_char(pos, chunk, " ");
                 valid = valid + 1;
-            else                                        
+            else
                 if (c ==  9 -- horizontal tab
                 or  c == 10 -- new line
                 or  c == 13 -- carriage return
@@ -185,27 +185,36 @@ function hex2ascii(hex, chunk_size)
                 end;
             end;
         end;
-        
+
         if (valid/chars > 0.9 and visible > 0) then
             message[#message + 1] = chunk;
-        end;        
+        end;
     end
-    
+
     return table.concat(message);
 end;
 
-function hex2utf8(hex, chunk_size)
-    local str = string.fromhex(hex);
-    
-    if (string.len(str) == 0) then 
-        return ""; 
+function hex2utf8(hex, chunk_size, os_time)
+    os_time = os_time or os.time();
+    local delay = os.time()-os_time;
+    if (delay > 10.0) then
+        return "";
+        -- A kludgy hack against unintentional Denial of Service attacks.
+        -- Fair enough as an emergency solution until a better system is
+        -- implemented.
     end;
-    
+
+    local str = string.fromhex(hex);
+
+    if (string.len(str) == 0) then
+        return "";
+    end;
+
     local validated   = validate_UTF8(str);
     local first_valid = nil;
     local last_valid  = nil;
     local invalid     = 0;
-    
+
     if (chunk_size == nil or chunk_size <= 0) then chunk_size = #validated; end;
 
     -- We start validating the supposed UTF-8 string chunk-by-chunk.
@@ -215,9 +224,9 @@ function hex2utf8(hex, chunk_size)
     local filtered = {};
     local chunk    = {};
     local i        = 1;
-    
+
     while (i <= #validated) do
-        chunk[#chunk + 1] = str:sub(i,i);        
+        chunk[#chunk + 1] = str:sub(i,i);
         if (validated[i]) then
             last_valid = #chunk;
             if (first_valid == nil) then
@@ -226,7 +235,7 @@ function hex2utf8(hex, chunk_size)
         else
             invalid = invalid + 1;
         end;
-        
+
         if (#filtered == 0 and first_valid ~= 1) then
             first_valid = nil;
             last_valid  = nil;
@@ -235,32 +244,32 @@ function hex2utf8(hex, chunk_size)
             chunk       = {};
         else
             if (i % chunk_size == 0) then
-                -- Worst case scenario includes 3 falsely invalid UTF-8 bytes in the 
+                -- Worst case scenario includes 3 falsely invalid UTF-8 bytes in the
                 -- beginning and 3 bad bytes at the end of the chunk.
-                if (first_valid ~= nil and first_valid <= 4 
-                and last_valid+3 >= chunk_size 
+                if (first_valid ~= nil and first_valid <= 4
+                and last_valid+3 >= chunk_size
                 and first_valid-1+chunk_size-last_valid == invalid ) then
                     filtered[#filtered + 1] = table.concat(chunk);
                 else
-                    return hex2utf8(string.tohex(table.concat(filtered))..hex:sub(2*i+1), chunk_size);
+                    return hex2utf8(string.tohex(table.concat(filtered))..hex:sub(2*i+1), chunk_size, os_time);
                 end;
-                
+
                 chunk = {};
                 first_valid = nil;
                 last_valid  = nil;
-                invalid     = 0;            
+                invalid     = 0;
             end;
         end;
         i = i + 1;
     end;
-    
-    if (first_valid ~= nil and first_valid <= 4 
+
+    if (first_valid ~= nil and first_valid <= 4
     and last_valid == #chunk) then
         filtered[#filtered + 1] = table.concat(chunk);
     elseif (#chunk > 0) then
-        return hex2utf8(string.tohex(table.concat(filtered)), chunk_size);
+        return hex2utf8(string.tohex(table.concat(filtered)), chunk_size, os_time);
     end;
-    
+
     -- No more pure noise chunks were found. We can now invalidate a chunk even
     -- if it has just one invalid UTF-8 byte.
     filtered = table.concat(filtered);
@@ -270,9 +279,9 @@ function hex2utf8(hex, chunk_size)
     local result = {};
     chunk = {};
     invalid = 0;
-    
-    for i=1, #validated do    
-        -- Although all ASCII characters are valid UTF-8 characters, 
+
+    for i=1, #validated do
+        -- Although all ASCII characters are valid UTF-8 characters,
         -- we deliberately invalidate some ASCII characters that are
         -- very unlikely a part of a human readable text.
         c = string.byte(filtered, i);
@@ -285,7 +294,7 @@ function hex2utf8(hex, chunk_size)
         and c <  32) then
             validated[i] = false;
         end
-               
+
         if (validated[i]) then
             --if (c == 0) then
             --    chunk[#chunk + 1] = " ";
@@ -295,7 +304,7 @@ function hex2utf8(hex, chunk_size)
         else
             invalid = invalid + 1;
         end;
-        
+
         if (i % chunk_size == 0) then
             if (invalid == 0) then
                 result[#result + 1] = table.concat(chunk);
@@ -304,7 +313,7 @@ function hex2utf8(hex, chunk_size)
             invalid = 0;
         end;
     end;
-    
+
     if (invalid == 0) then
         result[#result + 1] = table.concat(chunk);
     end;
@@ -343,9 +352,9 @@ function test_utf8()
                 valid = valid .. "|";
             else
                 valid = valid .. " ";
-            end;            
+            end;
         end;
-        
+
         local buf = hex2utf8(hex, 20);
         if (string.tohex(buf) ~= "d0af20d0bbd18ed0b1d0bbd18e20d182d0b5d0b1d18f") then
             print("HEX:   ["..hex.."]");
@@ -363,17 +372,17 @@ function test_jpg(filename)
         print(msg);
         return;
     end;
-    
+
     local content = f:read("*all");
     f:close();
-    
+
     local w, h = validate_JPG(content);
-    
+
     if (w == nil) then
         print(filename.." is not a valid JPG.");
-        return; 
+        return;
     end
-    
+
     print(filename.." is a valid JPG file ("..w.."x"..h..").");
 end
 
