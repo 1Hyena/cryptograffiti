@@ -102,10 +102,10 @@ executive = {
     tickets        = {},
     min_conf       = 0,    -- minimum number of confirmations required to fill an order
     version        = 0.95, -- the web client won't work if its version is lower than this
-    profits        = {["1MVpQJA7FtcDrwKC6zATkZvZcxqma4JixS"] = 0.10}
---  Previous profit distribution scheme:
---  profits        = {["1MVpQJA7FtcDrwKC6zATkZvZcxqma4JixS"] = 0.09,
---                    ["1ED5qtLdnFURLGQxajysRJtfJyNZ3fVWLi"] = 0.01}
+    profits        = {["1MVpQJA7FtcDrwKC6zATkZvZcxqma4JixS"] = 0.09, -- cryptograffiti.info
+                    --["??????????????????????????????????"] = 0.01, -- blockchair.com
+                    --["??????????????????????????????????"] = 0.01, -- bsv.btc.com
+                      ["14CcTei9dQKAjgbBbBci3a5yJBPy8y6NWq"] = 0.01} -- bchsvexplorer.com
 };
 
 admin = {
