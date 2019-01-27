@@ -328,7 +328,7 @@ function cg_decode() {
     var type  = CG_GRAFFITI[nr].type;
     var fsize = CG_GRAFFITI[nr].fsize;
     var fun   = ("fun" in CG_GRAFFITI[nr] ? CG_GRAFFITI[nr].fun : null);
-    if (fsize !== null) fsize = parseInt(fsize, 10);
+    if (fsize !== null)  fsize  = parseInt(fsize, 10);
 
     CG_READ_APIS[api].delay = -1;
     xmlhttpGet(sprintf(CG_READ_APIS[api].request, txid), '',
@@ -426,7 +426,7 @@ function cg_decode() {
                         var txt = msg;
                         processedTxt = processColours(txt);
 
-                        if (timestamp != 0) {
+                        if (timestamp !== 0 && timestamp !== null) {
                             while (msgheaderR.hasChildNodes()) msgheaderR.removeChild(msgheaderR.lastChild);
                             msgheaderR.appendChild(document.createTextNode(timeConverter(timestamp)));
                         }
@@ -625,7 +625,7 @@ function cg_read_extract_insight(r) {
             op_return = op_return + hex2ascii(hex_body);
         }
     }
-    var time = 0;
+    var time = null;
     if ("time" in r) time = r.time;
     return [out_bytes, op_return, time];
 }
@@ -676,7 +676,7 @@ function cg_read_extract_blockchair(r) {
             op_return = op_return + hex2ascii(hex_body);
         }
     }
-    var time = 0;
+    var time = null;
     if ("time" in r) time = r.time;
     return [out_bytes, op_return, time];
 }
@@ -716,7 +716,7 @@ function cg_read_extract_btc(r) {
             op_return = op_return + hex2ascii(hex_body);
         }
     }
-    var time = 0;
+    var time = null;
     if ("block_time" in r.data) time = r.data.block_time;
     return [out_bytes, op_return, time];
 }
@@ -968,9 +968,10 @@ function cg_read_get_latest() {
 
                         if (CG_NEWEST_TX_NR !== null) {
                             var obj = {
-                                type:  json.txs[0].type,
-                                fsize: json.txs[0].fsize,
-                                txid:  json.txs[0].txid
+                                type:   json.txs[0].type,
+                                fsize:  json.txs[0].fsize,
+                                txid:   json.txs[0].txid,
+                                amount: json.txs[0].amount
                             };
 
                             var key = parseInt(json.txs[0].nr, 10);
@@ -1075,6 +1076,7 @@ function cg_read_load_new_txs() {
                                 type:  json.txs[i].type,
                                 fsize: json.txs[i].fsize,
                                 txid:  json.txs[i].txid,
+                                amount:json.txs[i].amount,
                                 fun:   fun
                             };
                             if (CG_READ_FILTER_TXS === null || obj.txid in CG_READ_FILTER_TXS) {
@@ -1165,10 +1167,11 @@ function cg_read_load_old_txs() {
                         var sz = json.txs.length;
                         for (var i = 0; i < sz; i++) {
                             var obj = {
-                                type:  json.txs[i].type,
-                                fsize: json.txs[i].fsize,
-                                txid:  json.txs[i].txid,
-                                fun:   fun
+                                type:   json.txs[i].type,
+                                fsize:  json.txs[i].fsize,
+                                txid:   json.txs[i].txid,
+                                amount: json.txs[i].amount,
+                                fun:    fun
                             };
                             if (CG_READ_FILTER_TXS === null || obj.txid in CG_READ_FILTER_TXS) {
                                 var key = parseInt(json.txs[i].nr, 10);
@@ -1307,8 +1310,11 @@ function cg_read_create_graffiti(div, nr, append) {
     var msgfooter  = document.createElement("DIV");
     var msgfooterC = document.createElement("DIV");
 
-    var t_nr = document.createTextNode("#"+nr);
-    var a_nr = document.createElement("a"); a_nr.appendChild(t_nr);
+    msgheaderL.appendChild(document.createElement("span"));
+
+    var t_nr = document.createTextNode(nr);
+    var a_nr = document.createElement("a");
+    a_nr.appendChild(t_nr);
     a_nr.title = CG_TXT_READ_LINK_TO_THIS_MSG[CG_LANGUAGE];
     a_nr.href  = "#"+t.txid;
     if ("type" in CG_GRAFFITI[nr]) {
@@ -1363,7 +1369,25 @@ function cg_read_create_graffiti(div, nr, append) {
     };
     //a_nr.onclick=function(){fade_out(); setTimeout(function(){location.reload();}, 500); return true;};
 
+    if ("amount" in t) {
+        var amount = parseInt(t.amount, 10);
+        if (amount > 0) {
+            var tx_icon   = document.createElement("img");
+            tx_icon.src   = document.getElementById("gfx_icon").src;
+            tx_icon.title = CG_TXT_READ_MSG_FLAG_CRYPTOGRAFFITI[CG_LANGUAGE];
+            msgheaderL.appendChild(tx_icon);
+        }
+    }
+
     msgheaderL.appendChild(a_nr);
+
+    if ("fun" in t && t.fun === "get_btc_donations") {
+        var tx_featured = document.createElement("span");
+        tx_featured.appendChild(document.createTextNode("🌟"));
+        tx_featured.title = CG_TXT_READ_MSG_FLAG_FEATURED[CG_LANGUAGE];
+        msgheaderL.appendChild(tx_featured);
+    }
+
     msgheaderR.appendChild(document.createTextNode(""));
 
     var t_txid = document.createTextNode(t.txid);

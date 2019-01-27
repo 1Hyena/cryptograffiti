@@ -418,6 +418,20 @@ var CG_TXT_READ_LINK_TO_THIS_MSG =
     ru : "Ссылка на это сообщение."
 };
 
+var CG_TXT_READ_MSG_FLAG_CRYPTOGRAFFITI =
+{
+    en : "This graffiti was made using our service.",
+    et : "See graffiti tehti meie teenuse abiga.",
+    ru : "(This graffiti was made using our service.)"
+};
+
+var CG_TXT_READ_MSG_FLAG_FEATURED =
+{
+    en : "This graffiti is featured and can appear anywhere.",
+    et : "See graffiti on esiletõstetud ja võib ilmuda igale poole.",
+    ru : "(This graffiti is featured and can appear anywhere.)"
+};
+
 var CG_TXT_READ_TRANSACTION_DETAILS =
 {
     en : "Transaction details.",
@@ -522,6 +536,20 @@ var CG_TXT_VIEW_LOADING_TX_DATA =
     en : "Loading transaction %s from %s.",
     et : "Laen ülekannet %s, kasutades teenust %s.",
     ru : "Загружается транзакция %s из %s."
+};
+
+var CG_TXT_VIEW_LOADING_TX_METADATA =
+{
+    en : "Loading the metadata of TX %s.",
+    et : "Laen ülekande %s eelandmeid.",
+    ru : "(Loading the metadata of TX %s.)"
+};
+
+var CG_TXT_VIEW_LOADING_TX_METADATA_SUCCESS =
+{
+    en : "Metadata of TX %s loaded successfully.",
+    et : "Ülekande %s eelandmed laeti edukalt.",
+    ru : "(Metadata of TX %s loaded successfully.)"
 };
 
 var CG_TXT_VIEW_LOADING_TX_DATA_FAIL =
