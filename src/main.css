@@ -1121,19 +1121,19 @@ a.cg-link:hover {
     width: 0;
 }
 
-.cg-msgheader-left > :nth-child(2),
-.cg-msgheader-left > :nth-child(4) {
+.cg-msgheader-left > :not(a):nth-child(2),
+.cg-msgheader-left > :not(a):nth-child(4) {
     display: inline-block;
     height: 2ch;
     vertical-align: middle;
     cursor: help;
 }
 
-.cg-msgheader-left > :nth-child(2) {
+.cg-msgheader-left > :not(a):nth-child(2) {
     margin-right: 0.25ch;
 }
 
-.cg-msgheader-left > :nth-child(4) {
+.cg-msgheader-left > :not(a):nth-child(4) {
     margin-left: 0.25ch;
 }
 
