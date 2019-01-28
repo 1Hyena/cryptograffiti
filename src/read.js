@@ -45,10 +45,10 @@ var CG_READ_APIS = [
     },
     {
         domain       : "blockchair.com",
-        request      : "https://api.blockchair.com/bitcoin-sv/raw/transaction/%s",
+        request      : "https://api.blockchair.com/bitcoin-sv/dashboards/transaction/%s",
         link         : "https://blockchair.com/bitcoin-sv/transaction/%s",
         link_addr    : "https://blockchair.com/bitcoin-sv/address/%s",
-        extract      : "cg_read_extract_blockchair",
+        extract      : "cg_read_extract_blockchair_dashboard",
         delay        : 0,
         max_delay    : 2*CG_READ_PPS,
         down         : false,
@@ -681,6 +681,56 @@ function cg_read_extract_blockchair(r) {
     return [out_bytes, op_return, time];
 }
 
+function cg_read_extract_blockchair_dashboard(r) {
+    var out_bytes= "";
+    var op_return= "";
+
+    var txid = null;
+    for (var key in r.data) {
+        if (r.data.hasOwnProperty(key)) {
+            txid = key;
+            break;
+        }
+    }
+    if (txid === null || (txid+"").length != 64) return null;
+
+    var outs = r.data[txid].outputs;
+    var size = outs.length;
+
+    for (var j = 0; j < size; j++) {
+        if ("script_hex" in outs[j]
+        && outs[j].script_hex.length === 50
+        && outs[j].script_hex.substr( 0,6).toLowerCase() === "76a914"
+        && outs[j].script_hex.substr(46,4).toLowerCase() === "88ac") {
+            out_bytes = out_bytes + hex2ascii(outs[j].script_hex.substr(6,40));
+        }
+        else if ("script_hex" in outs[j]
+        && outs[j].script_hex.length === 46
+        && outs[j].script_hex.substr( 0,4).toLowerCase() === "a914"
+        && outs[j].script_hex.substr(44,2).toLowerCase() === "87") {
+            out_bytes = out_bytes + hex2ascii(outs[j].script_hex.substr(4,40));
+        }
+        else if ("script_hex" in outs[j]
+        && outs[j].script_hex.substr( 0,2).toLowerCase() === "6a") {
+            op_return = op_return + hex2ascii(outs[j].script_hex.substr(2));
+        }
+        else if ("recipient" in outs[j]
+        &&  outs[j].recipient.length > 0) {
+            var addr = outs[j].recipient;
+            var base58 = btc_base58(addr);
+            if (base58 !== null) {
+                out_bytes = out_bytes + Bitcoin.getAddressPayload(base58);
+            }
+        }
+    }
+
+    var time = null;
+    if ("transaction" in r.data[txid] && "time" in r.data[txid].transaction) {
+        time = new Date(r.data[txid].transaction.time + "Z")/1000;
+    }
+    return [out_bytes, op_return, time];
+}
+
 function cg_read_extract_btc(r) {
     var out_bytes= "";
     var op_return= "";
@@ -747,7 +797,7 @@ function cg_read_extract_blockr(r) {
     }
     else return null;
 
-    var timestamp = Date.parse(r.data.time_utc)/1000;
+    var timestamp = new Date(r.data.time_utc + "Z")/1000;
     return [out_bytes, op_return, timestamp];
 }
 
