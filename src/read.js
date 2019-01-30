@@ -1358,11 +1358,13 @@ function cg_read_create_graffiti(div, nr, append) {
     var msgheaderR = document.createElement("DIV");
     var msgbody    = document.createElement("PRE");
     var msgfooter  = document.createElement("DIV");
-    var msgfooterC = document.createElement("DIV");
+    var msgfooterL = document.createElement("DIV");
+    var msgfooterR = document.createElement("DIV");
 
     msgheaderL.appendChild(document.createElement("span"));
+    msgfooterR.appendChild(document.createElement("span"));
 
-    var t_nr = document.createTextNode(nr);
+    var t_nr = document.createTextNode("#"+nr);
     var a_nr = document.createElement("a");
     a_nr.appendChild(t_nr);
     a_nr.title = CG_TXT_READ_LINK_TO_THIS_MSG[CG_LANGUAGE];
@@ -1419,22 +1421,13 @@ function cg_read_create_graffiti(div, nr, append) {
     };
     //a_nr.onclick=function(){fade_out(); setTimeout(function(){location.reload();}, 500); return true;};
 
-    if ("amount" in t) {
-        var amount = parseInt(t.amount, 10);
-        if (amount > 0) {
-            var tx_icon   = document.createElement("img");
-            tx_icon.src   = document.getElementById("gfx_icon").src;
-            tx_icon.title = CG_TXT_READ_MSG_FLAG_CRYPTOGRAFFITI[CG_LANGUAGE];
-            msgheaderL.appendChild(tx_icon);
-        }
-    }
-
     msgheaderL.appendChild(a_nr);
 
     if ("fun" in t && t.fun === "get_btc_donations") {
         var tx_featured = document.createElement("span");
         tx_featured.appendChild(document.createTextNode("🌟"));
         tx_featured.title = CG_TXT_READ_MSG_FLAG_FEATURED[CG_LANGUAGE];
+        tx_featured.classList.add("cg-msgbox-stamp");
         msgheaderL.appendChild(tx_featured);
     }
 
@@ -1455,8 +1448,36 @@ function cg_read_create_graffiti(div, nr, append) {
     msgheader.appendChild(msgheaderL);
     msgheader.appendChild(msgheaderR);
     msgbody.appendChild(span);
-    msgfooterC.appendChild(a_txid)
-    msgfooter.appendChild(msgfooterC);
+    msgfooterL.appendChild(a_txid)
+
+    if ("amount" in t && t.amount !== null) {
+        var amount = parseInt(t.amount, 10);
+        if (amount > 0) {
+            var tx_stamp1 = document.createElement("img");
+            tx_stamp1.src = document.getElementById("gfx_icon").src;
+            tx_stamp1.title = CG_TXT_READ_MSG_FLAG_CRYPTOGRAFFITI[CG_LANGUAGE];
+            tx_stamp1.classList.add("cg-msgbox-stamp");
+
+            var tx_stamp2 = document.createElement("span");
+            tx_stamp2.appendChild(document.createTextNode("🔒"));
+            tx_stamp2.title = CG_TXT_READ_MSG_FLAG_PERMANENT[CG_LANGUAGE];
+            tx_stamp2.classList.add("cg-msgbox-stamp");
+
+            msgfooterR.appendChild(tx_stamp2);
+            msgfooterR.appendChild(tx_stamp1);
+        }
+        else {
+            var tx_stamp2 = document.createElement("span");
+            tx_stamp2.appendChild(document.createTextNode("🔓"));
+            tx_stamp2.title = CG_TXT_READ_MSG_FLAG_PRUNABLE[CG_LANGUAGE];
+            tx_stamp2.classList.add("cg-msgbox-stamp");
+
+            msgfooterR.appendChild(tx_stamp2);
+        }
+    }
+
+    msgfooter.appendChild(msgfooterL);
+    msgfooter.appendChild(msgfooterR);
 
     msgbox.appendChild(msgheader);
     msgbox.appendChild(msgbody);
@@ -1466,7 +1487,8 @@ function cg_read_create_graffiti(div, nr, append) {
     msgheaderL.classList.add("cg-msgheader-left");
     msgheaderR.classList.add("cg-msgheader-right");
     msgfooter.classList.add("cg-msgfooter");
-    msgfooterC.classList.add("cg-msgfooter-content");
+    msgfooterL.classList.add("cg-msgfooter-left");
+    msgfooterR.classList.add("cg-msgfooter-right");
     msgbody.classList.add("cg-msgbody");
     msgbody.classList.add("cg-read-msgbody");
     msgbox.classList.add("cg-msgbox");

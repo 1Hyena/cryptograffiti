@@ -27,7 +27,6 @@ function cg_construct_help(main) {
 
     wrapper.appendChild(a_protocol);
     wrapper.appendChild(document.createElement("BR"));
-    wrapper.appendChild(cg_help_create_list(CG_TXT_HELP_TODO,  CG_TXT_HELP_KNOWN_ISSUES[CG_LANGUAGE]));
     cell.appendChild(wrapper);
     table.appendChild(cell);
     div.appendChild(table);

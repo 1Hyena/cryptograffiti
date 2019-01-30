@@ -827,7 +827,8 @@ function cg_write_create_msgbox(chunks, mimetype) {
     var msgheaderR = document.createElement("DIV");
     var msgbody    = document.createElement("PRE");
     var msgfooter  = document.createElement("DIV");
-    var msgfooterC = document.createElement("DIV");
+    var msgfooterL = document.createElement("DIV");
+    var msgfooterR = document.createElement("DIV");
 
     var span = document.createElement('span');
     span.appendChild(document.createTextNode("("+CG_TXT_READ_MSG_NOT_DECODED_YET[CG_LANGUAGE]+")"));
@@ -836,7 +837,8 @@ function cg_write_create_msgbox(chunks, mimetype) {
     msgheader.appendChild(msgheaderL);
     msgheader.appendChild(msgheaderR);
     msgbody.appendChild(span);
-    msgfooter.appendChild(msgfooterC);
+    msgfooter.appendChild(msgfooterL);
+    msgfooter.appendChild(msgfooterR);
 
     msgbox.appendChild(msgheader);
     msgbox.appendChild(msgbody);
@@ -846,7 +848,8 @@ function cg_write_create_msgbox(chunks, mimetype) {
     msgheaderL.classList.add("cg-msgheader-left");
     msgheaderR.classList.add("cg-msgheader-right");
     msgfooter.classList.add("cg-msgfooter");
-    msgfooterC.classList.add("cg-msgfooter-content");
+    msgfooterL.classList.add("cg-msgfooter-left");
+    msgfooterR.classList.add("cg-msgfooter-right");
     msgbody.classList.add("cg-msgbody");
     msgbox.classList.add("cg-msgbox");
     msgbox.classList.add("cg-msgbox-selected");

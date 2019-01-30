@@ -265,29 +265,28 @@ function cg_view_update() {
         return cg_view_update_end(again);
     }
 
-    var msgheader = document.getElementById("cg-view-msgheader");
-    if (msgheader !== null && CG_VIEW_TX_HASH !== null) {
-        cg_view_get_msg_metadata(msgheader, CG_VIEW_TX_HASH);
+    var msgbox = document.getElementById("cg-view-msgbox");
+    if (msgbox !== null && CG_VIEW_TX_HASH !== null) {
+        cg_view_get_msg_metadata(msgbox, CG_VIEW_TX_HASH);
     }
 
     return cg_view_update_end(again);
 }
 
-function cg_view_get_msg_metadata(msgheader, txhash) {
-    var old_hash = msgheader.getAttribute("data-txhash");
+function cg_view_get_msg_metadata(msgbox, txhash) {
+    var old_hash = msgbox.getAttribute("data-txhash");
     if (old_hash !== txhash && old_hash.length > 0) {
-        while (msgheader.hasChildNodes()) msgheader.removeChild(msgheader.lastChild);
-        msgheader.setAttribute("data-age",   "0");
-        msgheader.setAttribute("data-txhash", "");
+        msgbox.setAttribute("data-age",   "0");
+        msgbox.setAttribute("data-txhash", "");
         return;
     }
 
-    var age_text = msgheader.getAttribute("data-age");
+    var age_text = msgbox.getAttribute("data-age");
 
     if (age_text.length === 0) return;
 
     var age = parseInt(age_text, 10);
-    msgheader.setAttribute("data-age", (age+1).toString(10));
+    msgbox.setAttribute("data-age", (age+1).toString(10));
 
     if (age !== 0) return;
 
@@ -304,10 +303,12 @@ function cg_view_get_msg_metadata(msgheader, txhash) {
     xmlhttpPost(CG_API, 'fun=get_msg_metadata&data='+json_str,
         function(response) {
             var status = "???";
-            var header = document.getElementById("cg-view-msgheader");
-            if (header !== null) {
+            var box = document.getElementById("cg-view-msgbox");
+            var footerR = document.getElementById("cg-view-msgfooter-right");
+            var headerL = document.getElementById("cg-view-msgheader-left");
+            if (box !== null) {
                 // By default we will retry in 30 seconds.
-                header.setAttribute("data-age", "-30");
+                box.setAttribute("data-age", "-30");
             }
 
                  if (response === false) status = CG_TXT_READ_LOADING_ERROR[CG_LANGUAGE];
@@ -322,20 +323,22 @@ function cg_view_get_msg_metadata(msgheader, txhash) {
                 &&  json.payload[0].nr !== null) {
                     status = sprintf(CG_TXT_VIEW_LOADING_TX_METADATA_SUCCESS[CG_LANGUAGE], txs[0]);
 
-                    if (header !== null) {
+                    if (box !== null && footerR !== null) {
                         // Success! Now let's stop counting updates...
-                        header.setAttribute("data-age", "");
+                        box.setAttribute("data-age", "");
 
-                        while (header.hasChildNodes()) header.removeChild(header.lastChild);
+                        while (footerR.hasChildNodes()) footerR.removeChild(footerR.lastChild);
+                        while (headerL.hasChildNodes()) headerL.removeChild(headerL.lastChild);
 
                         var tx_link = document.createElement("a");
-                        var tx_text = document.createTextNode(json.payload[0].nr);
+                        var tx_text = document.createTextNode("#"+json.payload[0].nr);
                         var tx_icon = null;
                         if ("amount" in json.payload[0]
                         &&  parseInt(json.payload[0].amount, 10) > 0) {
                             tx_icon     = document.createElement("img");
                             tx_icon.src = document.getElementById("gfx_icon").src;
                             tx_icon.title = CG_TXT_READ_MSG_FLAG_CRYPTOGRAFFITI[CG_LANGUAGE];
+                            tx_icon.classList.add("cg-msgbox-stamp");
                         }
 
                         tx_link.title = CG_TXT_READ_LINK_TO_THIS_MSG[CG_LANGUAGE];
@@ -343,9 +346,11 @@ function cg_view_get_msg_metadata(msgheader, txhash) {
                         tx_link.onclick=function(){fade_out(); setTimeout(function(){location.reload();}, 500); return true;};
                         tx_link.appendChild(tx_text);
 
-                        header.appendChild(document.createElement("span"));
-                        if (tx_icon !== null) header.append(tx_icon);
-                        header.appendChild(tx_link);
+                        headerL.appendChild(document.createElement("span"));
+                        headerL.appendChild(tx_link);
+
+                        footerR.appendChild(document.createElement("span"));
+                        if (tx_icon !== null) footerR.append(tx_icon);
 
                         var sel = document.getElementById("cg-view-type-of-"+txs[0]);
                         if (sel !== null) {
@@ -377,7 +382,8 @@ function cg_view_create_msgbox(out_bytes, op_return, mimetype, open, txhash, tim
     var msgheaderR = document.createElement("DIV");
     var msgbody    = document.createElement("PRE");
     var msgfooter  = document.createElement("DIV");
-    var msgfooterC = document.createElement("DIV");
+    var msgfooterL = document.createElement("DIV");
+    var msgfooterR = document.createElement("DIV");
 
     var t_txid = document.createTextNode(txhash);
     var a_txid = document.createElement("a");
@@ -385,7 +391,7 @@ function cg_view_create_msgbox(out_bytes, op_return, mimetype, open, txhash, tim
     a_txid.title = CG_TXT_READ_TRANSACTION_DETAILS[CG_LANGUAGE];
     a_txid.href  = link;
     a_txid.target= "_blank";
-    msgfooterC.appendChild(a_txid)
+    msgfooterL.appendChild(a_txid)
 
     if (timestamp !== null && timestamp !== 0) {
         msgheaderR.appendChild(document.createTextNode(timeConverter(timestamp)));
@@ -393,7 +399,8 @@ function cg_view_create_msgbox(out_bytes, op_return, mimetype, open, txhash, tim
 
     msgheader.appendChild(msgheaderL);
     msgheader.appendChild(msgheaderR);
-    msgfooter.appendChild(msgfooterC);
+    msgfooter.appendChild(msgfooterL);
+    msgfooter.appendChild(msgfooterR);
 
     msgbox.appendChild(msgheader);
     msgbox.appendChild(msgbody);
@@ -403,15 +410,17 @@ function cg_view_create_msgbox(out_bytes, op_return, mimetype, open, txhash, tim
     msgheaderL.classList.add("cg-msgheader-left");
     msgheaderR.classList.add("cg-msgheader-right");
     msgfooter.classList.add("cg-msgfooter");
-    msgfooterC.classList.add("cg-msgfooter-content");
+    msgfooterL.classList.add("cg-msgfooter-left");
+    msgfooterR.classList.add("cg-msgfooter-right");
     msgbody.classList.add("cg-msgbody");
     msgbox.classList.add("cg-msgbox");
     msgbox.classList.add("cg-msgbox-selected");
     msgbox.classList.add("cg-borderbox");
-
-    msgheaderL.id = "cg-view-msgheader";
-    msgheaderL.setAttribute("data-age", "0");
-    msgheaderL.setAttribute("data-txhash", "");
+    msgbox.setAttribute("data-age", "0");
+    msgbox.setAttribute("data-txhash", "");
+    msgbox.id = "cg-view-msgbox";
+    msgheaderL.id = "cg-view-msgheader-left";
+    msgfooterR.id = "cg-view-msgfooter-right";
 
     var msg = "";
     var fsz = is_blockchain_file(out_bytes, null);

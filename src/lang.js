@@ -432,6 +432,20 @@ var CG_TXT_READ_MSG_FLAG_FEATURED =
     ru : "(This graffiti is featured and can appear anywhere.)"
 };
 
+var CG_TXT_READ_MSG_FLAG_PERMANENT =
+{
+    en : "This graffiti is permanently stored on the block chain.",
+    et : "See graffiti on plokiahelasse salvestatud igaveseks.",
+    ru : "(This graffiti is permanently stored on the block chain.)"
+};
+
+var CG_TXT_READ_MSG_FLAG_PRUNABLE =
+{
+    en : "This graffiti is prunable.",
+    et : "See graffiti on kustutatav.",
+    ru : "(This graffiti is prunable.)"
+};
+
 var CG_TXT_READ_TRANSACTION_DETAILS =
 {
     en : "Transaction details.",
@@ -1216,30 +1230,6 @@ var CG_TXT_HELP_PROTOCOL_BODY = {
     et : "Iga Bitimündi ülekanne sisaldab väljundaadresseid. Tavaliselt me näeme neid aadresseid Base58 formaadis. Tegelikult aga on iga aadress lihtsalt 20-baidine binaarsõne. Et salvestada fail plokiahelasse, peaks ta kõigepealt jagama 20-baidisteks tükkideks. Kui viimane tükk on lühem kui 20 baiti, tuleb selle lõppu lisada vajaminev arv nullbaite. Faili lõpu tähistamiseks tuleb lisada tükkide jadale veel faili enda RIPEMD-160 räsi. Valikuliselt võib lisada failile ka tekstilise kommentaari, mis peab järgnema vahetult faili räsile. Kommentaar peaks olema UTF-8 kodeeringus ja sarnaselt failile peaks ta olema jagatud 20-baidisteks tükkideks. Kommentaar ise ei pea lõppema oma räsiga. Faili tükid, faili räsi ja kommentaari tükid tuleb siis liita kokku ühte massiivi ja seejärel iga tükk viia tema Base58 kujule. Viimase toiminguna on veel vaja teha tavapärane Bitimündi ülekanne kõigile saadud massiivis esindatud Bitimündi aadressidele.",
     ru : "Каждая Биткойн транзакция содержит число исходящих адресов. Обычно мы видим эти адреса в их Base58 формате. Однако, по своей сути, они всего лишь 20-байтные двоичные строки. Что бы сохранить файл в цепочку блоков, он должен быть поделён на 20-байтные фрагменты (добавляя нули в конец последнего фрагмента при необходимости). Затем, для обозначения конца файла, необходимо добавить RIPEMD-160 хеш оригинального файла к списку фрагментов файла. По желанию, можно добавить текстовый комментарий к файлу цепочки блоков сразу после хеша. Комментарий должен быть в UTF-8 кодировке и аналогично файлу, комментарий должен быть поделён на 20-байтные фрагменты. Однако, комментарий не должен заканчиваться своим хешем. Затем мы связываем фрагменты файла, хеш файла и фрагменты комментария в один массив. Все фрагменты должны быть сконвертированы в Base58 формат. В заключение, обычная Биткойн транзакция должна быть произведена, послав минимально возможную сумму биткойнов на каждый биткойн адрес в этом массиве."
 };
-
-var CG_TXT_HELP_KNOWN_ISSUES = {
-    en : "Known Issues",
-    et : "Teadaolevad probleemid",
-    ru : "Известные проблемы"
-};
-
-var CG_TXT_HELP_TODO = [
-    {
-        en : "Make it possible to view only the messages of a certain type, such as images.",
-        et : "Võimaldada lugeda vaid kindlaksmääratud tüüpi sõnumeid nagu näiteks pilte.",
-        ru : "Сделать возможным просмотр только сообщений определённого вида, таких как картинки."
-    },
-    {
-        en : "Make it possible to decode only the transactions of a user defined address.",
-        et : "Võimaldada üksnes kasutaja määratud aadressile tehtud ülekannete dekodeerimine.",
-        ru : "Сделать возможным декодирование только транзакций указанного пользователем адреса."
-    },
-    {
-        en : "Add more hints and helping information under the help tab and into tooltips.",
-        et : "Lisa rohkem abistavat teavet abi kaardi alla ja muudesse kohtadesse.",
-        ru : "Добавить больше рекомендаций и вспомогательной информации в закладку помощь и всплывающие подсказки."
-    }
-];
 
 ////////////////////////////////////////////////////////////////////////////////
 //  HELP TAB TRANSLATIONS END                                                 //
