@@ -10,7 +10,7 @@ var CG_TX_NR       = null;
 var CG_TX_HASH     = null;
 var CG_TX_TYPE     = null;
 var CG_SCROLL_KEY  = false;
-var CG_VERSION     = "1.05";
+var CG_VERSION     = "1.06";
 var CG_ACTIVE_TAB  = null;
 var CG_DECODER_OK  = true; // Decoder is online?
 var CG_ENCODER_OK  = true; // Encoder is online?
@@ -113,10 +113,17 @@ function cg_setup_parameters(params) {
                 case "lang"       : CG_LANGUAGE         = val; break;
                 case "tx_nr"      : CG_TX_NR            = val; break;
                 case "filter_addr": CG_READ_FILTER_ADDR = val; break;
-                case "filter_key" : CG_READ_FILTER_KEY  = val; break;
                 case "write_txt"  : CG_WRITE_TEXT       = val; break;
                 case "order_nr"   : CG_SAVE_ORDER_NR    = val; break;
                 case "mimetype"   : CG_READ_MIMETYPE    = val; break;
+                case "filter_key" : {
+                                        var ripemd160 = CryptoJS.algo.RIPEMD160.create();
+                                        ripemd160.update(val);
+                                        var filter = Bitcoin.createAddressFromText(hex2ascii(ripemd160.finalize()));
+                                        CG_READ_FILTER_ADDR = filter;
+                                        CG_READ_FILTER_KEY = val;
+                                        break;
+                                    }
                 case "tx_hash"    : {
                                         if (val.match(/[0-9A-Fa-f]{64}\.[a-zA-Z0-9_-]+/g)) {
                                             CG_TX_HASH = val.substr(0, 64).toLowerCase();
