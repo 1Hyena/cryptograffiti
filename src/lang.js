@@ -5,14 +5,14 @@ var CG_TXT_THE_ORIGINAL_BITCOIN =
 {
     en : "Bitcoin SV is The Original Bitcoin from which it all started in 2009.",
     et : "Bitcoin SV on see originaalne Bitcoin, millest aastal 2009 kõik alguse sai.",
-    ru : "(Bitcoin SV is The Original Bitcoin from which it all started in 2009.)"
+    ru : "Bitcoin SV это Оригинальный биткойн с которого всё началось в 2009."
 };
 
 var CG_TXT_THE_FAKE_BITCOIN =
 {
     en : "Bitcoin Core (BTC) is the fake Bitcoin hijacked by the Blockstream company.",
     et : "Bitcoin Core (BTC) on võlts Bitcoin, mille Blockstream kaaperdas.",
-    ru : "(Bitcoin Core (BTC) is the fake Bitcoin hijacked by the Blockstream company.)"
+    ru : "Bitcoin Core (BTC) это фальшивый биткойн захваченный компанией Blockstream."
 };
 
 var CG_TXT_MAIN_ERROR_1 =
@@ -436,28 +436,28 @@ var CG_TXT_READ_MSG_FLAG_CRYPTOGRAFFITI =
 {
     en : "This graffiti was made using our service.",
     et : "See graffiti tehti meie teenuse abiga.",
-    ru : "(This graffiti was made using our service.)"
+    ru : "Это граффити было созданно с использованием нашего сервиса."
 };
 
 var CG_TXT_READ_MSG_FLAG_FEATURED =
 {
     en : "This graffiti is featured and can appear anywhere.",
     et : "See graffiti on esiletõstetud ja võib ilmuda igale poole.",
-    ru : "(This graffiti is featured and can appear anywhere.)"
+    ru : "Это граффити выделенное и может отображаться везде."
 };
 
 var CG_TXT_READ_MSG_FLAG_PERMANENT =
 {
     en : "This graffiti is permanently stored on the block chain.",
     et : "See graffiti on plokiahelasse salvestatud igaveseks.",
-    ru : "(This graffiti is permanently stored on the block chain.)"
+    ru : "Это граффити навсегда сохранено в цепочке блоков."
 };
 
 var CG_TXT_READ_MSG_FLAG_PRUNABLE =
 {
     en : "This graffiti is prunable.",
     et : "See graffiti on kustutatav.",
-    ru : "(This graffiti is prunable.)"
+    ru : "Это удаляемое граффити."
 };
 
 var CG_TXT_READ_TRANSACTION_DETAILS =
@@ -570,14 +570,14 @@ var CG_TXT_VIEW_LOADING_TX_METADATA =
 {
     en : "Loading the metadata of TX %s.",
     et : "Laen ülekande %s eelandmeid.",
-    ru : "(Loading the metadata of TX %s.)"
+    ru : "Загружаются метаданные транзакции %s."
 };
 
 var CG_TXT_VIEW_LOADING_TX_METADATA_SUCCESS =
 {
     en : "Metadata of TX %s loaded successfully.",
     et : "Ülekande %s eelandmed laeti edukalt.",
-    ru : "(Metadata of TX %s loaded successfully.)"
+    ru : "Метаданные транзакции %s успешно загружены."
 };
 
 var CG_TXT_VIEW_LOADING_TX_DATA_FAIL =
@@ -862,7 +862,7 @@ var CG_TXT_SAVE_ORDER_RESTORE =
 {
     en : "Your order is being restored.",
     et : "Teie tellimust taastatakse.",
-    ru : "(Your order is being restored.)"
+    ru : "Ваш ордер восстанавливается."
 };
 
 var CG_TXT_SAVE_ORDER_PENDING =
@@ -897,14 +897,14 @@ var CG_TXT_SAVE_ORDER_PROOF =
 {
     en : "Hash of the transaction that filled your order:",
     et : "Ülekande räsi, mis täitis teie tellimuse:",
-    ru : "(Hash of the transaction that filled your order:)"
+    ru : "Хэш транзакции вашего ордера:"
 };
 
 var CG_TXT_SAVE_ORDER_PROOF_LINK =
 {
     en : "Link to your graffiti.",
     et : "Viide Teie graffitile.",
-    ru : "(Link to your graffiti.)"
+    ru : "Ссылка на ваше граффити."
 };
 
 var CG_TXT_SAVE_ORDER_TIMEOUT =
@@ -1037,7 +1037,7 @@ var CG_TXT_SAVE_PAYMENT_WARNING =
 {
     en : "We do NOT accept BTC or BCH tokens.",
     et : "Me EI aksepteeri BTC või BCH bitimünte.",
-    ru : "(We do NOT accept BTC or BCH tokens.)"
+    ru : "Мы НЕ принимаем BTC или BCH монеты."
 };
 
 var CG_TXT_SAVE_PAYMENT_NOTE =
@@ -1058,14 +1058,14 @@ var CG_TXT_SAVE_MONEYBUTTON_SUCCESS =
 {
     en : "Your MoneyButton payment was successful.",
     et : "Teie MoneyButton makse õnnestus.",
-    ru : "(Your MoneyButton payment was successful.)"
+    ru : "Ваш MoneyButton платёж успешно прошёл."
 };
 
 var CG_TXT_SAVE_MONEYBUTTON_FAILURE =
 {
     en : "Your MoneyButton payment failed.",
     et : "Teie MoneyButton makse ebaõnnestus.",
-    ru : "(Your MoneyButton payment failed.)"
+    ru : "Ваш MoneyButton платёж не прошёл."
 };
 
 ////////////////////////////////////////////////////////////////////////////////
