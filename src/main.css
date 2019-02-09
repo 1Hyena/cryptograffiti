@@ -1050,6 +1050,18 @@ a.cg-link:hover {
     background-color:rgba(255, 0, 0, 0.33);
 }
 
+.cg-msgbox:not(.cg-msgbox-prunable) .cg-stamp-prunable {
+    display: none;
+}
+
+.cg-msgbox.cg-msgbox-prunable .cg-stamp-permanent {
+    display: none;
+}
+
+.cg-msgbox:not(.cg-msgbox-ours) .cg-stamp-ours {
+    display: none;
+}
+
 .cg-read-loadingbox {
     position: relative;
     width: 100%;

@@ -421,7 +421,10 @@ function cg_decode() {
                                 msg = msg + "-----BEGIN OP_RETURN MESSAGE BLOCK-----\n"
                                           + op_return_msg + "\n----- END OP_RETURN MESSAGE BLOCK -----";
                             }
-                            else msg = op_return_msg;
+                            else {
+                                msg = op_return_msg;
+                                msgbox.classList.add("cg-msgbox-prunable");
+                            }
                         }
                         var txt = msg;
                         processedTxt = processColours(txt);
@@ -1452,28 +1455,29 @@ function cg_read_create_graffiti(div, nr, append) {
 
     if ("amount" in t && t.amount !== null) {
         var amount = parseInt(t.amount, 10);
-        if (amount > 0) {
-            var tx_stamp1 = document.createElement("img");
-            tx_stamp1.src = document.getElementById("gfx_icon").src;
-            tx_stamp1.title = CG_TXT_READ_MSG_FLAG_CRYPTOGRAFFITI[CG_LANGUAGE];
-            tx_stamp1.classList.add("cg-msgbox-stamp");
+        if (amount > 0) msgbox.classList.add("cg-msgbox-ours");
 
-            var tx_stamp2 = document.createElement("span");
-            tx_stamp2.appendChild(document.createTextNode("🔒"));
-            tx_stamp2.title = CG_TXT_READ_MSG_FLAG_PERMANENT[CG_LANGUAGE];
-            tx_stamp2.classList.add("cg-msgbox-stamp");
+        var tx_stamp1 = document.createElement("img");
+        tx_stamp1.src = document.getElementById("gfx_icon").src;
+        tx_stamp1.title = CG_TXT_READ_MSG_FLAG_CRYPTOGRAFFITI[CG_LANGUAGE];
+        tx_stamp1.classList.add("cg-msgbox-stamp");
+        tx_stamp1.classList.add("cg-stamp-ours");
 
-            msgfooterR.appendChild(tx_stamp2);
-            msgfooterR.appendChild(tx_stamp1);
-        }
-        else {
-            var tx_stamp2 = document.createElement("span");
-            tx_stamp2.appendChild(document.createTextNode("🔓"));
-            tx_stamp2.title = CG_TXT_READ_MSG_FLAG_PRUNABLE[CG_LANGUAGE];
-            tx_stamp2.classList.add("cg-msgbox-stamp");
+        var tx_stamp2 = document.createElement("span");
+        tx_stamp2.appendChild(document.createTextNode("🔒"));
+        tx_stamp2.title = CG_TXT_READ_MSG_FLAG_PERMANENT[CG_LANGUAGE];
+        tx_stamp2.classList.add("cg-msgbox-stamp");
+        tx_stamp2.classList.add("cg-stamp-permanent");
 
-            msgfooterR.appendChild(tx_stamp2);
-        }
+        var tx_stamp3 = document.createElement("span");
+        tx_stamp3.appendChild(document.createTextNode("🔓"));
+        tx_stamp3.title = CG_TXT_READ_MSG_FLAG_PRUNABLE[CG_LANGUAGE];
+        tx_stamp3.classList.add("cg-msgbox-stamp");
+        tx_stamp3.classList.add("cg-stamp-prunable");
+
+        msgfooterR.appendChild(tx_stamp3);
+        msgfooterR.appendChild(tx_stamp2);
+        msgfooterR.appendChild(tx_stamp1);
     }
 
     msgfooter.appendChild(msgfooterL);
