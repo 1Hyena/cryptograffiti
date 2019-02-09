@@ -1361,10 +1361,11 @@ a.cg-link:hover {
     border-radius: 100vmax;
     border: 1px solid #4772f6;
     width: 0;
-    height: 0;
+    height: 50px;
     -webkit-transition: width 0.5s, height 0.5s; /* For Safari 3.1 to 6.0 */
     transition: width 0.5s, height 0.5s;
     overflow: hidden;
+    opacity: 0;
 }
 
 #cg-cash-img,

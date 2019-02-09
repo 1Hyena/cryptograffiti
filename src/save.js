@@ -434,7 +434,9 @@ function cg_save_get_order() {
                                 addr_value = order_addr_input.value;
                             }
 
-                            if (moneyButton != null) {
+                            if (moneyButton != null
+                            &&  order_amnt_input.value.length > 0
+                            &&  order_addr_input.value.length > 0) {
                                 var mbw = document.createElement("div");
                                 mbw.classList.add("cg-moneybutton-wrapper");
                                 details.appendChild(document.createElement("br"));
@@ -466,6 +468,7 @@ function cg_save_get_order() {
                                         onPayment: function (arg) { CG_STATUS.push(CG_TXT_SAVE_MONEYBUTTON_SUCCESS[CG_LANGUAGE]); },
                                         onError:   function (arg) { CG_STATUS.push(CG_TXT_SAVE_MONEYBUTTON_FAILURE[CG_LANGUAGE]); }
                                     });
+                                    args.mbtn.classList.add("appear");
                                 }, 500, argset);
 
                                 details.appendChild(mbw);
