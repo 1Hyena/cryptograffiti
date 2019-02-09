@@ -1602,7 +1602,6 @@ function cg_read_mature(tab, near_bottom) {
 
     var row = [];
     var row_width = 0;
-    var all_wide = false;
     var style = window.getComputedStyle(tab, null);
     var padding = parseFloat(style.getPropertyValue("padding-left")) + parseFloat(style.getPropertyValue("padding-right"));
     var max_width = tab.clientWidth - padding;
@@ -1620,7 +1619,6 @@ function cg_read_mature(tab, near_bottom) {
 
         if (box.classList.contains('cg-msgbox-selected')
         || (top_bars === 0 && bottom_bars === 0)) {
-            all_wide = true; // We make selected box wide so that it would appear as fast as possible.
             mature   = true; // This is required when the user enters the site from a link referencing
             cg_sfx_spray();  // a particular message. We also display content ASAP when there is no
             break;           // decoded content displayed.
@@ -1639,7 +1637,6 @@ function cg_read_mature(tab, near_bottom) {
                 CG_IMMATURE_TIME++;
                 if (CG_IMMATURE_TIME >= 10*CG_READ_PPS) {
                     CG_IMMATURE_DIV = null;
-                    all_wide = true;
                     mature = true;
                     if (!near_bottom) cg_sfx_spray();
                     break;
@@ -1659,7 +1656,6 @@ function cg_read_mature(tab, near_bottom) {
             if (barbox.hasChildNodes()) {
                 var bar = barbox.children[0].children[0];
                 var p = Math.min(Math.round(100.0 * row_width / max_width), 100).toString(10);
-                //alert(row_width+"/"+max_width+"; "+p);
                 bar.style.width = p+"%";
             }
         }
@@ -1669,14 +1665,6 @@ function cg_read_mature(tab, near_bottom) {
 
     sz = row.length;
     for (var i = 0; i < sz; i++) {
-        if (all_wide) row[i].classList.add('cg-msgbox-wide');
-        else {
-            var free_w = max_width - row_width;
-            var this_w = free_w/sz;
-            //row[i].style.width = Math.ceil(row[i].offsetWidth)+"px";
-        }
-        //else row[i].style.flex=""+Math.round(row[i].offsetWidth);
-
         cg_read_msgbox_mature(row[i].id);
         if (CG_IMMATURE_DIV === row[i].id) CG_IMMATURE_DIV = null;
     }

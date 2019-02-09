@@ -1009,10 +1009,7 @@ a.cg-link:hover {
     transition: background-color 250ms ease;
 
     border-radius:0.75rem;
-}
-
-.cg-msgbox-wide {
-    width: 100%;
+    vertical-align: middle;
 }
 
 .cg-msgbox-premature {
@@ -1209,7 +1206,7 @@ a.cg-link:hover {
     border-right:thin solid gray;
 }
 
-.cg-msgbox:not(.cg-msgbox-wide) > .cg-read-msgbody {
+.cg-msgbox > .cg-read-msgbody {
     max-width: calc(100vw - 3.65rem);
 }
 
