@@ -113,11 +113,13 @@ function cg_construct_about(main) {
             cash_img.src = document.getElementById("gfx_cash").src;
             cash_img.width = "128";
             cash_img.height= "128";
+            cash_img.title = CG_TXT_THE_ORIGINAL_BITCOIN[CG_LANGUAGE];
 
             var core_img = document.createElement("img");
             core_img.src = document.getElementById("gfx_core").src;
             core_img.width = "128";
             core_img.height= "128";
+            core_img.title = CG_TXT_THE_FAKE_BITCOIN[CG_LANGUAGE];
 
             contact.appendChild(cash_img);
             contact.appendChild(table_wrapper);

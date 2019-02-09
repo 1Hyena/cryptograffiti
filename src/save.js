@@ -87,6 +87,7 @@ function cg_construct_save(main) {
     var btn_addrfmt = document.createElement("BUTTON"); btn_addrfmt.classList.add("cg-save-btn"); btn_addrfmt.disabled = true;
     btn_addrfmt.addEventListener("click", cg_save_addrfmt);
     btn_addrfmt.id = "cg-save-btn-addrfmt";
+    btn_addrfmt.classList.add("cg-toggled");
 
     var btn_wallet = document.createElement("BUTTON"); btn_wallet.classList.add("cg-save-btn"); btn_wallet.disabled = true;
     var txt_wallet = document.createTextNode(CG_TXT_SAVE_BTN_WALLET[CG_LANGUAGE]);
@@ -314,6 +315,7 @@ function cg_save_get_order() {
             else if (response === null ) status = sprintf(CG_TXT_SAVE_UPDATING_ORDER_TIMEOUT[CG_LANGUAGE], CG_SAVE_ORDER_NR);
             else {
                 var details_msg = null;
+                var warning_msg = null;
                 var order_addr_input = document.getElementById("cg-save-order-address");
                 var order_amnt_input = document.getElementById("cg-save-order-amount");
                 var delivery = "";
@@ -373,6 +375,7 @@ function cg_save_get_order() {
                             if (!filled) {
                                 var fmt = CG_TXT_SAVE_PAYMENT_DETAILS[CG_LANGUAGE];
                                 details_msg = sprintf(fmt, amnt, (base58 ? output.address : addr));
+                                warning_msg = CG_TXT_SAVE_PAYMENT_WARNING[CG_LANGUAGE];
                             }
                             else if ("proof" in output) {
                                 delivery = ""+output.proof;
@@ -403,7 +406,7 @@ function cg_save_get_order() {
 
                 if (details_msg !== null) {
                     var details = document.getElementById("cg-save-order-details");
-                    var content = details_msg+order_addr_input.value
+                    var content = details_msg+warning_msg+order_addr_input.value
                                  +order_amnt_input.value+json.order.nr
                                  +json.order.filled+json.order.accepted+delivery;
                     var ripemd160 = CryptoJS.algo.RIPEMD160.create();
@@ -413,6 +416,13 @@ function cg_save_get_order() {
                         details.setAttribute('data-hash', hash);
                         while (details.hasChildNodes()) details.removeChild(details.lastChild);
                         details.appendChild(document.createTextNode(details_msg));
+                        if (warning_msg !== null) {
+                            var warning = document.createElement("span");
+                            warning.appendChild(document.createTextNode(warning_msg));
+                            warning.classList.add("cg-save-order-warning");
+                            details.appendChild(document.createElement("br"));
+                            details.appendChild(warning);
+                        }
                         if (accepted && !filled) {
                             var addr_value = order_addr_input.value;
                             try {
@@ -424,7 +434,44 @@ function cg_save_get_order() {
                                 addr_value = order_addr_input.value;
                             }
 
-                            details.appendChild(document.createElement("br"));
+                            if (moneyButton != null) {
+                                var mbw = document.createElement("div");
+                                mbw.classList.add("cg-moneybutton-wrapper");
+                                details.appendChild(document.createElement("br"));
+
+                                var mb = document.createElement("div");
+                                mb.id = "cg-moneybutton";
+                                mb.classList.add("cg-borderbox");
+
+                                mbw.appendChild(document.createElement("span"));
+                                mbw.appendChild(mb);
+
+                                var argset = {
+                                    mbtn  : mb,
+                                    amnt  : ""+order_amnt_input.value,
+                                    addr  : order_addr_input.getAttribute('data-base58'),
+                                    order : ""+CG_SAVE_ORDER_NR
+                                };
+
+                                setTimeout(function(args){
+                                    moneyButton.render(args.mbtn, {
+                                        amount: args.amnt,
+                                        to: args.addr,
+                                        currency: "BSV",
+                                        label: "Swipe to Pay ➡️",
+                                        clientIdentifier: "878fc64f9f1e87bdc434afd38f2f8402",
+                                        buttonId: args.order,
+                                        buttonData: "{}",
+                                        type: "buy",
+                                        onPayment: function (arg) { CG_STATUS.push(CG_TXT_SAVE_MONEYBUTTON_SUCCESS[CG_LANGUAGE]); },
+                                        onError:   function (arg) { CG_STATUS.push(CG_TXT_SAVE_MONEYBUTTON_FAILURE[CG_LANGUAGE]); }
+                                    });
+                                }, 500, argset);
+
+                                details.appendChild(mbw);
+                            }
+                            else details.appendChild(document.createElement("br"));
+
                             details.appendChild(document.createElement("br"));
                             var addr = encodeURIComponent(addr_value);
                             var amnt = encodeURIComponent(order_amnt_input.value);
@@ -453,6 +500,7 @@ function cg_save_get_order() {
                                     var link_cash_accepted = document.createElement("a");
                                     link_core_rejected.href="http://www.newsbtc.com/2017/10/16/cryptograffiti-rejects-bitcoin-core-bch-now-available-payment-method/";
                                     link_core_rejected.target="_blank";
+                                    link_core_rejected.title = CG_TXT_THE_FAKE_BITCOIN[CG_LANGUAGE];
                                     link_core_rejected.onclick = function() {
                                         var img = document.getElementById("cg-core-img");
                                         if (img !== null && img.classList.contains("glow")) {
@@ -461,6 +509,7 @@ function cg_save_get_order() {
                                     };
                                     link_cash_accepted.href="https://bitcoinsv.io/";
                                     link_cash_accepted.target="_blank";
+                                    link_cash_accepted.title = CG_TXT_THE_ORIGINAL_BITCOIN[CG_LANGUAGE];
                                     link_cash_accepted.onclick = function() {
                                         var img = document.getElementById("cg-cash-img");
                                         if (img !== null && img.classList.contains("glow")) {

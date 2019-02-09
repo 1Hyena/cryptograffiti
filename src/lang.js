@@ -1,6 +1,20 @@
 ////////////////////////////////////////////////////////////////////////////////
 // MAIN TRANSLATIONS BEGIN                                                    //
 ////////////////////////////////////////////////////////////////////////////////
+var CG_TXT_THE_ORIGINAL_BITCOIN =
+{
+    en : "Bitcoin SV is The Original Bitcoin from which it all started in 2009.",
+    et : "Bitcoin SV on see originaalne Bitcoin, millest aastal 2009 kõik alguse sai.",
+    ru : "(Bitcoin SV is The Original Bitcoin from which it all started in 2009.)"
+};
+
+var CG_TXT_THE_FAKE_BITCOIN =
+{
+    en : "Bitcoin Core (BTC) is the fake Bitcoin hijacked by the Blockstream company.",
+    et : "Bitcoin Core (BTC) on võlts Bitcoin, mille Blockstream kaaperdas.",
+    ru : "(Bitcoin Core (BTC) is the fake Bitcoin hijacked by the Blockstream company.)"
+};
+
 var CG_TXT_MAIN_ERROR_1 =
 {
     en : "Error, cg-main element does not exist.",
@@ -848,7 +862,7 @@ var CG_TXT_SAVE_ORDER_RESTORE =
 {
     en : "Your order is being restored.",
     et : "Teie tellimust taastatakse.",
-    ru : ""
+    ru : "(Your order is being restored.)"
 };
 
 var CG_TXT_SAVE_ORDER_PENDING =
@@ -1014,9 +1028,16 @@ var CG_TXT_SAVE_ORDER_STATUS_FILLED =
 
 var CG_TXT_SAVE_PAYMENT_DETAILS =
 {
-    en : "Please send exactly %s bitcoins to %s.",
-    et : "Palun saatke täpselt %s bitimünti aadressile %s.",
-    ru : "Пожалуйста, отправьте ровно %s биткойнов на %s."
+    en : "Please send exactly %s BSV bitcoins to %s.",
+    et : "Palun saatke täpselt %s BSV bitimünti aadressile %s.",
+    ru : "Пожалуйста, отправьте ровно %s BSV биткойнов на %s."
+};
+
+var CG_TXT_SAVE_PAYMENT_WARNING =
+{
+    en : "Please, do not send BTC or BCH tokens!!!",
+    et : "Palun ärge saatke BTC või BCH bitimünte!!!",
+    ru : "(Please, do not send BTC or BCH tokens!!!)"
 };
 
 var CG_TXT_SAVE_PAYMENT_NOTE =
@@ -1031,6 +1052,20 @@ var CG_TXT_SAVE_MAX_DATA_SIZE_EXCEEDED =
     en : "Request data exceeds the size quota by %s.",
     et : "Päringu andmed ületavad mahu kvoodi %s võrra.",
     ru : "Данные запроса превышают допустимый размер на %s."
+};
+
+var CG_TXT_SAVE_MONEYBUTTON_SUCCESS =
+{
+    en : "Your MoneyButton payment was successful.",
+    et : "Teie MoneyButton makse õnnestus.",
+    ru : "(Your MoneyButton payment was successful.)"
+};
+
+var CG_TXT_SAVE_MONEYBUTTON_FAILURE =
+{
+    en : "Your MoneyButton payment failed.",
+    et : "Teie MoneyButton makse ebaõnnestus.",
+    ru : "(Your MoneyButton payment failed.)"
 };
 
 ////////////////////////////////////////////////////////////////////////////////

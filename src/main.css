@@ -1325,6 +1325,39 @@ a.cg-link:hover {
     -ms-interpolation-mode: nearest-neighbor;   /* IE8+                           */
 }
 
+.cg-save-order-warning {
+    color: red;
+}
+
+.cg-moneybutton-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+    text-align: center;
+    padding: 1ch;
+}
+
+.cg-moneybutton-wrapper > span:nth-child(1) {
+    width: 0;
+    height: 100%;
+    vertical-align: middle;
+    display: inline-block;
+}
+
+#cg-moneybutton {
+    position: relative;
+    display: inline-block;
+    vertical-align: middle;
+    background-color: #dad8d8;
+    border-radius: 100vmax;
+    border: 1px solid #4772f6;
+    width: 0;
+    height: 0;
+    -webkit-transition: width 0.5s, height 0.5s; /* For Safari 3.1 to 6.0 */
+    transition: width 0.5s, height 0.5s;
+    overflow: hidden;
+}
+
 #cg-cash-img,
 #cg-core-img {
     position: relative;
