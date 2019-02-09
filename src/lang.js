@@ -1035,9 +1035,9 @@ var CG_TXT_SAVE_PAYMENT_DETAILS =
 
 var CG_TXT_SAVE_PAYMENT_WARNING =
 {
-    en : "Please, do not send BTC or BCH tokens.",
-    et : "Palun ärge saatke BTC või BCH bitimünte.",
-    ru : "(Please, do not send BTC or BCH tokens.)"
+    en : "We do NOT accept BTC or BCH tokens.",
+    et : "Me EI aksepteeri BTC või BCH bitimünte.",
+    ru : "(We do NOT accept BTC or BCH tokens.)"
 };
 
 var CG_TXT_SAVE_PAYMENT_NOTE =
