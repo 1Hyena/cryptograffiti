@@ -171,9 +171,9 @@ var CG_TXT_MAIN_TITLE =
 
 var CG_TXT_MAIN_CREDITS =
 {
-    en : "©2018 CryptoGraffiti Developers",
-    et : "©2018 KrüptoGraffiti Arendajad",
-    ru : "©2018 Разработчики КриптоГраффити"
+    en : "©2019 CryptoGraffiti Developers",
+    et : "©2019 KrüptoGraffiti Arendajad",
+    ru : "©2019 Разработчики КриптоГраффити"
 };
 
 var CG_TXT_MAIN_SESSION = {
