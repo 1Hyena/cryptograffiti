@@ -4,23 +4,25 @@
 
 #include "json.h"
 
-enum class GRAFFITI {
+enum class LOCATION {
     NONE,
     OP_RETURN,
     P2PKH
 };
 
 struct graffiti_type {
-    GRAFFITI index;
+    LOCATION where;
     std::vector<unsigned char> payload;
 };
 
 const char *PROGRAM_NAME = "cgd";
 
-void trim_utf8(std::string& hairy);
+void trim_utf8(std::vector<unsigned char> &hairy);
 bool hex2bin(const char *hex, std::vector<unsigned char> *bin =nullptr);
 bool dump_json(const nlohmann::json &json, const int indent, std::string *to);
 int fail(const char *msg = "Invalid TX", const char* file = __builtin_FILE(), int line = __builtin_LINE());
+bool decode(const std::string &hex, std::queue<graffiti_type> &to);
+bool get_opret_segments(std::vector<unsigned char> &bytes, std::map<size_t, size_t> &to);
 
 int main(int argc, char **argv) {
     PROGRAM_NAME = argv[0];
@@ -39,7 +41,7 @@ int main(int argc, char **argv) {
         return fail();
     }
 
-    std::vector<graffiti_type> raw_graffiti;
+    std::queue<graffiti_type> graffiti;
 
     for (auto &vout : tx["vout"]) {
         if (!vout.count("scriptPubKey")
@@ -52,40 +54,133 @@ int main(int argc, char **argv) {
         }
 
         const std::string &hex = spk["hex"];
-
-        if (!hex.compare(0,2, "6a")) {
-            std::vector<unsigned char> bin;
-            if (!hex2bin(hex.c_str()+2, &bin)) {
-                return fail();
-            }
-            raw_graffiti.push_back({GRAFFITI::OP_RETURN, {} });
-            raw_graffiti.back().payload.swap(bin);
-        }
+        if (!decode(hex, graffiti)) return fail();
     }
 
-    //if (!dump_json(tx, 4, &data)) return EXIT_FAILURE;
-    //std::cout << data << std::endl;
-
-    std::queue<std::string> messages;
-
-    for (auto &graffiti : raw_graffiti) {
-        graffiti.payload.push_back(0);
-        std::string utf8str((const char *) &(graffiti.payload[0]));
-        trim_utf8(utf8str);
-        if (utf8str.size() > 2) {
-            messages.push(utf8str);
-        }
-    }
-
-    if (!messages.empty()) {
-        std::cout << tx["txid"].get<std::string>() << std::endl;
-        while (!messages.empty()) {
-            std::cout << messages.front() << std::endl;
-            messages.pop();
+    if (!graffiti.empty()) {
+        std::cerr << tx["txid"].get<std::string>() << std::endl;
+        while (!graffiti.empty()) {
+            trim_utf8(graffiti.front().payload);
+            graffiti.front().payload.push_back(0);
+            const char *str = (const char *) &(graffiti.front().payload[0]);
+            std::cout << str << std::endl;
+            graffiti.pop();
         }
     }
 
     return EXIT_SUCCESS;
+}
+
+bool decode(const std::string &hex, std::queue<graffiti_type> &to) {
+    LOCATION loc = LOCATION::NONE;
+    size_t start_at = 0;
+
+    if (!hex.compare(0, 2, "6a")) {
+        // OP_RETURN detected
+        loc = LOCATION::OP_RETURN;
+        start_at = 2;
+    }
+
+    if (loc == LOCATION::NONE) {
+        return true;
+    }
+
+    std::vector<unsigned char> bin;
+    if (!hex2bin(hex.c_str()+start_at, &bin)) {
+        return false;
+    }
+
+    if (loc == LOCATION::OP_RETURN) {
+        std::map<size_t, size_t> segments;
+        if (!get_opret_segments(bin, segments)) return false;
+
+        for (auto &segment : segments) {
+            size_t pos = segment.first;
+            size_t len = segment.second;
+
+            if (bin.size() > pos) {
+                to.push( { loc, std::vector<unsigned char>(bin.begin()+pos, bin.begin()+pos+len) } );
+            }
+            else return false;
+        }
+    }
+
+    return true;
+}
+
+bool get_opret_segments(std::vector<unsigned char> &bytes, std::map<size_t, size_t> &to) {
+    size_t sz = bytes.size();
+    size_t start_pos = 0;
+
+    std::vector<unsigned char> segment_size_bytes;
+    std::map<size_t, size_t> opret_segments;
+
+    Again:
+
+    for (size_t i=start_pos; i<sz; ++i) {
+        unsigned char byte = bytes[i];
+
+        if (!segment_size_bytes.empty()) {
+            size_t size_bytes = segment_size_bytes[0];
+
+            if (segment_size_bytes.size() < size_bytes + 1) {
+                segment_size_bytes.push_back(byte);
+
+                if (segment_size_bytes.size() == size_bytes + 1) {
+                    size_t segment_size = 0;
+                    while (segment_size_bytes.size() > 1) {
+                        unsigned char sz_byte = segment_size_bytes.back();
+                        segment_size_bytes.pop_back();
+                        segment_size = (segment_size << 8) + sz_byte;
+                    }
+
+                    if (i + 1 + segment_size > sz) {
+                        to.insert( { 0, sz } ); // Does not follow pushdata protocol.
+                        return true;
+                    }
+
+                    if (segment_size) {
+                        // We ignore zero size segments.
+                        opret_segments.insert( { i+1, segment_size } );
+                    }
+
+                    start_pos = i + 1 + segment_size;
+                    segment_size_bytes.clear();
+                    goto Again;
+                }
+
+                continue;
+            }
+
+            return false; // Should never happen.
+        }
+
+        if (byte <= 75) {
+            segment_size_bytes.push_back(1);
+            goto Again;
+        }
+        else if (byte == 76) {
+            segment_size_bytes.push_back(1);
+        }
+        else if (byte == 77) {
+            segment_size_bytes.push_back(2);
+        }
+        else if (byte == 78) {
+            segment_size_bytes.push_back(4);
+        }
+        else {
+            to.insert( { 0, sz } ); // Does not follow pushdata protocol.
+            return true;
+        }
+    }
+
+    if (!segment_size_bytes.empty()) {
+        to.insert( { 0, sz } ); // Does not follow pushdata protocol.
+        return true;
+    }
+
+    to.insert(opret_segments.begin(), opret_segments.end());
+    return true;
 }
 
 bool hex2bin(const char *hex, std::vector<unsigned char> *bin) {
@@ -143,13 +238,13 @@ int fail(const char *msg, const char* file, int line) {
     return EXIT_FAILURE;
 }
 
-void trim_utf8(std::string& hairy) {
+void trim_utf8(std::vector<unsigned char>& hairy) {
     std::vector<bool> results;
-    std::string smooth;
+    std::vector<unsigned char> smooth;
     size_t len = hairy.size();
     results.reserve(len);
     smooth.reserve(len);
-    const unsigned char *bytes = (const unsigned char *) hairy.c_str();
+    const unsigned char *bytes = (const unsigned char *) &(hairy[0]);
 
     auto read_utf8 = [](const unsigned char *bytes, size_t len, size_t *pos) -> unsigned {
         int code_unit1 = 0;
@@ -235,7 +330,7 @@ void trim_utf8(std::string& hairy) {
 
     size_t sz = results.size();
     for (size_t i = 0; i < sz; ++i) {
-        if (results[i]) smooth.append(1, hairy.at(i));
+        if (results[i]) smooth.push_back(hairy.at(i));
     }
 
     hairy.swap(smooth);
