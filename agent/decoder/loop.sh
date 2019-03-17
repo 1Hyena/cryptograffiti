@@ -50,15 +50,39 @@ do
         if [ $(which "${clifile}" 2>/dev/null ) ] \
         && [ $(which "${cgdfile}" 2>/dev/null ) ] \
         && [ $(which sort)                      ] \
+        && [ $(which echo)                      ] \
+        && [ $(which grep)                      ] \
         && [ $(which comm)                      ] \
         && [ $(which tee)                       ] \
         && [ $(which parallel)                  ] \
         && [ $(which jq)                        ] ; then
-            now=`date +"$date_format"`
-            printf "\033[1;36m%s\033[0m :: Checking for new TXs...\n" "$now"
-
-            ${clifile} ${datadir} getrawmempool | jq -M -r .[] | sort | tee ${newsfile} | comm -23 - ${oldsfile} | parallel -P ${workers} "${clifile} ${datadir} getrawtransaction {} 1 | ${cgdfile}"
+            news=`${clifile} ${datadir} getrawmempool | jq -M -r .[] | sort | tee ${newsfile} | comm -23 - ${oldsfile}`
             mv ${oldsfile} ${tempfile} && mv ${newsfile} ${oldsfile} && mv ${tempfile} ${newsfile}
+
+            lines=`echo -n "${news}" | grep -c '^'`
+
+            if [ "$lines" -ge "1" ]; then
+                now=`date +"$date_format"`
+                plural=""
+                if [ "$lines" -gt "1" ]; then
+                    plural="s"
+                fi
+                printf "\033[1;36m%s\033[0m :: Decoding %s new TX%s...\n" "$now" "${lines}" "${plural}"
+
+                graffiti=`echo "${news}" | parallel -P ${workers} "${clifile} ${datadir} getrawtransaction {} 1 | ${cgdfile}"`
+                msgcount=`echo -n "${graffiti}" | grep -c '^'`
+
+                if [ "$msgcount" -ge "1" ]; then
+                    now=`date +"$date_format"`
+                    plural=""
+                    if [ "$msgcount" -gt "1" ]; then
+                        plural="s"
+                    fi
+                    printf "\033[1;36m%s\033[0m :: Detected graffiti from %s TX%s.\n" "$now" "${msgcount}" "${plural}"
+
+                    echo "${graffiti}" | parallel --pipe -P ${workers} jq
+                fi
+            fi
         else
             now=`date +"$date_format"`
             printf "\033[1;36m%s\033[0m :: Some of the required commands are not available.\n" "$now"

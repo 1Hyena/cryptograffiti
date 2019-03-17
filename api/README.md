@@ -511,7 +511,7 @@ These values can be received with an API call of `get_constants` function.
         * `txs`        --- array of key-value pairs where TX hash is the key
             * `conf`   --- number of confirmations
             * `amount` --- number of satoshis donated (optional)
-            * `type`   --- message type such as ASCII, UTF8 or JPG (optional)
+            * `type`   --- block chain file's mime type (optional)
             * `fsize`  --- size of the embedded block chain file (optional)
             * `hash`   --- message hash (optional)
         * `nonce`      --- 64 bytes hex string (ALS)

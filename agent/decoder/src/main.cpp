@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <queue>
+#include <openssl/sha.h>
 
 #include "json.h"
 
@@ -19,15 +20,17 @@ const char *PROGRAM_NAME = "cgd";
 
 void trim_utf8(std::vector<unsigned char> &hairy);
 bool hex2bin(const char *hex, std::vector<unsigned char> *bin =nullptr);
-bool dump_json(const nlohmann::json &json, const int indent, std::string *to);
+bool dump_json(const nlohmann::json &json, const int indent =-1, std::string *to =nullptr);
 int fail(const char *msg = "Invalid TX", const char* file = __builtin_FILE(), int line = __builtin_LINE());
 bool decode(const std::string &hex, std::queue<graffiti_type> &to);
 bool get_opret_segments(std::vector<unsigned char> &bytes, std::map<size_t, size_t> &to);
+std::vector<unsigned char> sha256(const unsigned char *bytes, size_t len, bool hex =true);
 
 int main(int argc, char **argv) {
     PROGRAM_NAME = argv[0];
     std::string data(std::istreambuf_iterator<char>(std::cin), {});
     nlohmann::json tx = nlohmann::json();
+    nlohmann::json result = nlohmann::json();
 
     std::exception_ptr eptr;
     try         {tx   = nlohmann::json::parse(data);    }
@@ -57,16 +60,57 @@ int main(int argc, char **argv) {
         if (!decode(hex, graffiti)) return fail();
     }
 
-    if (!graffiti.empty()) {
-        std::cerr << tx["txid"].get<std::string>() << std::endl;
-        while (!graffiti.empty()) {
-            trim_utf8(graffiti.front().payload);
-            graffiti.front().payload.push_back(0);
-            const char *str = (const char *) &(graffiti.front().payload[0]);
-            std::cout << str << std::endl;
-            graffiti.pop();
-        }
+    std::vector<unsigned char> msg_bytes;
+    result["txid"] = tx["txid"].get<std::string>();
+    result["confirmations"] = 0;
+
+    if (tx.count("confirmations") && tx["confirmations"].is_number()) {
+        result["confirmations"] = tx["confirmations"];
     }
+
+    if (!graffiti.empty()) {
+        result["chunks"] = nlohmann::json::array();
+
+        while (!graffiti.empty()) {
+            size_t old_sz = graffiti.front().payload.size();
+            trim_utf8(graffiti.front().payload);
+            size_t new_sz = graffiti.front().payload.size();
+
+            nlohmann::json chunk = nlohmann::json();
+
+            switch (graffiti.front().where) {
+                case LOCATION::OP_RETURN: chunk["type"] = std::string("OP_RETURN"); break;
+                case LOCATION::P2PKH:     chunk["type"] = std::string("P2PKH");     break;
+                default:                  chunk["type"] = std::string("UNKNOWN");   break;
+            }
+
+            chunk["initial_size"] = old_sz;
+            chunk["trimmed_size"] = new_sz;
+
+            std::vector<unsigned char> &payload = graffiti.front().payload;
+
+            if (old_sz/10 + new_sz >= old_sz) {
+                payload.push_back(0);
+                chunk["unicode_body"] = std::string((const char *) &payload[0]);
+                payload.pop_back();
+
+                if (new_sz >= 4) {
+                    msg_bytes.insert(msg_bytes.end(), payload.begin(), payload.end());
+                }
+                else chunk["error"] = std::string("too short");
+            }
+            else chunk["error"] = std::string("not plaintext");
+
+            graffiti.pop();
+            result["chunks"].push_back(chunk);
+        }
+
+        std::vector<unsigned char> msg_hash = sha256(&msg_bytes[0], msg_bytes.size());
+        result["trimmed_size"] = msg_bytes.size();
+        result["trimmed_hash"] = std::string((const char *) (&msg_hash[0]));
+    }
+
+    if (!msg_bytes.empty() && !dump_json(result)) return fail();
 
     return EXIT_SUCCESS;
 }
@@ -222,14 +266,17 @@ bool hex2bin(const char *hex, std::vector<unsigned char> *bin) {
 bool dump_json(const nlohmann::json &json, const int indent, std::string *to) {
     std::string result;
     try {
-        result = json.dump(indent);
+        if (indent >= 0) result = json.dump(indent);
+        else             result = json.dump();
     }
     catch (nlohmann::json::type_error& e) {
         std::cerr << PROGRAM_NAME << ": " << e.what() << std::endl;
         return false;
     }
 
-    to->swap(result);
+    if (to) to->swap(result);
+    else std::cout << result << std::endl;
+
     return true;
 }
 
@@ -334,5 +381,34 @@ void trim_utf8(std::vector<unsigned char>& hairy) {
     }
 
     hairy.swap(smooth);
+}
+
+std::vector<unsigned char> sha256(const unsigned char *bytes, size_t len, bool hex) {
+    char buf[256];
+    SHA256_CTX context;
+    unsigned char md[SHA256_DIGEST_LENGTH];
+    std::vector<unsigned char> result;
+    if (hex) result.reserve(2*SHA256_DIGEST_LENGTH+1);
+    else     result.reserve(SHA256_DIGEST_LENGTH);
+
+    SHA256_Init(&context);
+    SHA256_Update(&context, bytes, len);
+    SHA256_Final(md, &context);
+
+    if (hex) {
+        for (size_t i=0;i<SHA256_DIGEST_LENGTH;i++) {
+            sprintf(buf,"%02x",md[i]);
+            result.push_back(buf[0]);
+            result.push_back(buf[1]);
+        }
+        result.push_back(0);
+    }
+    else {
+        for (size_t i=0;i<SHA256_DIGEST_LENGTH;i++) {
+            result.push_back(md[i]);
+        }
+    }
+
+    return result;
 }
 
