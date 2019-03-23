@@ -1,6 +1,6 @@
 #!/bin/bash
 
-date_format="%a %b %d %H:%M:%S %Y"
+date_format="%Y-%m-%d %H:%M:%S"
 
 clifile="$1"
 cgdfile="$2"
@@ -63,11 +63,13 @@ do
 
             if [ "$lines" -ge "1" ]; then
                 now=`date +"$date_format"`
-                plural=""
+
                 if [ "$lines" -gt "1" ]; then
-                    plural="s"
+                    printf "\033[1;36m%s\033[0m :: Decoding %s TXs.\n" "$now" "${lines}"
+                else
+                    txhash=`printf "%s" "${news}" | tr -d '\n'`
+                    printf "\033[1;36m%s\033[0m :: Decoding TX %s.\n" "$now" "${txhash}"
                 fi
-                printf "\033[1;36m%s\033[0m :: Decoding %s new TX%s...\n" "$now" "${lines}" "${plural}"
 
                 graffiti=`echo "${news}" | parallel -P ${workers} "${clifile} ${datadir} getrawtransaction {} 1 | ${cgdfile}"`
                 msgcount=`echo -n "${graffiti}" | grep -c '^'`
