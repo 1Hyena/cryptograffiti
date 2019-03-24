@@ -18,6 +18,8 @@ void PROGRAM::run() {
     }
 
     DECODER decoder(log);
+    decoder.set_verbose(options->verbose);
+    decoder.set_nostril(options->nostril);
 
     std::string input(std::istreambuf_iterator<char>(std::cin), {});
     nlohmann::json result = nlohmann::json();
@@ -57,6 +59,13 @@ bool PROGRAM::init(int argc, char **argv) {
 
     if (!options->init(argc, argv)) {
         return false;
+    }
+
+    if (options->nostril) {
+        if (system("which nostril > /dev/null 2>&1") != 0) {
+            log(get_name(), "%s: command not found", "nostril");
+            return false;
+        }
     }
 
     return true;

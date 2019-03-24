@@ -165,3 +165,11 @@ bool hex2bin(const char *hex, std::vector<unsigned char> *bin) {
     return !invalid;
 }
 
+void str2hex(const char *str, std::string &hex) {
+    char buf[8];
+    for (; *str; ++str) {
+        sprintf(buf, "%02x", *str);
+        hex.append(buf);
+    }
+}
+

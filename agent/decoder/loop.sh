@@ -84,7 +84,7 @@ do
                     printf "\033[1;36m%s\033[0m ${canary} Decoding TX %s.\n" "$now" "${txhash}"
                 fi
 
-                graffiti=`echo "${news}" | parallel -P ${workers} "${clifile} ${datadir} getrawtransaction {} 1 | ${cgdfile}"`
+                graffiti=`echo "${news}" | parallel -P ${workers} "${clifile} ${datadir} getrawtransaction {} 1 | ${cgdfile} --nostril --verbose"`
                 state=$?
                 msgcount=`echo -n "${graffiti}" | grep -c '^'`
 

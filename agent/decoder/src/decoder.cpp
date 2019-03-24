@@ -62,6 +62,7 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
 
     if (!graffiti.empty()) {
         (*result)["chunks"] = nlohmann::json::array();
+        nlohmann::json chunkbuf = nlohmann::json::array();
 
         while (!graffiti.empty()) {
             size_t old_sz = graffiti.front().payload.size();
@@ -94,8 +95,85 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
             else chunk["error"] = std::string("not plaintext");
 
             graffiti.pop();
-            (*result)["chunks"].push_back(chunk);
+            if (chunk.count("error") && !verbose) continue;
+
+            chunkbuf.push_back(chunk);
         }
+
+        if (nostril) {
+            std::string command;
+            for (auto& chunk : chunkbuf) {
+                if (chunk.count("unicode_body")) {
+                    std::string str = chunk["unicode_body"].get<std::string>();
+                    std::replace(str.begin(), str.end(), '\n', ' ');
+                    command.append(std::move(str));
+                    command.append(1, '\n');
+                }
+            }
+
+            if (!command.empty()) {
+                std::string hex;
+                str2hex(command.c_str(), hex);
+
+                command.clear();
+                command.append("printf '%s' '");
+                command.append(hex).append("'");
+                command.append(" | xxd -p -r");
+                command.append(" | xargs -d '\n' nostril");
+
+                std::FILE *fp = popen(command.c_str(), "re"); // Open the command for reading.
+                if (!fp) {
+                    log(logfrom.c_str(), "Unable to execute '%s'.\n", command.c_str());
+                    return false;
+                }
+                else {
+                    std::vector<unsigned char> bytes;
+                    char buf[4096];
+                    do {
+                        size_t read_max = sizeof(buf);
+                        size_t byte_count = fread(buf, 1, read_max, fp);
+                        bytes.insert(bytes.end(), buf, buf + byte_count);
+                        if (byte_count != read_max) break;
+                    }
+                    while (true);
+
+                    std::vector<std::string> lines;
+                    std::vector<unsigned char> linebuf;
+                    for (size_t i=0, sz = bytes.size(); i<sz; ++i) {
+                        if (bytes[i] == '\n') {
+                            linebuf.push_back(0);
+                            lines.push_back( (const char *) &(linebuf[0]) );
+                            linebuf.clear();
+                        }
+                        else linebuf.push_back(bytes[i]);
+                    }
+
+                    std::vector<bool> gibberish;
+                    for (const auto &l : lines) {
+                        size_t found = l.rfind("[real]");
+                        if (found != std::string::npos
+                        &&  l.size() - found == 6) {
+                            //log(logfrom.c_str(), "%s (%lu / %lu)", l.c_str(), found, l.size());
+                            gibberish.push_back(false);
+                        }
+                        else gibberish.push_back(true);
+                    }
+
+                    size_t chunk_index = 0;
+                    for (auto& chunk : chunkbuf) {
+                        if (chunk_index >= gibberish.size()) break;
+                        if (gibberish[chunk_index++]) {
+                            chunk["gibberish"] = true;
+                        }
+                        else chunk["gibberish"] = false;
+                    }
+                }
+
+                if (pclose(fp) == -1) log(logfrom.c_str(), "%s: %s", __FUNCTION__, strerror(errno));
+            }
+        }
+
+        (*result)["chunks"].swap(chunkbuf);
 
         std::vector<unsigned char> msg_hash = sha256(&msg_bytes[0], msg_bytes.size());
         (*result)["trimmed_size"] = msg_bytes.size();
@@ -217,5 +295,13 @@ bool DECODER::get_opret_segments(std::vector<unsigned char> &bytes, std::map<siz
 
     to.insert(opret_segments.begin(), opret_segments.end());
     return true;
+}
+
+void DECODER::set_verbose(bool value) {
+    verbose = value;
+}
+
+void DECODER::set_nostril(bool value) {
+    nostril = value;
 }
 
