@@ -8,6 +8,8 @@
 #include "program.h"
 #include "decoder.h"
 
+size_t PROGRAM::log_size = 0;
+
 void PROGRAM::run() {
     if (!options) return bug();
     if (options->exit_flag) {
@@ -20,7 +22,13 @@ void PROGRAM::run() {
     std::string input(std::istreambuf_iterator<char>(std::cin), {});
     nlohmann::json result = nlohmann::json();
 
-    if (decoder.decode(input, &result)) {
+    bool success = decoder.decode(input, &result);
+
+    if (result.count("txid") && result.at("txid").is_string()) {
+        comment = result["txid"].get<std::string>();
+    }
+
+    if (success) {
         if (result.count("graffiti")
         &&  result.at("graffiti").is_boolean()) {
             if (result["graffiti"].get<bool>()) {
@@ -35,7 +43,9 @@ void PROGRAM::run() {
     }
     else {
         if (result.count("error") && result.at("error").is_string()) {
-            log(get_name(), "%s", result["error"].get<std::string>().c_str());
+            std::string error(result["error"].get<std::string>());
+            if (comment.empty()) log(get_name(), "%s", error.c_str());
+            else log(get_name(), "%s: %s", comment.c_str(), error.c_str());
         }
         else bug();
     }
@@ -52,15 +62,21 @@ bool PROGRAM::init(int argc, char **argv) {
     return true;
 }
 
-void PROGRAM::deinit() {
+int PROGRAM::deinit() {
     if (options) {
         delete options;
         options = nullptr;
     }
+
+    return get_status();
 }
 
 int PROGRAM::get_status() const {
     return status;
+}
+
+size_t PROGRAM::get_log_size() {
+    return PROGRAM::log_size;
 }
 
 void PROGRAM::log(const char *origin, const char *p_fmt, ...) {
@@ -90,12 +106,22 @@ void PROGRAM::log(const char *origin, const char *p_fmt, ...) {
         }
     }
 
-    std::cerr << origin << ": " << buf << std::endl;
+    std::string logline(origin);
+    logline.reserve(size);
+    logline.append(": ").append(buf).append("\n");
+
+    PROGRAM::log_size += logline.size();
+    std::cerr << logline;
     free(buf);
 }
 
 void PROGRAM::bug(const char *file, int line) {
-    log(get_name(), "Forbidden condition met on line %d of %s.", line, file);
+    if (comment.empty()) {
+        log(get_name(), "Bug on line %d of %s.", line, file);
+        return;
+    }
+
+    log(get_name(), "%s: Bug on line %d of %s.", comment.c_str(), line, file);
 }
 
 const char *PROGRAM::get_name() const {
@@ -104,6 +130,10 @@ const char *PROGRAM::get_name() const {
 
 const char *PROGRAM::get_version() const {
     return pver.c_str();
+}
+
+const char *PROGRAM::get_comment() const {
+    return comment.c_str();
 }
 
 bool PROGRAM::dump_json(const nlohmann::json &json, const int indent, std::string *to, const char* file, int line) {

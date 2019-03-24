@@ -17,16 +17,18 @@ class PROGRAM {
 
     ~PROGRAM() {}
 
+    static size_t get_log_size();
     static void log(const char *, const char *, ...);
 
     void bug(const char * =__builtin_FILE(), int =__builtin_LINE());
     bool init(int argc, char **argv);
     void run();
-    void deinit();
+    int deinit();
     int get_status() const;
 
     const char *get_name() const;
     const char *get_version() const;
+    const char *get_comment() const;
 
     private:
     bool dump_json(
@@ -41,6 +43,9 @@ class PROGRAM {
     std::string    pver;
     int            status;
     class OPTIONS *options;
+    std::string    comment;
+
+    static size_t log_size;
 };
 
 #endif

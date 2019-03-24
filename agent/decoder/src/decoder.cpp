@@ -6,17 +6,26 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
     nlohmann::json buf = nlohmann::json();
     nlohmann::json tx  = nlohmann::json();
 
+    if (result == nullptr) result = &buf;
+
     std::exception_ptr eptr;
     try         {tx   = nlohmann::json::parse(data);    }
     catch (...) {eptr = std::current_exception();       }
     try         {if (eptr) std::rethrow_exception(eptr);}
     catch (const std::exception& e) {
-        if (result) (*result)["error"] = e.what();
+        (*result)["error"] = e.what();
         return false;
     }
 
+    if (!tx.count("txid") || !tx["txid"].is_string()) {
+        (*result)["error"] = "invalid txid structure";
+        return false;
+    }
+
+    (*result)["txid"] = tx["txid"].get<std::string>();
+
     if (!tx.count("vout") || !tx["vout"].is_array()) {
-        if (result) (*result)["error"] = "invalid TX vout structure";
+        (*result)["error"] = "invalid vout structure";
         return false;
     }
 
@@ -25,35 +34,34 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
     for (auto &vout : tx["vout"]) {
         if (!vout.count("scriptPubKey")
         ||  !vout.at("scriptPubKey").is_object()) {
-            if (result) (*result)["error"] = "invalid TX scriptPubKey structure";
+            (*result)["error"] = "invalid scriptPubKey structure";
             return false;
         }
 
         auto &spk = vout["scriptPubKey"];
 
         if (!spk.count("hex") || !spk.at("hex").is_string()) {
-            if (result) (*result)["error"] = "invalid TX hex structure";
+            (*result)["error"] = "invalid hex structure";
             return false;
         }
 
         const std::string &hex = spk["hex"];
         if (!decode(hex, graffiti)) {
-            if (result) (*result)["error"] = "failed to decode TX hex";
+            (*result)["error"] = "failed to decode scriptPubKey['hex']";
             return false;
         }
     }
 
     std::vector<unsigned char> msg_bytes;
-    buf["txid"] = tx["txid"].get<std::string>();
-    buf["confirmations"] = 0;
-    buf["graffiti"] = false;
+    (*result)["confirmations"] = 0;
+    (*result)["graffiti"] = false;
 
     if (tx.count("confirmations") && tx["confirmations"].is_number()) {
-        buf["confirmations"] = tx["confirmations"];
+        (*result)["confirmations"] = tx["confirmations"];
     }
 
     if (!graffiti.empty()) {
-        buf["chunks"] = nlohmann::json::array();
+        (*result)["chunks"] = nlohmann::json::array();
 
         while (!graffiti.empty()) {
             size_t old_sz = graffiti.front().payload.size();
@@ -86,17 +94,15 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
             else chunk["error"] = std::string("not plaintext");
 
             graffiti.pop();
-            buf["chunks"].push_back(chunk);
+            (*result)["chunks"].push_back(chunk);
         }
 
         std::vector<unsigned char> msg_hash = sha256(&msg_bytes[0], msg_bytes.size());
-        buf["trimmed_size"] = msg_bytes.size();
-        buf["trimmed_hash"] = std::string((const char *) (&msg_hash[0]));
+        (*result)["trimmed_size"] = msg_bytes.size();
+        (*result)["trimmed_hash"] = std::string((const char *) (&msg_hash[0]));
     }
 
-    if (!msg_bytes.empty()) buf["graffiti"] = true;
-
-    if (result) result->swap(buf);
+    if (!msg_bytes.empty()) (*result)["graffiti"] = true;
 
     return true;
 }
