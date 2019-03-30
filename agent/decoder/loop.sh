@@ -100,7 +100,7 @@ do
                     fi
                     printf "\033[1;36m%s\033[0m ${canary} Detected graffiti from %s TX%s.\n" "$now" "${msgcount}" "${plural}"
 
-                    echo "${graffiti}" | parallel --pipe -P ${workers} jq
+                    echo "${graffiti}" | parallel --pipe -P ${workers} jq {}
 
                     if [[ ! -z "${oauth}" ]]; then
                         while read -r line; do
