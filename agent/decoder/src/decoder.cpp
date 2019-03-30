@@ -65,11 +65,8 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
         nlohmann::json chunkbuf = nlohmann::json::array();
 
         while (!graffiti.empty()) {
-            size_t old_sz = graffiti.front().payload.size();
-            trim_utf8(graffiti.front().payload);
-            size_t new_sz = graffiti.front().payload.size();
-
             nlohmann::json chunk = nlohmann::json();
+            std::vector<unsigned char> &payload = graffiti.front().payload;
 
             switch (graffiti.front().where) {
                 case LOCATION::OP_RETURN: chunk["type"] = std::string("OP_RETURN"); break;
@@ -77,22 +74,51 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
                 default:                  chunk["type"] = std::string("UNKNOWN");   break;
             }
 
-            chunk["initial_size"] = old_sz;
-            chunk["trimmed_size"] = new_sz;
+            size_t old_sz = payload.size();
+            std::string mimetype = get_mimetype((const unsigned char *) &payload[0], payload.size());
 
-            std::vector<unsigned char> &payload = graffiti.front().payload;
+            chunk["content_type"] = mimetype;
+            chunk["content_size"] = old_sz;
 
-            if (old_sz/10 + new_sz >= old_sz) {
-                payload.push_back(0);
-                chunk["unicode_body"] = std::string((const char *) &payload[0]);
-                payload.pop_back();
-
-                if (new_sz >= 4) {
-                    msg_bytes.insert(msg_bytes.end(), payload.begin(), payload.end());
-                }
-                else chunk["error"] = std::string("too short");
+            if (mimetype.find("image/") == 0) {
+                chunk["content_body"] = bin2hex((const unsigned char *) &payload[0], payload.size());
             }
-            else chunk["error"] = std::string("not plaintext");
+            else {
+                trim_utf8(payload);
+                size_t new_sz = payload.size();
+
+                chunk["trimmed_size"] = new_sz;
+
+                double entropy = calc_entropy((const unsigned char *) &payload[0], payload.size());
+                if (std::isnan(entropy)) chunk["entropy"] = nullptr;
+                else                     chunk["entropy"] = entropy;
+
+                if (old_sz/10 + new_sz >= old_sz) {
+                    payload.push_back(0);
+                    const char *str = (const char *) &payload[0];
+                    chunk["unicode_body"] = str;
+
+                    if (new_sz <= 4) {
+                        chunk["error"] = std::string("too short");
+                    }
+                    else if (entropy >= 0.9) {
+                        chunk["error"] = std::string("high entropy");
+                    }
+                    else if (hex2bin(str)) {
+                        chunk["error"] = std::string("hex string");
+                    }
+                    else if (validate_bitcoin_address(str, nullptr, 0) >= 0) {
+                        chunk["error"] = std::string("bitcoin address");
+                    }
+
+                    payload.pop_back();
+                }
+                else chunk["error"] = std::string("not plaintext");
+            }
+
+            if (!chunk.count("error")) {
+                msg_bytes.insert(msg_bytes.end(), payload.begin(), payload.end());
+            }
 
             graffiti.pop();
             if (chunk.count("error") && !verbose) continue;
@@ -100,84 +126,11 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
             chunkbuf.push_back(chunk);
         }
 
-        if (nostril) {
-            std::string command;
-            for (auto& chunk : chunkbuf) {
-                if (chunk.count("unicode_body")) {
-                    std::string str = chunk["unicode_body"].get<std::string>();
-                    std::replace(str.begin(), str.end(), '\n', ' ');
-                    command.append(std::move(str));
-                    command.append(1, '\n');
-                }
-            }
-
-            if (!command.empty()) {
-                std::string hex;
-                str2hex(command.c_str(), hex);
-
-                command.clear();
-                command.append("printf '%s' '");
-                command.append(hex).append("'");
-                command.append(" | xxd -p -r");
-                command.append(" | xargs -d '\n' nostril");
-
-                std::FILE *fp = popen(command.c_str(), "re"); // Open the command for reading.
-                if (!fp) {
-                    log(logfrom.c_str(), "Unable to execute '%s'.\n", command.c_str());
-                    return false;
-                }
-                else {
-                    std::vector<unsigned char> bytes;
-                    char buf[4096];
-                    do {
-                        size_t read_max = sizeof(buf);
-                        size_t byte_count = fread(buf, 1, read_max, fp);
-                        bytes.insert(bytes.end(), buf, buf + byte_count);
-                        if (byte_count != read_max) break;
-                    }
-                    while (true);
-
-                    std::vector<std::string> lines;
-                    std::vector<unsigned char> linebuf;
-                    for (size_t i=0, sz = bytes.size(); i<sz; ++i) {
-                        if (bytes[i] == '\n') {
-                            linebuf.push_back(0);
-                            lines.push_back( (const char *) &(linebuf[0]) );
-                            linebuf.clear();
-                        }
-                        else linebuf.push_back(bytes[i]);
-                    }
-
-                    std::vector<bool> gibberish;
-                    for (const auto &l : lines) {
-                        size_t found = l.rfind("[real]");
-                        if (found != std::string::npos
-                        &&  l.size() - found == 6) {
-                            //log(logfrom.c_str(), "%s (%lu / %lu)", l.c_str(), found, l.size());
-                            gibberish.push_back(false);
-                        }
-                        else gibberish.push_back(true);
-                    }
-
-                    size_t chunk_index = 0;
-                    for (auto& chunk : chunkbuf) {
-                        if (chunk_index >= gibberish.size()) break;
-                        if (gibberish[chunk_index++]) {
-                            chunk["gibberish"] = true;
-                        }
-                        else chunk["gibberish"] = false;
-                    }
-                }
-
-                if (pclose(fp) == -1) log(logfrom.c_str(), "%s: %s", __FUNCTION__, strerror(errno));
-            }
-        }
-
         (*result)["chunks"].swap(chunkbuf);
 
         std::vector<unsigned char> msg_hash = sha256(&msg_bytes[0], msg_bytes.size());
-        (*result)["trimmed_size"] = msg_bytes.size();
-        (*result)["trimmed_hash"] = std::string((const char *) (&msg_hash[0]));
+        (*result)["graffiti_size"] = msg_bytes.size();
+        (*result)["graffiti_hash"] = std::string((const char *) (&msg_hash[0]));
     }
 
     if (!msg_bytes.empty()) (*result)["graffiti"] = true;
@@ -301,7 +254,48 @@ void DECODER::set_verbose(bool value) {
     verbose = value;
 }
 
-void DECODER::set_nostril(bool value) {
-    nostril = value;
+std::string DECODER::get_mimetype(const unsigned char *bytes, size_t len) const {
+    std::string mimetype;
+
+    {
+        size_t i;
+        std::string command;
+        FILE *fp;
+
+        command.reserve(2*len+64);
+        command.append("printf '");
+        char buf[8];
+        for (i=0; i<len; ++i) {
+            std::snprintf(buf, sizeof(buf), "%02x", bytes[i]);
+            command.append(buf);
+        }
+        command.append("' | xxd -p -r | file -r -k -b --mime-type -");
+
+        fp = popen(command.c_str(), "r");
+        if (fp == nullptr) goto Fail;
+
+        int c;
+        bool slash = false;
+        while ( (c = fgetc(fp)) != EOF ) {
+            if (c == '\n'
+            ||  c == '\0'
+            ||  c == 12) break;
+            if (c == '/') slash = true;
+            if (c >= 0
+            &&  c <= std::numeric_limits<unsigned char>::max()) {
+                mimetype.append(1, (unsigned char) c);
+            }
+        }
+
+        pclose(fp);
+        if (!slash) goto Fail;
+        goto Success;
+    }
+
+    Fail:
+    return "";
+
+    Success:
+    return mimetype;
 }
 

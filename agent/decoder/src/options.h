@@ -12,7 +12,6 @@ class OPTIONS {
         void      (*log_fun) (const char *, const char *, ...) =drop_log,
         const char *log_src ="options"
     ) : verbose   (      0)
-      , nostril   (      0)
       , exit_flag (      0)
       , name      (     "")
       , version   (version)
@@ -22,7 +21,6 @@ class OPTIONS {
     ~OPTIONS() {}
 
     int verbose;
-    int nostril;
     int exit_flag;
     std::string name;
 
@@ -35,7 +33,6 @@ class OPTIONS {
         result.append(
             "Options:\n"
             "      --brief           Print brief information (default).\n"
-            "      --nostril         Filter out gibberish using nostril.\n"
             "  -h  --help            Display this usage information.\n"
             "      --verbose         Print verbose information.\n"
             "  -v  --version         Show version information.\n"
@@ -52,7 +49,6 @@ class OPTIONS {
                 // These options set a flag:
                 {"brief",               no_argument,         &verbose,           0 },
                 {"verbose",             no_argument,         &verbose,           1 },
-                {"nostril",             no_argument,         &nostril,           1 },
                 // These options may take an argument:
                 {"help",                no_argument,              0,            'h'},
                 {"version",             no_argument,              0,            'v'},

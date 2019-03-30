@@ -19,7 +19,6 @@ void PROGRAM::run() {
 
     DECODER decoder(log);
     decoder.set_verbose(options->verbose);
-    decoder.set_nostril(options->nostril);
 
     std::string input(std::istreambuf_iterator<char>(std::cin), {});
     nlohmann::json result = nlohmann::json();
@@ -33,7 +32,8 @@ void PROGRAM::run() {
     if (success) {
         if (result.count("graffiti")
         &&  result.at("graffiti").is_boolean()) {
-            if (result["graffiti"].get<bool>()) {
+            if (result["graffiti"].get<bool>()
+            ||  options->verbose) {
                 if (dump_json(result)) {
                     status = EXIT_SUCCESS;
                 }
@@ -61,9 +61,17 @@ bool PROGRAM::init(int argc, char **argv) {
         return false;
     }
 
-    if (options->nostril) {
-        if (system("which nostril > /dev/null 2>&1") != 0) {
-            log(get_name(), "%s: command not found", "nostril");
+    constexpr const char *prerequisites[] = {
+        "xxd",
+        "printf",
+        "file"
+    };
+
+    for (const char *prg : prerequisites) {
+        char buf[256];
+        std::snprintf(buf, sizeof(buf), "which %s > /dev/null 2>&1", prg);
+        if (system(buf) != 0) {
+            log(get_name(), "%s: command not found", prg);
             return false;
         }
     }

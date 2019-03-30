@@ -3,7 +3,7 @@
 date_format="%Y-%m-%d %H:%M:%S"
 
 clifile="$1"
-webhook="$2"
+oauth="$2"
 cgdfile="$3"
 datadir="$4"
 workers="16"
@@ -37,8 +37,8 @@ if [ -z "$clifile" ] ; then
     clifile="bitcoin-cli"
 fi
 
-if [ -z "$webhook" ] ; then
-    webhook=""
+if [ -z "$oauth" ] ; then
+    oauth=""
 fi
 
 if [ -z "$cgdfile" ] ; then
@@ -84,7 +84,7 @@ do
                     printf "\033[1;36m%s\033[0m ${canary} Decoding TX %s.\n" "$now" "${txhash}"
                 fi
 
-                graffiti=`echo "${news}" | parallel -P ${workers} "${clifile} ${datadir} getrawtransaction {} 1 | ${cgdfile} --nostril --verbose"`
+                graffiti=`echo "${news}" | parallel -P ${workers} "${clifile} ${datadir} getrawtransaction {} 1 | ${cgdfile}"`
                 state=$?
                 msgcount=`echo -n "${graffiti}" | grep -c '^'`
 
@@ -97,6 +97,30 @@ do
                     printf "\033[1;36m%s\033[0m ${canary} Detected graffiti from %s TX%s.\n" "$now" "${msgcount}" "${plural}"
 
                     echo "${graffiti}" | parallel --pipe -P ${workers} jq
+
+                    if [[ ! -z "${oauth}" ]]; then
+                        while read -r line; do
+                            json=`printf "%s" "${line}" | jq -M -r '[.chunks | .[]? | select(.content_body != null) | [.]][0] | select (.!=null) | .[]'`
+
+                            if [[ ! -z "${json}" ]]; then
+                                txid=`printf "%s" "${line}" | jq -M -r '.txid'`
+                                size=`printf "%s" "${json}" | jq -M -r '.content_size'`
+                                type=`printf "%s" "${json}" | jq -M -r '.content_type'`
+                                body=`printf "%s" "${json}" | jq -M -r '.content_body'`
+
+                                now=`date +"$date_format"`
+                                printf "\033[1;36m%s\033[0m ${canary} Uploading a file from TX %s (%s, %s).\n" "$now" "${txid}" "${type}" "${size}"
+                                ok=`printf "%s" "${body}" | xxd -p -r | curl -s -F file=@- -F "initial_comment=${txid}" -F channels=cryptograffiti -H "Authorization: Bearer ${oauth}" https://slack.com/api/files.upload | jq -M -r '.ok'`
+
+                                now=`date +"$date_format"`
+                                if [ "${ok}" = "true" ]; then
+                                    printf "\033[1;36m%s\033[0m ${canary} Successfully uploaded a file from TX %s.\n" "$now" "${txid}"
+                                else
+                                    printf "\033[1;31m%s\033[0m ${deadcanary} Failed to upload file.\n" "$now"
+                                fi
+                            fi
+                        done <<< "${graffiti}"
+                    fi
                 fi
 
                 if [ "$state" -ge "1" ]; then

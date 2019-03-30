@@ -2,7 +2,7 @@ NAME    = cgd
 CC      = g++
 PROF    = -O3
 C_FLAGS = -std=c++11 -Wall -Wextra -pedantic-errors -Wconversion -Wno-unused-parameter -fmax-errors=5 $(PROF)
-L_FLAGS = -lm -lstdc++ -lcrypto $(PROF)
+L_FLAGS = -lm -lstdc++ -lcrypto -lz $(PROF)
 OBJ_DIR = obj
 DEFINES =
 

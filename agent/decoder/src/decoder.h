@@ -16,14 +16,14 @@ class DECODER {
         const char *log_src ="decoder"
     ) : logfrom   (log_src)
       , log       (log_fun)
-      , verbose   (true)
-      , nostril   (false) {}
+      , verbose   (true) {}
 
     ~DECODER() {}
 
     bool decode(const std::string &input, nlohmann::json *json =nullptr);
     void set_verbose(bool value);
-    void set_nostril(bool value);
+
+    std::string get_mimetype(const unsigned char *bytes, size_t len) const;
 
     private:
 
@@ -35,7 +35,6 @@ class DECODER {
     std::string logfrom;
     void (*log)(const char *, const char *p_fmt, ...);
     bool verbose;
-    bool nostril;
 };
 
 #endif
