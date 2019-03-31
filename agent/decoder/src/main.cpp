@@ -3,7 +3,7 @@
 int main(int argc, char **argv) {
     std::string comment;
     int exit_status = EXIT_FAILURE;
-    PROGRAM program(argv[0], "0.1");
+    PROGRAM program(argv[0], "0.2");
 
     if (program.init(argc, argv)) {
         program.run();

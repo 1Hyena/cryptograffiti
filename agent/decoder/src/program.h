@@ -13,7 +13,8 @@ class PROGRAM {
     : pname(name)
     , pver(version)
     , status(EXIT_FAILURE)
-    , options(nullptr) {}
+    , options(nullptr)
+    , max_sys_cmd_len(0) {}
 
     ~PROGRAM() {}
 
@@ -25,6 +26,7 @@ class PROGRAM {
     void run();
     int deinit();
     int get_status() const;
+    bool syspipe(const unsigned char *input, size_t len, const std::string &cmd, std::vector<unsigned char> *output) const;
 
     const char *get_name() const;
     const char *get_version() const;
@@ -39,11 +41,14 @@ class PROGRAM {
         int line = __builtin_LINE()
     );
 
+    size_t estimate_cmd_buf_size() const;
+
     std::string    pname;
     std::string    pver;
     int            status;
     class OPTIONS *options;
     std::string    comment;
+    size_t         max_sys_cmd_len;
 
     static size_t log_size;
 };

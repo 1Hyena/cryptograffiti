@@ -186,6 +186,26 @@ std::string bin2hex(const unsigned char *bytes, size_t len) {
     return hex;
 }
 
+bool str2int(char const *s, int *i, int base) {
+    char *end;
+    long l;
+    errno = 0;
+    l = strtol(s, &end, base);
+    if ((errno == ERANGE && l == std::numeric_limits<long int>::max())
+    || l > std::numeric_limits<int>::max()) {
+        return false;
+    }
+    if ((errno == ERANGE && l == std::numeric_limits<long int>::min())
+    || l < std::numeric_limits<int>::min()) {
+        return false;
+    }
+    if (*s == '\0' || *end != '\0') {
+        return false;
+    }
+    *i = (int) l;
+    return true;
+}
+
 double calc_entropy(const unsigned char *bytes, size_t inlen) {
     constexpr const int compressionlevel = Z_BEST_COMPRESSION;
     if (!inlen) return 0.0;

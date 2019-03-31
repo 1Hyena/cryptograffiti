@@ -12,18 +12,20 @@ class DECODER {
     public:
 
     DECODER(
+        class PROGRAM *program,
         void      (*log_fun) (const char *, const char *, ...) =drop_log,
         const char *log_src ="decoder"
     ) : logfrom   (log_src)
       , log       (log_fun)
-      , verbose   (true) {}
+      , verbose   (   true)
+      , program   (program) {}
 
     ~DECODER() {}
 
     bool decode(const std::string &input, nlohmann::json *json =nullptr);
     void set_verbose(bool value);
 
-    std::string get_mimetype(const unsigned char *bytes, size_t len) const;
+    bool get_mimetype(const unsigned char *bytes, size_t len, std::string &mimetype) const;
 
     private:
 
@@ -34,7 +36,8 @@ class DECODER {
 
     std::string logfrom;
     void (*log)(const char *, const char *p_fmt, ...);
-    bool verbose;
+    bool    verbose;
+    class PROGRAM *program;
 };
 
 #endif

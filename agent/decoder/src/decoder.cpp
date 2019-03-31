@@ -4,6 +4,7 @@
 #include "decoder.h"
 #include "utils.h"
 #include "json.h"
+#include "program.h"
 
 bool DECODER::decode(const std::string &data, nlohmann::json *result) {
     nlohmann::json buf = nlohmann::json();
@@ -78,7 +79,11 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
             }
 
             size_t old_sz = payload.size();
-            std::string mimetype = get_mimetype((const unsigned char *) &payload[0], payload.size());
+            std::string mimetype;
+            if (!get_mimetype((const unsigned char *) &payload[0], payload.size(), mimetype)) {
+                (*result)["error"] = "failed to detect mimetype";
+                return false;
+            }
 
             chunk["content_type"] = mimetype;
             chunk["content_size"] = old_sz;
@@ -257,53 +262,19 @@ void DECODER::set_verbose(bool value) {
     verbose = value;
 }
 
-std::string DECODER::get_mimetype(const unsigned char *bytes, size_t len) const {
-    char sfn[] = "/tmp/cgd.XXXXXX";
-    std::string mimetype;
+bool DECODER::get_mimetype(const unsigned char *bytes, size_t len, std::string &mimetype) const {
+    std::vector<unsigned char> result;
 
-    {
-        int fd = -1;
-
-        if ((fd = mkstemp(sfn)) == -1) return "";
-
-        std::ofstream outfile(sfn, std::ofstream::binary);
-        outfile.write((const char *) bytes, len);
-        outfile.close();
-
-        std::string command;
-        FILE *fp;
-
-        command.append("cat ");
-        command.append(sfn);
-        command.append(" | file -r -k -b --mime-type -");
-
-        fp = popen(command.c_str(), "r");
-        if (fp == nullptr) goto Fail;
-
-        int c;
-        bool slash = false;
-
-        while ( (c = fgetc(fp)) != EOF ) {
-            if (c == '\n'
-            ||  c == '\0') break;
-            if (c == '/') slash = true;
-            if (c >= 0
-            &&  c <= std::numeric_limits<unsigned char>::max()) {
-                mimetype.append(1, (unsigned char) c);
-            }
-        }
-
-        pclose(fp);
-        if (!slash) goto Fail;
-        goto Success;
+    if (!program->syspipe(bytes, len, "file -r -k -b --mime-type -", &result)) {
+        return false;
     }
 
-    Fail:
-    unlink(sfn);
-    return "";
+    for (unsigned char c : result) {
+        if (c == '\n'
+        ||  c == '\0') break;
+        mimetype.append(1, c);
+    }
 
-    Success:
-    unlink(sfn);
-    return mimetype;
+    return true;
 }
 

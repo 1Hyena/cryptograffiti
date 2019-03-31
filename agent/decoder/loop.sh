@@ -67,18 +67,21 @@ do
         && [ $(which grep)                      ] \
         && [ $(which comm)                      ] \
         && [ $(which curl)                      ] \
+        && [ $(which tr)                        ] \
         && [ $(which tee)                       ] \
         && [ $(which parallel)                  ] \
         && [ $(which jq)                        ] ; then
             bestblock=`${clifile} ${datadir} getbestblockhash`
             pool=`${clifile} ${datadir} getrawmempool | jq -M -r .[]`
             news=`${clifile} ${datadir} getblock ${bestblock} | jq -M -r '.tx | .[]'`
-            news=`printf "%s\n%s\n" "${pool}" "${news}" | sort | uniq | tee ${newsfile} | comm -23 - ${oldsfile}`
+            news=`printf "%s\n%s\n" "${pool}" "${news}" | tr -s '\n' '\n' | sort | uniq | tee ${newsfile} | comm -23 - ${oldsfile}`
             mv ${oldsfile} ${tempfile} && mv ${newsfile} ${oldsfile} && mv ${tempfile} ${newsfile}
 
             lines=`echo -n "${news}" | grep -c '^'`
 
             if [ "$lines" -ge "1" ]; then
+                echo "${news}" # this line is just for debugging, can be removed
+
                 now=`date +"$date_format"`
 
                 if [ "$lines" -gt "1" ]; then
@@ -100,7 +103,7 @@ do
                     fi
                     printf "\033[1;36m%s\033[0m ${canary} Detected graffiti from %s TX%s.\n" "$now" "${msgcount}" "${plural}"
 
-                    echo "${graffiti}" | parallel --pipe -P ${workers} jq {}
+                    echo "${graffiti}" | parallel --pipe -P ${workers} "jq '.chunks[] |= del(.content_body)'"
 
                     if [[ ! -z "${oauth}" ]]; then
                         while read -r line; do
@@ -114,7 +117,7 @@ do
 
                                 now=`date +"$date_format"`
                                 printf "\033[1;36m%s\033[0m ${canary} Uploading a file from TX %s (%s, %s).\n" "$now" "${txid}" "${type}" "${size}"
-                                ok=`printf "%s" "${body}" | xxd -p -r | curl -s -F file=@- -F "initial_comment=${txid}" -F channels=cryptograffiti -H "Authorization: Bearer ${oauth}" https://slack.com/api/files.upload | jq -M -r '.ok'`
+                                ok=`printf "%s" "${body}" | xxd -p -r | curl -s -F file=@- -F "initial_comment=https://bchsvexplorer.com/tx/${txid}" -F channels=cryptograffiti -H "Authorization: Bearer ${oauth}" https://slack.com/api/files.upload | jq -M -r '.ok'`
 
                                 now=`date +"$date_format"`
                                 if [ "${ok}" = "true" ]; then
