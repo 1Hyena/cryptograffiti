@@ -1,3 +1,6 @@
+#include <unistd.h>
+#include <fstream>
+
 #include "decoder.h"
 #include "utils.h"
 #include "json.h"
@@ -255,31 +258,34 @@ void DECODER::set_verbose(bool value) {
 }
 
 std::string DECODER::get_mimetype(const unsigned char *bytes, size_t len) const {
+    char sfn[] = "/tmp/cgd.XXXXXX";
     std::string mimetype;
 
     {
-        size_t i;
+        int fd = -1;
+
+        if ((fd = mkstemp(sfn)) == -1) return "";
+
+        std::ofstream outfile(sfn, std::ofstream::binary);
+        outfile.write((const char *) bytes, len);
+        outfile.close();
+
         std::string command;
         FILE *fp;
 
-        command.reserve(2*len+64);
-        command.append("printf '");
-        char buf[8];
-        for (i=0; i<len; ++i) {
-            std::snprintf(buf, sizeof(buf), "%02x", bytes[i]);
-            command.append(buf);
-        }
-        command.append("' | xxd -p -r | file -r -k -b --mime-type -");
+        command.append("cat ");
+        command.append(sfn);
+        command.append(" | file -r -k -b --mime-type -");
 
         fp = popen(command.c_str(), "r");
         if (fp == nullptr) goto Fail;
 
         int c;
         bool slash = false;
+
         while ( (c = fgetc(fp)) != EOF ) {
             if (c == '\n'
-            ||  c == '\0'
-            ||  c == 12) break;
+            ||  c == '\0') break;
             if (c == '/') slash = true;
             if (c >= 0
             &&  c <= std::numeric_limits<unsigned char>::max()) {
@@ -293,9 +299,11 @@ std::string DECODER::get_mimetype(const unsigned char *bytes, size_t len) const 
     }
 
     Fail:
+    unlink(sfn);
     return "";
 
     Success:
+    unlink(sfn);
     return mimetype;
 }
 
