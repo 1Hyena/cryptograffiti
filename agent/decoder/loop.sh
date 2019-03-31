@@ -75,7 +75,7 @@ do
             pool=`${clifile} ${datadir} getrawmempool | jq -M -r .[]`
             news=`${clifile} ${datadir} getblock ${bestblock} | jq -M -r '.tx | .[]'`
             nfmt="%s%s\n"
-            if [[ ! -z "${news}" ]]; then
+            if [[ ! -z "${pool}" ]]; then
                 nfmt="%s\n%s\n"
             fi
             news=`printf "${nfmt}" "${pool}" "${news}" | sort | uniq | tee ${newsfile} | comm -23 - ${oldsfile}`
