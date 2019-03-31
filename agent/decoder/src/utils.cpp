@@ -292,7 +292,7 @@ int validate_bitcoin_address(const char *address, unsigned char *payload, size_t
             c = (unsigned)b58digits_map[b58u[i]];
             for (j = outisz; j--; ) {
                 t = ((uint64_t)outi[j]) * 58 + c;
-                c = (t & 0x3f00000000) >> 32;
+                c = (uint32_t) ((t & 0x3f00000000) >> 32);
                 outi[j] = t & 0xffffffff;
             }
 
