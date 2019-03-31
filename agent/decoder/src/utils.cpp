@@ -302,9 +302,9 @@ int validate_bitcoin_address(const char *address, unsigned char *payload, size_t
 
         j = 0;
         switch (bytesleft) {
-            case 3: *(binu++) = (outi[0] &   0xff0000) >> 16; // fall through
-		    case 2: *(binu++) = (outi[0] &     0xff00) >>  8; // fall through
-		    case 1: *(binu++) = (outi[0] &       0xff);  ++j;
+            case 3: *(binu++) = (unsigned char) ((outi[0] &   0xff0000) >> 16); // fall through
+		    case 2: *(binu++) = (unsigned char) ((outi[0] &     0xff00) >>  8); // fall through
+		    case 1: *(binu++) = (unsigned char) ((outi[0] &       0xff));  ++j;
 		    default: break;
         }
 
