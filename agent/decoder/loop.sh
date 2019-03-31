@@ -74,7 +74,11 @@ do
             bestblock=`${clifile} ${datadir} getbestblockhash`
             pool=`${clifile} ${datadir} getrawmempool | jq -M -r .[]`
             news=`${clifile} ${datadir} getblock ${bestblock} | jq -M -r '.tx | .[]'`
-            news=`printf "%s\n%s\n" "${pool}" "${news}" | tr -s '\n' '\n' | sort | uniq | tee ${newsfile} | comm -23 - ${oldsfile}`
+            nfmt="%s%s\n"
+            if [[ ! -z "${news}" ]]; then
+                nfmt="%s\n%s\n"
+            fi
+            news=`printf "${nfmt}" "${pool}" "${news}" | sort | uniq | tee ${newsfile} | comm -23 - ${oldsfile}`
             mv ${oldsfile} ${tempfile} && mv ${newsfile} ${oldsfile} && mv ${tempfile} ${newsfile}
 
             lines=`echo -n "${news}" | grep -c '^'`
