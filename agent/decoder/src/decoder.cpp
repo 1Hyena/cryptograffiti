@@ -89,7 +89,19 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
             chunk["content_size"] = old_sz;
 
             if (mimetype.find("image/") == 0) {
-                chunk["content_body"] = bin2hex((const unsigned char *) &payload[0], payload.size());
+                std::vector<unsigned char> errors;
+
+                if (!program->syspipe((const unsigned char *) &payload[0],
+                    payload.size(), "identify -verbose - 2>&1 > /dev/null", &errors)) {
+                    (*result)["error"] = "failed to identify file";
+                    return false;
+                }
+                else if (errors.empty()) {
+                    chunk["content_body"] = bin2hex((const unsigned char *) &payload[0], payload.size());
+                }
+                else {
+                    chunk["error"] = std::string("corrupt file");
+                }
             }
             else {
                 trim_utf8(payload);

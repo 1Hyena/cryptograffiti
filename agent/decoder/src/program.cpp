@@ -76,7 +76,8 @@ bool PROGRAM::init(int argc, char **argv) {
         "grep",
         "tail",
         "tr",
-        "file"
+        "file",
+        "identify"
     };
 
     for (const char *prg : prerequisites) {
