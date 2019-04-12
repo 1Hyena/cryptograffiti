@@ -1721,8 +1721,10 @@ function cron_pulse($link, $T) {
             // The following code is called 20 times per minute, timing is important:
             $time_start = microtime(true);
 
-            // Inactive or abused captchas get deleted so that the user must solve a new CAPTCHA
-            $link->query("UPDATE `captcha` SET `fused` = TRUE WHERE `rpm` > `max_rpm`");
+            // Inactive or abused captchas get fused/deleted so that the user must solve a new CAPTCHA
+            // Avoid fusing such captchas that haven't been updated within the last 30 seconds because
+            // in that case our CRON tick might not be working as expected.
+            $link->query("UPDATE `captcha` SET `fused` = TRUE WHERE `rpm` > `max_rpm` AND `last_update` > ( NOW() - INTERVAL 30 second )");
             if ( ($ar = $link->affected_rows) > 0) {
                 db_log($link, null, $ar.' token'.($ar == 1 ? '' : 's').' fused due to excess RPM.');
             }
