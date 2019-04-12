@@ -1713,6 +1713,8 @@ function fun_default($link, $user) {
 
 // curl --connect-timeout 300 --silent -d "task=cron_pulse&pass=CRON_PASSWORD_HERE&T=5" -X POST 'https://amaraca.com/db/'
 function cron_pulse($link, $T) {
+    db_log($link, null, 'CRON pulse cycle starts.', LOG_MINOR);
+
     $PPM = 20; // Pulse Per Minute
     for ($t = 0; $t < $T; $t++) {
         for ($i = 0; $i < $PPM; $i++) {
@@ -1735,6 +1737,7 @@ function cron_pulse($link, $T) {
         }
     }
 
+    db_log($link, null, 'CRON pulse cycle ends.', LOG_MINOR);
     return make_success();
 }
 
@@ -1752,6 +1755,8 @@ function http_get($url, $params=array()) {
 
 // curl --connect-timeout 300 --silent -d "task=cron_tick&pass=CRON_PASSWORD_HERE&T=5" -X POST 'https://amaraca.com/db/'
 function cron_tick($link, $T) {
+    db_log($link, null, 'CRON tick cycle starts.', LOG_MINOR);
+
     for ($t = 0; $t < $T; $t++) {
         $time_start = microtime(true);
 
@@ -1909,11 +1914,13 @@ function cron_tick($link, $T) {
         if ($time > 0 && $t+1 < $T) usleep($time);
     }
 
+    db_log($link, null, 'CRON tick cycle ends.', LOG_MINOR);
     return make_success();
 }
 
 //curl --connect-timeout 60 --silent 'http://www.cryptograffiti.info/database/index.php?task=cron_day&pass=NZQAtEYE3gYG' >/dev/null 2>&1
 function cron_day($link) {
+    db_log($link, null, 'CRON day event starts.', LOG_MINOR);
     $errors = 0;
 
     db_log($link, null, 'Checking log table for errors.', LOG_NORMAL);
@@ -1951,6 +1958,7 @@ function cron_day($link) {
     }
     else set_critical_error($link, $link->error);
 
+    db_log($link, null, 'CRON day event ends.', LOG_MINOR);
     return make_success();
 }
 
