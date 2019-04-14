@@ -5,7 +5,7 @@
 
 enum class LOCATION {
     NONE,
-    OP_RETURN,
+    NULL_DATA,
     P2PKH
 };
 

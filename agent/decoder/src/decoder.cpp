@@ -73,7 +73,7 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
             std::vector<unsigned char> &payload = graffiti.front().payload;
 
             switch (graffiti.front().where) {
-                case LOCATION::OP_RETURN: chunk["type"] = std::string("OP_RETURN"); break;
+                case LOCATION::NULL_DATA: chunk["type"] = std::string("NULL_DATA"); break;
                 case LOCATION::P2PKH:     chunk["type"] = std::string("P2PKH");     break;
                 default:                  chunk["type"] = std::string("UNKNOWN");   break;
             }
@@ -164,7 +164,7 @@ bool DECODER::decode(const std::string &hex, std::queue<graffiti_type> &to) {
 
     if (!hex.compare(0, 2, "6a")) {
         // OP_RETURN detected
-        loc = LOCATION::OP_RETURN;
+        loc = LOCATION::NULL_DATA;
         start_at = 2;
     }
 
@@ -177,7 +177,7 @@ bool DECODER::decode(const std::string &hex, std::queue<graffiti_type> &to) {
         return false;
     }
 
-    if (loc == LOCATION::OP_RETURN) {
+    if (loc == LOCATION::NULL_DATA) {
         std::map<size_t, size_t> segments;
         if (!get_opret_segments(bin, segments)) return false;
 
