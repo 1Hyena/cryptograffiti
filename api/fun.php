@@ -422,13 +422,13 @@ function ALS_extract($link, $fun, $data, $sec_hash, $salt, $checksum, &$security
 
     if ($sec_key === null) return make_failure(ERROR_INTERNAL, 'Cannot find `sec_key`.');
 
-    if ( ($data = AES_256_decrypt($data, bin2hex($sec_key), $salt)) === false ) {
+    if ( ($data = AES_256_decrypt($data, bin2hex($sec_key), $salt)) === false || $data === null) {
         return make_failure(ERROR_INVALID_ARGUMENTS, 'Data decryption failed.');
     }
 
     $cs = md5($data.bin2hex($sec_key), true);
     if ($cs !== pack("H*",$checksum)) {
-        return make_failure(ERROR_INVALID_ARGUMENTS, 'Data integrity check failed, wrong checksum!');
+        return make_failure(ERROR_INVALID_ARGUMENTS, 'Data integrity check failed, wrong checksum! Did you forget to encrypt?');
     }
 
     $security_key = $sec_key;

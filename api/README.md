@@ -137,7 +137,7 @@ These values can be received with an API call of `get_constants` function.
     _POST Parameters_
     * `fun`            --- `init`
     * `data`           --- JSON string with the following structure
-        * `guid`       --- 64 bytes random hex string (optional)
+        * `guid`       --- 64 bytes random hex string
         * `restore`    --- when '1' attempt to restore an old session (optional)
     * `sec_hash`       --- SHA256(`sec_key`) as a 64-byte hex string (ALS)
     * `salt`           --- 32-byte hex string, must differ on each request (ALS)
