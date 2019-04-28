@@ -72,7 +72,8 @@ These values can be received with an API call of `get_constants` function.
     `seed` as a response to Initialization. BEFORE each subsequent API call the
     client has to renew the `nonce` so that new nonce will be equal to
     SHA256(`nonce` + `seed`) where `nonce` and `seed` are concatenated to
-    64-byte binary string.
+    64-byte binary string. It is a common mistake here to calculate the SHA 256
+    hash of a hex string instead of its underlying binary data.
 
 *   INTEGRITY
     When ALS is enabled all POST requests that use it must include a `checksum`
@@ -121,7 +122,7 @@ These values can be received with an API call of `get_constants` function.
     was enabled during session creation the client can only restore the old
     session when it knows its `guid`, `seed` and last `nonce`). The client
     should not share its GUID with anyone. In case the GUID has already been
-    registered the server returns an error and previously used `nonce` so that
+    registered the server returns an error and PREVIOUSLY used `nonce` so that
     the session could be restored when the client knows `seed`. If the session
     does not have a `seed` yet but ALS was used then `seed` is created and
     returned. This function should be called to generate a whole new session or

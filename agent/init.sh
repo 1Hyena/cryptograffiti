@@ -2,11 +2,23 @@
 
 ################################################################################
 # The aim of this script is to fill in the following variables as part of the  #
-# newly established session for the API of CryptoGraffiti.info.                #
-SEC_KEY=""                                                                     #
+# newly established/restored session for the API of CryptoGraffiti.info.       #
+SKEY=""                                                                        #
 SEED=""                                                                        #
 GUID=""                                                                        #
+TOKN=""                                                                        #
+NONC=""                                                                        #
 ################################################################################
+
+ADDR="https://cryptograffiti.info/api/"
+CONF="$1" # Configuration file
+if [ -z "$CONF" ] ; then
+    CONF=""
+fi
+
+ERRORS=0
+
+date_format="%Y-%m-%d %H:%M:%S"
 
 rawurlencode() {
     local string="${1}"
@@ -26,96 +38,150 @@ rawurlencode() {
     REPLY="${encoded}"   #+or echo the result (EASIER)... or both... :p
 }
 
-date_format="%Y-%m-%d %H:%M:%S"
+log() {
+    now=`date +"$date_format"`
+    printf "\033[1;36m%s\033[0m :: %s\n" "$now" "$1" >/dev/stderr
+}
+
+if [ ! -z "${CONF}" ] ; then
+    log "Loading configuration: ${CONF}"
+
+    if [[ -r ${CONF} ]] ; then
+        config=$(<"$CONF")
+        SKEY=`printf "%s" "${config}" | jq -r -M .sec_key | xxd -r -p | xxd -p | tr -d '\n'`
+        SEED=`printf "%s" "${config}" | jq -r -M .seed    | xxd -r -p | xxd -p | tr -d '\n'`
+        GUID=`printf "%s" "${config}" | jq -r -M .guid    | xxd -r -p | xxd -p | tr -d '\n'`
+        TOKN=`printf "%s" "${config}" | jq -r -M .token   | xxd -r -p | xxd -p | tr -d '\n'`
+        ADDR=`printf "%s" "${config}" | jq -r -M .api`
+
+        if [ ! -z "${SKEY}" ] \
+        && [ ! -z "${SEED}" ] \
+        && [ ! -z "${GUID}" ] ; then
+            log "Configuration loaded successfully."
+        else
+            log "Failed to extract the configuration file."
+            exit
+        fi
+    else
+        log "Failed to load configuration."
+        exit
+    fi
+else
+    log "Configuration file was not provided."
+
+    while :
+    do
+        log "Generating a new security key."
+        SKEY=`head /dev/urandom | tr -dc A-Za-z0-9 | head -c 64 | sha256sum | head -c 64`
+
+        log "Performing the security handshake."
+
+        url_data=$( rawurlencode "{}"      )
+        url_skey=$( rawurlencode "${SKEY}" )
+
+        if [ ! -z "${TOKN}" ] ; then
+            url_token=$( rawurlencode "${TOKN}" )
+            response=`curl -f -s -d "fun=handshake&data=${url_data}&sec_key=${url_skey}&token=${url_token}" -X POST "${ADDR}"`
+        else
+            response=`curl -f -s -d "fun=handshake&data=${url_data}&sec_key=${url_skey}" -X POST "${ADDR}"`
+        fi
+
+        result=`printf "%s" "${response}" | jq -M -r .result`
+
+        if [ ${result} == "SUCCESS" ]; then
+            log "Security handshake completed successfully."
+            break
+        fi
+
+        printf "%s" "${response}" | jq >/dev/stderr
+
+        if [ "${ERRORS}" -ge "3" ]; then
+            log "Security handshake failed, exiting."
+            exit
+        fi
+
+        log "Security handshake failed, retrying."
+        ((ERRORS++))
+        sleep 1
+    done
+fi
 
 while :
 do
-    now=`date +"$date_format"`
-    printf "\033[1;36m%s\033[0m :: Generating a new security key.\n" "$now"
-
-    SEC_KEY=`makepasswd --chars 64 | sha256sum | head -c 64`
-
-    now=`date +"$date_format"`
-    printf "\033[1;36m%s\033[0m :: SEC_KEY: %s\n" "$now" "${SEC_KEY}"
-
-    now=`date +"$date_format"`
-    printf "\033[1;36m%s\033[0m :: Performing the security handshake.\n" "$now"
-
-    URL_DATA=$( rawurlencode "{}" )
-    URL_SEC_KEY=$( rawurlencode "${SEC_KEY}" )
-
-    response=`curl -s -d "fun=handshake&data=${URL_DATA}&sec_key=${URL_SEC_KEY}" -X POST "https://cryptograffiti.info/api/"`
-    result=`printf "%s" "${response}" | jq -M -r .result`
-
-    if [ ${result} == "SUCCESS" ]; then
-        now=`date +"$date_format"`
-        printf "\033[1;36m%s\033[0m :: Security handshake completed successfully.\n" "$now"
-        break
+    if [ ! -z "${GUID}" ] ; then
+        log "Restoring the session."
+        data=`printf '{"guid":"%s","restore":"1"}' "${GUID}"`
+    else
+        log "Generating a new GUID."
+        GUID=`head /dev/urandom | tr -dc A-Za-z0-9 | head -c 64 | sha256sum | head -c 64`
+        data=`printf '{"guid":"%s"}' "${GUID}"`
     fi
 
-    printf "%s" "${response}" | jq
+    hash=`printf "%s" "${SKEY}" | xxd -r -p | sha256sum | head -c 64`
+    salt=`head /dev/urandom | tr -dc A-Za-z0-9 | head -c 64 | sha256sum | head -c 32`
+    csum=`printf "%s%s" "${data}" "${SKEY}" | md5sum | head -c 32`
+    data=`printf "%s" "${data}" | openssl enc -aes-256-cfb -a -A -K "${SKEY}" -iv "${salt}"`
 
-    now=`date +"$date_format"`
-    printf "\033[1;36m%s\033[0m :: Security handshake failed, retrying.\n" "$now"
-    sleep 1
-done
+    url_data=$( rawurlencode "${data}" )
+    url_hash=$( rawurlencode "${hash}" )
+    url_salt=$( rawurlencode "${salt}" )
+    url_csum=$( rawurlencode "${csum}" )
 
-while :
-do
-    now=`date +"$date_format"`
-    printf "\033[1;36m%s\033[0m :: Generating a new GUID.\n" "$now"
+    if [ ! -z "${TOKN}" ] ; then
+        url_token=$( rawurlencode "${TOKN}" )
+        response=`curl -f -s -d "fun=init&data=${url_data}&sec_hash=${url_hash}&salt=${url_salt}&checksum=${url_csum}&token=${url_token}" -X POST "${ADDR}"`
+    else
+        response=`curl -f -s -d "fun=init&data=${url_data}&sec_hash=${url_hash}&salt=${url_salt}&checksum=${url_csum}" -X POST "${ADDR}"`
+    fi
 
-    GUID=`makepasswd --chars 64 | sha256sum | head -c 64`
-
-    now=`date +"$date_format"`
-    printf "\033[1;36m%s\033[0m :: GUID   : %s\n" "$now" "${GUID}"
-
-    SEC_HASH=`printf "%s" "${SEC_KEY}" | xxd -r -p | sha256sum | head -c 64`
-    SALT=`makepasswd --chars 64 | sha256sum | head -c 32`
-    DATA=`printf '{"guid":"%s"}' "${GUID}"`
-    CHECKSUM=`printf "%s%s" "${DATA}" "${SEC_KEY}" | md5sum | head -c 32`
-    DATA=`printf "%s" "${DATA}" | openssl enc -aes-256-cfb -a -A -K "${SEC_KEY}" -iv "${SALT}"`
-
-    URL_DATA=$( rawurlencode "${DATA}" )
-    URL_SEC_HASH=$( rawurlencode "${SEC_HASH}" )
-    URL_SALT=$( rawurlencode "${SALT}" )
-    URL_CHECKSUM=$( rawurlencode "${CHECKSUM}" )
-
-    response=`curl -s -d "fun=init&data=${URL_DATA}&sec_hash=${URL_SEC_HASH}&salt=${URL_SALT}&checksum=${URL_CHECKSUM}" -X POST "https://cryptograffiti.info/api/"`
     response_iv=`printf "%s" "${response}" | jq -M -r .iv`
     response_checksum=`printf "%s" "${response}" | jq -M -r .checksum | tr '[:upper:]' '[:lower:]'`
-    response_data=`printf "%s" "${response}" | jq -M -r .data | openssl enc -d -aes-256-cfb -a -A -K "${SEC_KEY}" -iv "${response_iv}"`
-    test_checksum=`printf "%s%s" "${response_data}" "${SEC_KEY}" | md5sum | head -c 32 | tr '[:upper:]' '[:lower:]'`
+    response_data=`printf "%s" "${response}" | jq -M -r .data | openssl enc -d -aes-256-cfb -a -A -K "${SKEY}" -iv "${response_iv}"`
+    test_checksum=`printf "%s%s" "${response_data}" "${SKEY}" | md5sum | head -c 32 | tr '[:upper:]' '[:lower:]'`
 
     if [ "${response_checksum}" == "${test_checksum}" ]; then
         result=`printf "%s" "${response_data}" | jq -M -r .result`
 
         if [ "${result}" == "SUCCESS" ]; then
-            SEED=`printf "%s" "${response_data}" | jq -M -r .seed`
+            NONC=`printf "%s" "${response_data}" | jq -M -r .nonce`
 
-            now=`date +"$date_format"`
-            printf "\033[1;36m%s\033[0m :: Session initialization completed successfully.\n" "$now"
-            printf "%s" "${response_data}" | jq
+            if [ ! -z "${SEED}" ] ; then
+                log "Session restoration completed successfully."
+            else
+                SEED=`printf "%s" "${response_data}" | jq -M -r .seed`
+                log "Session initialization completed successfully."
+            fi
+
             break
         fi
     else
-        now=`date +"$date_format"`
-        printf "\033[1;36m%s\033[0m :: Response includes a wrong checksum!\n" "$now"
+        log "Response includes a wrong checksum!"
     fi
 
-    printf "%s" "${response}" | jq
+    printf "%s" "${response}" | jq >/dev/stderr
 
-    now=`date +"$date_format"`
-    printf "\033[1;36m%s\033[0m :: Session initialization failed, retrying.\n" "$now"
+    if [ "${ERRORS}" -ge "3" ]; then
+        log "Session initialization failed, exiting."
+        exit
+    fi
 
+    log "Session initialization failed, retrying."
+    ((ERRORS++))
     sleep 1
 done
 
-if [[ ! -z "${SEED}" ]]; then
-    now=`date +"$date_format"`
-    printf "\033[1;36m%s\033[0m :: SEED   : %s\n" "$now" "${SEED}"
+if [ ! -z "${SKEY}" ] \
+&& [ ! -z "${SEED}" ] \
+&& [ ! -z "${NONC}" ] \
+&& [ ! -z "${GUID}" ] ; then
+    if [ ! -z "${TOKN}" ] ; then
+        TOKN="\"${TOKN}\""
+    else
+        TOKN="null"
+    fi
+    printf '{"sec_key":"%s","seed":"%s","guid":"%s","nonce":"%s","token":%s,"api":"%s"}' "${SKEY}" "${SEED}" "${GUID}" "${NONC}" "${TOKN}" "${ADDR}" | jq -r -M
+else
+    log "Incomplete results, exiting."
+    exit
 fi
-
-now=`date +"$date_format"`
-printf "\033[1;36m%s\033[0m :: All done.\n" "$now"
 
