@@ -1310,7 +1310,7 @@ function fun_set_btc_txs($link, $user, $guid, $txs) {
                 // Race condition BUG here:
                 // If another set_btc_txs request is made right after the following
                 // query and it adds a different TX with the same msg_hash for the first
-                // time then borth TXs will be added to the DB. However, this behavior
+                // time then both TXs will be added to the DB. However, this behavior
                 // can be tolerated here because such race conditions happen very rarely
                 // and having a couple of duplicate messages now and then is not really
                 // a big deal.

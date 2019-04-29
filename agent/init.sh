@@ -93,7 +93,7 @@ else
             break
         fi
 
-        printf "%s" "${response}" | jq >/dev/stderr
+        printf "%s" "${response}" | jq . >/dev/stderr
 
         if [ "${ERRORS}" -ge "3" ]; then
             log "Security handshake failed, exiting."
@@ -158,7 +158,7 @@ do
         log "Response includes a wrong checksum!"
     fi
 
-    printf "%s" "${response}" | jq >/dev/stderr
+    printf "%s" "${response}" | jq . >/dev/stderr
 
     if [ "${ERRORS}" -ge "3" ]; then
         log "Session initialization failed, exiting."
@@ -179,7 +179,7 @@ if [ ! -z "${SKEY}" ] \
     else
         TOKN="null"
     fi
-    printf '{"sec_key":"%s","seed":"%s","guid":"%s","nonce":"%s","token":%s,"api":"%s"}' "${SKEY}" "${SEED}" "${GUID}" "${NONC}" "${TOKN}" "${ADDR}" | jq -r -M
+    printf '{"sec_key":"%s","seed":"%s","guid":"%s","nonce":"%s","token":%s,"api":"%s"}' "${SKEY}" "${SEED}" "${GUID}" "${NONC}" "${TOKN}" "${ADDR}" | jq -r -M .
 else
     log "Incomplete results, exiting."
     exit

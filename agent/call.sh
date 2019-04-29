@@ -110,7 +110,7 @@ response_data=`printf "%s" "${response}" | jq -M -r .data | openssl enc -d -aes-
 test_checksum=`printf "%s%s" "${response_data}" "${SKEY}" | md5sum | head -c 32 | tr '[:upper:]' '[:lower:]'`
 
 if [ "${response_checksum}" == "${test_checksum}" ]; then
-    printf "%s" "${response_data}" | jq -M -r
+    printf "%s" "${response_data}" | jq -M -r .
 else
     log "Response includes a wrong checksum!"
 fi
