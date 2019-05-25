@@ -284,6 +284,7 @@ if ($l = init_sql()) {
         case 'get_btc_graffiti'  : $r=fun_get_btc_graffiti ($l, $USER, $GUID, $ARGS['nr'],  $ARGS['count'], $ARGS['back'], $ARGS['mimetype']);    break;
         case 'get_btc_donations' : $r=fun_get_btc_donations($l, $USER, $GUID, $ARGS['nr'],  $ARGS['count'], $ARGS['back'], $ARGS['mimetype']);    break;
         case 'set_btc_txs'       : $r=fun_set_btc_txs      ($l, $USER, $GUID, $ARGS['txs']);                                                      break;
+        case 'set_graffiti'      : $r=fun_set_graffiti     ($l, $USER, $GUID, $ARGS['graffiti']);                                                 break;
         case 'accept_order'      : $r=fun_accept_order     ($l, $USER, $GUID, $ARGS['nr']);                                                       break;
         case 'set_order'         : $r=fun_set_order        ($l, $USER, $GUID, $ARGS['nr'], $ARGS['output'], $ARGS['filled']);                     break;
         case 'get_order'         : $r=fun_get_order        ($l, $USER, $GUID, $ARGS['nr'], $ARGS['inclusive']);                                   break;
@@ -388,6 +389,7 @@ function assure_tables($l) {
     if (!assure_security($l)    ) return make_failure(ERROR_TABLE_ASSURANCE, 'Unable to assure table `security`.');
     if (!assure_address($l)     ) return make_failure(ERROR_TABLE_ASSURANCE, 'Unable to assure table `address`.') ;
     if (!assure_captcha($l)     ) return make_failure(ERROR_TABLE_ASSURANCE, 'Unable to assure table `captcha`.') ;
+    if (!assure_graffiti($l)    ) return make_failure(ERROR_TABLE_ASSURANCE, 'Unable to assure table `graffiti`.');
     if (!assure_btc_tx($l)      ) return make_failure(ERROR_TABLE_ASSURANCE, 'Unable to assure table `btc_tx`.')  ;
     if (!assure_order($l)       ) return make_failure(ERROR_TABLE_ASSURANCE, 'Unable to assure table `order`.')   ;
 

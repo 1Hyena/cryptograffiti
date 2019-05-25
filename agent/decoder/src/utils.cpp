@@ -1,6 +1,7 @@
 #include <limits>
 #include <cstring>
 #include <openssl/sha.h>
+#include <openssl/ripemd.h>
 #include <zlib.h>
 
 #include "utils.h"
@@ -125,6 +126,35 @@ std::vector<unsigned char> sha256(const unsigned char *bytes, size_t len, bool h
     }
     else {
         for (size_t i=0;i<SHA256_DIGEST_LENGTH;i++) {
+            result.push_back(md[i]);
+        }
+    }
+
+    return result;
+}
+
+std::vector<unsigned char> ripemd160(const unsigned char *bytes, size_t len, bool hex) {
+    char buf[256];
+    RIPEMD160_CTX context;
+    unsigned char md[RIPEMD160_DIGEST_LENGTH];
+    std::vector<unsigned char> result;
+    if (hex) result.reserve(2*RIPEMD160_DIGEST_LENGTH+1);
+    else     result.reserve(RIPEMD160_DIGEST_LENGTH);
+
+    RIPEMD160_Init(&context);
+    RIPEMD160_Update(&context, bytes, len);
+    RIPEMD160_Final(md, &context);
+
+    if (hex) {
+        for (size_t i=0; i<RIPEMD160_DIGEST_LENGTH; i++) {
+            sprintf(buf,"%02x",md[i]);
+            result.push_back(buf[0]);
+            result.push_back(buf[1]);
+        }
+        result.push_back(0);
+    }
+    else {
+        for (size_t i=0;i<RIPEMD160_DIGEST_LENGTH;i++) {
             result.push_back(md[i]);
         }
     }

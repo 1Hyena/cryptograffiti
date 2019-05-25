@@ -7,6 +7,7 @@
 
 void trim_utf8(std::vector<unsigned char> &hairy);
 std::vector<unsigned char> sha256(const unsigned char *bytes, size_t len, bool hex =true);
+std::vector<unsigned char> ripemd160(const unsigned char *bytes, size_t len, bool hex =true);
 bool hex2bin(const char *hex, std::vector<unsigned char> *bin =nullptr);
 void str2hex(const char *str, std::string &hex);
 std::string bin2hex(const unsigned char *bytes, size_t len);

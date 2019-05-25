@@ -11,6 +11,7 @@ enum class LOCATION {
 
 struct graffiti_type {
     LOCATION where;
+    size_t offset;
     std::vector<unsigned char> payload;
 };
 

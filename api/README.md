@@ -529,6 +529,40 @@ These values can be received with an API call of `get_constants` function.
     * `checksum`       --- 32-byte hex string (ALS)
 
 
+* __Set Graffiti__
+    `POST https://cryptograffiti.info/api/`
+
+    Add a list of Bitcoin transactions. No more than `TXS_PER_QUERY` TXs can be
+    sent with this function. If that limit is exceeded the function returns
+    `FAILURE` without changing anything. Remember that all dictionary values
+    must be in string format.
+
+    _POST Parameters:_
+    * `fun`            --- `set_graffiti`
+    * `data`           --- JSON string with the following structure
+      * `guid`         --- 64 bytes random hex string,
+      * `graffiti`     --- array of key-value pairs where TX hash is the key
+        * `txsize`     --- total size of the transaction
+        * `files`      --- array of graffiti objects
+          * `location` --- location of the file within the TX
+          * `fsize`    --- file size
+          * `offset`   --- offset of the first byte
+          * `type`     --- MIME type of the file
+          * `hash`     --- RIPEMD-160 hash of the file
+      * `nonce`        --- 64 bytes hex string (ALS)
+    * `sec_hash`       --- SHA256(`sec_key`) as a 64-byte hex string (ALS)
+    * `salt`           --- 32-byte hex string, must differ on each request (ALS)
+    * `checksum`       --- 32-byte hex string (ALS)
+    * `token`          --- 64 bytes hex string (optional)
+
+    _Returns a JSON dictionary:_
+    * `data`
+        * `result`     --- `SUCCESS` or `FAILURE`
+        * `error`      --- error dictionary if result was `FAILURE` (optional)
+    * `iv`             --- 32-byte hex string (ALS)
+    * `checksum`       --- 32-byte hex string (ALS)
+
+
 * __Accept Order__
     `POST https://cryptograffiti.info/api/`
 

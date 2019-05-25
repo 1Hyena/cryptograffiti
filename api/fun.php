@@ -379,6 +379,25 @@ function assure_btc_tx($link) {
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1");
 }
 
+function assure_graffiti($link) {
+    return assure_table($link, 'graffiti', "CREATE TABLE `graffiti` (
+ `nr` bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT 'primary key',
+ `txid` binary(32) NOT NULL COMMENT 'TX hash',
+ `location` varchar(16) NOT NULL DEFAULT 'NULL_DATA' COMMENT 'location of the payload within the TX',
+ `fsize` bigint(20) unsigned NOT NULL DEFAULT 0 COMMENT 'file size in bytes',
+ `offset` bigint(20) NOT NULL DEFAULT 0 COMMENT 'first byte offset of the file',
+ `mimetype` varchar(64) NOT NULL DEFAULT 'application/octet-stream' COMMENT 'file MIME type',
+ `hash` binary(20) DEFAULT NULL COMMENT 'RIPEMD-160 hash of the file',
+ `created` timestamp NOT NULL DEFAULT current_timestamp() COMMENT 'creation timestamp',
+ `modified` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT 'timestamp of the last update',
+ PRIMARY KEY (`nr`),
+ UNIQUE KEY `identifier` (`txid`,`location`,`offset`) USING BTREE COMMENT 'prevents duplicate graffiti',
+ KEY `txid` (`txid`),
+ KEY `mimetype` (`mimetype`),
+ KEY `hash` (`hash`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8");
+}
+
 function assure_order($link) {
     return assure_table($link, 'order', "CREATE TABLE `order` (
  `nr` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'Primary key. Unique integer identifier.',
@@ -470,6 +489,7 @@ function extract_args($data) {
     extract_btc_addr ('btc_addr',    $args, $result);
     extract_email    ('email',       $args, $result);
     extract_txs      ('txs',         $args, $result);
+    extract_graffiti ('graffiti',    $args, $result);
     extract_txids    ('txids',       $args, $result);
     extract_json     ('input',       $args, $result);
     extract_json     ('output',      $args, $result);
@@ -641,6 +661,62 @@ function extract_txs($var, $args, &$result) {
                 &&  strlen($data['hash']) === 64
                 &&  ctype_xdigit($data['hash']) ) {
                     $buf['hash'] = strval($data['hash']);
+                }
+
+                $result[$var][$hash] = $buf;
+            }
+            else {
+                $result[$var] = null;
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+function extract_graffiti($var, $args, &$result) {
+    if (array_key_exists($var, $args)
+    &&  is_array($args[$var])) {
+        $result[$var] = array();
+        foreach ($args[$var] as $hash => $data) {
+            if (strlen($hash) === 64
+            &&  ctype_xdigit($hash)
+            &&  array_key_exists('files', $data)
+            &&  is_array($data['files'])
+            &&  array_key_exists('txsize', $data)
+            &&  is_num($data['txsize'])
+            &&  intval($data['txsize']) > 0) {
+                $buf = array('txsize' => intval($data['txsize']),
+                             'files'  => array()
+                );
+
+                foreach ($data['files'] as $nr => $fdata) {
+                    if (array_key_exists('location', $fdata)
+                    &&  is_type_str($fdata['location'])
+                    &&  array_key_exists('fsize', $fdata)
+                    &&  is_num($fdata['fsize'])
+                    &&  intval($fdata['fsize']) >= 0
+                    &&  array_key_exists('offset', $fdata)
+                    &&  is_num($fdata['offset'])
+                    &&  intval($fdata['offset']) >= 0
+                    &&  array_key_exists('type', $fdata)
+                    &&  is_type_str($fdata['type'])
+                    &&  array_key_exists('hash', $fdata)
+                    &&  strlen($fdata['hash']) === 40
+                    &&  ctype_xdigit($fdata['hash'])) {
+                        $buf['files'][] = array(
+                            "location"  => $fdata['location'],
+                            "fsize"     => intval($fdata['fsize']),
+                            "offset"    => intval($fdata['offset']),
+                            "type"      => $fdata['type'],
+                            "hash"      => $fdata['hash']
+                        );
+                    }
+                    else {
+                        $result[$var] = null;
+                        return false;
+                    }
                 }
 
                 $result[$var][$hash] = $buf;
@@ -1404,6 +1480,110 @@ function fun_set_btc_txs($link, $user, $guid, $txs) {
     if ($errno !== 0) return make_failure(ERROR_SQL, $error);
     return make_success();
 }
+
+function fun_set_graffiti($link, $user, $guid, $graffiti) {
+    if ($guid      === null) return make_failure(ERROR_INVALID_ARGUMENTS, '`guid` is invalid.');
+    if ($graffiti  === null) return make_failure(ERROR_INVALID_ARGUMENTS, '`graffiti` is invalid.');
+    if (!has_access($link, $guid, ROLE_DECODER)) return make_failure(ERROR_MISUSE, 'Access denied!');
+    if (is_paralyzed($link, $guid)) return make_failure(ERROR_NO_CHANGE, 'Failed to set graffiti, session is paralyzed!');
+
+    if (($c=count($txs)) > TXS_PER_QUERY) {
+        return make_failure(ERROR_MISUSE, '`txs` contains '.$c.' elements exceeding the limit of '.TXS_PER_QUERY.'.');
+    }
+
+    $errno      = 0;
+    $error      = '';
+    $spam_count = 0;
+    $spam_txid  = null;
+    $changes    = 0;
+    $added      = 0;
+
+    foreach ($graffiti as $tx_hash => $tx) {
+        $spam = true;
+
+        foreach ($tx['files'] as $file) {
+            $q = db_query($link, "SELECT `nr` FROM `graffiti` WHERE `hash` = X'".$file['hash'].
+                                 "' AND `created` IS NOT NULL AND".
+                                 " `created` > (NOW() - INTERVAL 30 day) LIMIT 1");
+            if ($q['errno'] === 0) {
+                if ($q['result']->fetch_assoc()) {
+                    // Some other TX already exists with the same hash. Ignore this TX.
+                    continue;
+                }
+                else {
+                    $spam = false;
+                    break;
+                }
+            }
+            else {
+                $errno = $q['errno'];
+                $error = $q['error'];
+                if ($errno !== 0) set_critical_error($link);
+                continue;
+            }
+        }
+
+        if ($spam === true) {
+            $spam_count++;
+            $spam_txid = $tx_hash;
+            continue;
+        }
+
+        foreach ($tx['files'] as $file) {
+            $nr = insert_hex_unique(
+                $link,
+                'graffiti',
+                array(
+                    'txid'     => $tx_hash,
+                    'location' => $file['location'],
+                    'offset'   => $file['offset']
+                )
+            );
+
+            if ($nr !== null) {
+                $added++;
+
+                $query_string =
+                    "UPDATE `graffiti` SET ".
+                    "`fsize` = '".$file['fsize']."', ".
+                    "`mimetype` = '".$file['type']."', ".
+                    "`hash` = X'".$file['hash']."', ".
+                    "`created` = NOW() WHERE `nr` = '".$nr."'";
+                $link->query($query_string);
+                $errno = $link->errno;
+                $error = $link->error;
+                if ($link->affected_rows === 0) set_critical_error($link);
+            }
+            else {
+                $query_string =
+                    "UPDATE `graffiti` SET ".
+                    "`fsize` = '".$file['fsize']."', ".
+                    "`mimetype` = '".$file['type']."', ".
+                    "`hash` = X'".$file['hash']."', ".
+                    "WHERE `txid` = X'".$tx_hash."'".
+                    " AND `location` = '".$file['location']."'".
+                    " AND `offset` = '".$file['offset']."'";
+                $link->query($query_string);
+                $errno = $link->errno;
+                $error = $link->error;
+                if ($link->affected_rows !== 0) {
+                    db_log($link, $user, $query_string);
+                    $changes++;
+                }
+            }
+        }
+    }
+
+    db_log($link, $user, 'Added '.$added.', updated '.$changes.' graffiti row'.($changes === 1 ? '.' : 's.'));
+    if ($spam_count > 0) {
+        if ($spam_count === 1) db_log($link, $user, 'Ignored the graffiti from TX '.$spam_txid.' (spam detected).');
+        else                   db_log($link, $user, 'Ignored '.$spam_count.' graffiti TXs (spam detected).');
+    }
+
+    if ($errno !== 0) return make_failure(ERROR_SQL, $error);
+    return make_success();
+}
+
 
 function fun_get_msg_metadata($link, $user, $guid, $txids) {
     if ($txids  === null) return make_failure(ERROR_INVALID_ARGUMENTS, '`txids` is invalid.');

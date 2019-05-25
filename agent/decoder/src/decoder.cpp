@@ -56,7 +56,7 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
         }
     }
 
-    std::vector<unsigned char> msg_bytes;
+    size_t valid_files = 0;
     (*result)["confirmations"] = 0;
     (*result)["graffiti"] = false;
 
@@ -65,7 +65,7 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
     }
 
     if (!graffiti.empty()) {
-        (*result)["chunks"] = nlohmann::json::array();
+        (*result)["files"] = nlohmann::json::array();
         nlohmann::json chunkbuf = nlohmann::json::array();
 
         while (!graffiti.empty()) {
@@ -73,9 +73,9 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
             std::vector<unsigned char> &payload = graffiti.front().payload;
 
             switch (graffiti.front().where) {
-                case LOCATION::NULL_DATA: chunk["type"] = std::string("NULL_DATA"); break;
-                case LOCATION::P2PKH:     chunk["type"] = std::string("P2PKH");     break;
-                default:                  chunk["type"] = std::string("UNKNOWN");   break;
+                case LOCATION::NULL_DATA: chunk["location"] = std::string("NULL_DATA"); break;
+                case LOCATION::P2PKH:     chunk["location"] = std::string("P2PKH");     break;
+                default:                  chunk["location"] = std::string("UNKNOWN");   break;
             }
 
             size_t old_sz = payload.size();
@@ -85,8 +85,9 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
                 return false;
             }
 
-            chunk["content_type"] = mimetype;
-            chunk["content_size"] = old_sz;
+            chunk["mimetype"] = mimetype;
+            chunk["offset"] = graffiti.front().offset;
+            chunk["fsize"] = old_sz;
 
             if (mimetype.find("image/") == 0) {
                 std::vector<unsigned char> errors;
@@ -97,7 +98,7 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
                     return false;
                 }
                 else if (errors.empty()) {
-                    chunk["content_body"] = bin2hex((const unsigned char *) &payload[0], payload.size());
+                    chunk["content"] = bin2hex((const unsigned char *) &payload[0], payload.size());
                 }
                 else {
                     chunk["error"] = std::string("corrupt file");
@@ -107,8 +108,6 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
                 trim_utf8(payload);
                 size_t new_sz = payload.size();
 
-                chunk["trimmed_size"] = new_sz;
-
                 double entropy = calc_entropy((const unsigned char *) &payload[0], payload.size());
                 if (std::isnan(entropy)) chunk["entropy"] = nullptr;
                 else                     chunk["entropy"] = entropy;
@@ -116,7 +115,7 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
                 if (old_sz/10 + new_sz >= old_sz) {
                     payload.push_back(0);
                     const char *str = (const char *) &payload[0];
-                    chunk["unicode_body"] = str;
+                    chunk["unicode"] = str;
 
                     if (new_sz <= 4) {
                         chunk["error"] = std::string("too short");
@@ -137,7 +136,10 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
             }
 
             if (!chunk.count("error")) {
-                msg_bytes.insert(msg_bytes.end(), payload.begin(), payload.end());
+                valid_files++;
+                chunk["hash"] = std::string(
+                    (const char *) (&ripemd160(&payload[0], payload.size())[0])
+                );
             }
 
             graffiti.pop();
@@ -146,14 +148,10 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
             chunkbuf.push_back(chunk);
         }
 
-        (*result)["chunks"].swap(chunkbuf);
-
-        std::vector<unsigned char> msg_hash = sha256(&msg_bytes[0], msg_bytes.size());
-        (*result)["graffiti_size"] = msg_bytes.size();
-        (*result)["graffiti_hash"] = std::string((const char *) (&msg_hash[0]));
+        (*result)["files"].swap(chunkbuf);
     }
 
-    if (!msg_bytes.empty()) (*result)["graffiti"] = true;
+    if (valid_files > 0) (*result)["graffiti"] = true;
 
     return true;
 }
@@ -186,7 +184,7 @@ bool DECODER::decode(const std::string &hex, std::queue<graffiti_type> &to) {
             size_t len = segment.second;
 
             if (bin.size() > pos) {
-                to.push( { loc, std::vector<unsigned char>(bin.begin()+pos, bin.begin()+pos+len) } );
+                to.push( { loc, pos, std::vector<unsigned char>(bin.begin()+pos, bin.begin()+pos+len) } );
             }
             else return false;
         }
