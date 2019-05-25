@@ -1008,6 +1008,28 @@ function insert_hex_unique($link, $table, $vars) {
     return null;
 }
 
+function insert_unique_graffiti($link, $table, $txid, $loc, $offset) {
+    $table = $link->real_escape_string($table);
+    $txid = $link->real_escape_string($txid);
+    $loc = $link->real_escape_string($loc);
+    $offset = $link->real_escape_string($offset);
+
+    $req = "INSERT INTO `$table` (`txid`, `location`, `offset`) ";
+    $req .= "SELECT X'".$txid."', '".$loc."', '".$offset."' FROM DUAL ";
+    $req .= "WHERE NOT EXISTS (SELECT 1 FROM `$table` WHERE ";
+    $req .= "`txid` = X'".$txid."' AND `location` = '".$loc."' AND `offset` = '".$offset."' ";
+    $req .= ") LIMIT 1";
+
+    $res = $link->query($req);
+    if ($link->errno !== 0) {
+        set_critical_error($link, $link->error);
+        return null;
+    }
+    if ($link->errno === 0 && $link->affected_rows > 0)  return $link->insert_id;
+
+    return null;
+}
+
 function insert_dummy($link, $table) {
     $sql = "INSERT INTO `".$table."` () VALUES ()";
     $res = $link->query($sql);
@@ -1530,14 +1552,12 @@ function fun_set_graffiti($link, $user, $guid, $graffiti) {
         }
 
         foreach ($tx['files'] as $file) {
-            $nr = insert_hex_unique(
+            $nr = insert_unique_graffiti(
                 $link,
                 'graffiti',
-                array(
-                    'txid'     => $tx_hash,
-                    'location' => $file['location'],
-                    'offset'   => $file['offset']
-                )
+                $tx_hash,
+                $file['location'],
+                $file['offset']
             );
 
             if ($nr !== null) {

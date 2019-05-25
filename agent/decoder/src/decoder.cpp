@@ -59,9 +59,14 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
     size_t valid_files = 0;
     (*result)["confirmations"] = 0;
     (*result)["graffiti"] = false;
+    (*result)["size"] = nullptr;
 
     if (tx.count("confirmations") && tx["confirmations"].is_number()) {
         (*result)["confirmations"] = tx["confirmations"];
+    }
+
+    if (tx.count("size") && tx["size"].is_number()) {
+        (*result)["size"] = tx["size"];
     }
 
     if (!graffiti.empty()) {
