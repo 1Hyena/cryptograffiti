@@ -13,6 +13,7 @@ define("ERROR_NONCE",               "ERROR_NONCE"              ); // unexpected 
 define("ERROR_ACCESS_DENIED",       "ERROR_ACCESS_DENIED"      ); // banned or invalid IP address
 
 // GAME CONSTANTS:
+define("API_VERSION",                                     "1.0"); // Version identifier for this particular implementation of the API.
 define("SATOSHIS_PER_BITCOIN",                        100000000); // All bitcoin amounts are converted to integers known as satoshis.
 define("BTC_ADDRESS",      "1MVpQJA7FtcDrwKC6zATkZvZcxqma4JixS"); // Server's bitcoin address used to deposit bitcoins.
 define("STATS_PER_QUERY",                                    50); // Maximum number of stats rows to be returned as a response to `get_stats`.
@@ -22,6 +23,7 @@ define("SESSION_TIMEOUT",                                    30); // Number of s
 define("CAPTCHA_TIMEOUT",                                   600); // Number of seconds unused captchas are kept in the database.
 define("MAX_DATA_SIZE",                                  262144); // Maximum number of uncompressed and unencrypted data bytes accepted as valid input.
 define("TXS_PER_QUERY",                                    1000); // Maximum number of transactions to be dealt with per single API call.
+define("ROWS_PER_QUERY",                                   1000); // Maximum number of rows to be dealt with per single API call.
 define("MIN_BTC_DONATION",                                    1); // Minimum number of satoshis that count for a donation.
 define("MIN_BTC_OUTPUT",                                    546); // Minimum number of satoshis per TX output.
 define("ENCODER_FEE_AMPLIFIER",                             1.0); // Amplifier for the estimatefee results.
@@ -1244,7 +1246,8 @@ function fun_get_log($link, $user, $guid, $log_nr, $count) {
 }
 
 function fun_get_constants($link, $user, $guid) {
-    $response = array('constants' => array( "SATOSHIS_PER_BITCOIN"          => SATOSHIS_PER_BITCOIN,
+    $response = array('constants' => array( "API_VERSION"                   => API_VERSION,
+                                            "SATOSHIS_PER_BITCOIN"          => SATOSHIS_PER_BITCOIN,
                                             "BTC_ADDRESS"                   => BTC_ADDRESS,
                                             "ENCODER_FEE_AMPLIFIER"         => ENCODER_FEE_AMPLIFIER,
                                             "STATS_PER_QUERY"               => STATS_PER_QUERY,
@@ -1254,7 +1257,8 @@ function fun_get_constants($link, $user, $guid) {
                                             "CAPTCHA_TIMEOUT"               => CAPTCHA_TIMEOUT,
                                             "MAX_DATA_SIZE"                 => MAX_DATA_SIZE,
                                             "MIN_BTC_OUTPUT"                => MIN_BTC_OUTPUT,
-                                            "TXS_PER_QUERY"                 => TXS_PER_QUERY ) );
+                                            "TXS_PER_QUERY"                 => TXS_PER_QUERY,
+                                            "ROWS_PER_QUERY"                => ROWS_PER_QUERY ) );
 
     return make_success($response);
 }
@@ -1524,9 +1528,12 @@ function fun_set_graffiti($link, $user, $guid, $graffiti) {
         $spam = true;
 
         foreach ($tx['files'] as $file) {
-            $q = db_query($link, "SELECT `nr` FROM `graffiti` WHERE `hash` = X'".$file['hash'].
-                                 "' AND `created` IS NOT NULL AND".
-                                 " `created` > (NOW() - INTERVAL 30 day) LIMIT 1");
+            $qstr = "SELECT `nr` FROM `graffiti` WHERE `hash` = X'"
+                   .$file['hash']."' AND `txid` != X'".$tx_hash
+                   ."' AND `created` IS NOT NULL AND"
+                   ." `created` > (NOW() - INTERVAL 30 day) LIMIT 1";
+            $q = db_query($link, $qstr);
+
             if ($q['errno'] === 0) {
                 if ($q['result']->fetch_assoc()) {
                     // Some other TX already exists with the same hash. Ignore this TX.
@@ -1579,7 +1586,7 @@ function fun_set_graffiti($link, $user, $guid, $graffiti) {
                     "UPDATE `graffiti` SET ".
                     "`fsize` = '".$file['fsize']."', ".
                     "`mimetype` = '".$file['type']."', ".
-                    "`hash` = X'".$file['hash']."', ".
+                    "`hash` = X'".$file['hash']."' ".
                     "WHERE `txid` = X'".$tx_hash."'".
                     " AND `location` = '".$file['location']."'".
                     " AND `offset` = '".$file['offset']."'";
@@ -1710,6 +1717,65 @@ function fun_get_btc_graffiti($link, $user, $guid, $graffiti_nr, $count, $back, 
     }
 
     if ($graffiti_nr === null && is_array($response['txs'])) $response['txs'] = array_reverse($response['txs']);
+
+    return make_success($response);
+}
+
+function fun_get_graffiti($link, $user, $guid, $graffiti_nr, $count, $back, $mimetype) {
+    if ($count  === null) return make_failure(ERROR_INVALID_ARGUMENTS, '`count` is invalid.');
+
+    if ($mimetype !== null) $mimetype = $link->real_escape_string($mimetype);
+
+    $limit = intval(min(intval($count), ROWS_PER_QUERY));
+
+    $response = array('rows' => null);
+    $graffiti = array();
+
+    if ($limit <= 0) return make_success($response);
+
+    $where = "";
+    $query = null;
+
+    if ($graffiti_nr === null) {
+        if ($mimetype !== null) $where = "WHERE `type` LIKE '".$mimetype."%'";
+        $query = "SELECT * ".
+                 "FROM `graffiti` ".$where." ORDER BY `nr` DESC LIMIT ".$limit;
+    }
+    else if ($back === '1') {
+        if ($mimetype !== null) $where = "AND `type` LIKE '".$mimetype."%'";
+        $query = "SELECT * ".
+                 "FROM `graffiti` WHERE `nr` <= '".$graffiti_nr."' ".$where." ORDER BY `nr` DESC LIMIT ".$limit;
+    }
+    else if ($back === '0' || $back === null) {
+        if ($mimetype !== null) $where = "AND `type` LIKE '".$mimetype."%'";
+        $query = "SELECT * ".
+                 "FROM `graffiti` WHERE `nr` >= '".$graffiti_nr."' ".$where." ORDER BY `nr` ASC LIMIT ".$limit;
+    }
+
+    if ($query === null) {
+        return make_failure(ERROR_INTERNAL, 'Unexpected program flow.');
+    }
+
+    $result = $link->query($query);
+    if ($link->errno === 0) {
+        while ($row = $result->fetch_assoc()) {
+            $graffiti[] = array("nr"            => $row['nr'],
+                                "location"      => $row['location'],
+                                "mimetype"      => $row['mimetype'],
+                                "fsize"         => $row['fsize'],
+                                "offset"        => $row['offset'],
+                                "txid"          => bin2hex($row['txid']),
+                                "hash"          => bin2hex($row['hash'])
+                               );
+        }
+        $result->free();
+        $response['rows'] = $graffiti;
+    }
+    else {
+        return make_failure(ERROR_SQL, $link->error);
+    }
+
+    if ($graffiti_nr === null && is_array($response['rows'])) $response['rows'] = array_reverse($response['rows']);
 
     return make_success($response);
 }

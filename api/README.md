@@ -1,4 +1,4 @@
-PUBLIC API, 18. 11. 2018
+PUBLIC API, 26. 05. 2019
 --------------------------------------------------------------------------------
 
 ##### TERMS OF USE #############################################################
@@ -44,6 +44,7 @@ These values can be received with an API call of `get_constants` function.
 * `CAPTCHA_TIMEOUT`      - number of seconds unused captchas are kept in the DB
 * `MAX_DATA_SIZE`        - max number of uncompressed and unencrypted data bytes
 * `TXS_PER_QUERY`        - max number of TXs to be dealt with for each API call
+* `ROWS_PER_QUERY`       - max number of rows to be dealt with for each API call
 * `MIN_BTC_DONATION`     - min number of satoshis that count for a donation
 * `MIN_BTC_OUTPUT`       - min number of satoshis per TX output
 
@@ -216,7 +217,7 @@ These values can be received with an API call of `get_constants` function.
     * `checksum`       --- 32-byte hex string (ALS)
 
 
-* __Get Bitcoin Graffiti__
+* __Get Bitcoin Graffiti (deprecated)__
     `POST https://cryptograffiti.info/api/`
 
     Returns the graffiti in the defined range. If `nr` is not sent or is invalid
@@ -243,6 +244,37 @@ These values can be received with an API call of `get_constants` function.
         * `result`     --- `SUCCESS` or `FAILURE`
         * `error`      --- error dictionary if result was `FAILURE` (optional)
         * `txs`        --- array of graffiti transactions (optional)
+    * `iv`             --- 32-byte hex string (ALS),
+    * `checksum`       --- 32-byte hex string (ALS)
+
+
+* __Get Graffiti__
+    `POST https://cryptograffiti.info/api/`
+
+    Returns the graffiti in the defined range. If `nr` is not sent or is invalid
+    then newest `count` of graffiti instances is returned. If `mimetype` is
+    specified then only the graffiti matching with the selected mime-type are
+    returned. The `count` parameter cannot exceed `ROWS_PER_QUERY`.
+
+    _POST Parameters:_
+    * `fun`            --- `get_graffiti`
+    * `data`           --- JSON string with the following structure
+        * `guid`       --- 64 bytes random hex string (optional)
+        * `nr`         --- the number of the first graffiti entry (optional)
+        * `count`      --- the total number of graffiti entries to be returned
+        * `back`       --- if '1' get `count` earlier than `nr` rows (optional)
+        * `mimetype`   --- expected file type, may be partial (optional)
+        * `nonce`      --- 64 bytes hex string (ALS)
+    * `sec_hash`       --- SHA256(`sec_key`) as a 64-byte hex string (ALS)
+    * `salt`           --- 32-byte hex string, must differ on each request (ALS)
+    * `checksum`       --- 32-byte hex string (ALS)
+    * `token`          --- 64 bytes hex string (optional)
+
+    _Returns a JSON dictionary:_
+    * `data`
+        * `result`     --- `SUCCESS` or `FAILURE`
+        * `error`      --- error dictionary if result was `FAILURE` (optional)
+        * `rows`       --- array of graffiti instances (optional)
     * `iv`             --- 32-byte hex string (ALS),
     * `checksum`       --- 32-byte hex string (ALS)
 
@@ -497,7 +529,7 @@ These values can be received with an API call of `get_constants` function.
     * `checksum`       --- 32-byte hex string (ALS)
 
 
-* __Set BTC Transactions__
+* __Set BTC Transactions (deprecated)__
     `POST https://cryptograffiti.info/api/`
 
     Add a list of Bitcoin transactions. No more than `TXS_PER_QUERY` TXs can be
