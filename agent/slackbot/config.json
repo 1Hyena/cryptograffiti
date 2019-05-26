@@ -1,0 +1,7 @@
+{
+  "comment": "This is an example configuration file for the SlackBot Agent.",
+  "api": "https://cryptograffiti.info/api/",
+  "title": "CG-SlackBot",
+  "call.sh": "../call.sh"
+}
+

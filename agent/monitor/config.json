@@ -5,6 +5,8 @@
   "guid": "0000000000000000000000000000000000000000000000000000000000000000",
   "token": "0000000000000000000000000000000000000000000000000000000000000000",
   "api": "https://cryptograffiti.info/api/",
-  "title": "CG-Monitor"
+  "title": "CG-Monitor",
+  "init.sh": "../init.sh",
+  "call.sh": "../call.sh"
 }
 

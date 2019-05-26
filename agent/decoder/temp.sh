@@ -1,11 +1,9 @@
 #!/bin/bash
 
 ################################################################################
-# Example usage: ./loop.sh ../init.sh ../call.sh config.json                   #
+# Example usage: ./decoder.sh config.json                                      #
 ################################################################################
-INIT="$1"                                                                      #
-CALL="$2"                                                                      #
-CONF="$3"                                                                      #
+CONF="$1"                                                                      #
 SKEY=""                                                                        #
 SEED=""                                                                        #
 GUID=""                                                                        #
@@ -72,16 +70,6 @@ errors=0
 tick=8
 ################################################################################
 
-if [ -z "$INIT" ] ; then
-    log "Init script not provided, exiting."
-    exit
-fi
-
-if [ -z "$CALL" ] ; then
-    log "Call script not provided, exiting."
-    exit
-fi
-
 NR=""
 
 if [ -z "$CONF" ] ; then
@@ -92,12 +80,24 @@ fi
 if [[ -r ${CONF} ]] ; then
     config=$(<"$CONF")
     NAME=`printf "%s" "${config}" | jq -r -M '.title | select (.!=null)'`
+    INIT=`printf "%s" "${config}" | jq -r -M '.["init.sh"] | select (.!=null)'`
+    CALL=`printf "%s" "${config}" | jq -r -M '.["call.sh"] | select (.!=null)'`
 
     if [ ! -z "${NAME}" ] ; then
         printf "\033]0;%s\007" "${NAME}"
     fi
 else
     log "Failed to read the configuration file."
+    exit
+fi
+
+if [ -z "$INIT" ] ; then
+    log "Init script not provided, exiting."
+    exit
+fi
+
+if [ -z "$CALL" ] ; then
+    log "Call script not provided, exiting."
     exit
 fi
 
