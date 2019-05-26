@@ -1,164 +1,167 @@
 #!/bin/bash
 
-date_format="%Y-%m-%d %H:%M:%S"
+################################################################################
+# Example usage: ./slackbot.sh config.json                                     #
+################################################################################
+CONF="$1"                                                                      #
+ADDR=""                                                                        #
+NAME=""                                                                        #
+AUTH=""                                                                        #
+CLIF=""                                                                        #
+CGDF=""                                                                        #
+DDIR=""                                                                        #
+################################################################################
+DATE_FORMAT="%Y-%m-%d %H:%M:%S"
+ROWS_PER_QUERY=0
 
-clifile="$1"
-oauth="$2"
-cgdfile="$3"
-datadir="$4"
-workers="16"
+log() {
+    now=`date +"${DATE_FORMAT}"`
+    printf "\033[1;35m%s\033[0m :: %s\n" "$now" "$1" >/dev/stderr
+}
 
-lockfile=/tmp/7Ngp0oRoKc7QHIqC
-newsfile=/tmp/Y9Jx4Gvab0MYNjH0
-oldsfile=/tmp/dVDvED7qzF0wHFp1
-tempfile=/tmp/g2xEyKg2hqoDuCii
-touch $lockfile
-read lastPID < $lockfile
+NR=""
 
-if [ ! -z "$lastPID" -a -d /proc/$lastPID ]
-then
-    now=`date +"$date_format"`
-    printf "\033[1;36m%s\033[0m :: Process is already running!\n" "$now"
+if [ -z "$CONF" ] ; then
+    log "Configuration file not provided, exiting."
     exit
 fi
-echo $$ > $lockfile
 
-truncate -s 0 $newsfile
-truncate -s 0 $oldsfile
-truncate -s 0 $tempfile
+if [[ -r ${CONF} ]] ; then
+    config=$(<"$CONF")
+    NAME=`printf "%s" "${config}" | jq -r -M '.title | select (.!=null)'`
+    CALL=`printf "%s" "${config}" | jq -r -M '.["call.sh"] | select (.!=null)'`
+    ADDR=`printf "%s" "${config}" | jq -r -M .api`
+    AUTH=`printf "%s" "${config}" | jq -r -M .oauth`
+    CGDF=`printf "%s" "${config}" | jq -r -M .cgd`
+    CLIF=`printf "%s" "${config}" | jq -r -M '.["bitcoin-cli"]'`
+    DDIR=`printf "%s" "${config}" | jq -r -M '.["bitcoin-dat"]'`
 
-if [ -z "$datadir" ] ; then
-    datadir=""
+    if [ ! -z "${DDIR}" ] ; then
+        DDIR="-datadir=${DDIR}"
+    fi
+
+    if [ ! -z "${NAME}" ] ; then
+        printf "\033]0;%s\007" "${NAME}"
+    fi
 else
-    datadir="-datadir=${datadir}"
+    log "Failed to read the configuration file."
+    exit
 fi
 
-if [ -z "$clifile" ] ; then
-    clifile="bitcoin-cli"
+if [ -z "$CALL" ] ; then
+    log "Call script not provided, exiting."
+    exit
 fi
 
-if [ -z "$oauth" ] ; then
-    oauth=""
+if [ -z "$ADDR" ] ; then
+    log "API address not provided, exiting."
+    exit
 fi
 
-if [ -z "$cgdfile" ] ; then
-    cgdfile="./cgd"
+if [ ! $(which "${CGDF}" 2>/dev/null ) ] ; then
+    log "Program not found: ${CGDF}"
+    exit
 fi
 
-errors=0
-tick=8
+if [ ! $(which "${CLIF}" 2>/dev/null ) ] ; then
+    log "Program not found: ${CLIF}"
+    exit
+fi
+
 while :
 do
-    deadcanary="\033[0;31m::\033[0m"
-    canary="::"
-    if [ "$errors" -ge "1" ]; then
-        canary="${deadcanary}"
-    fi
+    wdir=`pwd`
+    log "${wdir}"
 
-    ((tick++))
-    if [ "$tick" -ge "10" ]; then
-        tick=0
+    DATA=`printf '{}' | xxd -p | tr -d '\n'`
+    response=`"${CALL}" "${CONF}" "get_constants" "${DATA}"`
 
-        if [ $(which "${clifile}" 2>/dev/null ) ] \
-        && [ $(which "${cgdfile}" 2>/dev/null ) ] \
-        && [ $(which sort)                      ] \
-        && [ $(which uniq)                      ] \
-        && [ $(which echo)                      ] \
-        && [ $(which grep)                      ] \
-        && [ $(which comm)                      ] \
-        && [ $(which curl)                      ] \
-        && [ $(which tr)                        ] \
-        && [ $(which tee)                       ] \
-        && [ $(which parallel)                  ] \
-        && [ $(which jq)                        ] ; then
-            bestblock=`${clifile} ${datadir} getbestblockhash`
-            pool=`${clifile} ${datadir} getrawmempool | jq -M -r .[]`
-            news=`${clifile} ${datadir} getblock ${bestblock} | jq -M -r '.tx | .[]'`
-            nfmt="%s%s\n"
-            if [[ ! -z "${pool}" ]]; then
-                nfmt="%s\n%s\n"
+    result=`printf "%s" "${response}" | jq -r -M .result`
+    if [ "${result}" == "SUCCESS" ]; then
+        ROWS_PER_QUERY=`printf "%s" "${response}" | jq -r -M .constants | jq -r -M .ROWS_PER_QUERY`
+        log "ROWS_PER_QUERY: ${ROWS_PER_QUERY}"
+
+        while :
+        do
+            if [ -z "$NR" ] ; then
+                DATA=`printf '{"count":"%s"}' "1" | xxd -p | tr -d '\n'`
+            else
+                DATA=`printf '{"nr":"%s","count":"%s"}' "${NR}" "${ROWS_PER_QUERY}" | xxd -p | tr -d '\n'`
             fi
-            news=`printf "${nfmt}" "${pool}" "${news}" | sort | uniq | tee ${newsfile} | comm -23 - ${oldsfile}`
-            mv ${oldsfile} ${tempfile} && mv ${newsfile} ${oldsfile} && mv ${tempfile} ${newsfile}
+            response=`"${CALL}" "${CONF}" "get_graffiti" "${DATA}"`
 
-            lines=`echo -n "${news}" | grep -c '^'`
+            result=`printf "%s" "${response}" | jq -r -M .result`
 
-            if [ "$lines" -ge "1" ]; then
-                echo "${news}" # this line is just for debugging, can be removed
+            if [ "${result}" == "SUCCESS" ]; then
+                lines=`printf "%s" "${response}" | jq -r -M --compact-output ".rows | .[]"`
+                last_nr="${NR}"
 
-                now=`date +"$date_format"`
+                while read -r line; do
+                    nr=`printf "%s" "${line}" | jq -r -M .nr`
 
-                if [ "$lines" -gt "1" ]; then
-                    printf "\033[1;36m%s\033[0m ${canary} Decoding %s TXs.\n" "$now" "${lines}"
-                else
-                    txhash=`printf "%s" "${news}" | tr -d '\n'`
-                    printf "\033[1;36m%s\033[0m ${canary} Decoding TX %s.\n" "$now" "${txhash}"
-                fi
-
-                graffiti=`echo "${news}" | parallel -P ${workers} "${clifile} ${datadir} getrawtransaction {} 1 | ${cgdfile}"`
-                state=$?
-                msgcount=`echo -n "${graffiti}" | grep -c '^'`
-
-                if [ "$msgcount" -ge "1" ]; then
-                    now=`date +"$date_format"`
-                    plural=""
-                    if [ "$msgcount" -gt "1" ]; then
-                        plural="s"
-                    fi
-                    printf "\033[1;36m%s\033[0m ${canary} Detected graffiti from %s TX%s.\n" "$now" "${msgcount}" "${plural}"
-
-                    echo "${graffiti}" | parallel --pipe -P ${workers} "jq '.files[]? |= del(.content)'"
-
-                    if [[ ! -z "${oauth}" ]]; then
-                        while read -r line; do
-                            json=`printf "%s" "${line}" | jq -M -r '[.files | .[]? | select(.content != null) | [.]][0] | select (.!=null) | .[]'`
-
-                            if [[ ! -z "${json}" ]]; then
-                                txid=`printf "%s" "${line}" | jq -M -r '.txid'`
-                                size=`printf "%s" "${json}" | jq -M -r '.fsize'`
-                                type=`printf "%s" "${json}" | jq -M -r '.mimetype'`
-                                body=`printf "%s" "${json}" | jq -M -r '.content'`
-
-                                now=`date +"$date_format"`
-                                printf "\033[1;36m%s\033[0m ${canary} Uploading a file from TX %s (%s, %s).\n" "$now" "${txid}" "${type}" "${size}"
-                                ok=`printf "%s" "${body}" | xxd -p -r | curl -s -F file=@- -F "initial_comment=https://bchsvexplorer.com/tx/${txid}" -F channels=cryptograffiti -H "Authorization: Bearer ${oauth}" https://slack.com/api/files.upload | jq -M -r '.ok'`
-
-                                now=`date +"$date_format"`
-                                if [ "${ok}" = "true" ]; then
-                                    printf "\033[1;36m%s\033[0m ${canary} Successfully uploaded a file from TX %s.\n" "$now" "${txid}"
-                                else
-                                    printf "\033[1;31m%s\033[0m ${deadcanary} Failed to upload file.\n" "$now"
-                                fi
-                            fi
-                        done <<< "${graffiti}"
-                    fi
-                fi
-
-                if [ "$state" -ge "1" ]; then
-                    now=`date +"$date_format"`
-                    if [ "$state" -eq "101" ]; then
-                        printf "\033[1;31m%s\033[0m ${deadcanary} More than 100 jobs failed.\n" "$now"
+                    if [ -z "${NR}" ] ; then
+                        NR="${nr}"
+                        last_nr="0"
                     else
-                        if [ "$state" -le "100" ]; then
-                            if [ "$state" -eq "1" ]; then
-                                printf "\033[1;31m%s\033[0m ${deadcanary} 1 job failed.\n" "$now"
-                            else
-                                printf "\033[1;31m%s\033[0m ${deadcanary} %s jobs failed.\n" "$now" "$state"
-                            fi
-                        else
-                            printf "\033[1;31m%s\033[0m ${deadcanary} Other error from parallel.\n" "$now"
+                        if [ "${nr}" -gt "${NR}" ]; then
+                            NR="${nr}"
                         fi
                     fi
-                    ((errors++))
-                fi
+
+                    if [ "${nr}" -gt "${last_nr}" ]; then
+                        log "${line}"
+
+                        txid=`printf "%s" "${line}" | jq -r -M .txid`
+                        graffiti=`${CLIF} ${DDIR} getrawtransaction ${txid} 1 | ${CGDF}`
+                        gfiles=`printf "%s" "${graffiti}" | jq -r -M --compact-output .files[]`
+
+                        log "Extracting TX ${txid}."
+
+                        while read -r gfile; do
+                            mimetype=`printf "%s" "${gfile}" | jq -r -M .mimetype`
+                            filehash=`printf "%s" "${gfile}" | jq -r -M .hash`
+                            filesize=`printf "%s" "${gfile}" | jq -r -M .fsize`
+                            content=`printf "%s" "${gfile}" | jq -r -M .content`
+
+                            if [ "${content}" = "null" ]; then
+                                log "Graffiti file ${filehash} has no content!"
+                            else
+                                log "TX contains ${filehash} (${mimetype}, ${filesize})."
+                                unicode=`printf "%s" "${gfile}" | jq -r -M .unicode`
+
+                                if [ "${unicode}" != "null" ]; then
+                                    log "Dumping unicode:"
+                                    printf "%s\n" "${unicode}"
+                                fi
+
+                                if [[ ! -z "${AUTH}" ]]; then
+                                    log "Uploading ${filesize} bytes."
+                                    ok=`printf "%s" "${content}" | xxd -p -r | curl -s -F file=@- -F "initial_comment=https://bchsvexplorer.com/tx/${txid}" -F "mimetype=${mimetype}" -F "filename=${filehash}" -F channels=cryptograffiti -H "Authorization: Bearer ${AUTH}" https://slack.com/api/files.upload | jq -M -r '.ok'`
+
+                                    if [ "${ok}" = "true" ]; then
+                                        log "Successfully uploaded the file (${filehash})."
+                                    else
+                                        log "Failed to upload the file (${filehash})."
+                                    fi
+                                fi
+                            fi
+                        done <<< "${gfiles}"
+                    fi
+                done <<< "${lines}"
+            else
+                printf "%s" "${response}" | jq .error >/dev/stderr
+                error_code=`printf "%s" "${response}" | jq -r -M .error | jq -r -M .code`
+                sleep 10
             fi
-        else
-            now=`date +"$date_format"`
-            printf "\033[1;36m%s\033[0m ${canary} Some of the required commands are not available.\n" "$now"
-            exit
-        fi
+
+            sleep 5
+        done
+    else
+        printf "%s" "${response}" | jq .error >/dev/stderr
+        error_code=`printf "%s" "${response}" | jq -r -M .error | jq -r -M .code`
+        sleep 10
     fi
 
-    sleep 1
+    sleep 5
 done
 

@@ -102,10 +102,7 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
                     (*result)["error"] = "failed to identify file";
                     return false;
                 }
-                else if (errors.empty()) {
-                    chunk["content"] = bin2hex((const unsigned char *) &payload[0], payload.size());
-                }
-                else {
+                else if (!errors.empty()) {
                     chunk["error"] = std::string("corrupt file");
                 }
             }
@@ -144,6 +141,10 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
                 valid_files++;
                 chunk["hash"] = std::string(
                     (const char *) (&ripemd160(&payload[0], payload.size())[0])
+                );
+
+                chunk["content"] = bin2hex(
+                    (const unsigned char *) &payload[0], payload.size()
                 );
             }
 

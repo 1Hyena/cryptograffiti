@@ -29,12 +29,8 @@ else
         TOKN=`printf "%s" "${config}" | jq -r -M .token   | xxd -r -p | xxd -p | tr -d '\n'`
         ADDR=`printf "%s" "${config}" | jq -r -M .api`
 
-        if [ -z "${SKEY}" ] \
-        || [ -z "${SEED}" ] \
-        || [ -z "${TOKN}" ] \
-        || [ -z "${ADDR}" ] \
-        || [ -z "${GUID}" ] ; then
-            log "Failed to extract the configuration file."
+        if [ -z "${ADDR}" ] ; then
+            log "Failed to extract the API address from the configuration file."
             exit
         fi
     else
@@ -76,6 +72,33 @@ rawurlencode() {
     echo "${encoded}"    # You can either set a return variable (FASTER)
     REPLY="${encoded}"   #+or echo the result (EASIER)... or both... :p
 }
+
+if [ -z "${SKEY}" ] \
+|| [ -z "${SEED}" ] \
+|| [ -z "${TOKN}" ] \
+|| [ -z "${GUID}" ] ; then
+    # Making the API call without ALS
+    data=`printf "%s" "${DATA}" | xxd -r -p`
+
+    url_func=$( rawurlencode "${FUNC}" )
+    url_data=$( rawurlencode "${data}" )
+
+    response=`curl -f -s -d "fun=${url_func}&data=${url_data}" -X POST "${ADDR}"`
+
+    exit_code="$?"
+    if [ "0" != "${exit_code}" ]; then
+        log "Curl exits with code ${exit_code}."
+        exit
+    fi
+
+    if [[ -z "${response}" ]]; then
+        log "Received an empty response."
+        exit
+    fi
+
+    printf "%s" "${response}" | jq -M -r .
+    exit
+fi
 
 #log "API call: ${FUNC}"
 
