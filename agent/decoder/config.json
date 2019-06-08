@@ -7,6 +7,9 @@
   "api": "https://cryptograffiti.info/api/",
   "title": "CG-Decoder",
   "init.sh": "../init.sh",
-  "call.sh": "../call.sh"
+  "call.sh": "../call.sh",
+  "cgd": "../decoder/cgd",
+  "bitcoin-cli": "bitcoin-cli",
+  "bitcoin-dat": ""
 }
 

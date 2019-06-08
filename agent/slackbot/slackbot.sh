@@ -84,9 +84,9 @@ do
         while :
         do
             if [ -z "$NR" ] ; then
-                DATA=`printf '{"count":"%s"}' "1" | xxd -p | tr -d '\n'`
+                DATA=`printf '{"count":"%s","mimetype":"image"}' "1" | xxd -p | tr -d '\n'`
             else
-                DATA=`printf '{"nr":"%s","count":"%s"}' "${NR}" "${ROWS_PER_QUERY}" | xxd -p | tr -d '\n'`
+                DATA=`printf '{"nr":"%s","count":"%s","mimetype":"image"}' "${NR}" "${ROWS_PER_QUERY}" | xxd -p | tr -d '\n'`
             fi
             response=`"${CALL}" "${CONF}" "get_graffiti" "${DATA}"`
 
@@ -112,6 +112,7 @@ do
                         log "${line}"
 
                         txid=`printf "%s" "${line}" | jq -r -M .txid`
+                        ghash=`printf "%s" "${line}" | jq -r -M .hash`
                         graffiti=`${CLIF} ${DDIR} getrawtransaction ${txid} 1 | ${CGDF}`
                         gfiles=`printf "%s" "${graffiti}" | jq -r -M --compact-output .files[]`
 
@@ -123,27 +124,32 @@ do
                             filesize=`printf "%s" "${gfile}" | jq -r -M .fsize`
                             content=`printf "%s" "${gfile}" | jq -r -M .content`
 
-                            if [ "${content}" = "null" ]; then
-                                log "Graffiti file ${filehash} has no content!"
-                            else
-                                log "TX contains ${filehash} (${mimetype}, ${filesize})."
-                                unicode=`printf "%s" "${gfile}" | jq -r -M .unicode`
+                            if [ "${ghash}" = "${filehash}" ]; then
 
-                                if [ "${unicode}" != "null" ]; then
-                                    log "Dumping unicode:"
-                                    printf "%s\n" "${unicode}"
-                                fi
+                                if [ "${content}" = "null" ]; then
+                                    log "Graffiti file ${filehash} has no content!"
+                                else
+                                    log "TX contains ${filehash} (${mimetype}, ${filesize})."
+                                    unicode=`printf "%s" "${gfile}" | jq -r -M .unicode`
 
-                                if [[ ! -z "${AUTH}" ]]; then
-                                    log "Uploading ${filesize} bytes."
-                                    ok=`printf "%s" "${content}" | xxd -p -r | curl -s -F file=@- -F "initial_comment=https://bchsvexplorer.com/tx/${txid}" -F "mimetype=${mimetype}" -F "filename=${filehash}" -F channels=cryptograffiti -H "Authorization: Bearer ${AUTH}" https://slack.com/api/files.upload | jq -M -r '.ok'`
+                                    if [ "${unicode}" != "null" ]; then
+                                        log "Dumping unicode:"
+                                        printf "%s\n" "${unicode}"
+                                    fi
 
-                                    if [ "${ok}" = "true" ]; then
-                                        log "Successfully uploaded the file (${filehash})."
-                                    else
-                                        log "Failed to upload the file (${filehash})."
+                                    if [[ ! -z "${AUTH}" ]]; then
+                                        log "Uploading ${filesize} bytes."
+                                        ok=`printf "%s" "${content}" | xxd -p -r | curl -s -F file=@- -F "initial_comment=https://bchsvexplorer.com/tx/${txid}" -F "mimetype=${mimetype}" -F "filename=${filehash}" -F channels=cryptograffiti -H "Authorization: Bearer ${AUTH}" https://slack.com/api/files.upload | jq -M -r '.ok'`
+
+                                        if [ "${ok}" = "true" ]; then
+                                            log "Successfully uploaded the file (${filehash})."
+                                        else
+                                            log "Failed to upload the file (${filehash})."
+                                        fi
                                     fi
                                 fi
+                            else
+                                log "SKIPPING ${filehash} != ${ghash}"
                             fi
                         done <<< "${gfiles}"
                     fi

@@ -85,7 +85,7 @@ if ($l = init_sql()) {
         if (get_addr_stat ($l, $IP, "banned")) {
             increase_stat($l, "banned_requests");
             //db_log($l, $USER, 'Request rejected due to persistent IP ban.');
-            $err = make_failure(ERROR_ACCESS_DENIED, '`'.$IP.'` is banned. Attach Proof of Work to bypass the ban.');
+            $err = make_failure(ERROR_ACCESS_DENIED, '`'.$IP.'` is banned. Provide `token` to bypass the ban.');
             echo json_encode($err);
             deinit_sql($l);
             exit;
@@ -112,7 +112,7 @@ if ($l = init_sql()) {
                 }
                 $err = make_failure(
                            ERROR_ACCESS_DENIED,
-                           '`'.$IP.'` is temporarily banned for making too many requests. Attach Proof of Work to bypass the ban.'
+                           '`'.$IP.'` is temporarily banned for making too many requests. Provide `token` to bypass the ban.'
                        );
                 echo json_encode($err);
                 deinit_sql($l);

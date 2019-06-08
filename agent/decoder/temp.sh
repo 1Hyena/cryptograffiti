@@ -11,24 +11,23 @@ TOKN=""                                                                        #
 NONC=""                                                                        #
 ADDR=""                                                                        #
 NAME=""                                                                        #
+CLIF=""                                                                        #
+CGDF=""                                                                        #
+DDIR=""                                                                        #
 ################################################################################
 DATE_FORMAT="%Y-%m-%d %H:%M:%S"
-LOGS_PER_QUERY=0
+CANARY="::"
+WORKERS="16"
+TXS_PER_QUERY=0
 NONCE_ERRORS=0
-
-canary="::"
+OTHER_ERRORS=0
+TICK=8
+CACHE=""
 
 log() {
     now=`date +"${DATE_FORMAT}"`
-    printf "\033[1;36m%s\033[0m ${canary} %s\n" "$now" "$1" >/dev/stderr
+    printf "\033[1;36m%s\033[0m ${CANARY} %s\n" "$now" "$1" >/dev/stderr
 }
-
-################################################################################
-clifile="/home/hyena/Desktop/system/bitcoin-cli"
-oauth=""
-cgdfile=""
-datadir=""
-workers="16"
 
 lockfile=/tmp/7Ngp0oRoKc7QHIqC
 newsfile=/tmp/Y9Jx4Gvab0MYNjH0
@@ -47,30 +46,7 @@ echo $$ > $lockfile
 truncate -s 0 $newsfile
 truncate -s 0 $oldsfile
 truncate -s 0 $tempfile
-
-if [ -z "$datadir" ] ; then
-    datadir=""
-else
-    datadir="-datadir=${datadir}"
-fi
-
-if [ -z "$clifile" ] ; then
-    clifile="bitcoin-cli"
-fi
-
-if [ -z "$oauth" ] ; then
-    oauth=""
-fi
-
-if [ -z "$cgdfile" ] ; then
-    cgdfile="./cgd"
-fi
-
-errors=0
-tick=8
 ################################################################################
-
-NR=""
 
 if [ -z "$CONF" ] ; then
     log "Configuration file not provided, exiting."
@@ -82,6 +58,14 @@ if [[ -r ${CONF} ]] ; then
     NAME=`printf "%s" "${config}" | jq -r -M '.title | select (.!=null)'`
     INIT=`printf "%s" "${config}" | jq -r -M '.["init.sh"] | select (.!=null)'`
     CALL=`printf "%s" "${config}" | jq -r -M '.["call.sh"] | select (.!=null)'`
+    ADDR=`printf "%s" "${config}" | jq -r -M .api`
+    CGDF=`printf "%s" "${config}" | jq -r -M .cgd`
+    CLIF=`printf "%s" "${config}" | jq -r -M '.["bitcoin-cli"]'`
+    DDIR=`printf "%s" "${config}" | jq -r -M '.["bitcoin-dat"]'`
+
+    if [ ! -z "${DDIR}" ] ; then
+        DDIR="-datadir=${DDIR}"
+    fi
 
     if [ ! -z "${NAME}" ] ; then
         printf "\033]0;%s\007" "${NAME}"
@@ -98,6 +82,21 @@ fi
 
 if [ -z "$CALL" ] ; then
     log "Call script not provided, exiting."
+    exit
+fi
+
+if [ -z "$ADDR" ] ; then
+    log "API address not provided, exiting."
+    exit
+fi
+
+if [ ! $(which "${CGDF}" 2>/dev/null ) ] ; then
+    log "Program not found: ${CGDF}"
+    exit
+fi
+
+if [ ! $(which "${CLIF}" 2>/dev/null ) ] ; then
+    log "Program not found: ${CLIF}"
     exit
 fi
 
@@ -142,137 +141,147 @@ do
 
         while :
         do
-            deadcanary="\033[0;31m::\033[0m"
-            if [ "$errors" -ge "1" ]; then
-                canary="${deadcanary}"
+            if [ "$OTHER_ERRORS" -ge "1" ]; then
+                CANARY="\033[0;31m::\033[0m" # Canary is "dead", we got errors.
             fi
 
-            ((tick++))
-            if [ "$tick" -ge "10" ]; then
-                tick=0
+            ((TICK++))
+            if [ "$TICK" -ge "10" ]; then
+                TICK=0
 
-                if [ $(which "${clifile}" 2>/dev/null ) ] \
-                && [ $(which "${cgdfile}" 2>/dev/null ) ] \
-                && [ $(which sort)                      ] \
-                && [ $(which uniq)                      ] \
-                && [ $(which echo)                      ] \
-                && [ $(which grep)                      ] \
-                && [ $(which comm)                      ] \
-                && [ $(which curl)                      ] \
-                && [ $(which tr)                        ] \
-                && [ $(which tee)                       ] \
-                && [ $(which parallel)                  ] \
-                && [ $(which jq)                        ] ; then
-                    bestblock=`${clifile} ${datadir} getbestblockhash`
-                    pool=`${clifile} ${datadir} getrawmempool | jq -M -r .[]`
-                    news=`${clifile} ${datadir} getblock ${bestblock} | jq -M -r '.tx | .[]'`
-                    nfmt="%s%s\n"
-                    if [[ ! -z "${pool}" ]]; then
-                        nfmt="%s\n%s\n"
-                    fi
-                    news=`printf "${nfmt}" "${pool}" "${news}" | sort | uniq | tee ${newsfile} | comm -23 - ${oldsfile}`
-                    mv ${oldsfile} ${tempfile} && mv ${newsfile} ${oldsfile} && mv ${tempfile} ${newsfile}
-
-                    lines=`echo -n "${news}" | grep -c '^'`
-
-                    if [ "$lines" -ge "1" ]; then
-                        echo "${news}" # this line is just for debugging, can be removed
-
-                        if [ "$lines" -gt "1" ]; then
-                            log "Decoding ${lines} TXs."
-                        else
-                            txhash=`printf "%s" "${news}" | tr -d '\n'`
-                            log "Decoding TX ${txhash}."
+                if [ $(which "${CLIF}" 2>/dev/null ) ] \
+                && [ $(which "${CGDF}" 2>/dev/null ) ] \
+                && [ $(which sort)                   ] \
+                && [ $(which uniq)                   ] \
+                && [ $(which echo)                   ] \
+                && [ $(which grep)                   ] \
+                && [ $(which comm)                   ] \
+                && [ $(which curl)                   ] \
+                && [ $(which tr)                     ] \
+                && [ $(which tee)                    ] \
+                && [ $(which parallel)               ] \
+                && [ $(which jq)                     ] ; then
+                    if [ -z "${CACHE}" ] ; then
+                        bestblock=`${CLIF} ${DDIR} getbestblockhash`
+                        pool=`${CLIF} ${DDIR} getrawmempool | jq -M -r .[]`
+                        news=`${CLIF} ${DDIR} getblock ${bestblock} | jq -M -r '.tx | .[]'`
+                        nfmt="%s%s\n"
+                        if [[ ! -z "${pool}" ]]; then
+                            nfmt="%s\n%s\n"
                         fi
+                        news=`printf "${nfmt}" "${pool}" "${news}" | sort | uniq | tee ${newsfile} | comm -23 - ${oldsfile}`
+                        mv ${oldsfile} ${tempfile} && mv ${newsfile} ${oldsfile} && mv ${tempfile} ${newsfile}
 
-                        graffiti=`echo "${news}" | parallel -P ${workers} "${clifile} ${datadir} getrawtransaction {} 1 | ${cgdfile}"`
-                        state=$?
-                        msgcount=`echo -n "${graffiti}" | grep -c '^'`
+                        lines=`echo -n "${news}" | grep -c '^'`
 
-                        if [ "$msgcount" -ge "1" ]; then
-                            plural=""
-                            if [ "$msgcount" -gt "1" ]; then
-                                plural="s"
-                            fi
-                            log "Detected graffiti from ${msgcount} TX${plural}."
-
-                            echo "${graffiti}" | parallel --pipe -P ${workers} "jq '.files[]? |= del(.content)'"
-
-                            graffiti_buffer="{"
-                            while read -r line; do
-                                txid=`printf "%s" "${line}" | jq -M -r '.txid'`
-                                txsz=`printf "%s" "${line}" | jq -M -r '.size'`
-                                files=`printf "%s" "${line}" | jq -M -r --compact-output '[.files[] | .["type"] = .mimetype | del(.mimetype, .content, .entropy, .unicode)] | walk(if type == "number" then tostring else . end)'`
-
-                                if [ "${graffiti_buffer}" != "{" ]; then
-                                    graffiti_buffer+=","
-                                fi
-
-                                graffiti_buffer+="\"${txid}\":{\"txsize\":\"${txsz}\",\"files\":${files}}"
-                            done <<< "${graffiti}"
-                            graffiti_buffer+="}"
-
-                            log "Uploading new graffiti."
-                            #printf "%s\n" "${graffiti_buffer}"
-                            #printf "%s" "${graffiti_buffer}" | jq .
-
-################################################################################
-                            NONC=`printf "%s%s" "${NONC}" "${SEED}" | xxd -r -p | sha256sum | head -c 64`
-                            DATA=`printf '{"guid":"%s","nonce":"%s","graffiti":%s}' "${GUID}" "${NONC}" "${graffiti_buffer}" | xxd -p | tr -d '\n'`
-                            response=`"${CALL}" "${CONF}" "set_graffiti" "${DATA}"`
-
-                            result=`printf "%s" "${response}" | jq -r -M .result`
-
-                            if [ "${result}" == "SUCCESS" ]; then
-                                printf "%s" "${response}" | jq .
+                        if [ "$lines" -ge "1" ]; then
+                            if [ "$lines" -gt "1" ]; then
+                                log "Decoding ${lines} TXs."
                             else
-                                printf "%s" "${response}" | jq .error >/dev/stderr
-                                error_code=`printf "%s" "${response}" | jq -r -M .error | jq -r -M .code`
-                                if [ "${error_code}" == "ERROR_NONCE" ]; then
-                                    ((NONCE_ERRORS++))
-                                    break
-                                fi
+                                txhash=`printf "%s" "${news}" | tr -d '\n'`
+                                log "Decoding TX ${txhash}."
                             fi
-################################################################################
 
-                            if [[ ! -z "${oauth}" ]]; then
-                                while read -r line; do
-                                    json=`printf "%s" "${line}" | jq -M -r '[.files | .[]? | select(.content != null) | [.]][0] | select (.!=null) | .[]'`
+                            decoding_start=$SECONDS
 
-                                    if [[ ! -z "${json}" ]]; then
-                                        txid=`printf "%s" "${line}" | jq -M -r '.txid'`
-                                        size=`printf "%s" "${json}" | jq -M -r '.fsize'`
-                                        type=`printf "%s" "${json}" | jq -M -r '.mimetype'`
-                                        body=`printf "%s" "${json}" | jq -M -r '.content'`
+                            graffiti=`echo "${news}" | parallel -P ${WORKERS} "${CLIF} ${DDIR} getrawtransaction {} 1 | ${CGDF}"`
+                            state=$?
 
-                                        log "Uploading file from TX ${txid} (${type}, ${size})."
-                                        ok=`printf "%s" "${body}" | xxd -p -r | curl -s -F file=@- -F "initial_comment=https://bchsvexplorer.com/tx/${txid}" -F channels=cryptograffiti -H "Authorization: Bearer ${oauth}" https://slack.com/api/files.upload | jq -M -r '.ok'`
-
-                                        if [ "${ok}" = "true" ]; then
-                                            log "Successfully uploaded a file from TX ${txid}."
-                                        else
-                                            log "Failed to upload file."
-                                        fi
-                                    fi
-                                done <<< "${graffiti}"
-                            fi
-                        fi
-
-                        if [ "$state" -ge "1" ]; then
-                            if [ "$state" -eq "101" ]; then
-                                log "More than 100 jobs failed."
-                            else
-                                if [ "$state" -le "100" ]; then
-                                    if [ "$state" -eq "1" ]; then
-                                        log "1 job failed."
-                                    else
-                                        log "${state} jobs failed."
-                                    fi
+                            if [ "$state" -ge "1" ]; then
+                                if [ "$state" -eq "101" ]; then
+                                    log "More than 100 jobs failed."
                                 else
-                                    log "Other error from parallel."
+                                    if [ "$state" -le "100" ]; then
+                                        if [ "$state" -eq "1" ]; then
+                                            log "1 job failed."
+                                        else
+                                            log "${state} jobs failed."
+                                        fi
+                                    else
+                                        log "Other error from parallel."
+                                    fi
                                 fi
+                                ((OTHER_ERRORS++))
                             fi
-                            ((errors++))
+
+                            decoding_time=$(( SECONDS - decoding_start ))
+
+                            if [ "$decoding_time" -gt "1" ]; then
+                                log "Decodeding took ${decoding_time} seconds."
+                            fi
+
+                            msgcount=`echo -n "${graffiti}" | grep -c '^'`
+
+                            if [ "$msgcount" -ge "1" ]; then
+                                plural=""
+                                if [ "$msgcount" -gt "1" ]; then
+                                    plural="s"
+                                fi
+                                log "Detected graffiti from ${msgcount} TX${plural}."
+
+                                echo "${graffiti}" | parallel --pipe -P ${WORKERS} "jq '.files[]? |= del(.content)'"
+
+                                graffiti_buffer="{"
+                                while read -r line; do
+                                    txid=`printf "%s" "${line}" | jq -M -r '.txid'`
+                                    txsz=`printf "%s" "${line}" | jq -M -r '.size'`
+                                    files=`printf "%s" "${line}"  | jq -M -r --compact-output '[.files[] | .["type"] = .mimetype | del(.mimetype, .content, .entropy, .unicode)]'`
+
+                                    # We must convert all known integer values
+                                    # to strings because Cryptograffiti's API
+                                    # notoriously only recognizes string values.
+                                    files=`printf "%s" "${files}" | jq -M -r --compact-output '. | map_values( . + {"fsize": .fsize|tostring} )'`
+                                    files=`printf "%s" "${files}" | jq -M -r --compact-output '. | map_values( . + {"offset": .offset|tostring} )'`
+
+                                    if [ "${graffiti_buffer}" != "{" ]; then
+                                        graffiti_buffer+=","
+                                    fi
+
+                                    graffiti_buffer+="\"${txid}\":{\"txsize\":\"${txsz}\",\"files\":${files}}"
+                                done <<< "${graffiti}"
+                                graffiti_buffer+="}"
+
+                                tcount=`printf "%s" "${graffiti_buffer}" | jq length`
+                                fcount=`printf "%s" "${graffiti_buffer}" | jq -r -M '.[].files' | jq -r -M -s add | jq length`
+
+                                if [ "$tcount" -eq "1" ]; then
+                                    log "Uploading ${fcount} graffiti from ${tcount} TX."
+                                else
+                                    log "Uploading ${fcount} graffiti from ${tcount} TXs."
+                                fi
+
+                                CACHE="${graffiti_buffer}"
+                            fi
+                        fi
+                    else
+                        log "Trying to upload from cache."
+                    fi
+
+                    if [ ! -z "${CACHE}" ] ; then
+                        NONC=`printf "%s%s" "${NONC}" "${SEED}" | xxd -r -p | sha256sum | head -c 64`
+                        DATA=`printf '{"guid":"%s","nonce":"%s","graffiti":%s}' "${GUID}" "${NONC}" "${CACHE}" | xxd -p | tr -d '\n'`
+                        response=`"${CALL}" "${CONF}" "set_graffiti" "${DATA}"`
+
+                        result=`printf "%s" "${response}" | jq -r -M .result`
+                        rpm=`printf "%s" "${response}" | jq -r -M .api_usage.rpm`
+                        max_rpm=`printf "%s" "${response}" | jq -r -M .api_usage.max_rpm`
+
+                        if [ "${result}" == "SUCCESS" ]; then
+                            log "Upload completed successfully (RPM: ${rpm}/${max_rpm})."
+                            CACHE=""
+                        else
+                            printf "%s" "${response}" | jq .error >/dev/stderr
+                            error_code=`printf "%s" "${response}" | jq -r -M .error | jq -r -M .code`
+                            if [ "${error_code}" == "ERROR_NONCE" ]; then
+                                ((NONCE_ERRORS++))
+                                break
+                            fi
+                        fi
+
+                        ((rpm+=10))
+                        if [ "$rpm" -ge "$max_rpm" ]; then
+                            log "API usage is reaching its hard limit of ${max_rpm} RPM, throttling!"
+                            sleep 60
                         fi
                     fi
                 else

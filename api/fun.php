@@ -345,7 +345,7 @@ function assure_captcha($link) {
  `nr` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'Primary key. Unsigned integer.',
  `sticky` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'When set to TRUE this token will not get deleted after use.',
  `fused` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'TRUE when this token has been disabled to avoid greater damage.',
- `token` binary(32) NOT NULL COMMENT 'Client sends this to display Proof of Work.',
+ `token` binary(32) NOT NULL COMMENT 'Client sends this to bypass IP ban.',
  `rpm` int(10) unsigned NOT NULL DEFAULT '0' COMMENT 'Requests per minute.',
  `max_rpm` int(10) unsigned NOT NULL DEFAULT '60' COMMENT 'Maximum number of requests per minute.',
  `last_update` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last time the record got updated.',
