@@ -101,7 +101,9 @@ do
 
                     if [ -z "${NR}" ] ; then
                         NR="${nr}"
-                        last_nr="0"
+                        last_nr="${nr}" # Let's not upload the first we get.
+                        # This way we are not spamming the Slack with duplicate
+                        # posts in case the SlackBot restarts.
                     else
                         if [ "${nr}" -gt "${NR}" ]; then
                             NR="${nr}"
