@@ -91,6 +91,8 @@ do
             response=`"${CALL}" "${CONF}" "get_graffiti" "${DATA}"`
 
             result=`printf "%s" "${response}" | jq -r -M .result`
+            rpm=`printf "%s" "${response}" | jq -r -M .api_usage.rpm`
+            max_rpm=`printf "%s" "${response}" | jq -r -M .api_usage.max_rpm`
 
             if [ "${result}" == "SUCCESS" ]; then
                 lines=`printf "%s" "${response}" | jq -r -M --compact-output ".rows | .[]"`
@@ -158,9 +160,15 @@ do
                 done <<< "${lines}"
             else
                 error_code=`printf "%s" "${response}" | jq -r -M .error | jq -r -M .code`
-                log "Failed to get graffiti: ${error_code}"
+                log "Failed to get graffiti: ${error_code}  (RPM: ${rpm}/${max_rpm})"
                 printf "%s" "${response}" | jq .error >/dev/stderr
                 sleep 10
+            fi
+
+            ((rpm+=10))
+            if [ "$rpm" -ge "$max_rpm" ]; then
+                log "API usage is reaching its hard limit of ${max_rpm} RPM, throttling!"
+                sleep 60
             fi
 
             sleep 5
