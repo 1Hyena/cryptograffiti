@@ -157,16 +157,18 @@ do
                     fi
                 done <<< "${lines}"
             else
-                printf "%s" "${response}" | jq .error >/dev/stderr
                 error_code=`printf "%s" "${response}" | jq -r -M .error | jq -r -M .code`
+                log "Failed to get graffiti: ${error_code}"
+                printf "%s" "${response}" | jq .error >/dev/stderr
                 sleep 10
             fi
 
             sleep 5
         done
     else
-        printf "%s" "${response}" | jq .error >/dev/stderr
         error_code=`printf "%s" "${response}" | jq -r -M .error | jq -r -M .code`
+        log "Failed to get constants: ${error_code}"
+        printf "%s" "${response}" | jq .error >/dev/stderr
         sleep 10
     fi
 
