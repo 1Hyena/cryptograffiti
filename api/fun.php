@@ -1678,17 +1678,17 @@ function fun_get_btc_graffiti($link, $user, $guid, $graffiti_nr, $count, $back, 
     $query = null;
 
     if ($graffiti_nr === null) {
-        if ($mimetype !== null) $where = "WHERE `type` LIKE '".$mimetype."%'";
+        if ($mimetype !== null) $where = "WHERE `mimetype` LIKE '".$mimetype."%'";
         $query = "SELECT *, CONVERT_TZ(`creation_time`, @@session.time_zone, '+00:00') AS `utc_creation` ".
                  "FROM `btc_tx` ".$where." ORDER BY `nr` DESC LIMIT ".$limit;
     }
     else if ($back === '1') {
-        if ($mimetype !== null) $where = "AND `type` LIKE '".$mimetype."%'";
+        if ($mimetype !== null) $where = "AND `mimetype` LIKE '".$mimetype."%'";
         $query = "SELECT *, CONVERT_TZ(`creation_time`, @@session.time_zone, '+00:00') AS `utc_creation` ".
                  "FROM `btc_tx` WHERE `nr` <= '".$graffiti_nr."' ".$where." ORDER BY `nr` DESC LIMIT ".$limit;
     }
     else if ($back === '0' || $back === null) {
-        if ($mimetype !== null) $where = "AND `type` LIKE '".$mimetype."%'";
+        if ($mimetype !== null) $where = "AND `mimetype` LIKE '".$mimetype."%'";
         $query = "SELECT *, CONVERT_TZ(`creation_time`, @@session.time_zone, '+00:00') AS `utc_creation` ".
                  "FROM `btc_tx` WHERE `nr` >= '".$graffiti_nr."' ".$where." ORDER BY `nr` ASC LIMIT ".$limit;
     }
