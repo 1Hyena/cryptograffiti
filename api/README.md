@@ -561,16 +561,16 @@ These values can be received with an API call of `get_constants` function.
     * `checksum`       --- 32-byte hex string (ALS)
 
 
-* __Set Graffiti__
+* __Set Transactions__
     `POST https://cryptograffiti.info/api/`
 
     Add a list of Bitcoin transactions. No more than `TXS_PER_QUERY` TXs can be
     sent with this function. If that limit is exceeded the function returns
-    `FAILURE` without changing anything. Remember that all dictionary values
+    `FAILURE` without changing anything. Remember, that all dictionary values
     must be in string format.
 
     _POST Parameters:_
-    * `fun`            --- `set_graffiti`
+    * `fun`            --- `set_txs`
     * `data`           --- JSON string with the following structure
       * `guid`         --- 64 bytes random hex string,
       * `graffiti`     --- array of key-value pairs where TX hash is the key

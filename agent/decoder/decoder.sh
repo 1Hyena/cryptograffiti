@@ -265,7 +265,7 @@ do
                     if [ ! -z "${CACHE}" ] ; then
                         NONC=`printf "%s%s" "${NONC}" "${SEED}" | xxd -r -p | sha256sum | head -c 64`
                         DATA=`printf '{"guid":"%s","nonce":"%s","graffiti":%s}' "${GUID}" "${NONC}" "${CACHE}" | xxd -p | tr -d '\n'`
-                        response=`"${CALL}" "${CONF}" "set_graffiti" "${DATA}"`
+                        response=`"${CALL}" "${CONF}" "set_txs" "${DATA}"`
 
                         result=`printf "%s" "${response}" | jq -r -M .result`
                         rpm=`printf "%s" "${response}" | jq -r -M .api_usage.rpm`

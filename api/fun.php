@@ -13,7 +13,7 @@ define("ERROR_NONCE",               "ERROR_NONCE"              ); // unexpected 
 define("ERROR_ACCESS_DENIED",       "ERROR_ACCESS_DENIED"      ); // banned or invalid IP address
 
 // GAME CONSTANTS:
-define("API_VERSION",                                    "1.03"); // Version identifier for this particular implementation of the API.
+define("API_VERSION",                                    "1.04"); // Version identifier for this particular implementation of the API.
 define("SATOSHIS_PER_BITCOIN",                        100000000); // All bitcoin amounts are converted to integers known as satoshis.
 define("BTC_ADDRESS",      "1MVpQJA7FtcDrwKC6zATkZvZcxqma4JixS"); // Server's bitcoin address used to deposit bitcoins.
 define("STATS_PER_QUERY",                                    50); // Maximum number of stats rows to be returned as a response to `get_stats`.
@@ -1529,7 +1529,7 @@ function fun_set_btc_txs($link, $user, $guid, $txs) {
     return make_success();
 }
 
-function fun_set_graffiti($link, $user, $guid, $graffiti) {
+function fun_set_txs($link, $user, $guid, $graffiti) {
     if ($guid      === null) return make_failure(ERROR_INVALID_ARGUMENTS, '`guid` is invalid.');
     if ($graffiti  === null) return make_failure(ERROR_INVALID_ARGUMENTS, '`graffiti` is invalid.');
     if (!has_access($link, $guid, ROLE_DECODER)) return make_failure(ERROR_MISUSE, 'Access denied!');
