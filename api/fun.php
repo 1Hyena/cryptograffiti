@@ -13,7 +13,7 @@ define("ERROR_NONCE",               "ERROR_NONCE"              ); // unexpected 
 define("ERROR_ACCESS_DENIED",       "ERROR_ACCESS_DENIED"      ); // banned or invalid IP address
 
 // GAME CONSTANTS:
-define("API_VERSION",                                    "1.01"); // Version identifier for this particular implementation of the API.
+define("API_VERSION",                                    "1.02"); // Version identifier for this particular implementation of the API.
 define("SATOSHIS_PER_BITCOIN",                        100000000); // All bitcoin amounts are converted to integers known as satoshis.
 define("BTC_ADDRESS",      "1MVpQJA7FtcDrwKC6zATkZvZcxqma4JixS"); // Server's bitcoin address used to deposit bitcoins.
 define("STATS_PER_QUERY",                                    50); // Maximum number of stats rows to be returned as a response to `get_stats`.
@@ -700,16 +700,20 @@ function extract_graffiti($var, $args, &$result) {
             &&  ctype_xdigit($hash)
             &&  array_key_exists('files', $data)
             &&  is_array($data['files'])
-            &&  array_key_exists('txtime', $data)
-            &&  is_num($data['txtime'])
-            &&  intval($data['txtime']) > 0
+            && (!array_key_exists('txtime', $data)
+             || $data['txtime'] === null
+             || (is_num($data['txtime']) && intval($data['txtime']) > 0))
             &&  array_key_exists('txsize', $data)
             &&  is_num($data['txsize'])
             &&  intval($data['txsize']) > 0) {
                 $buf = array('txsize' => intval($data['txsize']),
-                             'txtime' => intval($data['txtime']),
+                             'txtime' => null,
                              'files'  => array()
                 );
+
+                if (array_key_exists('txtime', $data)) {
+                    $buf['txtime'] = intval($data['txtime']);
+                }
 
                 foreach ($data['files'] as $nr => $fdata) {
                     if (array_key_exists('location', $fdata)
@@ -1553,7 +1557,8 @@ function fun_set_graffiti($link, $user, $guid, $graffiti) {
             $added_txs++;
 
             $query_string = "UPDATE `tx` SET ".
-                         "`txsize` = '".$txsize."', `txtime` = '".$txtime."', ".
+                         "`txsize` = '".$txsize."', ".
+                         ($txtime !== null ? "`txtime` = '".$txtime."', " : "").
                          "`created` = NOW() WHERE `nr` = '".$tx_nr."'";
             $link->query($query_string);
 
@@ -1569,8 +1574,9 @@ function fun_set_graffiti($link, $user, $guid, $graffiti) {
         }
         else {
             $query_string = "UPDATE `tx` SET ".
-                         "`txsize` = '".$txsize."', `txtime` = '".$txtime."' ".
-                         "WHERE `txid` = X'".$tx_hash."'";
+                         "`txsize` = '".$txsize."', ".
+                         ($txtime !== null ? "`txtime` = '".$txtime."', " : "").
+                         "`modified` = NOW() WHERE `txid` = X'".$tx_hash."'";
             $link->query($query_string);
 
             if ($errno === 0 && $link->errno !== 0) {

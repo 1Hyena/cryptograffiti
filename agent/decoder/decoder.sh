@@ -238,7 +238,11 @@ do
                                         graffiti_buffer+=","
                                     fi
 
-                                    graffiti_buffer+="\"${txid}\":{\"txsize\":\"${txsz}\",\"txtime\":\"${txtm}\",\"files\":${files}}"
+                                    if [ "${txtm}" == "null" ]; then
+                                        graffiti_buffer+="\"${txid}\":{\"txsize\":\"${txsz}\",\"files\":${files}}"
+                                    else
+                                        graffiti_buffer+="\"${txid}\":{\"txsize\":\"${txsz}\",\"txtime\":\"${txtm}\",\"files\":${files}}"
+                                    fi
                                 done <<< "${graffiti}"
                                 graffiti_buffer+="}"
 

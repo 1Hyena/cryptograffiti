@@ -28,12 +28,13 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
 
     (*result)["txid"] = tx["txid"].get<std::string>();
 
-    if (!tx.count("time") || !tx["time"].is_number()) {
-        (*result)["error"] = "invalid or missing time";
+    if (tx.count("time") && !tx["time"].is_number()) {
+        (*result)["error"] = "invalid time";
         return false;
     }
 
-    (*result)["time"] = tx["time"];
+    if (tx.count("time")) (*result)["time"] = tx["time"];
+    else                  (*result)["time"] = nullptr;
 
     if (!tx.count("size") || !tx["size"].is_number()) {
         (*result)["error"] = "invalid or missing size";
