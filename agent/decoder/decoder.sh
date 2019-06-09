@@ -225,6 +225,7 @@ do
                                 while read -r line; do
                                     txid=`printf "%s" "${line}" | jq -M -r '.txid'`
                                     txsz=`printf "%s" "${line}" | jq -M -r '.size'`
+                                    txtm=`printf "%s" "${line}" | jq -M -r '.time'`
                                     files=`printf "%s" "${line}"  | jq -M -r --compact-output '[.files[] | .["type"] = .mimetype | del(.mimetype, .content, .entropy, .unicode)]'`
 
                                     # We must convert all known integer values
@@ -237,7 +238,7 @@ do
                                         graffiti_buffer+=","
                                     fi
 
-                                    graffiti_buffer+="\"${txid}\":{\"txsize\":\"${txsz}\",\"files\":${files}}"
+                                    graffiti_buffer+="\"${txid}\":{\"txsize\":\"${txsz}\",\"txtime\":\"${txtm}\",\"files\":${files}}"
                                 done <<< "${graffiti}"
                                 graffiti_buffer+="}"
 

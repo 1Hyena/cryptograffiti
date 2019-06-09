@@ -44,6 +44,7 @@ define("LOG_MINOR",                                           0);
 define("LOG_NORMAL",                                          1);
 define("LOG_MISUSE",                                          2);
 define("LOG_FINANCIAL",                                       3);
+define("LOG_ALERT",                                           4);
 define("LOG_ERROR",                                           4);
 define("LOG_CRITICAL",                                        5);
 
@@ -386,9 +387,9 @@ function assure_graffiti($link) {
  `nr` bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT 'primary key',
  `txid` binary(32) NOT NULL COMMENT 'TX hash',
  `location` varchar(16) NOT NULL DEFAULT 'NULL_DATA' COMMENT 'location of the payload within the TX',
- `fsize` bigint(20) unsigned NOT NULL DEFAULT 0 COMMENT 'file size in bytes',
+ `fsize` bigint(20) unsigned DEFAULT NULL COMMENT 'file size in bytes',
  `offset` bigint(20) NOT NULL DEFAULT 0 COMMENT 'first byte offset of the file',
- `mimetype` varchar(64) NOT NULL DEFAULT 'application/octet-stream' COMMENT 'file MIME type',
+ `mimetype` varchar(64) DEFAULT NULL COMMENT 'file MIME type',
  `hash` binary(20) DEFAULT NULL COMMENT 'RIPEMD-160 hash of the file',
  `created` timestamp NOT NULL DEFAULT current_timestamp() COMMENT 'creation timestamp',
  `modified` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT 'timestamp of the last update',
@@ -397,6 +398,19 @@ function assure_graffiti($link) {
  KEY `txid` (`txid`),
  KEY `mimetype` (`mimetype`),
  KEY `hash` (`hash`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8");
+}
+
+function assure_tx($link) {
+    return assure_table($link, 'tx', "CREATE TABLE `tx` (
+ `nr` bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT 'primary key',
+ `txid` binary(32) NOT NULL COMMENT 'TX hash',
+ `size` bigint(20) unsigned DEFAULT NULL COMMENT 'TX size in bytes',
+ `time` bigint(20) DEFAULT NULL COMMENT 'TX time in seconds since epoch',
+ `created` timestamp NOT NULL DEFAULT current_timestamp() COMMENT 'creation timestamp',
+ `modified` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT 'timestamp of the last update',
+ PRIMARY KEY (`nr`),
+ UNIQUE KEY `txid` (`txid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8");
 }
 
@@ -686,10 +700,14 @@ function extract_graffiti($var, $args, &$result) {
             &&  ctype_xdigit($hash)
             &&  array_key_exists('files', $data)
             &&  is_array($data['files'])
+            &&  array_key_exists('txtime', $data)
+            &&  is_num($data['txtime'])
+            &&  intval($data['txtime']) > 0
             &&  array_key_exists('txsize', $data)
             &&  is_num($data['txsize'])
             &&  intval($data['txsize']) > 0) {
                 $buf = array('txsize' => intval($data['txsize']),
+                             'txtime' => intval($data['txtime']),
                              'files'  => array()
                 );
 
@@ -1517,14 +1535,56 @@ function fun_set_graffiti($link, $user, $guid, $graffiti) {
         return make_failure(ERROR_MISUSE, '`txs` contains '.$c.' elements exceeding the limit of '.TXS_PER_QUERY.'.');
     }
 
-    $errno      = 0;
-    $error      = '';
-    $spam_count = 0;
-    $spam_txid  = null;
-    $changes    = 0;
-    $added      = 0;
+    $errno            = 0;
+    $error            = '';
+    $spam_count       = 0;
+    $spam_txid        = null;
+    $changed_graffiti = 0;
+    $changed_txs      = 0;
+    $added_graffiti   = 0;
+    $added_txs        = 0;
 
     foreach ($graffiti as $tx_hash => $tx) {
+        $txsize = $tx['txsize'];
+        $txtime = $tx['txtime'];
+
+        $tx_nr = insert_hex_unique($link, 'tx', array('txid' => $tx_hash));
+        if ($tx_nr !== null) {
+            $added_txs++;
+
+            $query_string = "UPDATE `tx` SET ".
+                         "`txsize` = '".$txsize."', `txtime` = '".$txtime."', ".
+                         "`created` = NOW() WHERE `nr` = '".$tx_nr."'";
+            $link->query($query_string);
+
+            if ($errno === 0 && $link->errno !== 0) {
+                set_critical_error($link, $link->error);
+                $errno = $link->errno;
+                $error = $link->error;
+            }
+
+            if ($link->affected_rows === 0) {
+                db_log($link, $user, "TX nr `".$tx_nr."` was not updated after its creation.", LOG_ALERT);
+            }
+        }
+        else {
+            $query_string = "UPDATE `tx` SET ".
+                         "`txsize` = '".$txsize."', `txtime` = '".$txtime."' ".
+                         "WHERE `txid` = X'".$tx_hash."'";
+            $link->query($query_string);
+
+            if ($errno === 0 && $link->errno !== 0) {
+                set_critical_error($link, $link->error);
+                $errno = $link->errno;
+                $error = $link->error;
+            }
+
+            if ($link->affected_rows !== 0) {
+                db_log($link, $user, $query_string);
+                $changed_txs++;
+            }
+        }
+
         $spam = true;
 
         foreach ($tx['files'] as $file) {
@@ -1545,9 +1605,11 @@ function fun_set_graffiti($link, $user, $guid, $graffiti) {
                 }
             }
             else {
-                $errno = $q['errno'];
-                $error = $q['error'];
-                if ($errno !== 0) set_critical_error($link);
+                if ($errno === 0 && $q['errno'] !== 0) {
+                    $errno = $q['errno'];
+                    $error = $q['error'];
+                    set_critical_error($link, $error);
+                }
                 continue;
             }
         }
@@ -1568,7 +1630,7 @@ function fun_set_graffiti($link, $user, $guid, $graffiti) {
             );
 
             if ($nr !== null) {
-                $added++;
+                $added_graffiti++;
 
                 $query_string =
                     "UPDATE `graffiti` SET ".
@@ -1577,9 +1639,16 @@ function fun_set_graffiti($link, $user, $guid, $graffiti) {
                     "`hash` = X'".$file['hash']."', ".
                     "`created` = NOW() WHERE `nr` = '".$nr."'";
                 $link->query($query_string);
-                $errno = $link->errno;
-                $error = $link->error;
-                if ($link->affected_rows === 0) set_critical_error($link);
+
+                if ($errno === 0 && $link->errno !== 0) {
+                    set_critical_error($link, $link->error);
+                    $errno = $link->errno;
+                    $error = $link->error;
+                }
+
+                if ($link->affected_rows === 0) {
+                    db_log($link, $user, "Graffiti nr `".$nr."` was not updated after its creation.", LOG_ALERT);
+                }
             }
             else {
                 $query_string =
@@ -1591,17 +1660,23 @@ function fun_set_graffiti($link, $user, $guid, $graffiti) {
                     " AND `location` = '".$file['location']."'".
                     " AND `offset` = '".$file['offset']."'";
                 $link->query($query_string);
-                $errno = $link->errno;
-                $error = $link->error;
+
+                if ($errno === 0 && $link->errno !== 0) {
+                    set_critical_error($link, $link->error);
+                    $errno = $link->errno;
+                    $error = $link->error;
+                }
+
                 if ($link->affected_rows !== 0) {
                     db_log($link, $user, $query_string);
-                    $changes++;
+                    $changed_graffiti++;
                 }
             }
         }
     }
 
-    db_log($link, $user, 'Added '.$added.', updated '.$changes.' graffiti row'.($changes === 1 ? '.' : 's.'));
+    db_log($link, $user, 'Added '.$added_txs.', updated '.$changed_txs.' TX'.($changed_txs === 1 ? '.' : 's.'));
+    db_log($link, $user, 'Added '.$added_graffiti.', updated '.$changed_graffiti.' graffiti row'.($changed_graffiti === 1 ? '.' : 's.'));
     if ($spam_count > 0) {
         if ($spam_count === 1) db_log($link, $user, 'Ignored the graffiti from TX '.$spam_txid.' (spam detected).');
         else                   db_log($link, $user, 'Ignored '.$spam_count.' graffiti TXs (spam detected).');

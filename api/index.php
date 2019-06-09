@@ -391,6 +391,7 @@ function assure_tables($l) {
     if (!assure_address($l)     ) return make_failure(ERROR_TABLE_ASSURANCE, 'Unable to assure table `address`.') ;
     if (!assure_captcha($l)     ) return make_failure(ERROR_TABLE_ASSURANCE, 'Unable to assure table `captcha`.') ;
     if (!assure_graffiti($l)    ) return make_failure(ERROR_TABLE_ASSURANCE, 'Unable to assure table `graffiti`.');
+    if (!assure_tx($l)          ) return make_failure(ERROR_TABLE_ASSURANCE, 'Unable to assure table `tx`.')      ;
     if (!assure_btc_tx($l)      ) return make_failure(ERROR_TABLE_ASSURANCE, 'Unable to assure table `btc_tx`.')  ;
     if (!assure_order($l)       ) return make_failure(ERROR_TABLE_ASSURANCE, 'Unable to assure table `order`.')   ;
 

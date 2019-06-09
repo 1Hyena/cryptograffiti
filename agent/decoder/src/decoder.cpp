@@ -22,11 +22,25 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
     }
 
     if (!tx.count("txid") || !tx["txid"].is_string()) {
-        (*result)["error"] = "invalid txid structure";
+        (*result)["error"] = "invalid or missing txid";
         return false;
     }
 
     (*result)["txid"] = tx["txid"].get<std::string>();
+
+    if (!tx.count("time") || !tx["time"].is_number()) {
+        (*result)["error"] = "invalid or missing time";
+        return false;
+    }
+
+    (*result)["time"] = tx["time"];
+
+    if (!tx.count("size") || !tx["size"].is_number()) {
+        (*result)["error"] = "invalid or missing size";
+        return false;
+    }
+
+    (*result)["size"] = tx["size"];
 
     if (!tx.count("vout") || !tx["vout"].is_array()) {
         (*result)["error"] = "invalid vout structure";
@@ -59,14 +73,9 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
     size_t valid_files = 0;
     (*result)["confirmations"] = 0;
     (*result)["graffiti"] = false;
-    (*result)["size"] = nullptr;
 
     if (tx.count("confirmations") && tx["confirmations"].is_number()) {
         (*result)["confirmations"] = tx["confirmations"];
-    }
-
-    if (tx.count("size") && tx["size"].is_number()) {
-        (*result)["size"] = tx["size"];
     }
 
     if (!graffiti.empty()) {

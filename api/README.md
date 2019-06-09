@@ -575,6 +575,7 @@ These values can be received with an API call of `get_constants` function.
       * `guid`         --- 64 bytes random hex string,
       * `graffiti`     --- array of key-value pairs where TX hash is the key
         * `txsize`     --- total size of the transaction
+        * `txtime`     --- TX time in seconds since epoch
         * `files`      --- array of graffiti objects
           * `location` --- location of the file within the TX
           * `fsize`    --- file size
