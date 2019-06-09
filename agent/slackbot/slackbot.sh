@@ -90,6 +90,9 @@ do
             fi
             response=`"${CALL}" "${CONF}" "get_graffiti" "${DATA}"`
 
+            testresponse=`"${CALL}" "${CONF}" "get_txs" "${DATA}"`
+            printf "%s" "${testresponse}" | jq .
+
             result=`printf "%s" "${response}" | jq -r -M .result`
             rpm=`printf "%s" "${response}" | jq -r -M .api_usage.rpm`
             max_rpm=`printf "%s" "${response}" | jq -r -M .api_usage.max_rpm`
