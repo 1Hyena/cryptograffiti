@@ -13,7 +13,7 @@ define("ERROR_NONCE",               "ERROR_NONCE"              ); // unexpected 
 define("ERROR_ACCESS_DENIED",       "ERROR_ACCESS_DENIED"      ); // banned or invalid IP address
 
 // GAME CONSTANTS:
-define("API_VERSION",                                    "1.05"); // Version identifier for this particular implementation of the API.
+define("API_VERSION",                                    "1.06"); // Version identifier for this particular implementation of the API.
 define("SATOSHIS_PER_BITCOIN",                        100000000); // All bitcoin amounts are converted to integers known as satoshis.
 define("BTC_ADDRESS",      "1MVpQJA7FtcDrwKC6zATkZvZcxqma4JixS"); // Server's bitcoin address used to deposit bitcoins.
 define("STATS_PER_QUERY",                                    50); // Maximum number of stats rows to be returned as a response to `get_stats`.
@@ -1874,28 +1874,34 @@ function fun_get_txs($link, $user, $guid, $tx_nr, $count, $back, $mimetype) {
     if ($limit <= 0) return make_success($response);
 
     $where = "";
+    $subwhere = "";
     $query = null;
 
-    if ($tx_nr === null) {
-        if ($mimetype !== null) $where = "WHERE `mimetype` LIKE '".$mimetype."%'";
+    if ($mimetype !== null) {
+        $where = "WHERE `mimetype` LIKE '".$mimetype."%'";
+        $subwhere = "AND `graffiti`.`mimetype` LIKE '".$mimetype."%'";
+    }
 
+    if ($tx_nr === null) {
         $query = "SELECT `txnr`, `txsize`, `ic`.`txid`, `ic`.`nr` AS gnr, `location`, `fsize`, `offset`, `mimetype`, `hash` ".
-                 "FROM ((select `nr` AS txnr, `txid`, `size` AS txsize from `tx` LIMIT ".$limit.") im) ".
+                 "FROM ((select `nr` AS txnr, `txid`, `size` AS txsize from `tx` ".
+                 "where exists (SELECT `nr` FROM `graffiti` WHERE `graffiti`.`txid` = `tx`.`txid` ".$subwhere.") ".
+                 "order by `txnr` desc limit ".$limit.") im) ".
                  "INNER JOIN `graffiti` ic ON `im`.`txid` = `ic`.`txid` ".$where." ORDER BY `txnr` DESC";
     }
     else if ($back === '1') {
-        if ($mimetype !== null) $where = "AND `mimetype` LIKE '".$mimetype."%'";
-
         $query = "SELECT `txnr`, `txsize`, `ic`.`txid`, `ic`.`nr` AS gnr, `location`, `fsize`, `offset`, `mimetype`, `hash` ".
-                 "FROM ((select `nr` AS txnr, `txid`, `size` AS txsize from `tx` where `nr` <= '".$tx_nr."' LIMIT ".$limit.") im) ".
-                 "INNER JOIN `graffiti` ic ON `im`.`txid`  = `ic`.`txid` ".$where." ORDER BY `txnr` DESC";
+                 "FROM ((select `nr` AS txnr, `txid`, `size` AS txsize from `tx` ".
+                 "where exists (SELECT `nr` FROM `graffiti` WHERE `graffiti`.`txid` = `tx`.`txid` ".$subwhere.") ".
+                 "and `nr` <= '".$tx_nr."' order by `txnr` desc limit ".$limit.") im) ".
+                 "INNER JOIN `graffiti` ic ON `im`.`txid` = `ic`.`txid` ".$where." ORDER BY `txnr` DESC";
     }
     else if ($back === '0' || $back === null) {
-        if ($mimetype !== null) $where = "AND `mimetype` LIKE '".$mimetype."%'";
-
         $query = "SELECT `txnr`, `txsize`, `ic`.`txid`, `ic`.`nr` AS gnr, `location`, `fsize`, `offset`, `mimetype`, `hash` ".
-                 "FROM ((select `nr` AS txnr, `txid`, `size` AS txsize from `tx` where `nr` >= '".$tx_nr."' LIMIT ".$limit.") im) ".
-                 "INNER JOIN `graffiti` ic ON `im`.`txid`  = `ic`.`txid` ".$where." ORDER BY `txnr` ASC";
+                 "FROM ((select `nr` AS txnr, `txid`, `size` AS txsize from `tx` ".
+                 "where exists (SELECT `nr` FROM `graffiti` WHERE `graffiti`.`txid` = `tx`.`txid` ".$subwhere.") ".
+                 "and `nr` >= '".$tx_nr."' order by `txnr` asc limit ".$limit.") im) ".
+                 "INNER JOIN `graffiti` ic ON `im`.`txid` = `ic`.`txid` ".$where." ORDER BY `txnr` ASC";
     }
 
     if ($query === null) {
@@ -1925,7 +1931,7 @@ function fun_get_txs($link, $user, $guid, $tx_nr, $count, $back, $mimetype) {
                 "fsize"    => $row['fsize'],
                 "offset"   => $row['offset'],
                 "mimetype" => $row['mimetype'],
-                "hash"     => $row['hash']
+                "hash"     => bin2hex($row['hash'])
             );
         }
         $result->free();
