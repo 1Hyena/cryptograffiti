@@ -13,7 +13,7 @@ define("ERROR_NONCE",               "ERROR_NONCE"              ); // unexpected 
 define("ERROR_ACCESS_DENIED",       "ERROR_ACCESS_DENIED"      ); // banned or invalid IP address
 
 // GAME CONSTANTS:
-define("API_VERSION",                                    "1.04"); // Version identifier for this particular implementation of the API.
+define("API_VERSION",                                    "1.05"); // Version identifier for this particular implementation of the API.
 define("SATOSHIS_PER_BITCOIN",                        100000000); // All bitcoin amounts are converted to integers known as satoshis.
 define("BTC_ADDRESS",      "1MVpQJA7FtcDrwKC6zATkZvZcxqma4JixS"); // Server's bitcoin address used to deposit bitcoins.
 define("STATS_PER_QUERY",                                    50); // Maximum number of stats rows to be returned as a response to `get_stats`.
@@ -1857,6 +1857,89 @@ function fun_get_graffiti($link, $user, $guid, $graffiti_nr, $count, $back, $mim
     }
 
     if ($graffiti_nr === null && is_array($response['rows'])) $response['rows'] = array_reverse($response['rows']);
+
+    return make_success($response);
+}
+
+function fun_get_txs($link, $user, $guid, $tx_nr, $count, $back, $mimetype) {
+    if ($count  === null) return make_failure(ERROR_INVALID_ARGUMENTS, '`count` is invalid.');
+
+    if ($mimetype !== null) $mimetype = $link->real_escape_string($mimetype);
+
+    $limit = intval(min(intval($count), TXS_PER_QUERY));
+
+    $response = array('txs' => null);
+    $graffiti = array();
+
+    if ($limit <= 0) return make_success($response);
+
+    $where = "";
+    $query = null;
+
+    if ($tx_nr === null) {
+        if ($mimetype !== null) $where = "WHERE `mimetype` LIKE '".$mimetype."%'";
+
+        $query = "SELECT `txnr`, `txsize`, `ic`.`txid`, `ic`.`nr` AS gnr, `location`, `fsize`, `offset`, `mimetype`, `hash` ".
+                 "FROM ((select `nr` AS txnr, `txid`, `size` AS txsize from `tx` LIMIT ".$limit.") im) ".
+                 "INNER JOIN `graffiti` ic ON `im`.`txid` = `ic`.`txid` ".$where." ORDER BY `txnr` DESC";
+    }
+    else if ($back === '1') {
+        if ($mimetype !== null) $where = "AND `mimetype` LIKE '".$mimetype."%'";
+
+        $query = "SELECT `txnr`, `txsize`, `ic`.`txid`, `ic`.`nr` AS gnr, `location`, `fsize`, `offset`, `mimetype`, `hash` ".
+                 "FROM ((select `nr` AS txnr, `txid`, `size` AS txsize from `tx` where `nr` <= '".$tx_nr."' LIMIT ".$limit.") im) ".
+                 "INNER JOIN `graffiti` ic ON `im`.`txid`  = `ic`.`txid` ".$where." ORDER BY `txnr` DESC";
+    }
+    else if ($back === '0' || $back === null) {
+        if ($mimetype !== null) $where = "AND `mimetype` LIKE '".$mimetype."%'";
+
+        $query = "SELECT `txnr`, `txsize`, `ic`.`txid`, `ic`.`nr` AS gnr, `location`, `fsize`, `offset`, `mimetype`, `hash` ".
+                 "FROM ((select `nr` AS txnr, `txid`, `size` AS txsize from `tx` where `nr` >= '".$tx_nr."' LIMIT ".$limit.") im) ".
+                 "INNER JOIN `graffiti` ic ON `im`.`txid`  = `ic`.`txid` ".$where." ORDER BY `txnr` ASC";
+    }
+
+    if ($query === null) {
+        return make_failure(ERROR_INTERNAL, 'Unexpected program flow.');
+    }
+
+    $result = $link->query($query);
+    if ($link->errno === 0) {
+        $tx_buf = array();
+
+        while ($row = $result->fetch_assoc()) {
+            $txnr = "".$row['txnr'];
+            $txid = bin2hex($row['txid']);
+            $txsize = $row['txsize'];
+
+            if (!array_key_exists($txnr, $tx_buf)) {
+                $tx_buf[$txnr] = array(
+                    "graffiti" => array(),
+                    "txid" => $txid,
+                    "txsize" => $txsize
+                );
+            }
+
+            $tx_buf[$txnr]["graffiti"][] = array(
+                "nr"       => $row['gnr'],
+                "location" => $row['location'],
+                "fsize"    => $row['fsize'],
+                "offset"   => $row['offset'],
+                "mimetype" => $row['mimetype'],
+                "hash"     => $row['hash']
+            );
+        }
+        $result->free();
+
+        $response['txs'] = array();
+        foreach ($tx_buf as $nr => $tx) {
+            $response['txs'][] = $tx;
+        }
+    }
+    else {
+        return make_failure(ERROR_SQL, $link->error);
+    }
+
+    if ($tx_nr === null && is_array($response['txs'])) $response['txs'] = array_reverse($response['txs']);
 
     return make_success($response);
 }

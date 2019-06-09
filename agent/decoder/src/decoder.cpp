@@ -161,7 +161,8 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
             graffiti.pop();
             if (chunk.count("error") && !verbose) continue;
 
-            chunkbuf.push_back(chunk);
+            // Let's ignore excess chunks to avoid potential DoS attacks.
+            if (chunkbuf.size() < 32) chunkbuf.push_back(chunk);
         }
 
         (*result)["files"].swap(chunkbuf);

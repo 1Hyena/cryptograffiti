@@ -279,6 +279,38 @@ These values can be received with an API call of `get_constants` function.
     * `checksum`       --- 32-byte hex string (ALS)
 
 
+* __Get Transactions__
+    `POST https://cryptograffiti.info/api/`
+
+    Returns Bitcoin transactions in the defined range. If `nr` is not sent or is
+    invalid then newest `count` of transactions is returned. If `mimetype` is
+    specified then only the transactions containing the graffiti that matches
+    with the selected mime-type are returned. The `count` parameter cannot
+    exceed `TXS_PER_QUERY`.
+
+    _POST Parameters:_
+    * `fun`            --- `get_txs`
+    * `data`           --- JSON string with the following structure
+        * `guid`       --- 64 bytes random hex string (optional)
+        * `nr`         --- the number of the first graffiti entry (optional)
+        * `count`      --- the total number of graffiti entries to be returned
+        * `back`       --- if '1' get `count` earlier than `nr` rows (optional)
+        * `mimetype`   --- expected file type, may be partial (optional)
+        * `nonce`      --- 64 bytes hex string (ALS)
+    * `sec_hash`       --- SHA256(`sec_key`) as a 64-byte hex string (ALS)
+    * `salt`           --- 32-byte hex string, must differ on each request (ALS)
+    * `checksum`       --- 32-byte hex string (ALS)
+    * `token`          --- 64 bytes hex string (optional)
+
+    _Returns a JSON dictionary:_
+    * `data`
+        * `result`     --- `SUCCESS` or `FAILURE`
+        * `error`      --- error dictionary if result was `FAILURE` (optional)
+        * `txs`        --- array of transactions (optional)
+    * `iv`             --- 32-byte hex string (ALS),
+    * `checksum`       --- 32-byte hex string (ALS)
+
+
 * __Get Bitcoin Donations__
     `POST https://cryptograffiti.info/api/`
 
