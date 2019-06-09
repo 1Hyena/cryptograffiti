@@ -99,6 +99,8 @@ do
 
             if [ "${result}" == "SUCCESS" ]; then
                 lines=`printf "%s" "${response}" | jq -r -M --compact-output ".rows | .[]"`
+                testlines=`printf "%s" "${testresponse}" | jq -r -M --compact-output ".rows | .[]"`
+                printf "%s\n" "${testlines}"
                 last_nr="${NR}"
 
                 while read -r line; do
