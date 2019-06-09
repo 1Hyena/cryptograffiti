@@ -90,17 +90,12 @@ do
             fi
             response=`"${CALL}" "${CONF}" "get_graffiti" "${DATA}"`
 
-            testresponse=`"${CALL}" "${CONF}" "get_txs" "${DATA}"`
-            printf "%s" "${testresponse}" | jq .
-
             result=`printf "%s" "${response}" | jq -r -M .result`
             rpm=`printf "%s" "${response}" | jq -r -M .api_usage.rpm`
             max_rpm=`printf "%s" "${response}" | jq -r -M .api_usage.max_rpm`
 
             if [ "${result}" == "SUCCESS" ]; then
                 lines=`printf "%s" "${response}" | jq -r -M --compact-output ".rows | .[]"`
-                testlines=`printf "%s" "${testresponse}" | jq -r -M --compact-output ".txs | .[]"`
-                printf "%s\n" "${testlines}"
                 last_nr="${NR}"
 
                 while read -r line; do
@@ -134,7 +129,6 @@ do
                             content=`printf "%s" "${gfile}" | jq -r -M .content`
 
                             if [ "${ghash}" = "${filehash}" ]; then
-
                                 if [ "${content}" = "null" ]; then
                                     log "Graffiti file ${filehash} has no content!"
                                 else
