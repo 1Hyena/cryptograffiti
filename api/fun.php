@@ -13,7 +13,7 @@ define("ERROR_NONCE",               "ERROR_NONCE"              ); // unexpected 
 define("ERROR_ACCESS_DENIED",       "ERROR_ACCESS_DENIED"      ); // banned or invalid IP address
 
 // GAME CONSTANTS:
-define("API_VERSION",                                    "1.06"); // Version identifier for this particular implementation of the API.
+define("API_VERSION",                                    "1.07"); // Version identifier for this particular implementation of the API.
 define("SATOSHIS_PER_BITCOIN",                        100000000); // All bitcoin amounts are converted to integers known as satoshis.
 define("BTC_ADDRESS",      "1MVpQJA7FtcDrwKC6zATkZvZcxqma4JixS"); // Server's bitcoin address used to deposit bitcoins.
 define("STATS_PER_QUERY",                                    50); // Maximum number of stats rows to be returned as a response to `get_stats`.
@@ -1919,9 +1919,10 @@ function fun_get_txs($link, $user, $guid, $tx_nr, $count, $back, $mimetype) {
 
             if (!array_key_exists($txnr, $tx_buf)) {
                 $tx_buf[$txnr] = array(
-                    "graffiti" => array(),
+                    "nr" => $row['txnr'],
                     "txid" => $txid,
-                    "txsize" => $txsize
+                    "txsize" => $txsize,
+                    "graffiti" => array()
                 );
             }
 
