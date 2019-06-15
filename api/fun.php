@@ -1571,12 +1571,13 @@ function fun_set_txs($link, $user, $guid, $graffiti) {
             if ($link->affected_rows === 0) {
                 db_log($link, $user, "TX nr `".$tx_nr."` was not updated after its creation.", LOG_ALERT);
             }
+            else db_log($link, $user, $query_string);
         }
         else {
             $query_string = "UPDATE `tx` SET ".
-                         "`size` = '".$txsize."', ".
                          ($txtime !== null ? "`time` = '".$txtime."', " : "").
-                         "`modified` = NOW() WHERE `txid` = X'".$tx_hash."'";
+                         "`size` = '".$txsize."' ".
+                         "WHERE `txid` = X'".$tx_hash."'";
             $link->query($query_string);
 
             if ($errno === 0 && $link->errno !== 0) {
@@ -1655,6 +1656,7 @@ function fun_set_txs($link, $user, $guid, $graffiti) {
                 if ($link->affected_rows === 0) {
                     db_log($link, $user, "Graffiti nr `".$nr."` was not updated after its creation.", LOG_ALERT);
                 }
+                else db_log($link, $user, $query_string);
             }
             else {
                 $query_string =
@@ -1892,15 +1894,15 @@ function fun_get_txs($link, $user, $guid, $tx_nr, $count, $back, $mimetype) {
     else if ($back === '1') {
         $query = "SELECT `txnr`, `txsize`, `ic`.`txid`, `ic`.`nr` AS gnr, `location`, `fsize`, `offset`, `mimetype`, `hash` ".
                  "FROM ((select `nr` AS txnr, `txid`, `size` AS txsize from `tx` ".
-                 "where exists (SELECT `nr` FROM `graffiti` WHERE `graffiti`.`txid` = `tx`.`txid` ".$subwhere.") ".
-                 "and `nr` <= '".$tx_nr."' order by `txnr` desc limit ".$limit.") im) ".
+                 "where `nr` <= '".$tx_nr."' and exists (SELECT `nr` FROM `graffiti` WHERE `graffiti`.`txid` = `tx`.`txid` ".$subwhere.") ".
+                 "order by `txnr` desc limit ".$limit.") im) ".
                  "INNER JOIN `graffiti` ic ON `im`.`txid` = `ic`.`txid` ".$where." ORDER BY `txnr` DESC";
     }
     else if ($back === '0' || $back === null) {
         $query = "SELECT `txnr`, `txsize`, `ic`.`txid`, `ic`.`nr` AS gnr, `location`, `fsize`, `offset`, `mimetype`, `hash` ".
                  "FROM ((select `nr` AS txnr, `txid`, `size` AS txsize from `tx` ".
-                 "where exists (SELECT `nr` FROM `graffiti` WHERE `graffiti`.`txid` = `tx`.`txid` ".$subwhere.") ".
-                 "and `nr` >= '".$tx_nr."' order by `txnr` asc limit ".$limit.") im) ".
+                 "where `nr` >= '".$tx_nr."' and exists (SELECT `nr` FROM `graffiti` WHERE `graffiti`.`txid` = `tx`.`txid` ".$subwhere.") ".
+                 "order by `txnr` asc limit ".$limit.") im) ".
                  "INNER JOIN `graffiti` ic ON `im`.`txid` = `ic`.`txid` ".$where." ORDER BY `txnr` ASC";
     }
 
