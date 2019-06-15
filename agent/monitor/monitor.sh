@@ -117,6 +117,7 @@ do
                         level=`printf "%s" "${line}" | jq -r -M .level`
                         text=`printf "%s" "${line}" | jq -r -M .text`
                         time=`printf "%s" "${line}" | jq -r -M .creation_time`
+                        alias=`printf "%s" "${line}" | jq -r -M '.session_alias | select (.!=null)'`
 
                         color="\033[0m";
                           if [ "${level}" == "0" ]; then color="\033[0;37m" # spam
@@ -127,7 +128,11 @@ do
                         elif [ "${level}" == "5" ]; then color="\033[1;31m" # critical
                         fi
 
-                        printf "%s :: ${color}%s\033[0m\n" "${time}" "${text}"
+                        if [ -z "${alias}" ] ; then
+                            printf "%s :: ${color}%s\033[0m\n" "${time}" "${text}"
+                        else
+                            printf "%s :: %s: ${color}%s\033[0m\n" "${time}" "${alias}" "${text}"
+                        fi
                     fi
                 done <<< "${lines}"
             else

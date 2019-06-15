@@ -1245,9 +1245,13 @@ function fun_get_log($link, $user, $guid, $log_nr, $count) {
 
     if ($limit <= 0) return make_success($response);
 
-    $query = "SELECT * FROM `log` WHERE `nr` >= '".$log_nr."' ORDER BY `nr` ASC LIMIT ".$limit;
+    $query = "SELECT `ll`.*, `sess`.`alias` AS 'session_alias' ".
+             "FROM `log` ll LEFT JOIN `session` sess on `ll`.session_nr = `sess`.nr ".
+             "WHERE `ll`.`nr` >= '".$log_nr."' ORDER BY `ll`.`nr` ASC LIMIT ".$limit;
     if ($log_nr === null) {
-        $query = "SELECT * FROM `log` ORDER BY `nr` DESC LIMIT ".$limit;
+        $query = "SELECT `ll`.*, `sess`.`alias` AS 'session_alias' ".
+                 "FROM `log` ll LEFT JOIN `session` sess on `ll`.session_nr = `sess`.nr ".
+                 "ORDER BY `ll`.`nr` DESC LIMIT ".$limit;
     }
 
     $result = $link->query($query);
