@@ -154,12 +154,9 @@ do
                                         if [ "${cache_respone}" = "${filehash}" ]; then
                                             log "Successfully uploaded the file to cache."
                                             slack_msg=`printf "%s%s\n%s%s" "${CACH}" "${filehash}" "https://bchsvexplorer.com/tx/" "${txid}"`
-                                            printf "%s\n" "${slack_msg}" >/dev/stderr
                                             slack_req=`jq -nc --arg str "${slack_msg}" '{"channel":"cryptograffiti","text": $str}'`
 
-                                            printf "%s" "${slack_req}" | jq . >/dev/stderr
-
-                                            #slack_resp=`printf "%s" "${slack_req}" | curl -s -H "Authorization: Bearer ${AUTH}" -H "Content-Type: application/json" -X POST --data-binary @- https://slack.com/api/chat.postMessage`
+                                            slack_resp=`printf "%s" "${slack_req}" | curl -s -H "Authorization: Bearer ${AUTH}" -H "Content-Type: application/json" -X POST --data-binary @- https://slack.com/api/chat.postMessage`
                                             ok=`printf "%s" "${slack_resp}" | jq -M -r '.ok'`
 
                                             if [ "${ok}" = "true" ]; then
@@ -171,13 +168,6 @@ do
                                         else
                                             log "Failed to upload the file (${cache_response})."
                                         fi
-#                                        ok=`printf "%s" "${content}" | xxd -p -r | curl -s -F file=@- -F "initial_comment=https://bchsvexplorer.com/tx/${txid}" -F "mimetype=${mimetype}" -F "filename=${filehash}" -F channels=cryptograffiti -H "Authorization: Bearer ${AUTH}" https://slack.com/api/files.upload | jq -M -r '.ok'`
-#
-#                                        if [ "${ok}" = "true" ]; then
-#                                            log "Successfully uploaded the file (${filehash})."
-#                                        else
-#                                            log "Failed to upload the file (${filehash})."
-#                                        fi
                                     fi
                                 fi
                             else
