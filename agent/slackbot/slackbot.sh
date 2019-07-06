@@ -173,7 +173,7 @@ do
                                             log "Successfully uploaded the file to cache."
                                             url_text=$( rawurlencode "${CACH}${filehash}\nhttps://bchsvexplorer.com/tx/${txid}" )
 
-                                            slack_resp=`curl -s -X POST -F "text=${url_text}" -F channels=cryptograffiti -H "Authorization: Bearer ${AUTH}" https://slack.com/api/chat.postMessage`
+                                            slack_resp=`curl -s -X POST -F "text=${url_text}" -F channel=cryptograffiti -H "Authorization: Bearer ${AUTH}" https://slack.com/api/chat.postMessage`
                                             ok=`printf "%s" "${slack_resp}" | jq -M -r '.ok'`
 
                                             if [ "${ok}" = "true" ]; then
