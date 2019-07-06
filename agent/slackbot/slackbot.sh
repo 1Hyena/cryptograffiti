@@ -153,7 +153,7 @@ do
 
                                         if [ "${cache_respone}" = "${filehash}" ]; then
                                             log "Successfully uploaded the file to cache."
-                                            slack_msg="${CACH}${filehash}\nhttps://bchsvexplorer.com/tx/${txid}"
+                                            slack_msg=`printf "%s%s\n%s%s" "${CACH}" "${filehash}" "https://bchsvexplorer.com/tx/" "${txid}"`
                                             printf "%s\n" "${slack_msg}" >/dev/stderr
                                             slack_req=`jq -nc --arg str "${slack_msg}" '{"channel":"cryptograffiti","text": $str}'`
 
