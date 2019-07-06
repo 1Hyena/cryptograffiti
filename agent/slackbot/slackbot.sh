@@ -5,6 +5,7 @@
 ################################################################################
 CONF="$1"                                                                      #
 ADDR=""                                                                        #
+CACH=""                                                                        #
 NAME=""                                                                        #
 AUTH=""                                                                        #
 CLIF=""                                                                        #
@@ -19,6 +20,24 @@ log() {
     printf "\033[1;35m%s\033[0m :: %s\n" "$now" "$1" >/dev/stderr
 }
 
+rawurlencode() {
+    local string="${1}"
+    local strlen=${#string}
+    local encoded=""
+    local pos c o
+
+    for (( pos=0 ; pos<strlen ; pos++ )); do
+        c=${string:$pos:1}
+        case "$c" in
+            [-_.~a-zA-Z0-9] ) o="${c}" ;;
+            * )               printf -v o '%%%02x' "'$c"
+        esac
+        encoded+="${o}"
+    done
+    echo "${encoded}"    # You can either set a return variable (FASTER)
+    REPLY="${encoded}"   #+or echo the result (EASIER)... or both... :p
+}
+
 NR=""
 
 if [ -z "$CONF" ] ; then
@@ -31,6 +50,7 @@ if [[ -r ${CONF} ]] ; then
     NAME=`printf "%s" "${config}" | jq -r -M '.title | select (.!=null)'`
     CALL=`printf "%s" "${config}" | jq -r -M '.["call.sh"] | select (.!=null)'`
     ADDR=`printf "%s" "${config}" | jq -r -M .api`
+    CACH=`printf "%s" "${config}" | jq -r -M .cache`
     AUTH=`printf "%s" "${config}" | jq -r -M .oauth`
     CGDF=`printf "%s" "${config}" | jq -r -M .cgd`
     CLIF=`printf "%s" "${config}" | jq -r -M '.["bitcoin-cli"]'`
@@ -55,6 +75,11 @@ fi
 
 if [ -z "$ADDR" ] ; then
     log "API address not provided, exiting."
+    exit
+fi
+
+if [ -z "$CACH" ] ; then
+    log "Cache address not provided, exiting."
     exit
 fi
 
@@ -142,13 +167,29 @@ do
 
                                     if [[ ! -z "${AUTH}" ]]; then
                                         log "Uploading ${filesize} bytes."
-                                        ok=`printf "%s" "${content}" | xxd -p -r | curl -s -F file=@- -F "initial_comment=https://bchsvexplorer.com/tx/${txid}" -F "mimetype=${mimetype}" -F "filename=${filehash}" -F channels=cryptograffiti -H "Authorization: Bearer ${AUTH}" https://slack.com/api/files.upload | jq -M -r '.ok'`
+                                        cache_respone=`printf "%s" "${content}" | xxd -p -r | curl -s -X POST --data-binary @- "${CACH}"`
 
-                                        if [ "${ok}" = "true" ]; then
-                                            log "Successfully uploaded the file (${filehash})."
+                                        if [ "${cache_respone}" = "${filehash}" ]; then
+                                            log "Successfully uploaded the file to cache."
+                                            url_text=$( rawurlencode "${CACH}${filehash}\nhttps://bchsvexplorer.com/tx/${txid}" )
+
+                                            ok=`curl -s -X POST -F "text=${url_text}" -F channels=cryptograffiti -H "Authorization: Bearer ${AUTH}" https://slack.com/api/chat.postMessage | jq -M -r '.ok'`
+
+                                            if [ "${ok}" = "true" ]; then
+                                                log "A link to ${filehash} has been posted to Slack."
+                                            else
+                                                log "A link to ${filehash} could not be posted to Slack."
+                                            fi
                                         else
-                                            log "Failed to upload the file (${filehash})."
+                                            log "Failed to upload the file (${cache_response})."
                                         fi
+#                                        ok=`printf "%s" "${content}" | xxd -p -r | curl -s -F file=@- -F "initial_comment=https://bchsvexplorer.com/tx/${txid}" -F "mimetype=${mimetype}" -F "filename=${filehash}" -F channels=cryptograffiti -H "Authorization: Bearer ${AUTH}" https://slack.com/api/files.upload | jq -M -r '.ok'`
+#
+#                                        if [ "${ok}" = "true" ]; then
+#                                            log "Successfully uploaded the file (${filehash})."
+#                                        else
+#                                            log "Failed to upload the file (${filehash})."
+#                                        fi
                                     fi
                                 fi
                             else
