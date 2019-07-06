@@ -20,24 +20,6 @@ log() {
     printf "\033[1;35m%s\033[0m :: %s\n" "$now" "$1" >/dev/stderr
 }
 
-rawurlencode() {
-    local string="${1}"
-    local strlen=${#string}
-    local encoded=""
-    local pos c o
-
-    for (( pos=0 ; pos<strlen ; pos++ )); do
-        c=${string:$pos:1}
-        case "$c" in
-            [-_.~a-zA-Z0-9] ) o="${c}" ;;
-            * )               printf -v o '%%%02x' "'$c"
-        esac
-        encoded+="${o}"
-    done
-    echo "${encoded}"    # You can either set a return variable (FASTER)
-    REPLY="${encoded}"   #+or echo the result (EASIER)... or both... :p
-}
-
 NR=""
 
 if [ -z "$CONF" ] ; then
@@ -171,9 +153,12 @@ do
 
                                         if [ "${cache_respone}" = "${filehash}" ]; then
                                             log "Successfully uploaded the file to cache."
-                                            url_text=$( rawurlencode "${CACH}${filehash}\nhttps://bchsvexplorer.com/tx/${txid}" )
+                                            slack_msg="${CACH}${filehash}\nhttps://bchsvexplorer.com/tx/${txid}"
+                                            slack_req=`jq -nc --arg str "${slack_msg}" '{"channel":"cryptograffiti","text": $str}'`
 
-                                            slack_resp=`curl -s -X POST -F "text=${url_text}" -F channel=cryptograffiti -H "Authorization: Bearer ${AUTH}" https://slack.com/api/chat.postMessage`
+                                            printf "%s" "${slack_req}" | jq . >/dev/stderr
+
+                                            slack_resp=`printf "%s" "${slack_req}" | curl -s -H "Authorization: Bearer ${AUTH}" -H "Content-Type: application/json" -X POST --data-binary @- https://slack.com/api/chat.postMessage`
                                             ok=`printf "%s" "${slack_resp}" | jq -M -r '.ok'`
 
                                             if [ "${ok}" = "true" ]; then
