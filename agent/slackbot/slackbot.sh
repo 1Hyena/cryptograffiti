@@ -154,11 +154,12 @@ do
                                         if [ "${cache_respone}" = "${filehash}" ]; then
                                             log "Successfully uploaded the file to cache."
                                             slack_msg="${CACH}${filehash}\nhttps://bchsvexplorer.com/tx/${txid}"
+                                            printf "%s\n" "${slack_msg}" >/dev/stderr
                                             slack_req=`jq -nc --arg str "${slack_msg}" '{"channel":"cryptograffiti","text": $str}'`
 
                                             printf "%s" "${slack_req}" | jq . >/dev/stderr
 
-                                            slack_resp=`printf "%s" "${slack_req}" | curl -s -H "Authorization: Bearer ${AUTH}" -H "Content-Type: application/json" -X POST --data-binary @- https://slack.com/api/chat.postMessage`
+                                            #slack_resp=`printf "%s" "${slack_req}" | curl -s -H "Authorization: Bearer ${AUTH}" -H "Content-Type: application/json" -X POST --data-binary @- https://slack.com/api/chat.postMessage`
                                             ok=`printf "%s" "${slack_resp}" | jq -M -r '.ok'`
 
                                             if [ "${ok}" = "true" ]; then
