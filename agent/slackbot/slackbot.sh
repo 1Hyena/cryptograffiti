@@ -128,7 +128,7 @@ do
 
                     if [ -z "${NR}" ] ; then
                         NR="${nr}"
-                        last_nr="${nr}" # Let's not upload the first we get.
+                        last_nr="0" # "${nr}" # Let's not upload the first we get.
                         # This way we are not spamming the Slack with duplicate
                         # posts in case the SlackBot restarts.
                     else
@@ -173,12 +173,14 @@ do
                                             log "Successfully uploaded the file to cache."
                                             url_text=$( rawurlencode "${CACH}${filehash}\nhttps://bchsvexplorer.com/tx/${txid}" )
 
-                                            ok=`curl -s -X POST -F "text=${url_text}" -F channels=cryptograffiti -H "Authorization: Bearer ${AUTH}" https://slack.com/api/chat.postMessage | jq -M -r '.ok'`
+                                            slack_resp=`curl -s -X POST -F "text=${url_text}" -F channels=cryptograffiti -H "Authorization: Bearer ${AUTH}" https://slack.com/api/chat.postMessage`
+                                            ok=`printf "%s" "${slack_resp}" | jq -M -r '.ok'`
 
                                             if [ "${ok}" = "true" ]; then
                                                 log "A link to ${filehash} has been posted to Slack."
                                             else
                                                 log "A link to ${filehash} could not be posted to Slack."
+                                                printf "%s" "${slack_resp}" | jq . >/dev/stderr
                                             fi
                                         else
                                             log "Failed to upload the file (${cache_response})."
