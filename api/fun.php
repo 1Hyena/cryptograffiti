@@ -1607,10 +1607,14 @@ function fun_set_txs($link, $user, $guid, $graffiti) {
 
             if ($q['errno'] === 0) {
                 if ($q['result']->fetch_assoc()) {
-                    // Some other TX already exists with the same hash. Ignore this TX.
+                    // The same exact graffiti already exists in the database as
+                    // a part of a different TX. Let's see if this TX comes with
+                    // a graffiti, that does not already exist in the database.
                     continue;
                 }
                 else {
+                    // This TX contains at least one graffiti that is new to our
+                    // database. This means the TX is not spam.
                     $spam = false;
                     break;
                 }
