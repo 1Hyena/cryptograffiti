@@ -153,7 +153,7 @@ do
 
                                         if [ "${cache_respone}" = "${filehash}" ]; then
                                             log "Successfully uploaded the file to cache."
-                                            slack_msg=`printf "%s%s\n%s%s" "${CACH}" "${filehash}" "https://bchsvexplorer.com/tx/" "${txid}"`
+                                            slack_msg=`printf "%s%s\n(TX %s)" "${CACH}" "${filehash}" "<https://bchsvexplorer.com/tx/${txid}|${txid}>"`
                                             slack_req=`jq -nc --arg str "${slack_msg}" '{"channel":"cryptograffiti","text": $str}'`
 
                                             slack_resp=`printf "%s" "${slack_req}" | curl -s -H "Authorization: Bearer ${AUTH}" -H "Content-Type: application/json" -X POST --data-binary @- https://slack.com/api/chat.postMessage`
