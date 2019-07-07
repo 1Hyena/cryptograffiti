@@ -18,11 +18,13 @@ DDIR=""                                                                        #
 DATE_FORMAT="%Y-%m-%d %H:%M:%S"
 CANARY="::"
 WORKERS="16"
+BESTBLOCK=""
 TXS_PER_QUERY=0
 NONCE_ERRORS=0
 OTHER_ERRORS=0
 TICK=8
 CACHE=""
+TXBUF=""
 
 log() {
     now=`date +"${DATE_FORMAT}"`
@@ -163,6 +165,11 @@ do
                 && [ $(which jq)                     ] ; then
                     if [ -z "${CACHE}" ] ; then
                         bestblock=`${CLIF} ${DDIR} getbestblockhash`
+                        if [ "${bestblock}" != "${BESTBLOCK}" ]; then
+                            log "Loading block ${bestblock}."
+                            BESTBLOCK="${bestblock}"
+                        fi
+
                         pool=`${CLIF} ${DDIR} getrawmempool | jq -M -r .[]`
                         news=`${CLIF} ${DDIR} getblock ${bestblock} | jq -M -r '.tx | .[]'`
                         nfmt="%s%s\n"
@@ -172,11 +179,35 @@ do
                         news=`printf "${nfmt}" "${pool}" "${news}" | sort | uniq | tee ${newsfile} | comm -23 - ${oldsfile}`
                         mv ${oldsfile} ${tempfile} && mv ${newsfile} ${oldsfile} && mv ${tempfile} ${newsfile}
 
-                        lines=`echo -n "${news}" | grep -c '^'`
+                        newscount=`echo -n "${news}" | grep -c '^'`
 
-                        if [ "$lines" -ge "1" ]; then
-                            if [ "$lines" -gt "1" ]; then
-                                log "Decoding ${lines} TXs."
+                        bufsz=`echo -n "${TXBUF}" | grep -c '^'`
+                        if [ "$bufsz" -ge "1" ]; then
+                            if [ "$newscount" -ge "1" ]; then
+                                news=`printf "%s\n%s" "${TXBUF}" "${news}"`
+                            else
+                                news="${TXBUF}"
+                            fi
+
+                            TXBUF=""
+                            newscount=`echo -n "${news}" | grep -c '^'`
+                        fi
+
+                        if [ "$newscount" -gt "${TXS_PER_QUERY}" ]; then
+                            skip=$((newscount-TXS_PER_QUERY))
+                            TXBUF=`printf "%s" "${news}" | tail "-${skip}"`
+                            news=`printf "%s" "${news}" | head "-${TXS_PER_QUERY}"`
+                            newscount=`echo -n "${news}" | grep -c '^'`
+                        fi
+
+                        if [ "$newscount" -ge "1" ]; then
+                            if [ "$newscount" -gt "1" ]; then
+                                line_queue_len=`echo -n "${TXBUF}" | grep -c '^'`
+                                if [ "$line_queue_len" -ge "1" ]; then
+                                    log "Decoding ${newscount} TXs (${line_queue_len} in queue)."
+                                else
+                                    log "Decoding ${newscount} TXs."
+                                fi
                             else
                                 txhash=`printf "%s" "${news}" | tr -d '\n'`
                                 log "Decoding TX ${txhash}."
@@ -184,7 +215,7 @@ do
 
                             decoding_start=$SECONDS
 
-                            graffiti=`echo "${news}" | parallel -P ${WORKERS} "${CLIF} ${DDIR} getrawtransaction {} 1 | ${CGDF}"`
+                            graffiti=`echo "${news}" | parallel -P ${WORKERS} "${CLIF} ${DDIR} getrawtransaction {} 1 | ${CGDF} --brief"`
                             state=$?
 
                             if [ "$state" -ge "1" ]; then
@@ -222,17 +253,25 @@ do
                                 echo "${graffiti}" | parallel --pipe -P ${WORKERS} "jq '.files[]? |= del(.content)'"
 
                                 graffiti_buffer="{"
-                                while read -r line; do
+
+                                tx_count=0
+
+                                while IFS= read -r line; do
+                                    ((tx_count++))
+                                    if [ "$tx_count" -gt "${TXS_PER_QUERY}" ]; then
+                                        ((OTHER_ERRORS++))
+                                        log "Error, TX count exceeds the limit of ${TXS_PER_QUERY}!"
+                                        break
+                                    fi
+
                                     txid=`printf "%s" "${line}" | jq -M -r '.txid'`
                                     txsz=`printf "%s" "${line}" | jq -M -r '.size'`
                                     txtm=`printf "%s" "${line}" | jq -M -r '.time'`
-                                    files=`printf "%s" "${line}"  | jq -M -r --compact-output '[.files[] | .["type"] = .mimetype | del(.mimetype, .content, .entropy, .unicode)]'`
 
                                     # We must convert all known integer values
                                     # to strings because Cryptograffiti's API
                                     # notoriously only recognizes string values.
-                                    files=`printf "%s" "${files}" | jq -M -r --compact-output '. | map_values( . + {"fsize": .fsize|tostring} )'`
-                                    files=`printf "%s" "${files}" | jq -M -r --compact-output '. | map_values( . + {"offset": .offset|tostring} )'`
+                                    files=`printf "%s" "${line}" | jq -M -r --compact-output '[.files[] | .["type"] = .mimetype | del(.mimetype, .content, .entropy, .unicode)] | map_values( . + {"fsize": .fsize|tostring, "offset": .offset|tostring} )'`
 
                                     if [ "${graffiti_buffer}" != "{" ]; then
                                         graffiti_buffer+=","
@@ -266,27 +305,36 @@ do
                         NONC=`printf "%s%s" "${NONC}" "${SEED}" | xxd -r -p | sha256sum | head -c 64`
                         DATA=`printf '{"guid":"%s","nonce":"%s","graffiti":%s}' "${GUID}" "${NONC}" "${CACHE}" | xxd -p | tr -d '\n'`
                         response=`"${CALL}" "${CONF}" "set_txs" "${DATA}"`
+                        state=$?
 
-                        result=`printf "%s" "${response}" | jq -r -M .result`
-                        rpm=`printf "%s" "${response}" | jq -r -M .api_usage.rpm`
-                        max_rpm=`printf "%s" "${response}" | jq -r -M .api_usage.max_rpm`
+                        if [ "$state" -ge "1" ]; then
+                            ((OTHER_ERRORS++))
+                            log "${CALL}: Exit code ${state}, dumping the cache."
+                            printf "%s\n" "${CACHE}" >/dev/stderr
 
-                        if [ "${result}" == "SUCCESS" ]; then
-                            log "Upload completed successfully (RPM: ${rpm}/${max_rpm})."
                             CACHE=""
                         else
-                            printf "%s" "${response}" | jq .error >/dev/stderr
-                            error_code=`printf "%s" "${response}" | jq -r -M .error | jq -r -M .code`
-                            if [ "${error_code}" == "ERROR_NONCE" ]; then
-                                ((NONCE_ERRORS++))
-                                break
-                            fi
-                        fi
+                            result=`printf "%s" "${response}" | jq -r -M .result`
+                            rpm=`printf "%s" "${response}" | jq -r -M .api_usage.rpm`
+                            max_rpm=`printf "%s" "${response}" | jq -r -M .api_usage.max_rpm`
 
-                        ((rpm+=10))
-                        if [ "$rpm" -ge "$max_rpm" ]; then
-                            log "API usage is reaching its hard limit of ${max_rpm} RPM, throttling!"
-                            sleep 60
+                            if [ "${result}" == "SUCCESS" ]; then
+                                log "Upload completed successfully (RPM: ${rpm}/${max_rpm})."
+                                CACHE=""
+                            else
+                                printf "%s" "${response}" | jq .error >/dev/stderr
+                                error_code=`printf "%s" "${response}" | jq -r -M .error | jq -r -M .code`
+                                if [ "${error_code}" == "ERROR_NONCE" ]; then
+                                    ((NONCE_ERRORS++))
+                                    break
+                                fi
+                            fi
+
+                            ((rpm+=10))
+                            if [ "$rpm" -ge "$max_rpm" ]; then
+                                log "API usage is reaching its hard limit of ${max_rpm} RPM, throttling!"
+                                sleep 60
+                            fi
                         fi
                     fi
                 else
@@ -295,7 +343,7 @@ do
                 fi
             fi
 
-            sleep 5
+            sleep 3
         done
     else
         printf "%s" "${response}" | jq .error >/dev/stderr

@@ -1556,6 +1556,45 @@ function fun_set_txs($link, $user, $guid, $graffiti) {
         $txsize = $tx['txsize'];
         $txtime = $tx['txtime'];
 
+        $spam = true;
+
+        foreach ($tx['files'] as $file) {
+            $qstr = "SELECT `nr` FROM `graffiti` WHERE `hash` = X'"
+                   .$file['hash']."' AND `txid` != X'".$tx_hash
+                   ."' AND `created` IS NOT NULL AND"
+                   ." `created` > (NOW() - INTERVAL 30 day) LIMIT 1";
+            $q = db_query($link, $qstr);
+
+            if ($q['errno'] === 0) {
+                if ($q['result']->fetch_assoc()) {
+                    // The same exact graffiti already exists in the database as
+                    // a part of a different TX. Let's see if this TX comes with
+                    // a graffiti, that does not already exist in the database.
+                    continue;
+                }
+                else {
+                    // This TX contains at least one graffiti that is new to our
+                    // database. This means the TX is not spam.
+                    $spam = false;
+                    break;
+                }
+            }
+            else {
+                if ($errno === 0 && $q['errno'] !== 0) {
+                    $errno = $q['errno'];
+                    $error = $q['error'];
+                    set_critical_error($link, $error);
+                }
+                continue;
+            }
+        }
+
+        if ($spam === true) {
+            $spam_count++;
+            $spam_txid = $tx_hash;
+            continue;
+        }
+
         $tx_nr = insert_hex_unique($link, 'tx', array('txid' => $tx_hash));
         if ($tx_nr !== null) {
             $added_txs++;
@@ -1594,45 +1633,6 @@ function fun_set_txs($link, $user, $guid, $graffiti) {
                 db_log($link, $user, $query_string);
                 $changed_txs++;
             }
-        }
-
-        $spam = true;
-
-        foreach ($tx['files'] as $file) {
-            $qstr = "SELECT `nr` FROM `graffiti` WHERE `hash` = X'"
-                   .$file['hash']."' AND `txid` != X'".$tx_hash
-                   ."' AND `created` IS NOT NULL AND"
-                   ." `created` > (NOW() - INTERVAL 30 day) LIMIT 1";
-            $q = db_query($link, $qstr);
-
-            if ($q['errno'] === 0) {
-                if ($q['result']->fetch_assoc()) {
-                    // The same exact graffiti already exists in the database as
-                    // a part of a different TX. Let's see if this TX comes with
-                    // a graffiti, that does not already exist in the database.
-                    continue;
-                }
-                else {
-                    // This TX contains at least one graffiti that is new to our
-                    // database. This means the TX is not spam.
-                    $spam = false;
-                    break;
-                }
-            }
-            else {
-                if ($errno === 0 && $q['errno'] !== 0) {
-                    $errno = $q['errno'];
-                    $error = $q['error'];
-                    set_critical_error($link, $error);
-                }
-                continue;
-            }
-        }
-
-        if ($spam === true) {
-            $spam_count++;
-            $spam_txid = $tx_hash;
-            continue;
         }
 
         foreach ($tx['files'] as $file) {

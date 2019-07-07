@@ -127,7 +127,7 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
                 if (old_sz/10 + new_sz >= old_sz) {
                     payload.push_back(0);
                     const char *str = (const char *) &payload[0];
-                    chunk["unicode"] = str;
+                    if (verbose) chunk["unicode"] = str;
 
                     if (new_sz <= 4) {
                         chunk["error"] = std::string("too short");
@@ -153,9 +153,11 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
                     (const char *) (&ripemd160(&payload[0], payload.size())[0])
                 );
 
-                chunk["content"] = bin2hex(
-                    (const unsigned char *) &payload[0], payload.size()
-                );
+                if (verbose) {
+                    chunk["content"] = bin2hex(
+                        (const unsigned char *) &payload[0], payload.size()
+                    );
+                }
             }
 
             graffiti.pop();
