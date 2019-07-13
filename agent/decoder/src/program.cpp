@@ -27,6 +27,9 @@ void PROGRAM::run() {
 
     DECODER decoder(this, log);
     decoder.set_verbose(options->verbose);
+    decoder.set_content(options->content);
+    decoder.set_file_hash(options->hash);
+    decoder.set_unicode_len(options->unicode);
 
     std::string input(std::istreambuf_iterator<char>(std::cin), {});
     nlohmann::json result = nlohmann::json();

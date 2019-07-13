@@ -15,15 +15,20 @@ class DECODER {
         class PROGRAM *program,
         void      (*log_fun) (const char *, const char *, ...) =drop_log,
         const char *log_src ="decoder"
-    ) : logfrom   (log_src)
-      , log       (log_fun)
-      , verbose   (   true)
-      , program   (program) {}
+    ) : logfrom    (log_src)
+      , log        (log_fun)
+      , verbose    (   true)
+      , content    (  false)
+      , unicode_len(      0)
+      , program    (program) {}
 
     ~DECODER() {}
 
     bool decode(const std::string &input, nlohmann::json *json =nullptr);
     void set_verbose(bool value);
+    void set_content(bool value);
+    void set_file_hash(const std::string &);
+    void set_unicode_len(size_t value);
 
     bool get_mimetype(const unsigned char *bytes, size_t len, std::string &mimetype) const;
 
@@ -37,6 +42,9 @@ class DECODER {
     std::string logfrom;
     void (*log)(const char *, const char *p_fmt, ...);
     bool    verbose;
+    bool    content;
+    size_t  unicode_len;
+    std::string file_hash;
     class PROGRAM *program;
 };
 

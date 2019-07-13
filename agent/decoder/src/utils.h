@@ -14,6 +14,7 @@ std::string bin2hex(const unsigned char *bytes, size_t len);
 double calc_entropy(const unsigned char *, size_t);
 int validate_bitcoin_address(const char *address, unsigned char *payload, size_t payload_sz);
 bool str2int(char const *s, int *i, int base =10);
+std::string prune_utf8(const char *utf8, size_t max_len);
 
 #endif
 

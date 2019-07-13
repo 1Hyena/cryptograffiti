@@ -371,3 +371,19 @@ int validate_bitcoin_address(const char *address, unsigned char *payload, size_t
     return addrbin[0];
 }
 
+std::string prune_utf8(const char *utf8, size_t max_len) {
+    size_t len = 0;
+    size_t bytes = 0;
+    const char *str = utf8;
+
+    while (*str) {
+        len += (*str++ & 0xc0) != 0x80;
+        if (len > max_len) {
+            return std::string(utf8, bytes);
+        }
+        ++bytes;
+    }
+
+    return std::string(utf8);
+}
+

@@ -215,7 +215,7 @@ do
 
                             decoding_start=$SECONDS
 
-                            graffiti=`echo "${news}" | parallel -P ${WORKERS} "${CLIF} ${DDIR} getrawtransaction {} 1 | ${CGDF} --brief"`
+                            graffiti=`echo "${news}" | parallel -P ${WORKERS} "${CLIF} ${DDIR} getrawtransaction {} 1 | ${CGDF} --unicode-len 60 | jq -r -M --compact-output 'select(.graffiti == true)'"`
                             state=$?
 
                             if [ "$state" -ge "1" ]; then
@@ -238,7 +238,7 @@ do
                             decoding_time=$(( SECONDS - decoding_start ))
 
                             if [ "$decoding_time" -gt "1" ]; then
-                                log "Decodeding took ${decoding_time} seconds."
+                                log "Decoding took ${decoding_time} seconds."
                             fi
 
                             msgcount=`echo -n "${graffiti}" | grep -c '^'`
@@ -250,7 +250,7 @@ do
                                 fi
                                 log "Detected graffiti from ${msgcount} TX${plural}."
 
-                                echo "${graffiti}" | parallel --pipe -P ${WORKERS} "jq '.files[]? |= del(.content)'"
+                                echo "${graffiti}" | parallel --pipe -P ${WORKERS} "jq --color-output '.files[]? |= del(.content)'"
 
                                 graffiti_buffer="{"
 

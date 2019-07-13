@@ -124,21 +124,22 @@ do
 
                         txid=`printf "%s" "${line}" | jq -r -M .txid`
                         ghash=`printf "%s" "${line}" | jq -r -M .hash`
-                        graffiti=`${CLIF} ${DDIR} getrawtransaction ${txid} 1 | ${CGDF}`
+                        graffiti=`${CLIF} ${DDIR} getrawtransaction ${txid} 1 | ${CGDF} --content --hash "${ghash}"`
                         gfiles=`printf "%s" "${graffiti}" | jq -r -M --compact-output .files[]`
 
                         log "Extracting TX ${txid}."
 
                         while read -r gfile; do
-                            mimetype=`printf "%s" "${gfile}" | jq -r -M .mimetype`
                             filehash=`printf "%s" "${gfile}" | jq -r -M .hash`
-                            filesize=`printf "%s" "${gfile}" | jq -r -M .fsize`
-                            content=`printf "%s" "${gfile}" | jq -r -M .content`
 
                             if [ "${ghash}" = "${filehash}" ]; then
+                                content=`printf "%s" "${gfile}" | jq -r -M .content`
+
                                 if [ "${content}" = "null" ]; then
                                     log "Graffiti file ${filehash} has no content!"
                                 else
+                                    filesize=`printf "%s" "${gfile}" | jq -r -M .fsize`
+                                    mimetype=`printf "%s" "${gfile}" | jq -r -M .mimetype`
                                     log "TX contains ${filehash} (${mimetype}, ${filesize})."
                                     unicode=`printf "%s" "${gfile}" | jq -r -M .unicode`
 

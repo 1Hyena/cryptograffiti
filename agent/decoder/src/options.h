@@ -3,6 +3,7 @@
 
 #include <string>
 #include <getopt.h>
+#include "utils.h"
 
 class OPTIONS {
     public:
@@ -12,9 +13,12 @@ class OPTIONS {
         void      (*log_fun) (const char *, const char *, ...) =drop_log,
         const char *log_src ="options"
     ) : verbose         (      0)
+      , content         (      0)
       , max_sys_cmd_len (     -1)
       , exit_flag       (      0)
       , name            (     "")
+      , hash            (     "")
+      , unicode         (      0)
       , version         (version)
       , logfrom         (log_src)
       , log             (log_fun) {}
@@ -22,9 +26,12 @@ class OPTIONS {
     ~OPTIONS() {}
 
     int verbose;
+    int content;
     int max_sys_cmd_len;
     int exit_flag;
     std::string name;
+    std::string hash;
+    int unicode;
 
     std::string print_usage() const {
         char line[256];
@@ -39,7 +46,10 @@ class OPTIONS {
             "  -m  --max-cmd-len     Maximum system command length (default is -1).\n"
             "                            Provide a negative number to automatically\n"
             "                            determine a good value for this parameter.\n"
+            "  -H  --hash            Decode only the graffiti with the given hash.\n"
+            "  -u  --unicode-len     Maximum UTF8 preview length (default is 0).\n"
             "      --verbose         Print verbose information.\n"
+            "      --content         Include graffiti content.\n"
             "  -v  --version         Show version information.\n"
         );
 
@@ -54,15 +64,18 @@ class OPTIONS {
                 // These options set a flag:
                 {"brief",               no_argument,         &verbose,           0 },
                 {"verbose",             no_argument,         &verbose,           1 },
+                {"content",             no_argument,         &content,           1 },
                 // These options may take an argument:
                 {"help",                no_argument,              0,            'h'},
                 {"version",             no_argument,              0,            'v'},
                 {"max-cmd-len",         required_argument,        0,            'm'},
+                {"unicode-len",         required_argument,        0,            'u'},
+                {"hash",                required_argument,        0,            'H'},
                 {0,                     0,                        0,             0 }
             };
 
             int option_index = 0;
-            c = getopt_long(argc, argv, "hvm:", long_options, &option_index);
+            c = getopt_long(argc, argv, "hvm:u:H:", long_options, &option_index);
             if (c == -1) break; // End of command line parameters?
 
             switch (c) {
@@ -87,6 +100,22 @@ class OPTIONS {
                         else max_sys_cmd_len = i;
                     }
                     break;
+                case 'u':
+                    {
+                        int i = atoi(optarg);
+                        if (i == 0 && (optarg[0] != '0' || optarg[1] != '\0')) {
+                            log(logfrom.c_str(), "unicode-len invalid: %s", optarg);
+                        }
+                        else unicode = i;
+                    }
+                    break;
+                case 'H': {
+                    if (hex2bin(optarg)) hash.assign(optarg);
+                    else {
+                        log(logfrom.c_str(), "hash is invalid hex: %s", optarg);
+                    }
+                    break;
+                }
                 case 'h': {
                     std::cout << print_usage() << std::endl;
                     exit_flag = 1;

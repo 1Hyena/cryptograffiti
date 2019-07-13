@@ -74,13 +74,13 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
     size_t valid_files = 0;
     (*result)["confirmations"] = 0;
     (*result)["graffiti"] = false;
+    (*result)["files"] = nlohmann::json::array();
 
     if (tx.count("confirmations") && tx["confirmations"].is_number()) {
         (*result)["confirmations"] = tx["confirmations"];
     }
 
     if (!graffiti.empty()) {
-        (*result)["files"] = nlohmann::json::array();
         nlohmann::json chunkbuf = nlohmann::json::array();
 
         while (!graffiti.empty()) {
@@ -116,6 +116,10 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
                     chunk["error"] = std::string("corrupt file");
                 }
             }
+            else if (graffiti.front().where == LOCATION::NULL_DATA
+            &&  mimetype.find("application/json") == 0) {
+                chunk["error"] = std::string("json string");
+            }
             else {
                 trim_utf8(payload);
                 size_t new_sz = payload.size();
@@ -127,7 +131,9 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
                 if (old_sz/10 + new_sz >= old_sz) {
                     payload.push_back(0);
                     const char *str = (const char *) &payload[0];
-                    if (verbose) chunk["unicode"] = str;
+                    if (unicode_len) {
+                        chunk["unicode"] = prune_utf8(str, unicode_len);
+                    }
 
                     if (new_sz <= 4) {
                         chunk["error"] = std::string("too short");
@@ -147,13 +153,14 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
                 else chunk["error"] = std::string("not plaintext");
             }
 
+            chunk["hash"] = std::string(
+                (const char *) (&ripemd160(&payload[0], payload.size())[0])
+            );
+
             if (!chunk.count("error")) {
                 valid_files++;
-                chunk["hash"] = std::string(
-                    (const char *) (&ripemd160(&payload[0], payload.size())[0])
-                );
 
-                if (verbose) {
+                if (content) {
                     chunk["content"] = bin2hex(
                         (const unsigned char *) &payload[0], payload.size()
                     );
@@ -162,6 +169,11 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
 
             graffiti.pop();
             if (chunk.count("error") && !verbose) continue;
+
+            if (!file_hash.empty()
+            && (!chunk.count("hash") || file_hash.compare(chunk["hash"]))) {
+                continue;
+            }
 
             // Let's ignore excess chunks to avoid potential DoS attacks.
             if (chunkbuf.size() < 32) chunkbuf.push_back(chunk);
@@ -289,6 +301,24 @@ bool DECODER::get_opret_segments(std::vector<unsigned char> &bytes, std::map<siz
 
 void DECODER::set_verbose(bool value) {
     verbose = value;
+}
+
+void DECODER::set_content(bool value) {
+    content = value;
+}
+
+void DECODER::set_file_hash(const std::string &hash) {
+    file_hash.assign(hash);
+
+    std::transform(file_hash.begin(), file_hash.end(), file_hash.begin(),
+        [](unsigned char c){
+            return std::tolower(c);
+        }
+    );
+}
+
+void DECODER::set_unicode_len(size_t value) {
+    unicode_len = value;
 }
 
 bool DECODER::get_mimetype(const unsigned char *bytes, size_t len, std::string &mimetype) const {
