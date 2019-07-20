@@ -116,10 +116,6 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
                     chunk["error"] = std::string("corrupt file");
                 }
             }
-            else if (graffiti.front().where == LOCATION::NULL_DATA
-            &&  mimetype.find("application/json") == 0) {
-                chunk["error"] = std::string("json string");
-            }
             else {
                 trim_utf8(payload);
                 size_t new_sz = payload.size();
@@ -143,6 +139,9 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
                     }
                     else if (hex2bin(str)) {
                         chunk["error"] = std::string("hex string");
+                    }
+                    else if (nlohmann::json::accept(str)) {
+                        chunk["error"] = std::string("json string");
                     }
                     else if (validate_bitcoin_address(str, nullptr, 0) >= 0) {
                         chunk["error"] = std::string("bitcoin address");
@@ -176,7 +175,14 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
             }
 
             // Let's ignore excess chunks to avoid potential DoS attacks.
-            if (chunkbuf.size() < 32) chunkbuf.push_back(chunk);
+            if (chunkbuf.size() < 256) chunkbuf.push_back(chunk);
+            else break;
+
+            if (!file_hash.empty()
+            && (chunk.count("hash") && !file_hash.compare(chunk["hash"]))) {
+                // We have found the chunk we were looking for.
+                break;
+            }
         }
 
         (*result)["files"].swap(chunkbuf);

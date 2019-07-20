@@ -215,7 +215,7 @@ do
 
                             decoding_start=$SECONDS
 
-                            graffiti=`echo "${news}" | parallel -P ${WORKERS} "${CLIF} ${DDIR} getrawtransaction {} 1 | ${CGDF} --unicode-len 60 | jq -r -M --compact-output 'select(.graffiti == true)'"`
+                            graffiti=`echo "${news}" | parallel -P ${WORKERS} "${CLIF} ${DDIR} getrawtransaction {} 1 | ${CGDF} --unicode-len 60 | jq -r -M -c 'select(.graffiti == true)'"`
                             state=$?
 
                             if [ "$state" -ge "1" ]; then
@@ -271,7 +271,7 @@ do
                                     # We must convert all known integer values
                                     # to strings because Cryptograffiti's API
                                     # notoriously only recognizes string values.
-                                    files=`printf "%s" "${line}" | jq -M -r --compact-output '[.files[] | .["type"] = .mimetype | del(.mimetype, .content, .entropy, .unicode)] | map_values( . + {"fsize": .fsize|tostring, "offset": .offset|tostring} )'`
+                                    files=`printf "%s" "${line}" | jq -M -r -c '[.files[] | .["type"] = .mimetype | del(.mimetype, .content, .entropy, .unicode)] | map_values( . + {"fsize": .fsize|tostring, "offset": .offset|tostring} ) | [.[] | select(.error == null)]'`
 
                                     if [ "${graffiti_buffer}" != "{" ]; then
                                         graffiti_buffer+=","
@@ -295,6 +295,8 @@ do
                                 fi
 
                                 CACHE="${graffiti_buffer}"
+
+                                #jq . >/dev/stderr <<< "${CACHE}"
                             fi
                         fi
                     else

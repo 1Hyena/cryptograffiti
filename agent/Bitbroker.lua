@@ -1300,11 +1300,11 @@ function decode_graffiti()
                     end;
                 end;
 
-                --if (donation == 0) then
-                --    -- Because OP_RETURN channel contains a lot of plaintext spam
-                --    -- we ignore it unless it includes a donation to our service.
-                --    op_return_hex = nil;
-                --end
+                if (donation == 0) then
+                    -- Because OP_RETURN channel contains a lot of plaintext spam
+                    -- we ignore it unless it includes a donation to our service.
+                    op_return_hex = nil;
+                end
 
                 bitcoin.new_txs[k].amount    = donation;
                 bitcoin.new_txs[k].confirmed = confirmed;
