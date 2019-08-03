@@ -21,6 +21,8 @@ log() {
 }
 
 NR=""
+HR=""
+TS=""
 
 if [ -z "$CONF" ] ; then
     log "Configuration file not provided, exiting."
@@ -105,6 +107,13 @@ do
                 lines=`printf "%s" "${response}" | jq -r -M --compact-output ".rows | .[]"`
                 last_nr="${NR}"
 
+                hr=`date +"%H"`
+
+                if [ "${hr}" != "${HR}" ]; then
+                    HR="${hr}"
+                    TS=""
+                fi
+
                 while read -r line; do
                     nr=`printf "%s" "${line}" | jq -r -M .nr`
 
@@ -155,13 +164,25 @@ do
                                         if [ "${cache_respone}" = "${filehash}" ]; then
                                             log "Successfully uploaded the file to cache."
                                             slack_msg=`printf "%s%s\n(TX %s)" "${CACH}" "${filehash}" "<https://bchsvexplorer.com/tx/${txid}|${txid}>"`
-                                            slack_req=`jq -nc --arg str "${slack_msg}" '{"channel":"cryptograffiti","text": $str}'`
+
+                                            if [ -z "${TS}" ] ; then
+                                                slack_req=`jq -M -nc --arg str "${slack_msg}" '{"channel":"cryptograffiti","text": $str}'`
+                                            else
+                                                slack_req=`jq -M -nc --arg str "${slack_msg}" --arg ts "${TS}" '{"channel":"cryptograffiti","thread_ts": $ts,"text": $str}'`
+                                            fi
 
                                             slack_resp=`printf "%s" "${slack_req}" | curl -s -H "Authorization: Bearer ${AUTH}" -H "Content-Type: application/json" -X POST --data-binary @- https://slack.com/api/chat.postMessage`
                                             ok=`printf "%s" "${slack_resp}" | jq -M -r '.ok'`
 
                                             if [ "${ok}" = "true" ]; then
-                                                log "A link to ${filehash} has been posted to Slack."
+                                                new_ts=`printf "%s" "${slack_resp}" | jq -M -r '.ts'`
+
+                                                if [ -z "${TS}" ] ; then
+                                                    log "A link to ${filehash} has been posted to Slack (${new_ts})."
+                                                    TS="${new_ts}"
+                                                else
+                                                    log "A link to ${filehash} has been posted to Slack (${TS}/${new_ts})."
+                                                fi
                                             else
                                                 log "A link to ${filehash} could not be posted to Slack."
                                                 printf "%s" "${slack_resp}" | jq . >/dev/stderr
