@@ -25,6 +25,7 @@ HR=""
 TS=""
 LAST_TEXT=""
 LAST_HASH=""
+CHAN_ID=""
 
 if [ -z "$CONF" ] ; then
     log "Configuration file not provided, exiting."
@@ -181,12 +182,15 @@ do
 
                                                     LAST_TEXT="${slack_msg}"
                                                     LAST_HASH="${filehash}"
+                                                    CHAN_ID=`printf "%s" "${slack_resp}" | jq -M -r '.channel'`
+
+                                                    printf "%s" "${slack_resp}" | jq . >/dev/stderr
                                                 else
-                                                    log "A link to ${filehash} could not be posted to Slack."
+                                                    log "A link to ${filehash} could not be posted to Slack (1)."
                                                     printf "%s" "${slack_resp}" | jq . >/dev/stderr
                                                 fi
                                             else
-                                                slack_req=`jq -M -nc --arg str "${slack_msg}" --arg ts "${TS}" '{"channel":"cryptograffiti","ts": $ts,"text": $str}'`
+                                                slack_req=`jq -M -nc --arg str "${slack_msg}" --arg ts "${TS}" --arg chid "${CHAN_ID}" '{"channel":$chid,"ts": $ts,"text": $str}'`
 
                                                 slack_resp=`printf "%s" "${slack_req}" | curl -s -H "Authorization: Bearer ${AUTH}" -H "Content-Type: application/json" -X POST --data-binary @- https://slack.com/api/chat.update`
                                                 ok=`printf "%s" "${slack_resp}" | jq -M -r '.ok'`
@@ -218,7 +222,7 @@ do
                                                     LAST_TEXT="${slack_msg}"
                                                     LAST_HASH="${filehash}"
                                                 else
-                                                    log "A link to ${filehash} could not be posted to Slack."
+                                                    log "A link to ${filehash} could not be posted to Slack (2)."
                                                     printf "%s" "${slack_resp}" | jq . >/dev/stderr
                                                 fi
                                             fi
