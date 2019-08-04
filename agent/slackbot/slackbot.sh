@@ -169,7 +169,7 @@ do
                                             slack_msg=`printf "%s%s\n(TX %s)" "${CACH}" "${filehash}" "<https://bchsvexplorer.com/tx/${txid}|${txid}>"`
 
                                             if [ -z "${TS}" ] ; then
-                                                slack_req=`jq -M -nc --arg str "${slack_msg}" '{"channel":"cryptograffiti","text": $str}'`
+                                                slack_req=`jq -M -nc --arg str "${slack_msg}" '{"channel":"cryptograffiti","parse":"full","unfurl_links":true,"text":$str}'`
 
                                                 slack_resp=`printf "%s" "${slack_req}" | curl -s -H "Authorization: Bearer ${AUTH}" -H "Content-Type: application/json" -X POST --data-binary @- https://slack.com/api/chat.postMessage`
                                                 ok=`printf "%s" "${slack_resp}" | jq -M -r '.ok'`
@@ -190,7 +190,7 @@ do
                                                     printf "%s" "${slack_resp}" | jq . >/dev/stderr
                                                 fi
                                             else
-                                                slack_req=`jq -M -nc --arg str "${slack_msg}" --arg ts "${TS}" --arg chid "${CHAN_ID}" '{"channel":$chid,"ts": $ts,"text": $str}'`
+                                                slack_req=`jq -M -nc --arg str "${slack_msg}" --arg ts "${TS}" --arg chid "${CHAN_ID}" '{"parse":"full","unfurl_links":true,"channel":$chid,"ts":$ts,"text":$str}'`
 
                                                 slack_resp=`printf "%s" "${slack_req}" | curl -s -H "Authorization: Bearer ${AUTH}" -H "Content-Type: application/json" -X POST --data-binary @- https://slack.com/api/chat.update`
                                                 ok=`printf "%s" "${slack_resp}" | jq -M -r '.ok'`
@@ -198,7 +198,7 @@ do
                                                 if [ "${ok}" = "true" ]; then
                                                     new_ts=`printf "%s" "${slack_resp}" | jq -M -r '.ts'`
 
-                                                    log "A link to ${filehash} has been posted to Slack as a thread replacement (${TS} -> ${new_ts})."
+                                                    log "A link to ${filehash} has been posted to Slack as a thread replacement (${new_ts})."
                                                     TS="${new_ts}"
 
                                                     if [[ ! -z "${LAST_TEXT}" ]] && [[ ! -z "${LAST_HASH}" ]]; then
