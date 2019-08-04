@@ -23,6 +23,8 @@ log() {
 NR=""
 HR=""
 TS=""
+LAST_TEXT=""
+LAST_HASH=""
 
 if [ -z "$CONF" ] ; then
     log "Configuration file not provided, exiting."
@@ -167,25 +169,58 @@ do
 
                                             if [ -z "${TS}" ] ; then
                                                 slack_req=`jq -M -nc --arg str "${slack_msg}" '{"channel":"cryptograffiti","text": $str}'`
-                                            else
-                                                slack_req=`jq -M -nc --arg str "${slack_msg}" --arg ts "${TS}" '{"channel":"cryptograffiti","thread_ts": $ts,"text": $str}'`
-                                            fi
 
-                                            slack_resp=`printf "%s" "${slack_req}" | curl -s -H "Authorization: Bearer ${AUTH}" -H "Content-Type: application/json" -X POST --data-binary @- https://slack.com/api/chat.postMessage`
-                                            ok=`printf "%s" "${slack_resp}" | jq -M -r '.ok'`
+                                                slack_resp=`printf "%s" "${slack_req}" | curl -s -H "Authorization: Bearer ${AUTH}" -H "Content-Type: application/json" -X POST --data-binary @- https://slack.com/api/chat.postMessage`
+                                                ok=`printf "%s" "${slack_resp}" | jq -M -r '.ok'`
 
-                                            if [ "${ok}" = "true" ]; then
-                                                new_ts=`printf "%s" "${slack_resp}" | jq -M -r '.ts'`
+                                                if [ "${ok}" = "true" ]; then
+                                                    new_ts=`printf "%s" "${slack_resp}" | jq -M -r '.ts'`
 
-                                                if [ -z "${TS}" ] ; then
-                                                    log "A link to ${filehash} has been posted to Slack (${new_ts})."
+                                                    log "A link to ${filehash} has been posted to Slack as a new thread (${new_ts})."
                                                     TS="${new_ts}"
+
+                                                    LAST_TEXT="${slack_msg}"
+                                                    LAST_HASH="${filehash}"
                                                 else
-                                                    log "A link to ${filehash} has been posted to Slack (${TS}/${new_ts})."
+                                                    log "A link to ${filehash} could not be posted to Slack."
+                                                    printf "%s" "${slack_resp}" | jq . >/dev/stderr
                                                 fi
                                             else
-                                                log "A link to ${filehash} could not be posted to Slack."
-                                                printf "%s" "${slack_resp}" | jq . >/dev/stderr
+                                                slack_req=`jq -M -nc --arg str "${slack_msg}" --arg ts "${TS}" '{"channel":"cryptograffiti","ts": $ts,"text": $str}'`
+
+                                                slack_resp=`printf "%s" "${slack_req}" | curl -s -H "Authorization: Bearer ${AUTH}" -H "Content-Type: application/json" -X POST --data-binary @- https://slack.com/api/chat.update`
+                                                ok=`printf "%s" "${slack_resp}" | jq -M -r '.ok'`
+
+                                                if [ "${ok}" = "true" ]; then
+                                                    new_ts=`printf "%s" "${slack_resp}" | jq -M -r '.ts'`
+
+                                                    log "A link to ${filehash} has been posted to Slack as a thread replacement (${TS} -> ${new_ts})."
+                                                    TS="${new_ts}"
+
+                                                    if [[ ! -z "${LAST_TEXT}" ]] && [[ ! -z "${LAST_HASH}" ]]; then
+                                                        slack_req=`jq -M -nc --arg str "${LAST_TEXT}" --arg ts "${TS}" '{"channel":"cryptograffiti","thread_ts": $ts,"text": $str}'`
+                                                        head1="Authorization: Bearer ${AUTH}"
+                                                        head2="Content-Type: application/json"
+
+                                                        slack_resp=`printf "%s" "${slack_req}" | curl -s -H "${head1}" -H "${head2}" -X POST --data-binary @- https://slack.com/api/chat.postMessage`
+                                                        ok=`printf "%s" "${slack_resp}" | jq -M -r '.ok'`
+
+                                                        if [ "${ok}" = "true" ]; then
+                                                            log "A link to ${LAST_HASH} has been posted to the end of thread ${TS} in Slack."
+                                                        else
+                                                            log "A link to ${LAST_HASH} could not be posted to the end of thread ${TS} in Slack."
+                                                            printf "%s" "${slack_resp}" | jq . >/dev/stderr
+                                                        fi
+                                                    else
+                                                        log "Error. Unexpected program flow."
+                                                    fi
+
+                                                    LAST_TEXT="${slack_msg}"
+                                                    LAST_HASH="${filehash}"
+                                                else
+                                                    log "A link to ${filehash} could not be posted to Slack."
+                                                    printf "%s" "${slack_resp}" | jq . >/dev/stderr
+                                                fi
                                             fi
                                         else
                                             log "Failed to upload the file (${cache_response})."
