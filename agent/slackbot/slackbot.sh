@@ -190,7 +190,7 @@ do
                                                     printf "%s" "${slack_resp}" | jq . >/dev/stderr
                                                 fi
                                             else
-                                                slack_req=`jq -M -nc --arg str "${slack_msg}" --arg ts "${TS}" --arg chid "${CHAN_ID}" '{"unfurl_links":true,"unfurl_media":true,"channel":$chid,"ts":$ts,"text":$str}'`
+                                                slack_req=`jq -M -nc --arg str "${slack_msg}" --arg ts "${TS}" --arg chid "${CHAN_ID}" --arg imgurl "${CACH}${filehash}" '{"unfurl_links":true,"unfurl_media":true,"channel":$chid,"ts":$ts,"text":$str,"attachments":[{"image_url":$imgurl}]}'`
 
                                                 slack_resp=`printf "%s" "${slack_req}" | curl -s -H "Authorization: Bearer ${AUTH}" -H "Content-Type: application/json" -X POST --data-binary @- https://slack.com/api/chat.update`
                                                 ok=`printf "%s" "${slack_resp}" | jq -M -r '.ok'`
