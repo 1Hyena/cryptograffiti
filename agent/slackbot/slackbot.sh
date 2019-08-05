@@ -166,10 +166,10 @@ do
 
                                         if [ "${cache_respone}" = "${filehash}" ]; then
                                             log "Successfully uploaded the file to cache."
-                                            slack_msg=`printf "%s%s\n(TX %s)" "${CACH}" "${filehash}" "<https://bchsvexplorer.com/tx/${txid}|${txid}>"`
+                                            slack_msg=`printf "TX %s" "<https://bchsvexplorer.com/tx/${txid}|${txid}>"`
 
                                             if [ -z "${TS}" ] ; then
-                                                slack_req=`jq -M -nc --arg str "${slack_msg}" '{"channel":"cryptograffiti","unfurl_links":true,"unfurl_media":true,"text":$str}'`
+                                                slack_req=`jq -M -nc --arg str "${slack_msg}" --arg imgurl "${CACH}${filehash}" '{"channel":"cryptograffiti","unfurl_links":true,"unfurl_media":true,"text":$str,"attachments":[{"image_url":$imgurl}]}'`
 
                                                 slack_resp=`printf "%s" "${slack_req}" | curl -s -H "Authorization: Bearer ${AUTH}" -H "Content-Type: application/json" -X POST --data-binary @- https://slack.com/api/chat.postMessage`
                                                 ok=`printf "%s" "${slack_resp}" | jq -M -r '.ok'`
@@ -202,7 +202,7 @@ do
                                                     TS="${new_ts}"
 
                                                     if [[ ! -z "${LAST_TEXT}" ]] && [[ ! -z "${LAST_HASH}" ]]; then
-                                                        slack_req=`jq -M -nc --arg str "${LAST_TEXT}" --arg ts "${TS}" '{"channel":"cryptograffiti","thread_ts": $ts,"text": $str}'`
+                                                        slack_req=`jq -M -nc --arg str "${LAST_TEXT}" --arg ts "${TS}" --arg imgurl "${CACH}${LAST_HASH}" '{"channel":"cryptograffiti","unfurl_links":true,"unfurl_media":true,"thread_ts":$ts,"text":$str,"attachments":[{"image_url":$imgurl}]}'`
                                                         head1="Authorization: Bearer ${AUTH}"
                                                         head2="Content-Type: application/json"
 
