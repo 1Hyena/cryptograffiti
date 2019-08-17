@@ -260,7 +260,14 @@ if ($l = init_sql()) {
                         $query = "UPDATE `session` SET `nonce` = X'".$next_nonce."' WHERE `guid` = X'".$GUID."'";
                         $q = db_query($l, $query);
                         if ($q['affected_rows'] === 0) {
-                            $r = make_failure(ERROR_INTERNAL, 'Cannot update `nonce` for session #'.$session_nr.'.');
+                            $q = db_query($l, $query);
+
+                            db_log($l, $USER, "The `nonce` of session #".$session_nr." failed to update, retrying...", LOG_ALERT);
+
+                            if ($q['affected_rows'] === 0) {
+                                $r = make_failure(ERROR_INTERNAL, 'Cannot update `nonce` for session #'.$session_nr.'.');
+                            }
+                            else db_log($l, $USER, "The `nonce` of session #".$session_nr." was successfully updated.", LOG_ALERT);
                         }
                         if ($q['errno'] !== 0) $r = make_failure(ERROR_SQL, $q['error']);
                     }
