@@ -108,7 +108,7 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
                 std::vector<unsigned char> errors;
 
                 if (!program->syspipe((const unsigned char *) &payload[0],
-                    payload.size(), "identify -verbose - 2>&1 > /dev/null", &errors)) {
+                    payload.size(), "docker run --memory=64m --rm -i v4tech/imagemagick identify -verbose - 2>&1 > /dev/null", &errors)) {
                     (*result)["error"] = "failed to identify file";
                     return false;
                 }

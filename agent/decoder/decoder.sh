@@ -102,6 +102,14 @@ if [ ! $(which "${CLIF}" 2>/dev/null ) ] ; then
     exit
 fi
 
+if [ ! $(which "docker" 2>/dev/null ) ] ; then
+    log "Program not found: docker"
+    exit
+else
+    docker_img="v4tech/imagemagick:latest"
+    docker inspect "${docker_img}" > /dev/null 2>&1 || log "Docker image not found: ${docker_img}" ; exit
+fi
+
 while :
 do
     wdir=`pwd`
@@ -215,8 +223,10 @@ do
 
                             decoding_start=$SECONDS
 
-                            graffiti=`echo "${news}" | parallel -P ${WORKERS} "${CLIF} ${DDIR} getrawtransaction {} 1 | ${CGDF} --unicode-len 60 | jq -r -M -c 'select(.graffiti == true)'"`
+                            graffiti=`echo "${news}" | parallel --timeout 10 -P ${WORKERS} "${CLIF} ${DDIR} getrawtransaction {} 1 | ${CGDF} --unicode-len 60 | jq -r -M -c 'select(.graffiti == true)'"`
                             state=$?
+
+                            docker rm $(docker ps -a -q)
 
                             if [ "$state" -ge "1" ]; then
                                 if [ "$state" -eq "101" ]; then
