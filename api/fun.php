@@ -7,6 +7,7 @@ define("ERROR_TABLE_ASSURANCE",     "ERROR_TABLE_ASSURANCE"    ); // should neve
 define("ERROR_DATABASE_CONNECTION", "ERROR_DATABASE_CONNECTION"); // should never happen
 define("ERROR_SQL",                 "ERROR_SQL"                ); // should never happen
 define("ERROR_NO_CHANGE",           "ERROR_NO_CHANGE"          ); // can rarely occur but not repeatedly
+define("ERROR_BAD_TIMING",          "ERROR_BAD_TIMING"         ); // can rarely occur but not repeatedly
 define("ERROR_INVALID_ARGUMENTS",   "ERROR_INVALID_ARGUMENTS"  ); // invalid request
 define("ERROR_MISUSE",              "ERROR_MISUSE"             ); // invalid request
 define("ERROR_NONCE",               "ERROR_NONCE"              ); // unexpected nonce, possible MITM Attack attempt
@@ -981,29 +982,7 @@ function insert_entry($link, $table, $vars) {
 
         if ($link->errno !== 0) {
             set_critical_error($link, $link->error);
-            return null;
-        }
-        if ($link->errno === 0 && $link->affected_rows > 0) return $link->insert_id;
-    }
-    return null;
-}
-
-function insert_unique($link, $table, $vars) {
-    if (count($vars)) {
-        $table = $link->real_escape_string($table);
-        foreach ($vars as &$var) $var = $link->real_escape_string($var);
-
-        $req  = "INSERT INTO `$table` (`". join('`, `', array_keys($vars)) ."`) ";
-        $req .= "SELECT '". join("', '", $vars) ."' FROM DUAL ";
-        $req .= "WHERE NOT EXISTS (SELECT 1 FROM `$table` WHERE ";
-
-        foreach ($vars AS $col => $val) $req .= "`$col`='$val' AND ";
-
-        $req = substr($req, 0, -5) . ") LIMIT 1";
-        $res = $link->query($req);
-        if ($link->errno !== 0) {
-            set_critical_error($link, $link->error);
-            return null;
+            return false;
         }
         if ($link->errno === 0 && $link->affected_rows > 0) return $link->insert_id;
     }
@@ -1025,7 +1004,7 @@ function insert_hex_unique($link, $table, $vars) {
         $res = $link->query($req);
         if ($link->errno !== 0) {
             set_critical_error($link, $link->error);
-            return null;
+            return false;
         }
         if ($link->errno === 0 && $link->affected_rows > 0)  return $link->insert_id;
     }
@@ -1047,22 +1026,11 @@ function insert_unique_graffiti($link, $table, $txid, $loc, $offset) {
     $res = $link->query($req);
     if ($link->errno !== 0) {
         set_critical_error($link, $link->error);
-        return null;
+        return false;
     }
     if ($link->errno === 0 && $link->affected_rows > 0)  return $link->insert_id;
 
     return null;
-}
-
-function insert_dummy($link, $table) {
-    $sql = "INSERT INTO `".$table."` () VALUES ()";
-    $res = $link->query($sql);
-
-    if ($res === false || $link->errno !== 0) {
-        db_log($link, null, 'Failed to insert a dummy record to `'.$table.'` table.', LOG_ERROR);
-        return null;
-    }
-    return $link->insert_id;
 }
 
 function fun_handshake($link, $user, $IP, $key, $HTTPS) {
@@ -1072,16 +1040,20 @@ function fun_handshake($link, $user, $IP, $key, $HTTPS) {
 
     $nr = insert_hex_unique($link, 'security', array('key' => $key, 'hash' => $hash));
 
-    if ($nr !== null) {
+    if ($nr === null) {
+        return make_failure(ERROR_NO_CHANGE, 'Such security `key` or its `hash` already exists.');
+    }
+    else if ($nr === false) {
+        return make_failure(ERROR_BAD_TIMING, "Bad timing, please try again.");
+    }
+    else {
         $ip = $link->real_escape_string($IP);
 
         $q = db_query($link, "UPDATE `security` SET `ip` = '".$ip."', `start_time` = NOW() WHERE `nr` = '".$nr."'");
         if ($q['errno']         !== 0) return make_failure(ERROR_SQL, $q['error']);
         if ($q['affected_rows'] === 0) return make_failure(ERROR_INTERNAL, 'Nothing changed after update of `security` WHERE `nr` = `'.$nr.'`.');
     }
-    else {
-        return make_failure(ERROR_NO_CHANGE, 'Such security `key` or its `hash` already exists.');
-    }
+
     db_log($link, $user, 'Successful security handshake #'.$nr.' -'.($HTTPS ? ' HTTPS was enabled.' : ' HTTPS was disabled.'), LOG_NORMAL);
     return make_success(array('TLS' => $HTTPS));
 }
@@ -1120,18 +1092,7 @@ function fun_init($link, $user, $IP, $guid, $sec_hash, $HTTPS, $restore) {
 
     $nr = insert_hex_unique($link, 'session', array('guid' => $guid));
 
-    if ($nr !== null) {
-        $next_nonce = hash("sha256", pack('H*',$nonce.$seed), false);
-
-        $q = db_query($link, "UPDATE `session` SET ".
-                             ($ALS ? "`nonce` = X'".$next_nonce."', `seed` = X'".$seed."', " : "").
-                             "`ip` = '".$ip."', `start_time` = NOW() WHERE `nr` = '".$nr."'");
-        if ($q['errno'] !== 0) return make_failure(ERROR_SQL, $q['error']);
-        if ($q['affected_rows'] === 0) {
-            return make_failure(ERROR_NO_CHANGE, 'Nothing changed after update of `session` WHERE `nr` = `'.$nr.'`.');
-        }
-    }
-    else {
+    if ($nr === null) {
         if (($nr = get_session_nr($link, $guid)) === null) $nr = 'N/A';
 
         $extra_info = array('TLS' => $HTTPS, 'ALS' => $ALS);
@@ -1172,6 +1133,21 @@ function fun_init($link, $user, $IP, $guid, $sec_hash, $HTTPS, $restore) {
 
         return make_failure(ERROR_INVALID_ARGUMENTS, 'Session #'.$nr.' has already been registered with the given `guid`.', $extra_info);
     }
+    else if ($nr === false) {
+        return make_failure(ERROR_BAD_TIMING, "Bad timing, please try again.");
+    }
+    else {
+        $next_nonce = hash("sha256", pack('H*',$nonce.$seed), false);
+
+        $q = db_query($link, "UPDATE `session` SET ".
+                             ($ALS ? "`nonce` = X'".$next_nonce."', `seed` = X'".$seed."', " : "").
+                             "`ip` = '".$ip."', `start_time` = NOW() WHERE `nr` = '".$nr."'");
+        if ($q['errno'] !== 0) return make_failure(ERROR_SQL, $q['error']);
+        if ($q['affected_rows'] === 0) {
+            return make_failure(ERROR_NO_CHANGE, 'Nothing changed after update of `session` WHERE `nr` = `'.$nr.'`.');
+        }
+    }
+
     $response = array('TLS' => $HTTPS, 'ALS' => $ALS);
     if ($ALS) {
         $response['nonce'] = $nonce;
@@ -1304,6 +1280,9 @@ function fun_make_order($link, $user, $guid, $group, $input, $token) {
     $nr = 0;
     if ( ($nr = insert_entry($link, 'order', $insert)) === null) {
         return make_failure(ERROR_NO_CHANGE, 'Failed to insert a new order.');
+    }
+    else if ($nr === false) {
+        return make_failure(ERROR_BAD_TIMING, 'Bad timing, please try again.');
     }
 
     db_log($link, $user, 'Added a new order #'.$nr.' into group #'.$group.'.');
@@ -1464,23 +1443,15 @@ function fun_set_btc_txs($link, $user, $guid, $txs) {
         }
 
         $nr = insert_hex_unique($link, 'btc_tx', array('hash' => $tx_hash));
-        if ($nr !== null) {
-            $added++;
-
-            $query_string = "UPDATE `btc_tx` SET ".
-                         "`confirmed` = ".$confirmed.", ".
-                         ($amount   !== null ? "`amount` = '".$amount."', "      : "").
-                         ($msg_type !== null ? "`type` = '".$msg_type."', "      : "").
-                         ($fsize    !== null ? "`fsize` = '".$fsize."', "        : "").
-                         ($msg_hash !== null ? "`msg_hash` = X'".$msg_hash."', " : "").
-                         "`creation_time` = NOW() WHERE `nr` = '".$nr."'";
-            $link->query($query_string);
-            $errno = $link->errno;
-            $error = $link->error;
-            if ($fsize !== null && $msg_type === null) db_log($link, $user, "Query setting fsize without mime type: ".$query_string, LOG_ERROR);
-            if ($link->affected_rows === 0) set_critical_error($link);
+        if ($nr === false) {
+            db_log($link, $user, "SQL failure when inserting TX ".$tx_hash.", retrying.", LOG_ALERT);
+            $nr = insert_hex_unique($link, 'btc_tx', array('hash' => $tx_hash));
+            if ($nr === false) {
+                db_log($link, $user, "Repeated failure when inserting TX ".$tx_hash.".", LOG_ALERT);
+            }
         }
-        else {
+
+        if ($nr === null) {
             $query_string = "UPDATE `btc_tx` SET ".
                          ($amount   !== null ? "`amount` = '".$amount."', "      : "").
                          ($msg_type !== null ? "`type` = '".$msg_type."', "      : "").
@@ -1496,6 +1467,23 @@ function fun_set_btc_txs($link, $user, $guid, $txs) {
                 $changes++;
             }
         }
+        else if ($nr !== false) {
+            $added++;
+
+            $query_string = "UPDATE `btc_tx` SET ".
+                         "`confirmed` = ".$confirmed.", ".
+                         ($amount   !== null ? "`amount` = '".$amount."', "      : "").
+                         ($msg_type !== null ? "`type` = '".$msg_type."', "      : "").
+                         ($fsize    !== null ? "`fsize` = '".$fsize."', "        : "").
+                         ($msg_hash !== null ? "`msg_hash` = X'".$msg_hash."', " : "").
+                         "`creation_time` = NOW() WHERE `nr` = '".$nr."'";
+            $link->query($query_string);
+            $errno = $link->errno;
+            $error = $link->error;
+            if ($fsize !== null && $msg_type === null) db_log($link, $user, "Query setting fsize without mime type: ".$query_string, LOG_ERROR);
+            if ($link->affected_rows === 0) set_critical_error($link);
+        }
+        else set_critical_error($link);
     }
 
     db_log($link, $user, 'Added '.$added.', updated '.$changes.' Bitcoin transaction'.($changes === 1 ? '.' : 's.'));
@@ -1596,7 +1584,33 @@ function fun_set_txs($link, $user, $guid, $graffiti) {
         }
 
         $tx_nr = insert_hex_unique($link, 'tx', array('txid' => $tx_hash));
-        if ($tx_nr !== null) {
+        if ($tx_nr === false) {
+            db_log($link, $user, "SQL failure when inserting TX ".$tx_hash.", retrying.", LOG_ALERT);
+            $tx_nr = insert_hex_unique($link, 'btc_tx', array('txid' => $tx_hash));
+            if ($tx_nr === false) {
+                db_log($link, $user, "Repeated failure when inserting TX ".$tx_hash.".", LOG_ALERT);
+            }
+        }
+
+        if ($tx_nr === null) {
+            $query_string = "UPDATE `tx` SET ".
+                         ($txtime !== null ? "`time` = '".$txtime."', " : "").
+                         "`size` = '".$txsize."' ".
+                         "WHERE `txid` = X'".$tx_hash."'";
+            $link->query($query_string);
+
+            if ($errno === 0 && $link->errno !== 0) {
+                set_critical_error($link, $link->error);
+                $errno = $link->errno;
+                $error = $link->error;
+            }
+
+            if ($link->affected_rows !== 0) {
+                db_log($link, $user, $query_string);
+                $changed_txs++;
+            }
+        }
+        else if ($tx_nr !== false) {
             $added_txs++;
 
             $query_string = "UPDATE `tx` SET ".
@@ -1616,24 +1630,6 @@ function fun_set_txs($link, $user, $guid, $graffiti) {
             }
             else db_log($link, $user, $query_string);
         }
-        else {
-            $query_string = "UPDATE `tx` SET ".
-                         ($txtime !== null ? "`time` = '".$txtime."', " : "").
-                         "`size` = '".$txsize."' ".
-                         "WHERE `txid` = X'".$tx_hash."'";
-            $link->query($query_string);
-
-            if ($errno === 0 && $link->errno !== 0) {
-                set_critical_error($link, $link->error);
-                $errno = $link->errno;
-                $error = $link->error;
-            }
-
-            if ($link->affected_rows !== 0) {
-                db_log($link, $user, $query_string);
-                $changed_txs++;
-            }
-        }
 
         foreach ($tx['files'] as $file) {
             $nr = insert_unique_graffiti(
@@ -1644,29 +1640,31 @@ function fun_set_txs($link, $user, $guid, $graffiti) {
                 $file['offset']
             );
 
-            if ($nr !== null) {
-                $added_graffiti++;
+            if ($nr === false) {
+                db_log($link, $user,
+                    "SQL failure when inserting ".$file['location'].":".
+                    $file['offset']." graffiti from TX ".$tx_hash.", retrying.",
+                    LOG_ALERT
+                );
 
-                $query_string =
-                    "UPDATE `graffiti` SET ".
-                    "`fsize` = '".$file['fsize']."', ".
-                    "`mimetype` = '".$file['type']."', ".
-                    "`hash` = X'".$file['hash']."', ".
-                    "`created` = NOW() WHERE `nr` = '".$nr."'";
-                $link->query($query_string);
+                $nr = insert_unique_graffiti(
+                    $link,
+                    'graffiti',
+                    $tx_hash,
+                    $file['location'],
+                    $file['offset']
+                );
 
-                if ($errno === 0 && $link->errno !== 0) {
-                    set_critical_error($link, $link->error);
-                    $errno = $link->errno;
-                    $error = $link->error;
+                if ($nr === false) {
+                    db_log($link, $user,
+                        "Repeated SQL failure when inserting ".$file['location'].":".
+                        $file['offset']." graffiti from TX ".$tx_hash.", retrying.",
+                        LOG_ALERT
+                    );
                 }
-
-                if ($link->affected_rows === 0) {
-                    db_log($link, $user, "Graffiti nr `".$nr."` was not updated after its creation.", LOG_ALERT);
-                }
-                else db_log($link, $user, $query_string);
             }
-            else {
+
+            if ($nr === null) {
                 $query_string =
                     "UPDATE `graffiti` SET ".
                     "`fsize` = '".$file['fsize']."', ".
@@ -1687,6 +1685,28 @@ function fun_set_txs($link, $user, $guid, $graffiti) {
                     db_log($link, $user, $query_string);
                     $changed_graffiti++;
                 }
+            }
+            else if ($nr !== false) {
+                $added_graffiti++;
+
+                $query_string =
+                    "UPDATE `graffiti` SET ".
+                    "`fsize` = '".$file['fsize']."', ".
+                    "`mimetype` = '".$file['type']."', ".
+                    "`hash` = X'".$file['hash']."', ".
+                    "`created` = NOW() WHERE `nr` = '".$nr."'";
+                $link->query($query_string);
+
+                if ($errno === 0 && $link->errno !== 0) {
+                    set_critical_error($link, $link->error);
+                    $errno = $link->errno;
+                    $error = $link->error;
+                }
+
+                if ($link->affected_rows === 0) {
+                    db_log($link, $user, "Graffiti nr `".$nr."` was not updated after its creation.", LOG_ALERT);
+                }
+                else db_log($link, $user, $query_string);
             }
         }
     }
@@ -2508,7 +2528,9 @@ function db_log($link, $user, $body, $level = LOG_MINOR) {
         if (array_key_exists('fun',     $user) && is_string($user['fun'    ])) $insert['fun'       ] = $user['fun'    ];
     }
 
-    insert_entry($link, 'log', $insert);
+    if (insert_entry($link, 'log', $insert) === false) {
+        insert_entry($link, 'log', $insert);
+    }
 }
 
 ?>

@@ -128,7 +128,18 @@ if ($l = init_sql()) {
         $img    = $rand;
         $token  = hash("sha256", $img.CAPTCHA_SALT, false);
         $nr     = insert_hex_unique($l, 'captcha', array('token' => $token));
-        if ($nr !== null) {
+
+        if ($nr === null) {
+            $err = make_failure(ERROR_NO_CHANGE, 'Failed to generate CAPTCHA, try again.');
+            db_log($l, $USER, $err, LOG_ERROR);
+            echo json_encode($err);
+        }
+        else if ($nr === false) {
+            $err = make_failure(ERROR_BAD_TIMING, "Bad timing, please try again.");
+            db_log($l, $USER, $err, LOG_ALERT);
+            echo json_encode($err);
+        }
+        else {
             $ftoken = null;
 
             $ft_given_local  = get_addr_stat($l, $IP, 'free_tokens');
@@ -153,11 +164,7 @@ if ($l = init_sql()) {
             $result = make_success(array('captcha' => array('url' => $url,'img' => $img, 'token' => $ftoken)));
             echo json_encode($result);
         }
-        else {
-            $err = make_failure(ERROR_NO_CHANGE, 'Failed to generate CAPTCHA, try again.');
-            db_log($l, $USER, $err, LOG_ERROR);
-            echo json_encode($err);
-        }
+
         deinit_sql($l);
         exit;
     }
@@ -340,7 +347,8 @@ if ($l = init_sql()) {
                             db_log($l, $USER, "Suspicious ".$_SERVER['REQUEST_METHOD']." request from ".$USER['ip'].":\n".$request, LOG_MINOR);
                         }
                     }
-                    else if ($r['error']['code'] !== ERROR_NO_CHANGE) {
+                    else if ($r['error']['code'] !== ERROR_NO_CHANGE
+                         &&  $r['error']['code'] !== ERROR_BAD_TIMING) {
                         $log = "";
                         $request = var_export($data, true);
                         if (strlen($request) > 0) {
