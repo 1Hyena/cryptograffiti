@@ -107,7 +107,7 @@ if [ ! $(which "docker" 2>/dev/null ) ] ; then
     exit
 else
     docker_img="v4tech/imagemagick:latest"
-    docker inspect "${docker_img}" > /dev/null 2>&1 || log "Docker image not found: ${docker_img}" ; exit
+    docker inspect "${docker_img}" > /dev/null 2>&1 || { log "Docker image not found: ${docker_img}" ; exit ; }
 fi
 
 while :
@@ -226,7 +226,7 @@ do
                             graffiti=`echo "${news}" | parallel --timeout 30 -P ${WORKERS} "${CLIF} ${DDIR} getrawtransaction {} 1 | ${CGDF} --unicode-len 60 | jq -r -M -c 'select(.graffiti == true)'"`
                             state=$?
 
-                            docker rm $(docker ps -a -q)
+                            docker rm $(docker ps -a -q) 2>/dev/null
 
                             if [ "$state" -ge "1" ]; then
                                 if [ "$state" -eq "101" ]; then
