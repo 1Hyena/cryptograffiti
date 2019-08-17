@@ -223,7 +223,7 @@ do
 
                             decoding_start=$SECONDS
 
-                            graffiti=`echo "${news}" | parallel --timeout 10 -P ${WORKERS} "${CLIF} ${DDIR} getrawtransaction {} 1 | ${CGDF} --unicode-len 60 | jq -r -M -c 'select(.graffiti == true)'"`
+                            graffiti=`echo "${news}" | parallel --timeout 30 -P ${WORKERS} "${CLIF} ${DDIR} getrawtransaction {} 1 | ${CGDF} --unicode-len 60 | jq -r -M -c 'select(.graffiti == true)'"`
                             state=$?
 
                             docker rm $(docker ps -a -q)
