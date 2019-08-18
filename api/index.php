@@ -74,7 +74,7 @@ if ($l = init_sql()) {
             if (get_addr_stat ($l, $IP, "banned")) {
                 increase_stat($l, "banned_requests");
             }
-            db_log($l, $USER, 'Invalid POST token: `'.$token.'`', LOG_MISUSE);
+            db_log($l, $USER, 'Invalid POST token: `'.$token.'`', LOG_LEVEL_MISUSE);
             $err = make_failure(ERROR_INVALID_ARGUMENTS, 'Invalid `token`.');
             echo json_encode($err);
             deinit_sql($l);
@@ -104,10 +104,10 @@ if ($l = init_sql()) {
             if ($rpm > $max_rpm) {
                 increase_stat($l, "banned_requests");
                 if ($rpm === ($max_rpm+1)) {
-                    db_log($l, $USER, 'IP '.$IP.' is temporarily banned.', LOG_MISUSE);
+                    db_log($l, $USER, 'IP '.$IP.' is temporarily banned.', LOG_LEVEL_MISUSE);
                     if (count($_REQUEST) > 0) {
                         $request = var_export(json_encode($_REQUEST), true);
-                        db_log($l, $USER, "Abusive ".$_SERVER['REQUEST_METHOD']." request from ".$USER['ip'].":\n".$request, LOG_MISUSE);
+                        db_log($l, $USER, "Abusive ".$_SERVER['REQUEST_METHOD']." request from ".$USER['ip'].":\n".$request, LOG_LEVEL_MISUSE);
                     }
                 }
                 $err = make_failure(
@@ -131,12 +131,12 @@ if ($l = init_sql()) {
 
         if ($nr === null) {
             $err = make_failure(ERROR_NO_CHANGE, 'Failed to generate CAPTCHA, try again.');
-            db_log($l, $USER, $err, LOG_ERROR);
+            db_log($l, $USER, $err, LOG_LEVEL_ERROR);
             echo json_encode($err);
         }
         else if ($nr === false) {
             $err = make_failure(ERROR_BAD_TIMING, "Bad timing, please try again.");
-            db_log($l, $USER, $err, LOG_ALERT);
+            db_log($l, $USER, $err, LOG_LEVEL_ALERT);
             echo json_encode($err);
         }
         else {
@@ -150,14 +150,14 @@ if ($l = init_sql()) {
                 $ft_given_global= intval($ft_given_global);
                 if ($ft_given_local < 3 && $ft_given_global < 30) {
                     $ftoken = $token;
-                    db_log($l, $USER, 'Free token given out, binded to CAPTCHA #'.$nr.'.', LOG_NORMAL);
+                    db_log($l, $USER, 'Free token given out, binded to CAPTCHA #'.$nr.'.', LOG_LEVEL_NORMAL);
                     increase_addr_stat($l, $IP, 'free_tokens');
                     increase_stat     ($l, 'free_tokens');
                 }
             }
 
             if ($ftoken === null) {
-                db_log($l, $USER, 'Created a new CAPTCHA #'.$nr.'.', LOG_NORMAL);
+                db_log($l, $USER, 'Created a new CAPTCHA #'.$nr.'.', LOG_LEVEL_NORMAL);
             }
 
             $url = 'https://cryptograffiti.info/api/captcha.php?img='.$img;
@@ -176,7 +176,7 @@ if ($l = init_sql()) {
         if (!is_captcha_str($img)
         ||  !is_captcha_str($code)) {
             $err = make_failure(ERROR_INVALID_ARGUMENTS, 'Invalid `img` or `code`.');
-            db_log($l, $USER, $err, LOG_MISUSE);
+            db_log($l, $USER, $err, LOG_LEVEL_MISUSE);
             echo json_encode($err);
         }
         else {
@@ -185,12 +185,12 @@ if ($l = init_sql()) {
             if (strcasecmp(substr($token, 0, 5), $code) === 0) {
                 $result = make_success(array('token' => $token));
                 echo json_encode($result);
-                db_log($l, $USER, 'Token given for solving a CAPTCHA.', LOG_NORMAL);
+                db_log($l, $USER, 'Token given for solving a CAPTCHA.', LOG_LEVEL_NORMAL);
             }
             else {
                 db_query($l, "DELETE FROM `captcha` WHERE `token` = X'".$token."' AND `sticky` IS FALSE");
                 $err = make_failure(ERROR_MISUSE, 'Unexpected answer `'.$code.'` to a CAPTCHA `'.$img.'`. Related tokens invalidated.');
-                db_log($l, $USER, $err, LOG_MISUSE);
+                db_log($l, $USER, $err, LOG_LEVEL_MISUSE);
                 echo json_encode($err);
             }
         }
@@ -269,12 +269,12 @@ if ($l = init_sql()) {
                         if ($q['affected_rows'] === 0) {
                             $q = db_query($l, $query);
 
-                            db_log($l, $USER, "The `nonce` of session #".$session_nr." failed to update, retrying...", LOG_ALERT);
+                            db_log($l, $USER, "The `nonce` of session #".$session_nr." failed to update, retrying...", LOG_LEVEL_ALERT);
 
                             if ($q['affected_rows'] === 0) {
                                 $r = make_failure(ERROR_INTERNAL, 'Cannot update `nonce` for session #'.$session_nr.'.');
                             }
-                            else db_log($l, $USER, "The `nonce` of session #".$session_nr." was successfully updated.", LOG_ALERT);
+                            else db_log($l, $USER, "The `nonce` of session #".$session_nr." was successfully updated.", LOG_LEVEL_ALERT);
                         }
                         if ($q['errno'] !== 0) $r = make_failure(ERROR_SQL, $q['error']);
                     }
@@ -323,7 +323,7 @@ if ($l = init_sql()) {
                 $r['error']['fun']  = $fun;
                 $r['error']['data'] = $data;
                 if (array_key_exists('code', $r['error'])) {
-                    $level = LOG_ERROR;
+                    $level = LOG_LEVEL_ERROR;
                     if ($r['error']['code'] == ERROR_INVALID_ARGUMENTS
                     ||  $r['error']['code'] == ERROR_MISUSE
                     ||  $r['error']['code'] == ERROR_NO_CHANGE
@@ -331,20 +331,20 @@ if ($l = init_sql()) {
                     ||  $r['error']['code'] == ERROR_NONCE) {
                         increase_stat($l, "invalid_requests");
                         $inc_errors = false;
-                        $level = LOG_MISUSE;
+                        $level = LOG_LEVEL_MISUSE;
                     }
                     if ($r['error']['code'] == ERROR_CRITICAL
                     ||  $r['error']['code'] == ERROR_INTERNAL
                     ||  $r['error']['code'] == ERROR_TABLE_ASSURANCE
                     ||  $r['error']['code'] == ERROR_DATABASE_CONNECTION
                     ||  $r['error']['code'] == ERROR_SQL) {
-                        $level = LOG_CRITICAL;
+                        $level = LOG_LEVEL_CRITICAL;
                     }
 
                     if ($no_fun) {
                         if (count($_REQUEST) > 0) {
                             $request = var_export(json_encode($_REQUEST), true);
-                            db_log($l, $USER, "Suspicious ".$_SERVER['REQUEST_METHOD']." request from ".$USER['ip'].":\n".$request, LOG_MINOR);
+                            db_log($l, $USER, "Suspicious ".$_SERVER['REQUEST_METHOD']." request from ".$USER['ip'].":\n".$request, LOG_LEVEL_MINOR);
                         }
                     }
                     else if ($r['error']['code'] !== ERROR_NO_CHANGE
@@ -366,7 +366,7 @@ if ($l = init_sql()) {
                             $log .= var_export(json_encode($params), true);
                         }
 
-                        db_log($l, $USER, $log, LOG_MINOR);
+                        db_log($l, $USER, $log, LOG_LEVEL_MINOR);
                     }
 
                     db_log($l, $USER, $r, $level);
