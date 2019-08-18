@@ -1,9 +1,10 @@
 #!/bin/bash
 
 ################################################################################
-# Example usage: ./decoder.sh config.json                                      #
+# Example usage: ./decoder.sh config.json (TX hash)                            #
 ################################################################################
 CONF="$1"                                                                      #
+TXID="$2"                                                                      #
 SKEY=""                                                                        #
 SEED=""                                                                        #
 GUID=""                                                                        #
@@ -53,6 +54,17 @@ truncate -s 0 $tempfile
 if [ -z "$CONF" ] ; then
     log "Configuration file not provided, exiting."
     exit
+fi
+
+if [ ! -z "$TXID" ] ; then
+    txid=`printf "%s" "${TXID}" | tr -dc A-Za-z0-9 | head -c 64 | xxd -r -p | xxd -p | tr -d '\n'`
+
+    if [ ${#txid} -ne 64 ] || [ "${TXID}" != "${txid}" ]; then
+        log "Invalid TX hash parameter: ${TXID}"
+        exit
+    fi
+
+    TXBUF="${txid}"
 fi
 
 if [[ -r ${CONF} ]] ; then
