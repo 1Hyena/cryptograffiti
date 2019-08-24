@@ -73,12 +73,19 @@ function cg_construct_about(main) {
         a_source.href  = "https://github.com/1Hyena/cryptograffiti";
         a_source.target= "_blank";
 
-        var t_bchinfo  = document.createTextNode("https://bitcoinsv.io/");
-        var a_bchinfo  = document.createElement("a");
-        a_bchinfo.appendChild(t_bchinfo);
-        a_bchinfo.title = "Bitcoin Satoshi Vision";
-        a_bchinfo.href  = "https://bitcoinsv.io/";
-        a_bchinfo.target= "_blank";
+        var t_bsvinfo  = document.createTextNode("https://bitcoinsv.io/");
+        var a_bsvinfo  = document.createElement("a");
+        a_bsvinfo.appendChild(t_bsvinfo);
+        a_bsvinfo.title = "Bitcoin Satoshi Vision";
+        a_bsvinfo.href  = "https://bitcoinsv.io/";
+        a_bsvinfo.target= "_blank";
+
+        var t_wrightpaper = document.createTextNode("A P2P Electronic Cash System");
+        var a_wrightpaper = document.createElement("a");
+        a_wrightpaper.appendChild(t_wrightpaper);
+        a_wrightpaper.title = "Bitcoin: A Peer-to-Peer Electronic Cash System";
+        a_wrightpaper.href  = "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3440802";
+        a_wrightpaper.target= "_blank";
 
         var img_domain = document.createElement("img");
         img_domain.setAttribute('src', CG_IMG_DOMAIN);
@@ -89,7 +96,9 @@ function cg_construct_about(main) {
         td3_1.appendChild(document.createTextNode(CG_TXT_ABOUT_CONTACT_US [CG_LANGUAGE])); td3_2.appendChild(t_email); td3_2.appendChild(img_domain);
         td4_1.appendChild(document.createTextNode(CG_TXT_ABOUT_FRIENDS[CG_LANGUAGE]));
         td5_1.appendChild(document.createTextNode("Bitcoin:"));
-        td5_2.appendChild(a_bchinfo);
+        td5_2.appendChild(a_bsvinfo);
+        td5_2.appendChild(document.createElement("br"));
+        td5_2.appendChild(a_wrightpaper);
 
         var first_friend = true;
         for (var key in CG_TXT_ABOUT_FRIEND_LIST) {

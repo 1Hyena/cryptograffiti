@@ -1182,9 +1182,9 @@ var CG_TXT_TOOLS_BTN_PROOF_OF_EXISTENCE =
     et : "OLEMASOLU TÕESTUS",
     ru : "ДОКАЗАТЕЛЬСТВО СУЩЕСТВОВАНИЯ",
     description : {
-        en : "Decentralized Proof of Existence is a powerful concept that is bound to render conventional notary and patent offices obsolete. This tool allows anyone to securely time stamp files without revealing their actual content. If you ever need to prove that a particular file existed at a certain moment in time you will simply have to show that the file's cryptographic hash can be found from the Bitcoin's block chain. The Proof of Existence tool provided by CryptoGraffiti.info is spectacular in a way that it uses normal Bitcoin addresses to represent time stamps. This provides a simpler and more elegant means to verify a file's existence than competing methods. One would simply have to check the date of the oldest transaction made to the Bitcoin address that represents a file in question. In other words, the proof of existence remains intrinsically accessible even at times when CryptoGraffiti.info is offline.",
-        et : "Detsentraliseeritud olemasolu tõestus on võimas uus meetod, mis muudab konventsionaalsed notariteenused ja patendiameti iganenuks. See tööriist võimaldab igaühel turvaliselt luua ja talletada failide ajatempleid nende sisu avalikustamata. Kui Te peate tõestama, et mõni konkreetne fail eksisteeris mingil kindlal ajahetkel, siis peate te lihtsalt näitama, et selle faili krüptograafiline räsi on talletatud Bitimündi plokiahelasse. KrüptoGraffiti pakutav olemasolu tõestamise tööriist on silmapaistev veel ka selle pärast, et ta kasutab tavalisi Bitimündi aadresseid, esindamaks failide ajatempleid. See võimaldab lihtsamaid ja elegantsemaid mooduseid faili eksistentsi kontrollimiseks kui konkureerivad meetodid. Eksistentsi kontrollimiseks tuleks kõigest kontrollida failile vastavale Bitimündi aadressile tehtud vanima ülekande kuupäeva. Teisisõnu, faili eksistentsi tõestus jääb loomupäraselt ligipääsetavaks ka ajal, mil CrpytoGraffiti.info teenus pole kättesaadav.",
-        ru : "Децентрализованное Доказательство Существования это мощная концепция призванная сделать традиционные нотариальные и патентные ведомства устаревшими. Данный инструмент позволяет любому безопасно засвидетельствовать файлы не раскрывая их текущего содержимого. Если вам когда-нибудь понадобится доказать, что определённый файл существовал в определённый момент времени, вам лишь необходимо показать, что криптографический хэш находится в цепочке блоков Биткойна. Инструмент Доказательство Существования предоставляемый CryptoGraffiti.info отличается тем, что он использует обычные биткойн адреса для представления меток времени. Это обеспечивает более простой и элегантный способ проверки существования файла, чем конкурирующие методы. Всего лишь необходимо проверить дату самой ранней транзакции осуществлённой на биткойн адрес представляющий искомый файл. Другими словами, доказательство существования остаётся в действительности доступным даже когда CryptoGraffiti.info отключён.",
+        en : "This tool allows anyone to securely time stamp files without revealing their actual content. If you ever need to prove that a particular file existed at a certain moment in time you will simply have to show that the file's cryptographic hash can be found from the Bitcoin's block chain. The Proof of Existence tool provided by CryptoGraffiti.info is spectacular in a way that it uses normal Bitcoin addresses to represent time stamps. This provides a simpler and more elegant means to verify a file's existence than competing methods. One would simply have to check the date of the oldest transaction made to the Bitcoin address that represents a file in question. In other words, the proof of existence remains intrinsically accessible even at times when CryptoGraffiti.info is offline.",
+        et : "See tööriist võimaldab igaühel turvaliselt luua ja talletada failide ajatempleid nende sisu avalikustamata. Kui Te peate tõestama, et mõni konkreetne fail eksisteeris mingil kindlal ajahetkel, siis peate te lihtsalt näitama, et selle faili krüptograafiline räsi on talletatud Bitimündi plokiahelasse. KrüptoGraffiti pakutav olemasolu tõestamise tööriist on silmapaistev veel ka selle pärast, et ta kasutab tavalisi Bitimündi aadresseid, esindamaks failide ajatempleid. See võimaldab lihtsamaid ja elegantsemaid mooduseid faili eksistentsi kontrollimiseks kui konkureerivad meetodid. Eksistentsi kontrollimiseks tuleks kõigest kontrollida failile vastavale Bitimündi aadressile tehtud vanima ülekande kuupäeva. Teisisõnu, faili eksistentsi tõestus jääb loomupäraselt ligipääsetavaks ka ajal, mil CrpytoGraffiti.info teenus pole kättesaadav.",
+        ru : "Данный инструмент позволяет любому безопасно засвидетельствовать файлы не раскрывая их текущего содержимого. Если вам когда-нибудь понадобится доказать, что определённый файл существовал в определённый момент времени, вам лишь необходимо показать, что криптографический хэш находится в цепочке блоков Биткойна. Инструмент Доказательство Существования предоставляемый CryptoGraffiti.info отличается тем, что он использует обычные биткойн адреса для представления меток времени. Это обеспечивает более простой и элегантный способ проверки существования файла, чем конкурирующие методы. Всего лишь необходимо проверить дату самой ранней транзакции осуществлённой на биткойн адрес представляющий искомый файл. Другими словами, доказательство существования остаётся в действительности доступным даже когда CryptoGraffiti.info отключён.",
     }
 };
 
@@ -1204,7 +1204,7 @@ var CG_TXT_TOOLS_BTN_TRANSACTION_DECODER =
 
 var CG_TXT_TOOLS_DROP_FILES_HERE =
 {
-    en : "Click here or drag and drop your files in the box.",
+    en : "Click here or drag and drop your files into the box.",
     et : "Vajuta siia või lohista oma failid sellesse kasti.",
     ru : "Нажмите сюда или перетащите ваш файл в данную область."
 };
@@ -1214,6 +1214,13 @@ var CG_TXT_TOOLS_FILES_WILL_NOT_BE_UPLOADED =
     en : "The files will NOT be uploaded. The cryptographic proof is calculated client-side.",
     et : "Faile ei laeta üles. Krüptograafiline tõestus arvutatakse kliendi poolel.",
     ru : "Файл НЕ будет загружен. Криптографическое доказательство просчитывается на стороне клиента."
+};
+
+var CG_TXT_TOOLS_FILES_WILL_BE_CHECKED =
+{
+    en : "If the proof already exists on the block chain, the applciation will let you know.",
+    et : "Kui see krüptograafiline tõend on juba eelnevalt plokiahelasse talletatud, siis näidatakse teile vastavat viidet.",
+    ru : "(If the proof already exists on the block chain, the applciation will let you know.)"
 };
 
 var CG_TXT_TOOLS_BTN_CANCEL =
@@ -1275,44 +1282,44 @@ var CG_TXT_HELP_PROTOCOL_BODY = {
 ////////////////////////////////////////////////////////////////////////////////
 var CG_TXT_ABOUT_P1 =
 {
-    en : "Bitcoin's block chain is a decentralized database which main purpose is to secure and hold all Bitcoin transactions. It can be used to store other data too. CryptoGraffiti.info allows anyone to easily decode and read arbitrary messages saved on the block chain. No single entity has the power to alter or truncate these messages.",
-    et : "Bitimündi plokiahel on detsentraliseeritud andmebaas, mille peamine eesmärk on turvata ja talletada kõiki bitimündi ülekandeid. Ilmneb aga tõsiasi, et seda saab kasutada ka muude andmete talletamiseks. CryptoGraffiti.info lubab igaühel lihtsa vaevaga dekodeerida ja lugeda sõnumeid, mis on mittesihtpäraselt plokiahelasse salvestatud. Bitimündi protokolli omapäradest tulenevalt pole hiljem kellelgi võimalik neid sõnumeid muuta ega kustutada.",
+    en : "Bitcoin's ledger (the block chain) is a decentralized database which main purpose is to secure and hold all Bitcoin transactions. It can be used to store other data too. CryptoGraffiti.info allows anyone to easily decode and read arbitrary messages saved on the block chain. No single entity has the power to alter or truncate these messages.",
+    et : "Bitimündi pearaamat (plokiahel) on detsentraliseeritud andmebaas, mille peamine eesmärk on turvata ja talletada kõiki bitimündi ülekandeid. Ilmneb aga tõsiasi, et seda saab kasutada ka muude andmete talletamiseks. CryptoGraffiti.info lubab igaühel lihtsa vaevaga dekodeerida ja lugeda sõnumeid, mis on mittesihtpäraselt plokiahelasse salvestatud. Bitimündi protokolli omapäradest tulenevalt pole hiljem enam niisama lihtsalt võimalik neid sõnumeid muuta ega kustutada.",
     ru : "Цепочка блоков биткойна является децентрализованной базой данных, главной целью которой является обеспечение и проведение всех биткойн-транзакций. Она так же может быть использована для хранения других данных. CryptoGraffiti.info позволяет любому желающему легко расшифровывать и читать произвольные сообщения, сохраненные в цепочке блоков. Ни одна организация не имеет возможности изменить или обрезать эти сообщения."
 };
 
 var CG_TXT_ABOUT_P2 =
 {
-    en : "CryptoGraffiti.info monitors the Bitcoin network in real-time and tries to detect transactions that contain either human-readable text messages or files of known formats. When it finds such a transaction, it will be published under the read tab after a miner has confirmed it. Our decoder is capable of finding even those messages that originate from third parties (such as memo.cash).",
-    et : "",
-    ru : ""
+    en : "CryptoGraffiti.info monitors the Bitcoin network in real-time and tries to detect transactions that contain either human-readable text messages or files of known formats. When it finds such a transaction, it will be published under the READ tab. Our decoder is capable of finding even those messages that originate from third parties (such as twetch.app).",
+    et : "CryptoGraffiti.info monitoorib Bitimündi võrku reaalajas ja proovib leida selliseid ülekandeid, mis sisaldavad kas inimloetavaid tekstisõnumeid või tuntud failiformaate. Kui rakendus leiab sellise ülekande, siis publitseeritakse see LOE kaardi alla. Meie dekooder on võimeline leidma isegi selliseid sõnumeid, mis pärinevad kolmandatelt osapooltelt (näiteks twetch.app).",
+    ru : "(CryptoGraffiti.info monitors the Bitcoin network in real-time and tries to detect transactions that contain either human-readable text messages or files of known formats. When it finds such a transaction, it will be published under the READ tab. Our decoder is capable of finding even those messages that originate from third parties (such as twetch.app).)"
 };
 
 var CG_TXT_ABOUT_P3 =
 {
-    en : "Millions of people using Bitcoin clients are storing the very same data on their computers. CryptoGraffiti.info offers the functionality to store data permanently on the block chain by encoding it into a standard Bitcoin transaction. It is advisable to use this web service responsibly and with caution because all data saved on the block chain will remain there forever.",
-    et : "Miljonid inimesed, kes kasutavad Bitimündi rakendust, talletavad oma arvutites plokiahela koopiat. CryptoGraffiti.info pakub funktsionaalsust, mis võimaldab meelevaldselt konstrueeritud sõnumeid bitimündi aadressideks teisendada ja igaveseks plokiahelasse talletada. Seetõttu on soovitatav kasutada käesolevat veebiteenust vastutustundlikult ja ettevaatlikult, sest kõik andmed, mis kord juba plokiahelasse on salvestatud, jäävad sinna igaveseks.",
-    ru : "Миллионы людей, использующих биткойн-клиенты, хранят те же самые данные на своих компьютерах. CryptoGraffiti.info предоставляет возможность кодирования определённых сообщений в биткойн-адреса и импорта их в кошелёк для хранения текста в цепочке блоков. Рекомендуется использовать этот сервис ответственно и с осторожностью, потому что все данные, сохраненные в цепочке блоков, останутся там навсегда."
+    en : "Professionalized Bitcoin miners are storing the block chain on their data centers. CryptoGraffiti.info offers the functionality to save user data on those same data centers, encoded into the business-critical part of the ledger. This is achieved by embedding the data into a Bitcoin transaction in such a way that makes it very difficult to erase. Unlike with Null Data (OP_RETURN), which the miners could trivially delete from their storage, we make the data look like someone's unspent bitcoins. Any data that is saved in this manner becomes truly immutable. That said, it is advisable to use this service responsibly because only perhaps with an international court order can such data be erased.",
+    et : "Professionaliseerunud Bitimündi kaevurid talletavad plokiahelat andmekeskustes. CryptoGraffiti.info pakub funktsionaalsust, mis võimaldab kasutajal salvestada meelevaldseid andmeid nendesse keskustesse. Selleks kodeeritakse talletatavad andmed Bitimündi pearaamatu kõige ärikriitilisemasse osasse, kust neid on tehniliselt väga raske ära kustutada. Võrreldes Null Andmetega (OP_RETURN), mille kaevurid võivad triviaalselt oma andmelaekast eemaldada, sisestame kasutaja pakutud andmed Bitimündi ülekandesse sellisel moel, et nende kustutamine pole enam mõeldav. Niisiis on seda teenust soovitatav kasutada vastutustundlikult, kuna vaid rahvusvahelise kohtuotsusega oleks ehk võimalik hiljem nendest andmetest vabaneda.",
+    ru : "(Professionalized Bitcoin miners are storing the block chain on their data centers. CryptoGraffiti.info offers the functionality to save user data on those same data centers, encoded into the business-critical part of the ledger. This is achieved by embedding the data into a Bitcoin transaction in such a way that makes it very difficult to erase. Unlike with Null Data (OP_RETURN), which the miners could trivially delete from their storage, we make the data look like someone's unspent bitcoins. Any data that is saved in this manner becomes truly immutable. That said, it is advisable to use this service responsibly because only perhaps with an international court order can such data be erased.)"
 };
 
 var CG_TXT_ABOUT_P4 =
 {
-    en : "When using our message encoding service (provided under the write tab), you will be asked to make a payment explicitly in the original Bitcoin (Satoshi's Vision). We will not accept payments originating from other token platforms that might have the word \"Bitcoin\" in their name (ABC, Core, Gold and so on). Our fully automated message encoder calculates the cost of your message based on its size, adding a service fee of 10%. We use the fees to maintain this service ad-free and free from Google Analytics.",
-    et : "",
-    ru : ""
+    en : "When using our message encoding service (provided under the WRITE tab), you will be asked to make a payment explicitly in the original Bitcoin (Satoshi's Vision). We will not accept payments originating from other token platforms that might have the word \"Bitcoin\" in their name (Cash, Core, Gold and so on). If in doubt, use MoneyButton.com as an intermediary to complete the payment. Our fully automated message encoder calculates the cost of your message based on its size, adding a service fee of 10%. We use the fees to maintain this service ad-free and free from Google Analytics.",
+    et : "Kui kasutate meie sõnumi kodeerimise teenust (KIRJUTA kaart), siis peaksite selle eest tasuma vaid algupärast (Satoshi Visiooni järgivat) Bitimünti kasutades. Me ei aksepteeri makseid, mis saabuvad teistelt platvormidelt, millede nimes võib olla kasutatud sõna \"Bitcoin\" (Cash, Core, Gold jne). Kui kahtlete, kasutage makse teostamiseks MoneyButton.com vahendusteenust. Meie automatiseeritud sõnumi kodeerija kalkuleerib teie sõnumi hinna vastavalt selle suurusele, lisades sellele veel 10-protsendilise teenustasu. Me kasutame teenustasu selleks, et hoida see teenus reklaamivaba ja vaba Google Analüütikast.",
+    ru : "(When using our message encoding service (provided under the WRITE tab), you will be asked to make a payment explicitly in the original Bitcoin (Satoshi's Vision). We will not accept payments originating from other token platforms that might have the word \"Bitcoin\" in their name (Cash, Core, Gold and so on). If in doubt, use MoneyButton.com as an intermediary to complete the payment. Our fully automated message encoder calculates the cost of your message based on its size, adding a service fee of 10%. We use the fees to maintain this service ad-free and free from Google Analytics.)"
 };
 
 var CG_TXT_ABOUT_P5 =
 {
     en : "As soon as the encoder detects an incoming payment, it will consume that particular payment for the creation of a new transaction as a host to your message. This means that your message can only be stored on the block chain after its respective payment has been confirmed by a miner. It also means that your message will be directly linked to the Bitcoin address that paid for the message.",
-    et : "",
-    ru : ""
+    et : "Niipea kui kodeerija tuvastab makse, tarbib ta selle ära, et luua uus ülekanne, mis sisaldab teie soovitud andmeid. See tähendab, et teie sõnum jõuab plokiahelasse alles siis, kui mõni Bitimündi kaevur on temale vastava makse kinnitanud. See tähendab ka seda, et teie sõnum on otseselt ühendatud Bitimündi aadressiga, mida kasutati makse sooritamiseks.",
+    ru : "(As soon as the encoder detects an incoming payment, it will consume that particular payment for the creation of a new transaction as a host to your message. This means that your message can only be stored on the block chain after its respective payment has been confirmed by a miner. It also means that your message will be directly linked to the Bitcoin address that paid for the message.)"
 };
 
 var CG_TXT_ABOUT_P6 =
 {
-    en : "This service operates automatically and is not moderated because the block chain cannot be moderated. Decoding and encoding is done solely in the user's web browser using JavaScript. The authors of this site are not responsible for the content it displays. Viewer discretion is advised.",
-    et : "Käesolev teenus toimib iseseisvalt ja ilma moderaatorite sekkumiseta, sest plokiahelat on tehniliselt võimatu modereerida. Dekodeerimise ja kodeerimise eest vastutab kasutaja isiklik veebilehitseja, kui sellel on JavaScripti tugi. CryptoGraffiti.info autorid ei vastuta sisu eest, mida see teenus võimaldab lugeda. Kasutate seda teenust omal vastutusel.",
-    ru : "Данный сервис работает автоматически и не модерируется, потому что цепочка блоков не может модерироваться. Кодирование и декодирование происходит исключительно в веб-браузере пользователя при помощи JavaScript. Авторы данного сайта не несут ответственность за содержимое, которое он отображает. При просмотре Вы действуете на свое усмотрение."
+    en : "This service is fully automated and any possible moderation can only take place after the fact. Decoding and encoding is done solely in the user's web browser using JavaScript. You are encouraged to report any occurrences of clearly illegal content to us (see the e-mail below). The content that is displayed here is mostly user generated and unpredictable in its nature. CryptoGraffiti.info is not responsible for the creation of such content. Viewer discretion is advised.",
+    et : "See teenus on täielikult automatiseeritud ja igasugune modereerimine saab juhtuda alles pärast seda, kui ebasoovitud sisu on juba plokiahelasse jõudnud. Dekodeerimine ja kodeerimine toimub vaid kasutaja veebilehitsejas, kasutades selleks JavaScript'i. Te olete teretulnud raporteerima meile ilmselgelt ebaseaduslikust sisust (e-posti aadressi leiate selle lõigu alt). Sisu, mida sellel leheküljel kuvatakse, on peamiselt kasutajaloodud ja oma loomuses ettearvamatu. CryptoGraffiti.info ei ole vastutav selle sisu loomise eest. Kasutate seda teenust omal vastutusel.",
+    ru : "(This service is fully automated and any possible moderation can only take place after the fact. Decoding and encoding is done solely in the user's web browser using JavaScript. You are encouraged to report any occurrences of clearly illegal content to us (see the e-mail below). The content that is displayed here is mostly user generated and unpredictable in its nature. CryptoGraffiti.info is not responsible for the creation of such content. Viewer discretion is advised.)"
 };
 
 var CG_TXT_ABOUT_TOPIC =
@@ -1367,17 +1374,29 @@ var CG_TXT_ABOUT_FRIENDS =
 
 var CG_TXT_ABOUT_FRIEND_LIST =
 {
-   "Jeff" : {
-        website : "http://bitcoin-quest.com/",
-        en  : "Jeff's bitcoin art",
-        et  : "Jeffi bitimündi kunst",
-        ru  : "Биткойн искусство Иефф"
+    //"Jeff" : { // Commented out because of a broken/missing website
+    //    website : "http://bitcoin-quest.com/",
+    //    en  : "Jeff's bitcoin art",
+    //    et  : "Jeffi bitimündi kunst",
+    //    ru  : "Биткойн искусство Иефф"
+    //},
+   "MetaNet" : {
+        website : "https://metanet.icu/",
+        en  : "Exclusive membership club focused on BitCoin and the MetaNet",
+        et  : "Eksklusiivne liikmeklubi, mis on fokuseeritud Bitimündile ja Metanetile",
+        ru  : "(Exclusive membership club focused on BitCoin and the MetaNet)"
     },
    "CoinGeek" : {
         website : "https://coingeek.com/",
         en  : "Trusted source for all of the latest cryptocurrency news",
         et  : "Usaldusväärne krüptovaluutadele orienteeritud uudistesait",
-        ru  : ""
+        ru  : "(Trusted source for all of the latest cryptocurrency news)"
+    },
+   "MoneyButton" : {
+        website : "https://www.moneybutton.com/",
+        en  : "Simple browser based wallet for Bitcoin that we have integrated with",
+        et  : "Lihtne veebilehitsejal baseeruv rahakott, millega oleme integreeritud",
+        ru  : "(Simple browser based wallet for Bitcoin that we have integrated with)"
     }
 };
 

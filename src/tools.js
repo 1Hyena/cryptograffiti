@@ -109,6 +109,9 @@ function cg_tools_create_proof_of_existence() {
     drop_cell.appendChild(document.createElement("br"));
     drop_cell.appendChild(document.createElement("br"));
     drop_cell.appendChild(document.createTextNode(CG_TXT_TOOLS_FILES_WILL_NOT_BE_UPLOADED[CG_LANGUAGE]));
+    drop_cell.appendChild(document.createElement("br"));
+    drop_cell.appendChild(document.createElement("br"));
+    drop_cell.appendChild(document.createTextNode(CG_TXT_TOOLS_FILES_WILL_BE_CHECKED[CG_LANGUAGE]));
     drop_zone.appendChild(drop_cell);
 
     // Setup the dnd listeners.
