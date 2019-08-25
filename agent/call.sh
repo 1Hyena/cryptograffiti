@@ -45,11 +45,16 @@ if [ -z "${FUNC}" ] ; then
 fi
 
 if [ -z "${DATA}" ] ; then
-    log "Data not defined, exiting."
-    exit
+    DATA=$(</dev/stdin)
+    if [ -z "${DATA}" ] ; then
+        log "No data provided, exiting."
+        exit
+    #else
+    #    log "Loaded ${#DATA} bytes of data from the standard input."
+    fi
 fi
 
-format_data=`printf "%s" "${DATA}" | xxd -r -p | xxd -p | tr -d '\n'`
+format_data=$(xxd -r -p <<< "${DATA}" | xxd -p | tr -d '\n')
 if [ "${format_data}" != "${DATA}" ] ; then
     log "Invalid data format, exiting."
     exit
@@ -78,7 +83,7 @@ if [ -z "${SKEY}" ] \
 || [ -z "${TOKN}" ] \
 || [ -z "${GUID}" ] ; then
     # Making the API call without ALS
-    data=`printf "%s" "${DATA}" | xxd -r -p`
+    data=$(xxd -r -p <<< "${DATA}")
 
     url_func=$( rawurlencode "${FUNC}" )
     url_data=$( rawurlencode "${data}" )
@@ -102,21 +107,27 @@ fi
 
 #log "API call: ${FUNC}"
 
-data=`printf "%s" "${DATA}" | xxd -r -p`
+data=$(xxd -r -p <<< "${DATA}")
 hash=`printf "%s" "${SKEY}" | xxd -r -p | sha256sum | head -c 64`
-salt=`head /dev/urandom | tr -dc A-Za-z0-9 | head -c 64 | sha256sum | head -c 32`
+salt=$(
+    head /dev/urandom | tr -dc A-Za-z0-9 | head -c 64 | sha256sum | head -c 32
+)
+
 csum=`printf "%s%s" "${data}" "${SKEY}" | md5sum | head -c 32`
-data=`printf "%s" "${data}" | openssl enc -aes-256-cfb -a -A -K "${SKEY}" -iv "${salt}"`
+data=$(
+    printf "%s" "${data}" |
+    openssl enc -aes-256-cfb -a -A -K "${SKEY}" -iv "${salt}"
+)
 
 url_func=$( rawurlencode "${FUNC}" )
-url_data=$( rawurlencode "${data}" )
 url_hash=$( rawurlencode "${hash}" )
 url_salt=$( rawurlencode "${salt}" )
 url_csum=$( rawurlencode "${csum}" )
 url_tokn=$( rawurlencode "${TOKN}" )
 
-response=`curl -f -s -d "fun=${url_func}&data=${url_data}&sec_hash=${url_hash}&salt=${url_salt}&checksum=${url_csum}&token=${url_tokn}" -X POST "${ADDR}"`
+response=$(curl -f -s -d "fun=${url_func}" --data-urlencode data@- -d "sec_hash=${url_hash}" -d "salt=${url_salt}" -d "checksum=${url_csum}" -d "token=${url_tokn}" -X POST "${ADDR}" <<< "${data}")
 exit_code="$?"
+
 if [ "0" != "${exit_code}" ]; then
     log "Curl exits with code ${exit_code}."
     exit
@@ -127,14 +138,22 @@ if [[ -z "${response}" ]]; then
     exit
 fi
 
-response_iv=`printf "%s" "${response}" | jq -M -r .iv`
-response_checksum=`printf "%s" "${response}" | jq -M -r .checksum | tr '[:upper:]' '[:lower:]'`
-response_data=`printf "%s" "${response}" | jq -M -r .data | openssl enc -d -aes-256-cfb -a -A -K "${SKEY}" -iv "${response_iv}"`
-test_checksum=`printf "%s%s" "${response_data}" "${SKEY}" | md5sum | head -c 32 | tr '[:upper:]' '[:lower:]'`
+result=`printf "%s" "${response}" | jq -r -M .result`
 
-if [ "${response_checksum}" == "${test_checksum}" ]; then
-    printf "%s" "${response_data}" | jq -M -r .
+if [ "${result}" == "SUCCESS" ] || [ "${result}" == "null" ]; then
+    response_iv=`printf "%s" "${response}" | jq -M -r .iv`
+    response_checksum=`printf "%s" "${response}" | jq -M -r .checksum | tr '[:upper:]' '[:lower:]'`
+    response_data=`printf "%s" "${response}" | jq -M -r .data | openssl enc -d -aes-256-cfb -a -A -K "${SKEY}" -iv "${response_iv}"`
+    test_checksum=`printf "%s%s" "${response_data}" "${SKEY}" | md5sum | head -c 32 | tr '[:upper:]' '[:lower:]'`
+
+    if [ "${response_checksum}" == "${test_checksum}" ]; then
+        printf "%s" "${response_data}" | jq -M -r .
+    else
+        log "Response includes a wrong checksum!"
+    fi
 else
-    log "Response includes a wrong checksum!"
+    response_errmsg=`printf "%s" "${response}" | jq -M -r '.error | .message'`
+    log "API error: ${response_errmsg}"
+    printf "%s" "${response}" | jq . >/dev/stderr
 fi
 

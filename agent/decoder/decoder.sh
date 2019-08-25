@@ -23,16 +23,25 @@ BESTBLOCK=""
 TXS_PER_QUERY=0
 NONCE_ERRORS=0
 OTHER_ERRORS=0
+CACHE_ERRORS=0
 PULSE_PERIOD=30
 CACHE=""
 TXBUF=""
 
 log() {
+    if [ "${OTHER_ERRORS}" -ge "1" ]; then
+        CANARY="\033[0;31m::\033[0m" # Canary is "dead", we got errors.
+    fi
+
     local now=`date +"${DATE_FORMAT}"`
     printf "\033[1;36m%s\033[0m ${CANARY} %s\n" "$now" "$1" >/dev/stderr
 }
 
 alert() {
+    if [ "${OTHER_ERRORS}" -ge "1" ]; then
+        CANARY="\033[0;31m::\033[0m" # Canary is "dead", we got errors.
+    fi
+
     local now=`date +"${DATE_FORMAT}"`
     local format="\033[1;36m%s\033[0m ${CANARY} \033[1;33m%s\033[0m\n"
     printf "${format}" "$now" "$1" >/dev/stderr
@@ -223,13 +232,13 @@ init() {
         printf "%s%s" "${NONC}" "${SEED}" | xxd -r -p | sha256sum | head -c 64
     )
 
-    DATA=$(
+    local data=$(
         printf '{"guid":"%s","nonce":"%s"}' "${GUID}" "${NONC}" |
         xxd -p                                                  |
         tr -d '\n'
     )
 
-    local response=`"${CALL}" "${CONF}" "get_constants" "${DATA}"`
+    local response=`"${CALL}" "${CONF}" "get_constants" "${data}"`
 
     local result=`printf "%s" "${response}" | jq -r -M .result`
     if [ "${result}" == "SUCCESS" ]; then
@@ -266,10 +275,6 @@ loop() {
     do
         local pulse_start=`date +%s`
 
-        if [ "$OTHER_ERRORS" -ge "1" ]; then
-            CANARY="\033[0;31m::\033[0m" # Canary is "dead", we got errors.
-        fi
-
         if [ $(which "${CLIF}" 2>/dev/null ) ] \
         && [ $(which "${CGDF}" 2>/dev/null ) ] \
         && [ $(which sort)                   ] \
@@ -282,7 +287,10 @@ loop() {
         && [ $(which tee)                    ] \
         && [ $(which parallel)               ] \
         && [ $(which jq)                     ] ; then
-            step
+            if ! step ; then
+                alert "Program step reported an error, breaking the loop."
+                break
+            fi
         else
             log "Some of the required commands are not available."
             exit
@@ -435,6 +443,9 @@ step() {
                 local graffiti_buffer=$(compile_graffiti_json "${graffiti}")
 
                 if [ -z "${graffiti_buffer}" ] ; then
+                    # This should never happen because previously we have made
+                    # sure that we are not decoding more TXs than TXS_PER_QUERY
+                    # allows per step (see how ${news} gets its value).
                     ((OTHER_ERRORS++))
                     local tx_limit="${TXS_PER_QUERY}"
                     alert "Error, TX count exceeds the limit of ${tx_limit}!"
@@ -472,18 +483,30 @@ step() {
     )
 
     local datafmt="{\"guid\":\"%s\",\"nonce\":\"%s\",\"graffiti\":%s}"
-    DATA=$(
+    local data=$(
         printf "${datafmt}" "${GUID}" "${NONC}" "${CACHE}" | xxd -p | tr -d '\n'
     )
 
-    local response=`"${CALL}" "${CONF}" "set_txs" "${DATA}"`
+    # for debugging:
+    #for i in {1..131072}
+    #do
+    #   data+="2020"
+    #done
+
+    local response=$("${CALL}" "${CONF}" "set_txs" <<< "${data}")
     local state=$?
 
-    if [ "${state}" -ge "1" ]; then
+    if [ "${state}" -ge "1" ] ; then
         ((OTHER_ERRORS++))
         alert "${CALL}: Exit code ${state}, dumping the cache."
         printf "%s\n" "${CACHE}" >/dev/stderr
 
+        CACHE=""
+    elif [ -z "${response}" ] ; then
+        ((OTHER_ERRORS++))
+        alert "Call script returned nothing."
+        alert "Dumping the cache and dropping it."
+        printf "%s\n" "${CACHE}" >/dev/stderr
         CACHE=""
     else
         local result=`printf "%s" "${response}" | jq -r -M .result`
@@ -493,7 +516,7 @@ step() {
         if [ "${result}" == "SUCCESS" ]; then
             log "Upload completed successfully (RPM: ${rpm}/${max_rpm})."
             CACHE=""
-        else
+        elif [ "${result}" == "FAILURE" ]; then
             printf "%s" "${response}" | jq .error >/dev/stderr
             local error_code=$(
                 jq -r -M .error <<< "${response}" | jq -r -M .code
@@ -501,8 +524,35 @@ step() {
 
             if [ "${error_code}" == "ERROR_NONCE" ]; then
                 ((NONCE_ERRORS++))
-                break
+                return 1
+            else
+                local error_message=$(
+                    jq -r -M '.error | .message' <<< "${response}"
+                )
+                alert "Failed to upload the cache: ${error_message}"
+                ((CACHE_ERRORS++))
+
+                if [ "${CACHE_ERRORS}" -ge "5" ]; then
+                    alert "Too many failed attempts when uploading the cache."
+                    alert "Dumping the cache and dropping it."
+                    printf "%s\n" "${CACHE}" >/dev/stderr
+                    CACHE=""
+                    CACHE_ERRORS=0
+                    ((OTHER_ERRORS++))
+                    return 1
+                fi
             fi
+        else
+            # Invalid output from the call script.
+            alert "Call script returned invalid output:"
+            printf "%s\n" "${response}" >/dev/stderr
+
+            ((OTHER_ERRORS++))
+            alert "Dumping the cache."
+            printf "%s\n" "${CACHE}" >/dev/stderr
+
+            CACHE=""
+            return 1
         fi
 
         ((rpm+=10))
@@ -529,8 +579,11 @@ main() {
         if [ "${NONCE_ERRORS}" -ge "5" ]; then
             alert "Too many nonce errors, exiting."
             exit
-        else
+        elif [ "${NONCE_ERRORS}" -ge "1" ]; then
             log "Trying to synchronize the nonce (${NONCE_ERRORS})."
+        else
+            log "Restarting the session."
+            sleep 10
         fi
     done
 

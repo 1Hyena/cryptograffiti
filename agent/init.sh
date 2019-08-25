@@ -39,8 +39,8 @@ rawurlencode() {
 }
 
 log() {
-    now=`date +"$date_format"`
-    printf "\033[1;36m%s\033[0m :: %s\n" "$now" "$1" >/dev/stderr
+    local now=`date +"$date_format"`
+    printf "\033[1;35m%s\033[0m :: %s\n" "$now" "$1" >/dev/stderr
 }
 
 if [ ! -z "${CONF}" ] ; then
