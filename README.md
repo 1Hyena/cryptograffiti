@@ -28,8 +28,8 @@ to you. Below is a list of examples for the hashtag API.
   messages under the `wedding` category will be decoded and displayed in the
   read tab. Category can be any word or even a Bitcoin address. In case of an
   address only the messages including it will be shown to the user. For example,
-  https://cryptograffiti.info/#1Ross5Np5doy4ajF9iGXzgKaC2Q3Pwwxv decodes only
-  such block chain messages that contain a donation to Ross Ulbricht.
+  https://cryptograffiti.info/#1MVpQJA7FtcDrwKC6zATkZvZcxqma4JixS decodes only
+  such block chain messages that contain a payment to CryptoGraffiti.info.
 
 * `https://cryptograffiti.info/#mimetype:image`
 
