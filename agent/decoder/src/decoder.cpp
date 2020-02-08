@@ -202,9 +202,14 @@ bool DECODER::decode(const std::string &hex, std::queue<graffiti_type> &to) {
     size_t start_at = 0;
 
     if (!hex.compare(0, 2, "6a")) {
-        // OP_RETURN detected
+        // Legacy OP_RETURN detected
         loc = LOCATION::NULL_DATA;
         start_at = 2;
+    }
+    else if (!hex.compare(0, 4, "006a")) {
+        // OP_RETURN detected
+        loc = LOCATION::NULL_DATA;
+        start_at = 4;
     }
 
     if (loc == LOCATION::NONE) {
@@ -225,7 +230,7 @@ bool DECODER::decode(const std::string &hex, std::queue<graffiti_type> &to) {
             size_t len = segment.second;
 
             if (bin.size() > pos) {
-                to.push( { loc, pos, std::vector<unsigned char>(bin.begin()+pos, bin.begin()+pos+len) } );
+                to.emplace(make_graffiti(loc, pos, bin[pos], len));
             }
             else return false;
         }

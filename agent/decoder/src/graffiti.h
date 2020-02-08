@@ -15,5 +15,12 @@ struct graffiti_type {
     std::vector<unsigned char> payload;
 };
 
+graffiti_type make_graffiti(
+    LOCATION where,
+    size_t offset,
+    const unsigned char &start,
+    size_t length
+);
+
 #endif
 
