@@ -79,7 +79,7 @@ class OPTIONS {
             };
 
             int option_index = 0;
-            c = getopt_long(argc, argv, "hvm:u:H:", long_options, &option_index);
+            c = getopt_long(argc, argv, "hvm:u:H:M:", long_options, &option_index);
             if (c == -1) break; // End of command line parameters?
 
             switch (c) {
