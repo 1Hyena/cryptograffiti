@@ -152,7 +152,7 @@ config
 ################################################################################
 get_cgd_cmd() {
     local pipe1="${CLIF} ${DDIR} getrawtransaction {} 1"
-    local pipe2="${CGDF} --unicode-len 60"
+    local pipe2="${CGDF} --unicode-len 60 -M image/"
     local pipe3="jq -r -M -c 'select(.graffiti == true)'"
     printf "%s | %s | %s" "${pipe1}" "${pipe2}" "${pipe3}"
     return 0

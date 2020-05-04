@@ -4,6 +4,7 @@
 #include <string>
 #include <queue>
 #include <map>
+#include <set>
 
 #include "json.h"
 #include "graffiti.h"
@@ -29,6 +30,7 @@ class DECODER {
     void set_content(bool value);
     void set_file_hash(const std::string &);
     void set_unicode_len(size_t value);
+    void set_mime_types(const std::string &);
 
     bool get_mimetype(const unsigned char *bytes, size_t len, std::string &mimetype) const;
 
@@ -46,6 +48,7 @@ class DECODER {
     size_t  unicode_len;
     std::string file_hash;
     class PROGRAM *program;
+    std::set<std::string> mimetypes;
 };
 
 #endif

@@ -18,6 +18,7 @@ class OPTIONS {
       , exit_flag       (      0)
       , name            (     "")
       , hash            (     "")
+      , mime            (     "")
       , unicode         (      0)
       , version         (version)
       , logfrom         (log_src)
@@ -31,6 +32,7 @@ class OPTIONS {
     int exit_flag;
     std::string name;
     std::string hash;
+    std::string mime;
     int unicode;
 
     std::string print_usage() const {
@@ -46,6 +48,7 @@ class OPTIONS {
             "  -m  --max-cmd-len     Maximum system command length (default is -1).\n"
             "                            Provide a negative number to automatically\n"
             "                            determine a good value for this parameter.\n"
+            "  -M  --mime-types      Output only the graffiti with the given types.\n"
             "  -H  --hash            Decode only the graffiti with the given hash.\n"
             "  -u  --unicode-len     Maximum UTF8 preview length (default is 0).\n"
             "      --verbose         Print verbose information.\n"
@@ -71,6 +74,7 @@ class OPTIONS {
                 {"max-cmd-len",         required_argument,        0,            'm'},
                 {"unicode-len",         required_argument,        0,            'u'},
                 {"hash",                required_argument,        0,            'H'},
+                {"mime",                required_argument,        0,            'M'},
                 {0,                     0,                        0,             0 }
             };
 
@@ -114,6 +118,10 @@ class OPTIONS {
                     else {
                         log(logfrom.c_str(), "hash is invalid hex: %s", optarg);
                     }
+                    break;
+                }
+                case 'M': {
+                    mime.assign(optarg);
                     break;
                 }
                 case 'h': {

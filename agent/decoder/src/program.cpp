@@ -30,6 +30,7 @@ void PROGRAM::run() {
     decoder.set_content(options->content);
     decoder.set_file_hash(options->hash);
     decoder.set_unicode_len(options->unicode);
+    decoder.set_mime_types(options->mime);
 
     std::string input(std::istreambuf_iterator<char>(std::cin), {});
     nlohmann::json result = nlohmann::json();

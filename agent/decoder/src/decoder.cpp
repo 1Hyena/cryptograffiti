@@ -104,7 +104,19 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
             chunk["offset"] = graffiti.front().offset;
             chunk["fsize"] = old_sz;
 
-            if (mimetype.find("image/") == 0) {
+            bool found = false;
+
+            for (const std::string &mt : mimetypes)  {
+                if (mimetype.find(mt) == 0) {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                chunk["error"] = std::string("unwanted mimetype");
+            }
+            else if (mimetype.find("image/") == 0) {
                 std::vector<unsigned char> errors;
 
                 if (!program->syspipe((const unsigned char *) &payload[0],
@@ -334,6 +346,19 @@ void DECODER::set_file_hash(const std::string &hash) {
 
 void DECODER::set_unicode_len(size_t value) {
     unicode_len = value;
+}
+
+void DECODER::set_mime_types(const std::string &types) {
+    std::string buf;
+    for (char c : types) {
+        if (c == ',') {
+            mimetypes.insert(buf);
+            buf.clear();
+        }
+        else buf.append(1, c);
+    }
+
+    if (!buf.empty() || mimetypes.empty()) mimetypes.insert(buf);
 }
 
 bool DECODER::get_mimetype(const unsigned char *bytes, size_t len, std::string &mimetype) const {
