@@ -1252,7 +1252,7 @@ function decode_graffiti()
         end;
 
         if (tx and tx["vout"] ~= nil) then
-            if (v.raw_graffiti == nil) then;
+            if (v.raw_graffiti == nil) then
                 v.raw_graffiti = {};
 
                 local donation  = 0;
@@ -1269,7 +1269,9 @@ function decode_graffiti()
                             last_token = "";
                             for token in string.gmatch(j.scriptPubKey["asm"], "[^%s]+") do
                                 if (last_token == "OP_HASH160") then
-                                    table.insert(v.raw_graffiti, token);
+                                    if (token ~= nil) then
+                                        table.insert(v.raw_graffiti, token);
+                                    end
                                     break;
                                 elseif (last_token == "OP_RETURN") then
                                     op_return_hex = j.scriptPubKey["hex"]:sub(5); --token;
