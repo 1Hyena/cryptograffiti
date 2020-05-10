@@ -481,6 +481,42 @@ static int fun_hash_SHA256(lua_State *s) {
     return 1;
 }
 
+
+static int fun_validate_hex(lua_State *s) {
+    if (!SCRIBE::check_fun(s, 1)) return 1;
+
+    if (!lua_isstring(s, 1)) {
+        lua_pushstring(s, "incorrect arguments");
+        lua_error(s);
+        return 1;
+    }
+
+    const char * hex_str = lua_tostring(s, 1);
+
+    int len = strlen(hex_str);
+    bool valid = true;
+
+    for(int i = 0; i < len; i = i+2){
+	    unsigned char b1 = hex_str[i];
+	    unsigned char b2 = hex_str[i+1];
+
+	    char i1 = hex_to_bin(b1);
+	    char i2 = hex_to_bin(b2);
+
+	    if(i1 != -1 && i2 != -1) {
+		    continue;
+	    }
+	    else {
+	        valid = false;
+	        break;
+	    }
+    }
+
+    lua_pushboolean(s, valid);
+
+    return 1;
+}
+
 static int fun_validate_UTF8(lua_State *s) {
     if (!SCRIBE::check_fun(s, 1)) return 1;
 
@@ -1061,6 +1097,7 @@ const struct fun_type fun_table[] =
     {   "hash_SHA256",                  fun_hash_SHA256          },
     {   "validate_UTF8",                fun_validate_UTF8        },
     {   "validate_JPG",                 fun_validate_JPG         },
+    {   "validate_hex",                 fun_validate_hex         },
     {   "get_mimetype",                 fun_get_mimetype         },
     {   "is_blockchain_file",           fun_is_blockchain_file   },
     {   "is_bitcoin_addr",              fun_is_bitcoin_addr      },

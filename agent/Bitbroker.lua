@@ -1270,7 +1270,11 @@ function decode_graffiti()
                             for token in string.gmatch(j.scriptPubKey["asm"], "[^%s]+") do
                                 if (last_token == "OP_HASH160") then
                                     if (token ~= nil) then
-                                        table.insert(v.raw_graffiti, token);
+                                        if (validate_hex(token)) then
+                                            table.insert(v.raw_graffiti, token);
+                                        else
+                                            warn("Invalid hex in TX "..k..": "..token);
+                                        end
                                     end
                                     break;
                                 elseif (last_token == "OP_RETURN") then
