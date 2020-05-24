@@ -326,7 +326,7 @@ function cg_tools_poe_read_files() {
                 CG_TOOLS_POE_CHECKING = true;
 
                 if (api !== null) {
-                    var api_url  = sprintf(CG_READ_APIS[api].request_addr, addr)+"?noTxList=1";
+                    var api_url  = sprintf(CG_READ_APIS[api].request_addr, addr);
                     var info_url = sprintf(CG_READ_APIS[api].link_addr, addr);
 
                     xmlhttpGet(api_url, '',
@@ -336,7 +336,8 @@ function cg_tools_poe_read_files() {
                             else if (response === null );
                             else {
                                 var json = JSON.parse(response);
-                                if ("txApperances" in json && json.txApperances > 0) {
+                                if ("data" in json
+                                &&  "tx_count" in json.data && json.data.tx_count > 0) {
                                     while (status.hasChildNodes()) status.removeChild(status.lastChild);
 
                                     var a_proof   = document.createElement("a");

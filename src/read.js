@@ -31,6 +31,12 @@ var CG_READ_JOBS = {
 };
 
 var CG_READ_APIS = [
+    /* Had to disable this because their API has become broken...
+     *
+     * Access to XMLHttpRequest from origin 'null' has been blocked by CORS
+     * policy: The 'Access-Control-Allow-Origin' header contains multiple values
+     * '*, *', but only one is allowed.
+
     {
         domain       : "bchsvexplorer.com",
         request      : "https://bchsvexplorer.com/api/tx/%s",
@@ -43,6 +49,7 @@ var CG_READ_APIS = [
         down         : false,
         fails        : 0
     },
+    */
     {
         domain       : "blockchair.com",
         request      : "https://api.blockchair.com/bitcoin-sv/dashboards/transaction/%s",
@@ -57,6 +64,7 @@ var CG_READ_APIS = [
     {
         domain       : "bsv.btc.com",
         request      : "https://bsv-chain.api.btc.com/v3/tx/%s?verbose=3",
+        request_addr : "https://bsv-chain.api.btc.com/v3/address/%s",
         link         : "https://bsv.btc.com/%s",
         link_addr    : "https://bsv.btc.com/%s",
         extract      : "cg_read_extract_btc",
