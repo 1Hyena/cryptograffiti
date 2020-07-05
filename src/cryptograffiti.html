@@ -129,7 +129,11 @@ window.onbeforeunload = fade_out;
 </div>
 
 <script>
-cg_start();
+window.addEventListener(
+    "load", function() {
+        cg_main();
+    }
+);
 </script>
 
 </body>

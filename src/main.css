@@ -727,16 +727,18 @@ button {
     align-items: center;
     overflow: hidden;
     border: 0rem solid red;
-    max-width: 0ch;
+    /*
+    max-width: 65ch;
     -webkit-animation-name: cg-tabs-anim;
     -webkit-animation-duration: 1.5s;
     animation-name: cg-tabs-anim;
     animation-duration: 1.5s;
     -webkit-animation-fill-mode: forwards;
     animation-fill-mode: forwards;
+    */
     font-size: 1rem;
 }
-
+/*
 @-webkit-keyframes cg-tabs-anim {
     0%   {max-width: 0ch;}
     100% {max-width: 65ch;}
@@ -745,7 +747,7 @@ button {
     0%   {max-width: 0ch;}
     100% {max-width: 65ch;}
 }
-
+*/
 .cg-spacer-poofin {
     flex: 0 0 auto;
     -webkit-animation-name: cg-spacer-poofin-anim;
@@ -1536,4 +1538,3 @@ a.cg-link:hover {
 .ansi-format-3 { font-style: italic; }
 .ansi-format-4 { text-decoration: underline; }
 .ansi-format-9 { text-decoration: line-through; }
-

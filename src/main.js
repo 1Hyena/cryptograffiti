@@ -1,3 +1,4 @@
+var CG_VERSION     = "2.00";
 var CG_LANGUAGE    = "en";
 var CG_CONSTANTS   = null;
 var CG_STATUS      = [];
@@ -10,30 +11,12 @@ var CG_TX_NR       = null;
 var CG_TX_HASH     = null;
 var CG_TX_TYPE     = null;
 var CG_SCROLL_KEY  = false;
-var CG_VERSION     = "1.10";
 var CG_ACTIVE_TAB  = null;
 var CG_DECODER_OK  = true; // Decoder is online?
 var CG_ENCODER_OK  = true; // Encoder is online?
 var CG_LAST_HASH   = "";
 var CG_API         = ""; // Taken from the application-name meta tag's data-api attribute.
 var CG_HASHTAG     = null;
-
-function cg_start() {
-    if (window.attachEvent) {
-        window.attachEvent('onload', cg_main);
-    } else {
-        if (window.onload) {
-            var curronload = window.onload;
-            var newonload = function() {
-                curronload();
-                cg_main();
-            };
-            window.onload = newonload;
-        } else {
-            window.onload = cg_main;
-        }
-    }
-}
 
 function cg_main() {
     var metas = document.getElementsByTagName("META");
@@ -97,7 +80,7 @@ function cg_main() {
 
         cg_load_constants();
         cg_startup(cg);
-    }, 500);
+    }, 0);
 }
 
 function cg_setup_parameters(params) {
@@ -225,9 +208,16 @@ function cg_parse_hashtag() {
     }
 }
 
+function cg_prepare_status(status) {
+    if (status.charAt(0) === '!' || status.charAt(0) === '_') {
+        status = status.substr(1);
+    }
+    return status;
+}
+
 function cg_startup(cg) {
     if (CG_STATUS.length > 0) {
-        var text = document.createTextNode(CG_STATUS.shift());
+        var text = document.createTextNode(cg_prepare_status(CG_STATUS.shift()));
 
         while (cg.hasChildNodes()) {
             cg.removeChild(cg.lastChild);
@@ -259,7 +249,7 @@ function cg_startup(cg) {
     else {
         setTimeout(function(){
             cg_startup(cg);
-        }, 250);
+        }, 1000);
     }
 }
 
@@ -401,11 +391,11 @@ function cg_construct(cg) {
 
     setTimeout(function(){
         cg_construct_header();
-    }, 100);
+    }, 0);
 
     setTimeout(function(){
         cg_construct_footer();
-    }, 500);
+    }, 0);
 }
 
 function cg_construct_footer() {
@@ -488,7 +478,7 @@ function cg_construct_footer() {
         languages.classList.add("cg-footer-languages");
 
         footer.appendChild(languages);
-    }, 1000);
+    }, 0);
 }
 
 function cg_refresh_status(div) {
@@ -526,10 +516,7 @@ function cg_refresh_status(div) {
             div.removeChild(div.lastChild);
         }
 
-        var buf = status;
-        if (buf.charAt(0) === '!' || buf.charAt(0) === '_') {
-            buf = buf.substr(1);
-        }
+        var buf = cg_prepare_status(status);
 
         div.appendChild(document.createTextNode(buf));
         CG_LAST_STATUS = status;
@@ -678,6 +665,7 @@ function cg_construct_header() {
         var spacer = document.createElement("DIV");
         spacer.id="cg-tabs-spacer";
         spacer.classList.add("cg-spacer-poofin");
+
         header.appendChild(spacer);
 
         var tabs = document.createElement("DIV");
@@ -697,21 +685,22 @@ function cg_construct_header() {
                     version.classList.add("cg-appear");
                 }, 1000);
             }
-        }, 100);
-    }, 500);
+        }, 0);
+    }, 0);
 }
 
-function cg_click_initial_buttons(read_btn, write_btn) {
+function cg_activate_interface() {
     var cg = document.getElementById("cg-main");
-    if (cg == null) {
-        alert(CG_TXT_MAIN_ERROR_1[CG_LANGUAGE]);
-        return;
-    }
 
     while (cg.hasChildNodes()) {
         cg.removeChild(cg.lastChild);
     }
 
+    var btn = document.getElementById("cg-btn-tab-about");
+    btn.disabled = false;
+    btn.click();
+
+    /*
     if (CG_TX_HASH !== null) {
         var btn = document.getElementById("cg-btn-tab-read");
         cg_button_click(btn, cg_construct_view);
@@ -726,34 +715,55 @@ function cg_click_initial_buttons(read_btn, write_btn) {
         write_btn.disabled = false;
         write_btn.click();
     }
+    */
 }
 
 function cg_construct_buttons(tabs) {
-    var btn_1 = document.createElement("BUTTON"); btn_1.classList.add("cg-btn");
-    var btn_2 = document.createElement("BUTTON"); btn_2.classList.add("cg-btn");
-    var btn_3 = document.createElement("BUTTON"); btn_3.classList.add("cg-btn");
-    var btn_4 = document.createElement("BUTTON"); btn_4.classList.add("cg-btn");
+    //var btn_1 = document.createElement("BUTTON"); btn_1.classList.add("cg-btn");
+    //var btn_2 = document.createElement("BUTTON"); btn_2.classList.add("cg-btn");
+    //var btn_3 = document.createElement("BUTTON"); btn_3.classList.add("cg-btn");
+    //var btn_4 = document.createElement("BUTTON"); btn_4.classList.add("cg-btn");
     var btn_5 = document.createElement("BUTTON"); btn_5.classList.add("cg-btn");
 
-    btn_1.addEventListener("click", cg_button_click_read );
-    btn_2.addEventListener("click", cg_button_click_write);
-    btn_3.addEventListener("click", cg_button_click_tools);
-    btn_4.addEventListener("click", cg_button_click_help );
+    //btn_1.addEventListener("click", cg_button_click_read );
+    //btn_2.addEventListener("click", cg_button_click_write);
+    //btn_3.addEventListener("click", cg_button_click_tools);
+    //btn_4.addEventListener("click", cg_button_click_help );
     btn_5.addEventListener("click", cg_button_click_about);
 
-    var txt_1 = document.createTextNode(CG_TXT_MAIN_BTN_READ [CG_LANGUAGE]);
-    var txt_2 = document.createTextNode(CG_TXT_MAIN_BTN_WRITE[CG_LANGUAGE]);
-    var txt_3 = document.createTextNode(CG_TXT_MAIN_BTN_TOOLS[CG_LANGUAGE]);
-    var txt_4 = document.createTextNode(CG_TXT_MAIN_BTN_HELP [CG_LANGUAGE]);
+    //var txt_1 = document.createTextNode(CG_TXT_MAIN_BTN_READ [CG_LANGUAGE]);
+    //var txt_2 = document.createTextNode(CG_TXT_MAIN_BTN_WRITE[CG_LANGUAGE]);
+    //var txt_3 = document.createTextNode(CG_TXT_MAIN_BTN_TOOLS[CG_LANGUAGE]);
+    //var txt_4 = document.createTextNode(CG_TXT_MAIN_BTN_HELP [CG_LANGUAGE]);
     var txt_5 = document.createTextNode(CG_TXT_MAIN_BTN_ABOUT[CG_LANGUAGE]);
 
-    btn_1.appendChild(txt_1); btn_1.id = "cg-btn-tab-read";
-    btn_2.appendChild(txt_2); btn_2.id = "cg-btn-tab-write";
-    btn_3.appendChild(txt_3); btn_3.id = "cg-btn-tab-tools";
-    btn_4.appendChild(txt_4); btn_4.id = "cg-btn-tab-help";
+    //btn_1.appendChild(txt_1); btn_1.id = "cg-btn-tab-read";
+    //btn_2.appendChild(txt_2); btn_2.id = "cg-btn-tab-write";
+    //btn_3.appendChild(txt_3); btn_3.id = "cg-btn-tab-tools";
+    //btn_4.appendChild(txt_4); btn_4.id = "cg-btn-tab-help";
     btn_5.appendChild(txt_5); btn_5.id = "cg-btn-tab-about";
 
-    var spawn_delay = 200;
+    setTimeout(
+        function(){
+            /*
+            tabs.appendChild(btn_1);
+            tabs.appendChild(btn_2);
+            tabs.appendChild(btn_3);
+            tabs.appendChild(btn_4);
+            */
+            tabs.appendChild(btn_5);
+
+            setTimeout(
+                function(){
+                    cg_activate_interface();
+                }, 0
+            );
+
+        }, 0
+    );
+
+    /*
+    var spawn_delay = 0;
     setTimeout(function(){tabs.appendChild(btn_1);}, 0*spawn_delay);
     setTimeout(function(){
         tabs.appendChild(btn_2);
@@ -762,6 +772,7 @@ function cg_construct_buttons(tabs) {
     setTimeout(function(){tabs.appendChild(btn_3);}, 2*spawn_delay);
     setTimeout(function(){tabs.appendChild(btn_4);}, 3*spawn_delay);
     setTimeout(function(){tabs.appendChild(btn_5);}, 4*spawn_delay);
+    */
 }
 
 function cg_button_click(btn, fun) {
@@ -937,4 +948,3 @@ function cg_sfx_rattle() {
 var CG_IMG_US = "data:image/gif;base64,R0lGODlhHAAQALMAAAAAmWaZ//8AAP+Z///MAP/MM//MZv/Mmf/MzP/M////AP//M///Zv//mf//zP///ywAAAAAHAAQAAAEQhDISae4OGvwuO8g94xkWUoBkK6qpL3ZJ4dmfbYsC8D87NtAFG64471+M2CtwnQZNcqo8kmFSa+mqhaD7T62Wy82AgA7";
 var CG_IMG_RU = "data:image/gif;base64,R0lGODlhHAAQALMAAABmzMwAAP+ZzP+Z///MAP/MM//MZv/Mmf/MzP/M////AP//M///Zv//mf//zP///ywAAAAAHAAQAAAEKPDJSau9OOvNu/8gBYxkaZ5oqq5s675wLMNBbd94ru987//AoHB4iwAAOw==";
 var CG_IMG_EE = "data:image/gif;base64,R0lGODdhHAAQALMAAAAAAABmzP+ZzP+Z///MAP/MM//MZv/Mmf/MzP/M////AP//M///Zv//mf//zP///ywAAAAAHAAQAAAEKDDISau9OOvNu/8gBYxkaZ5oqq5s675wLMNPbd94ru987//AoHB4iwAAOw==";
-
