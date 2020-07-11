@@ -43,7 +43,7 @@ function cg_construct_about(main) {
 
     {
         var contact = document.createElement("div");
-        contact.classList.add("cg-contact");
+        contact.classList.add("cg-about-contact");
         contact.classList.add("cg-borderbox");
 
         var table = document.createElement("table");
@@ -74,7 +74,7 @@ function cg_construct_about(main) {
         table.classList.add("cg-about-table");
 
         var table_wrapper = document.createElement("div");
-        table_wrapper.id = "cg-contact-table-wrapper";
+        table_wrapper.id = "cg-about-contact-table-wrapper";
         table_wrapper.appendChild(table);
 
         var t_email  = document.createTextNode("support@");
