@@ -1,5 +1,31 @@
-var CG_VERSION     = "2.00";
-var CG_LANGUAGE    = "en";
+var GIuGDtd14GQaDKh9TfVKGQJS = {
+    "version" : "2.00",
+    "language" : "en",
+    "api_url" : "",
+    "hashtag" : null
+};
+
+function cg_get_global(name) {
+    if (name in GIuGDtd14GQaDKh9TfVKGQJS) {
+        return GIuGDtd14GQaDKh9TfVKGQJS[name];
+    }
+    else console.error("Could not get global variable '"+name+"'.");
+}
+
+function cg_set_global(name, value) {
+    if (name in GIuGDtd14GQaDKh9TfVKGQJS) {
+        GIuGDtd14GQaDKh9TfVKGQJS[name] = value;
+    }
+    else {
+        console.error(
+            "Could not set global variable '"+name+"' to '"+value+"'."
+        );
+    }
+}
+
+var CG_API_URL     = "";
+var CG_HASHTAG     = null;
+/******************************************************************************/
 var CG_CONSTANTS   = null;
 var CG_STATUS      = [];
 var CG_LAST_STATUS = "";
@@ -15,26 +41,24 @@ var CG_ACTIVE_TAB  = null;
 var CG_DECODER_OK  = true; // Decoder is online?
 var CG_ENCODER_OK  = true; // Encoder is online?
 var CG_LAST_HASH   = "";
-var CG_API         = ""; // Taken from the application-name meta tag's data-api attribute.
-var CG_HASHTAG     = null;
 
 function cg_main() {
     var metas = document.getElementsByTagName("META");
     for (var i=0; i < metas.length; ++i) {
         if (metas[i].name === "application-name") {
-            CG_API      = metas[i].getAttribute('data-api');
+            CG_API_URL = metas[i].getAttribute('data-api');
             break;
         }
     }
 
-    var cg = document.getElementById("cg-main");
-    if (cg == null) {
-        alert(CG_TXT_MAIN_ERROR_1[CG_LANGUAGE]);
-        return;
-    }
+    var cg_main = document.getElementById("cg-main");
 
     (function() {
-        var link = document.querySelector("link[rel*='icon']") || document.createElement('link');
+        var link = (
+            document.querySelector("link[rel*='icon']") ||
+            document.createElement('link')
+        );
+
         link.type = 'image/x-icon';
         link.rel = 'shortcut icon';
         link.href = document.getElementById("gfx_icon").src;
@@ -47,39 +71,60 @@ function cg_main() {
     cg_setup_parameters();
 
     if (CG_HASHTAG.lang === null) {
-        var lang = navigator.languages ? navigator.languages[0] : (navigator.language || navigator.userLanguage);
-        lang = lang || (window.navigator.languages ? window.navigator.languages[0] : null);
-        lang = lang || (window.navigator.language || window.navigator.browserLanguage || window.navigator.userLanguage);
+        var lang = (
+            navigator.languages
+                ? navigator.languages[0]
+                : (navigator.language || navigator.userLanguage)
+        );
+
+        lang = (
+            lang || (
+                window.navigator.languages
+                    ? window.navigator.languages[0] : null
+            )
+        );
+
+        lang = (
+            lang || (
+                window.navigator.language ||
+                window.navigator.browserLanguage ||
+                window.navigator.userLanguage
+            )
+        );
+
         if (lang.indexOf('-') !== -1) lang = lang.split('-')[0];
         if (lang.indexOf('_') !== -1) lang = lang.split('_')[0];
+
         lang = lang.toUpperCase();
-             if (lang === "ET") CG_LANGUAGE = "et";
-        else if (lang === "RU") CG_LANGUAGE = "ru";
-        else                    CG_LANGUAGE = "en";
+
+             if (lang === "ET") cg_set_global("language", "et");
+        else if (lang === "RU") cg_set_global("language", "ru");
+        else                    cg_set_global("language", "en");
     }
-    document.title = CG_TXT_MAIN_TITLE[CG_LANGUAGE];
+
+    document.title = CG_TXT_MAIN_TITLE[cg_get_global("language")];
 
     var credits = document.getElementById("cg-credits");
-    if (credits == null) {
-        alert(CG_TXT_MAIN_ERROR_3[CG_LANGUAGE]);
-        return;
-    }
+
     while (credits.hasChildNodes()) {
         credits.removeChild(credits.lastChild);
     }
-    credits.appendChild(document.createTextNode(CG_TXT_MAIN_CREDITS[CG_LANGUAGE]));
 
-    cg.classList.add("disappear");
+    credits.appendChild(
+        document.createTextNode(CG_TXT_MAIN_CREDITS[cg_get_global("language")])
+    );
+
+    cg_main.classList.add("disappear");
 
     setTimeout(function(){
-        cg.classList.remove("disappear");
-        cg.classList.add("appear");
-        while (cg.hasChildNodes()) {
-            cg.removeChild(cg.lastChild);
+        cg_main.classList.remove("disappear");
+        cg_main.classList.add("appear");
+        while (cg_main.hasChildNodes()) {
+            cg_main.removeChild(cg_main.lastChild);
         }
 
         cg_load_constants();
-        cg_startup(cg);
+        cg_startup(cg_main);
     }, 0);
 }
 
@@ -93,46 +138,8 @@ function cg_setup_parameters(params) {
             if (params !== null && key in params == false) continue;
 
             switch (key) {
-                case "lang"       : CG_LANGUAGE         = val; break;
-                case "tx_nr"      : CG_TX_NR            = val; break;
-                case "filter_addr": CG_READ_FILTER_ADDR = val; break;
-                case "write_txt"  : CG_WRITE_TEXT       = val; break;
-                case "order_nr"   : CG_SAVE_ORDER_NR    = val; break;
-                case "mimetype"   : CG_READ_MIMETYPE    = val; break;
-                case "filter_key" : {
-                                        var ripemd160 = CryptoJS.algo.RIPEMD160.create();
-                                        ripemd160.update(val);
-                                        var filter = Bitcoin.createAddressFromText(hex2ascii(ripemd160.finalize()));
-                                        CG_READ_FILTER_ADDR = filter;
-                                        CG_READ_FILTER_KEY = val;
-                                        break;
-                                    }
-                case "tx_hash"    : {
-                                        if (val.match(/[0-9A-Fa-f]{64}\.[a-zA-Z0-9_-]+/g)) {
-                                            CG_TX_HASH = val.substr(0, 64).toLowerCase();
-                                            CG_TX_TYPE = val.substr(65);
-                                        }
-                                        else {
-                                            CG_TX_HASH = val;
-                                            CG_TX_TYPE = null;
-                                        }
-                                        break;
-                                    }
-                case "pay"        : {
-                                        var parts = val.split(":");
-                                        CG_WRITE_PAY_TO = parts[0];
-                                        CG_WRITE_PAY_AMOUNT = Math.floor(parseFloat(parts[1])*100000000)/100000000;
-                                        break;
-                                    }
-                case "censor_txs" : {
-                                        var array = val.split(",");
-                                        CG_READ_CENSOR_TXS = {};
-                                        for (var i=0; i<array.length; ++i) {
-                                            CG_READ_CENSOR_TXS[array[i]] = true;
-                                        }
-                                        break;
-                                    }
-                default           : break;
+                case "lang" : cg_set_global("language", val); break;
+                default     : break;
             }
         }
     }
@@ -155,56 +162,9 @@ function cg_parse_hashtag() {
     var hashes = location.hash.substring(1).split("#");
     for (var i=0, sz=hashes.length; i<sz; ++i) {
         var hash = decodeURIComponent(hashes[i]);
-             if (hash === "en")                     CG_HASHTAG.lang    = hash;
-        else if (hash === "ru")                     CG_HASHTAG.lang    = hash;
-        else if (hash === "et")                     CG_HASHTAG.lang    = hash;
-        else if (isNormalInteger(hash))             CG_HASHTAG.tx_nr   = hash;
-        else if (isHex(hash) && hash.length === 64) CG_HASHTAG.tx_hash = hash.toLowerCase();
-        else if (hash.match(/[0-9A-Fa-f]{64}\.[a-zA-Z0-9_-]+/g)) {
-            var h = hash.substr(0, 64).toLowerCase();
-            var t = hash.substr(65);
-            CG_HASHTAG.tx_hash = h+"."+t;
-        }
-        else if (Bitcoin.testAddress(hash)) CG_HASHTAG.filter_addr = hash;
-        else if (hash.indexOf(":") > -1) {
-            var parts = hash.split(":");
-            if (parts.length === 2 && parts[0] === "censor") {
-                var censor_txs = {};
-                var txs = parts[1].split(",");
-                var censor_txs_arr = [];
-                for (var j=0, txsz=txs.length; j<txsz; ++j) {
-                    if (txs[j].length === 64 && isHex(txs[j])) {
-                        var txhash = txs[j].toLowerCase();
-                        censor_txs[txhash] = true;
-                        censor_txs_arr.push(txhash);
-                    }
-                }
-                if (Object.keys(censor_txs).length > 0) {
-                    CG_HASHTAG.censor_txs = censor_txs_arr.join();
-                }
-            }
-            else if (parts.length === 2 && parts[0] === "write") {
-                CG_HASHTAG.write_txt = parts[1];
-            }
-            else if (parts.length === 2 && parts[0] === "order") {
-                if (isNormalInteger(parts[1])) CG_HASHTAG.order_nr = parts[1];
-            }
-            else if (parts.length === 2 && parts[1].indexOf(".") > -1 && Bitcoin.testAddress(parts[0])) {
-                var nums = parts[1].split(".");
-                if (nums.length == 2 && isNumeric(nums[0]) && isNumeric(nums[1])) {
-                    var amount = nums[0]+"."+nums[1].substring(0,8);
-                    if (cg_write_check_amount(amount) === "") {
-                        CG_HASHTAG.pay = parts[0]+":"+parts[1];
-                    }
-                }
-            }
-            else if (parts.length === 2 && parts[0] === "mimetype") {
-                CG_HASHTAG.mimetype = parts[1];
-            }
-        }
-        else if (hash.length > 0) {
-            CG_HASHTAG.filter_key = hash;
-        }
+             if (hash === "en") CG_HASHTAG.lang = hash;
+        else if (hash === "ru") CG_HASHTAG.lang = hash;
+        else if (hash === "et") CG_HASHTAG.lang = hash;
     }
 }
 
@@ -217,7 +177,9 @@ function cg_prepare_status(status) {
 
 function cg_startup(cg) {
     if (CG_STATUS.length > 0) {
-        var text = document.createTextNode(cg_prepare_status(CG_STATUS.shift()));
+        var text = (
+            document.createTextNode(cg_prepare_status(CG_STATUS.shift()))
+        );
 
         while (cg.hasChildNodes()) {
             cg.removeChild(cg.lastChild);
@@ -270,17 +232,8 @@ function cg_main_set_hash(update) {
             if (val === null) continue;
 
             switch (key) {
-                case "lang"       : hashtag += "#"+val;          break;
-                case "tx_nr"      : hashtag += "#"+val;          break;
-                case "tx_hash"    : hashtag += "#"+val;          break;
-                case "filter_addr": hashtag += "#"+val;          break;
-                case "filter_key" : hashtag += "#"+val;          break;
-                case "censor_txs" : hashtag += "#censor:"+val;   break;
-                case "write_txt"  : hashtag += "#write:"+val;    break;
-                case "order_nr"   : hashtag += "#order:"+val;    break;
-                case "pay"        : hashtag += "#"+val;          break;
-                case "mimetype"   : hashtag += "#mimetype:"+val; break;
-                default           :                              break;
+                case "lang" : hashtag += "#"+val; break;
+                default     : break;
             }
         }
     }
@@ -339,8 +292,6 @@ function cg_main_loop() {
         cg_save_update();
     }
 
-    cg_save_pulse();
-
     setTimeout(function(){
         cg_main_loop();
     }, 1000);
@@ -366,7 +317,7 @@ function cg_check_key(e) {
 }
 
 function cg_construct(cg) {
-    var text = document.createTextNode(CG_TXT_MAIN_PLEASE_WAIT[CG_LANGUAGE]);
+    var text = document.createTextNode(cg_translate(CG_TXT_MAIN_PLEASE_WAIT));
 
     while (cg.hasChildNodes()) {
         cg.removeChild(cg.lastChild);
@@ -400,16 +351,8 @@ function cg_construct(cg) {
 
 function cg_construct_footer() {
     var footer = document.getElementById("cg-footer");
-    if (footer == null) {
-        alert(CG_TXT_MAIN_ERROR_2[CG_LANGUAGE]);
-        return;
-    }
 
     var credits = document.getElementById("cg-credits");
-    if (credits == null) {
-        alert(CG_TXT_MAIN_ERROR_3[CG_LANGUAGE]);
-        return;
-    }
 
     credits.className = credits.className + " cg-disappear";
 
@@ -425,54 +368,45 @@ function cg_construct_footer() {
 
         var img_us = document.createElement("img");
         img_us.setAttribute('src', CG_IMG_US);
-        img_us.setAttribute('alt', CG_TXT_MAIN_FLAG_OF_US[CG_LANGUAGE]);
+        img_us.setAttribute('alt', cg_translate(CG_TXT_MAIN_FLAG_OF_US));
         img_us.style.verticalAlign="middle";
 
         var img_ru = document.createElement("img");
         img_ru.setAttribute('src', CG_IMG_RU);
-        img_ru.setAttribute('alt', CG_TXT_MAIN_FLAG_OF_RU[CG_LANGUAGE]);
+        img_ru.setAttribute('alt', cg_translate(CG_TXT_MAIN_FLAG_OF_RU));
         img_ru.style.verticalAlign="middle";
 
         var img_ee = document.createElement("img");
         img_ee.setAttribute('src', CG_IMG_EE);
-        img_ee.setAttribute('alt', CG_TXT_MAIN_FLAG_OF_EE[CG_LANGUAGE]);
+        img_ee.setAttribute('alt', cg_translate(CG_TXT_MAIN_FLAG_OF_EE));
         img_ee.style.verticalAlign="middle";
 
         var options="";
-        if (CG_READ_FILTER_KEY !== null) options = "#"+CG_READ_FILTER_KEY;
-        if (CG_WRITE_PAY_TO !== null && CG_WRITE_PAY_AMOUNT !== null) options += "#"+CG_WRITE_PAY_TO+":"+CG_WRITE_PAY_AMOUNT;
-        if (Object.keys(CG_READ_CENSOR_TXS).length > 0) {
-            var keys = [];
-            for (var key in CG_READ_CENSOR_TXS) {
-                if (CG_READ_CENSOR_TXS.hasOwnProperty(key)) keys.push(key);
-            }
-            if (keys.length > 0) options += "#censor:"+keys.join();
-        }
 
         var a_en = document.createElement("a"); a_en.appendChild(img_us);
-        a_en.title = CG_TXT_MAIN_TRANSLATE_TO_EN[CG_LANGUAGE];
+        a_en.title = cg_translate(CG_TXT_MAIN_TRANSLATE_TO_EN);
         a_en.href  = "#en"+options;
         a_en.classList.add("hvr-glow");
         a_en.onclick=function(){fade_out(); setTimeout(function(){location.reload();}, 500); return true;};
         a_en.style.margin="0ch 0.25ch";
 
         var a_ru = document.createElement("a"); a_ru.appendChild(img_ru);
-        a_ru.title = CG_TXT_MAIN_TRANSLATE_TO_RU[CG_LANGUAGE];
+        a_ru.title = cg_translate(CG_TXT_MAIN_TRANSLATE_TO_RU);
         a_ru.href  = "#ru"+options;
         a_ru.classList.add("hvr-glow");
         a_ru.onclick=function(){fade_out(); setTimeout(function(){location.reload();}, 500); return true;};
         a_ru.style.margin="0ch 0.25ch";
 
         var a_ee = document.createElement("a"); a_ee.appendChild(img_ee);
-        a_ee.title = CG_TXT_MAIN_TRANSLATE_TO_EE[CG_LANGUAGE];
+        a_ee.title = cg_translate(CG_TXT_MAIN_TRANSLATE_TO_EE);
         a_ee.href  = "#et"+options;
         a_ee.classList.add("hvr-glow");
         a_ee.onclick=function(){fade_out(); setTimeout(function(){location.reload();}, 500); return true;};
         a_ee.style.margin="0ch 0.25ch";
 
-        if (CG_LANGUAGE !== "en") languages.appendChild(a_en);
-        if (CG_LANGUAGE !== "ru") languages.appendChild(a_ru);
-        if (CG_LANGUAGE !== "et") languages.appendChild(a_ee);
+        if (cg_get_global("language") !== "en") languages.appendChild(a_en);
+        if (cg_get_global("language") !== "ru") languages.appendChild(a_ru);
+        if (cg_get_global("language") !== "et") languages.appendChild(a_ee);
 
         languages.classList.add("cg-appear");
         languages.classList.add("cg-footer-languages");
@@ -488,7 +422,7 @@ function cg_refresh_status(div) {
 
     var status = "";
     if (CG_HOLD_STATUS > 0) {
-        status = CG_LAST_STATUS; //CG_STATUS[0];
+        status = CG_LAST_STATUS;
         CG_HOLD_STATUS--;
         if (CG_HOLD_DELAY && CG_STATUS.length > 0) {
             CG_HOLD_STATUS = 0;
@@ -496,7 +430,7 @@ function cg_refresh_status(div) {
         }
     }
     else if (CG_STATUS.length === 0) {
-        if (CG_ONLINE === null) status = CG_TXT_MAIN_PLEASE_WAIT[CG_LANGUAGE];
+        if (CG_ONLINE === null) status = cg_translate(CG_TXT_MAIN_PLEASE_WAIT);
         else                    status = CG_ONLINE;
     }
     else {
@@ -522,8 +456,12 @@ function cg_refresh_status(div) {
         CG_LAST_STATUS = status;
     }
 
-    if (div.classList.contains("cg-status-warning")) div.classList.remove("cg-status-warning");
-    else if (status.charAt(0) === '!') div.classList.add("cg-status-warning");
+    if (div.classList.contains("cg-status-warning")) {
+        div.classList.remove("cg-status-warning");
+    }
+    else if (status.charAt(0) === '!') {
+        div.classList.add("cg-status-warning");
+    }
 
     setTimeout(function(){
         cg_refresh_status(div);
@@ -534,13 +472,13 @@ function cg_load_constants() {
     var data_obj = {};
     var json_str = encodeURIComponent(JSON.stringify(data_obj));
 
-    CG_STATUS.push(CG_TXT_MAIN_LOADING_CONSTANTS[CG_LANGUAGE]);
-    xmlhttpPost(CG_API, 'fun=get_constants&data='+json_str,
+    CG_STATUS.push(cg_translate(CG_TXT_MAIN_LOADING_CONSTANTS));
+    xmlhttpPost(CG_API_URL, 'fun=get_constants&data='+json_str,
         function(response) {
             var status = "";
 
-                 if (response === false) status = CG_TXT_MAIN_ERROR[CG_LANGUAGE];
-            else if (response === null ) status = CG_TXT_MAIN_TIMEOUT[CG_LANGUAGE];
+                 if (response === false) status = cg_translate(CG_TXT_MAIN_ERROR);
+            else if (response === null ) status = cg_translate(CG_TXT_MAIN_TIMEOUT);
             else {
                 json = JSON.parse(response);
                 if ("constants" in json
@@ -549,12 +487,12 @@ function cg_load_constants() {
                 &&  "MIN_BTC_OUTPUT" in json.constants
                 &&  "SATOSHIS_PER_BITCOIN" in json.constants) {
                    CG_CONSTANTS = json.constants;
-                   status = CG_TXT_MAIN_CONSTANTS_LOADED[CG_LANGUAGE];
+                   status = cg_translate(CG_TXT_MAIN_CONSTANTS_LOADED);
                    CG_WRITE_MIN_BTC_OUTPUT = CG_CONSTANTS["MIN_BTC_OUTPUT"] / CG_CONSTANTS["SATOSHIS_PER_BITCOIN"];
                 }
                 else {
                     cg_handle_error(json);
-                    if (CG_STATUS.length === 0) status = CG_TXT_MAIN_ERROR[CG_LANGUAGE];
+                    if (CG_STATUS.length === 0) status = cg_translate(CG_TXT_MAIN_ERROR);
                 }
             }
 
@@ -576,13 +514,13 @@ function cg_load_stats() {
     var data_obj = {};
     var json_str = encodeURIComponent(JSON.stringify(data_obj));
 
-    CG_STATUS.push(CG_TXT_MAIN_ONLINE[CG_LANGUAGE]+": ...");
-    xmlhttpPost(CG_API, 'fun=get_stats&data='+json_str,
+    CG_STATUS.push(cg_translate(CG_TXT_MAIN_ONLINE)+": ...");
+    xmlhttpPost(CG_API_URL, 'fun=get_stats&data='+json_str,
         function(response) {
             var online = "???";
 
-                 if (response === false) online = CG_TXT_MAIN_ERROR[CG_LANGUAGE];
-            else if (response === null ) online = CG_TXT_MAIN_TIMEOUT[CG_LANGUAGE];
+                 if (response === false) online = cg_translate(CG_TXT_MAIN_ERROR);
+            else if (response === null ) online = cg_translate(CG_TXT_MAIN_TIMEOUT);
             else {
                 json = JSON.parse(response);
                 if ("stats" in json && json.stats.length === 1
@@ -592,17 +530,17 @@ function cg_load_stats() {
                 &&  "encoder" in json.stats[0]
                 &&  "sat_byte" in json.stats[0]) {
                     CG_SAT_BYTE = json.stats[0].sat_byte;
-                    var units = (json.stats[0].sessions == 1 ? CG_TXT_MAIN_SESSION[CG_LANGUAGE] : CG_TXT_MAIN_SESSIONS[CG_LANGUAGE]);
+                    var units = (json.stats[0].sessions == 1 ? cg_translate(CG_TXT_MAIN_SESSION) : cg_translate(CG_TXT_MAIN_SESSIONS));
                     online = json.stats[0].IPs/*+" ("+json.stats[0].sessions+" "+units+")"*/;
                     var decoder_ok = (json.stats[0].decoder !== "0");
                     var encoder_ok = (json.stats[0].encoder !== "0");
                     if (decoder_ok != CG_DECODER_OK) {
-                       if (!decoder_ok) CG_STATUS.push("!"+CG_TXT_MAIN_DECODER_APPEARS_OFFLINE[CG_LANGUAGE]);
-                       else CG_STATUS.push("_"+CG_TXT_MAIN_DECODER_APPEARS_ONLINE[CG_LANGUAGE]);
+                       if (!decoder_ok) CG_STATUS.push("!"+cg_translate(CG_TXT_MAIN_DECODER_APPEARS_OFFLINE));
+                       else CG_STATUS.push("_"+cg_translate(CG_TXT_MAIN_DECODER_APPEARS_ONLINE));
                     }
                     if (encoder_ok != CG_ENCODER_OK) {
-                       if (!encoder_ok) CG_STATUS.push("!"+CG_TXT_MAIN_ENCODER_APPEARS_OFFLINE[CG_LANGUAGE]);
-                       else CG_STATUS.push("_"+CG_TXT_MAIN_ENCODER_APPEARS_ONLINE[CG_LANGUAGE]);
+                       if (!encoder_ok) CG_STATUS.push("!"+cg_translate(CG_TXT_MAIN_ENCODER_APPEARS_OFFLINE));
+                       else CG_STATUS.push("_"+cg_translate(CG_TXT_MAIN_ENCODER_APPEARS_ONLINE));
                     }
                     CG_DECODER_OK = decoder_ok;
                     CG_ENCODER_OK = encoder_ok;
@@ -610,7 +548,7 @@ function cg_load_stats() {
                 else cg_handle_error(json);
             }
 
-            CG_ONLINE=CG_TXT_MAIN_ONLINE[CG_LANGUAGE]+": "+online;
+            CG_ONLINE=cg_translate(CG_TXT_MAIN_ONLINE)+": "+online;
             CG_STATUS.push(CG_ONLINE);
 
             setTimeout(function(){
@@ -623,7 +561,7 @@ function cg_load_stats() {
 function cg_handle_error(obj) {
     if ("error" in obj && "code" in obj.error) {
         if (obj.error.code === "ERROR_ACCESS_DENIED") {
-            CG_STATUS.push("!"+CG_TXT_MAIN_ERROR_ACCESS_DENIED[CG_LANGUAGE]);
+            CG_STATUS.push("!"+cg_translate(CG_TXT_MAIN_ERROR_ACCESS_DENIED));
         }
     }
     return;
@@ -631,10 +569,6 @@ function cg_handle_error(obj) {
 
 function cg_construct_header() {
     var header = document.getElementById("cg-header");
-    if (header == null) {
-        alert(CG_TXT_MAIN_ERROR_4[CG_LANGUAGE]);
-        return;
-    }
 
     header.classList.add("cg-disappear");
 
@@ -656,7 +590,11 @@ function cg_construct_header() {
             header.children[0].appendChild(title_link);
 
             version = document.createElement("span");
-            version.appendChild(document.createTextNode("v"+CG_VERSION));
+            version.appendChild(
+                document.createTextNode(
+                    "v"+cg_get_global("version")
+                )
+            );
             version.id="cg-version"
 
             header.children[0].appendChild(version);
@@ -735,7 +673,7 @@ function cg_construct_buttons(tabs) {
     //var txt_2 = document.createTextNode(CG_TXT_MAIN_BTN_WRITE[CG_LANGUAGE]);
     //var txt_3 = document.createTextNode(CG_TXT_MAIN_BTN_TOOLS[CG_LANGUAGE]);
     //var txt_4 = document.createTextNode(CG_TXT_MAIN_BTN_HELP [CG_LANGUAGE]);
-    var txt_5 = document.createTextNode(CG_TXT_MAIN_BTN_ABOUT[CG_LANGUAGE]);
+    var txt_5 = document.createTextNode(cg_translate(CG_TXT_MAIN_BTN_ABOUT));
 
     //btn_1.appendChild(txt_1); btn_1.id = "cg-btn-tab-read";
     //btn_2.appendChild(txt_2); btn_2.id = "cg-btn-tab-write";
@@ -784,36 +722,32 @@ function cg_button_click(btn, fun) {
     }
     btn.disabled = true;
 
-    var cg = document.getElementById("cg-main");
-    if (cg == null) {
-        alert(CG_TXT_MAIN_ERROR_1[CG_LANGUAGE]);
-        return;
-    }
+    var cg_main = document.getElementById("cg-main");
 
     cg_sfx_rattle();
     if (CG_ACTIVE_TAB !== 'cg-tab-read') {
-        cg.classList.remove("cg-poofin");
-        cg.classList.add("cg-poofout");
+        cg_main.classList.remove("cg-poofin");
+        cg_main.classList.add("cg-poofout");
     }
     else {
-        cg.classList.remove("cg-appear");
-        cg.classList.add("cg-disappear");
+        cg_main.classList.remove("cg-appear");
+        cg_main.classList.add("cg-disappear");
     }
 
-    if (fun !== cg_construct_read) {
+    if (fun !== cg_construct_about) {
         setTimeout(function(){
-            fun(cg);
-            cg.classList.remove("cg-disappear");
-            cg.classList.remove("cg-poofout");
-            cg.classList.add("cg-poofin");
+            fun(cg_main);
+            cg_main.classList.remove("cg-disappear");
+            cg_main.classList.remove("cg-poofout");
+            cg_main.classList.add("cg-poofin");
         }, (CG_ACTIVE_TAB === 'cg-tab-read') ? 500 : 200);
     }
     else {
         setTimeout(function(){
-            fun(cg);
-            cg.classList.remove("cg-disappear");
-            cg.classList.remove("cg-poofout");
-            cg.classList.add("cg-appear");
+            fun(cg_main);
+            cg_main.classList.remove("cg-disappear");
+            cg_main.classList.remove("cg-poofout");
+            cg_main.classList.add("cg-appear");
         }, (CG_ACTIVE_TAB === 'cg-tab-read') ? 500 : 200);
     }
 }
@@ -943,6 +877,10 @@ function cg_sfx_spray() {
 function cg_sfx_rattle() {
     var snd = Math.floor((Math.random() * 5) + 1);
     cg_sfx("sfx_rattle_"+snd);
+}
+
+function cg_translate(text) {
+    return text[cg_get_global("language")];
 }
 
 var CG_IMG_US = "data:image/gif;base64,R0lGODlhHAAQALMAAAAAmWaZ//8AAP+Z///MAP/MM//MZv/Mmf/MzP/M////AP//M///Zv//mf//zP///ywAAAAAHAAQAAAEQhDISae4OGvwuO8g94xkWUoBkK6qpL3ZJ4dmfbYsC8D87NtAFG64471+M2CtwnQZNcqo8kmFSa+mqhaD7T62Wy82AgA7";

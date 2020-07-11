@@ -15,32 +15,11 @@ var CG_TXT_THE_FAKE_BITCOIN =
     ru : "Bitcoin Core (BTC) это фальшивый биткойн захваченный компанией Blockstream."
 };
 
-var CG_TXT_MAIN_ERROR_1 =
-{
-    en : "Error, cg-main element does not exist.",
-    et : "Viga, cg-main elementi ei eksisteeri.",
-    ru : "Ошибка, cg-main элемент не существует."
-};
-
 var CG_TXT_MAIN_PLEASE_WAIT =
 {
     en : "Please wait.",
     et : "Palun oodake.",
     ru : "Пожалуйста, подождите."
-};
-
-var CG_TXT_MAIN_ERROR_2 =
-{
-    en : "Error, cg-footer element does not exist.",
-    et : "Viga, cg-footer elementi ei eksisteeri.",
-    ru : "Ошибка, cg-footer элемент не существует."
-};
-
-var CG_TXT_MAIN_ERROR_3 =
-{
-    en : "Error, cg-credits element does not exist.",
-    et : "Viga, cg-credits elementi ei eksisteeri.",
-    ru : "Ошибка, cg-credits элемент не существует."
 };
 
 var CG_TXT_MAIN_TRANSLATE_TO_EN =
@@ -118,13 +97,6 @@ var CG_TXT_MAIN_TIMEOUT =
     en : "TIMEOUT",
     et : "AEG LÄBI",
     ru : "ВРЕМЯ ОЖИДАНИЯ ИСТЕКЛО"
-};
-
-var CG_TXT_MAIN_ERROR_4 =
-{
-    en : "Error, cg-header element does not exist.",
-    et : "Viga , cg-header elementi ei eksisteeri.",
-    ru : "Ошибка, cg-header элемент не существует."
 };
 
 var CG_TXT_MAIN_BTN_READ =
