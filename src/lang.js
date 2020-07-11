@@ -1346,12 +1346,6 @@ var CG_TXT_ABOUT_FRIENDS =
 
 var CG_TXT_ABOUT_FRIEND_LIST =
 {
-    //"Jeff" : { // Commented out because of a broken/missing website
-    //    website : "http://bitcoin-quest.com/",
-    //    en  : "Jeff's bitcoin art",
-    //    et  : "Jeffi bitimündi kunst",
-    //    ru  : "Биткойн искусство Иефф"
-    //},
    "MetaNet" : {
         website : "https://metanet.icu/",
         en  : "Exclusive membership club focused on BitCoin and the MetaNet",
