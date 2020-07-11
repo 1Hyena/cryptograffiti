@@ -164,9 +164,9 @@ var CG_TXT_MAIN_BTN_ABOUT =
 
 var CG_TXT_MAIN_TITLE =
 {
-    en : "CryptoGraffiti - Bitcoin blockchain messages",
-    et : "KrüptoGraffiti - Bitimündi plokiahela sõnumid",
-    ru : "КриптоГраффити - Сообщения цепочки блоков Биткойн"
+    en : "CryptoGraffiti: Multimedia on the Blockchain",
+    et : "KrüptoGraffiti: Bitimündi plokiahela sõnumid",
+    ru : "КриптоГраффити: Сообщения цепочки блоков Биткойн"
 };
 
 var CG_TXT_MAIN_CREDITS =

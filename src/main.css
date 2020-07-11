@@ -15,6 +15,122 @@ button {
     font-size: 1rem;
 }
 
+#cg {
+    background: -webkit-repeating-linear-gradient(-45deg, rgba(0,0,0,0), rgba(0,0,0,0.1) 5%, rgba(0,0,0,0) 10%);
+    background: -o-repeating-linear-gradient(-45deg, rgba(0,0,0,0), rgba(0,0,0,0.1) 5%, rgba(0,0,0,0) 10%);
+    background: -moz-repeating-linear-gradient(-45deg, rgba(0,0,0,0), rgba(0,0,0,0.1) 5%, rgba(0,0,0,0) 10%);
+    background: repeating-linear-gradient(-45deg, rgba(0,0,0,0), rgba(0,0,0,0.1) 5%, rgba(0,0,0,0) 10%);
+    font-family: "Courier New", monospace;
+    font-size: 1rem;
+    height: 100%;
+}
+
+#cg>div:first-child {
+    display: table;
+    width: 100%;
+    height: 100%;
+    table-layout: fixed;
+}
+
+#cg>div:first-child>div:first-child {
+    display: table-row;
+    width: 100%;
+}
+
+#cg-header {
+    font-size: 1rem;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    min-height: 2rem;
+    text-shadow: 1px 1px 1px rgba(255,255,255,0.4), -1px -1px 1px rgba(0,0,0,0.4);
+}
+
+#cg-header-wrapper {
+    overflow: hidden;
+}
+
+#cg-header-wrapper>h2:first-child {
+    display: inline;
+    padding-left: 1ch;
+    padding-right: 0.5ch;
+}
+
+#cg-body-wrapper {
+    display: table-row;
+    width: 100%;
+    height: 100%;
+}
+
+#cg-body-wrapper>div:first-child {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+#cg-body {
+    font-size: 1rem;
+    display: block;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+
+    overflow: hidden;
+    margin-left: auto;
+    margin-right: auto;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+#cg-body-texture {
+    width: 100%;
+    height: 100%;
+    background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAQAAABuBnYAAAAAU0lEQVQIHQXBwRGDIBAAwO2/AMcCDHAcPjIRxjJ8Je1kl1uqUgphsWu6w0sIG6npLpcUBql4e/wsVRKabrkNTacIYbMrwsF06rqUhsnXVKVT+Hj+Ue4rPSONk4kAAAAASUVORK5CYII=);
+}
+
+#cg-body-shade {
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    background: -webkit-radial-gradient(rgba(255,255,255,0.75), rgba(255,255,255,0.66), rgba(255,255,255,0.33));
+    background: -o-radial-gradient(rgba(255,255,255,0.75), rgba(255,255,255,0.66), rgba(255,255,255,0.33));
+    background: -moz-radial-gradient(rgba(255,255,255,0.75), rgba(255,255,255,0.66), rgba(255,255,255,0.33));
+    background: radial-gradient(rgba(255,255,255,0.75), rgba(255,255,255,0.66), rgba(255,255,255,0.33));
+}
+
+#cg-main {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border-radius: 0.64rem;
+}
+
+#cg-main-initializer {
+    display:table;
+    width: 100%;
+    height: 100%;
+}
+
+#cg-main-initializer>div:first-child {
+    display:table-cell;
+    vertical-align:middle;
+}
+
+#cg-main-initializer>div:first-child>div:first-child {
+    margin-left:auto;
+    margin-right:auto;
+}
+
+#cg-footer-wrapper {
+    display: table-row;
+    width: 100%;
+}
+
+/******************************************************************************/
+
 .glow {
   animation: glowing 3000ms infinite;
 }
@@ -80,43 +196,6 @@ button {
     100% {opacity: 0;}
 }
 
-#cg-header {
-    font-size: 1rem;
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-    min-height: 2rem;
-    text-shadow: 1px 1px 1px rgba(255,255,255,0.4), -1px -1px 1px rgba(0,0,0,0.4);
-}
-
-#cg-body {
-    font-size: 1rem;
-    display: block;
-    width: 100%;
-    height: 100%;
-    position: absolute;
-
-    overflow: hidden;
-    margin-left: auto;
-    margin-right: auto;
-    -webkit-box-sizing: border-box;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-}
-
-#cg-body-texture {
-    width: 100%;
-    height: 100%;
-}
-
-#cg-body-shade {
-    width: 100%;
-    height: 100%;
-    text-align: center;
-}
-
 #cg-footer {
     font-size: 1rem;
     display: flex;
@@ -127,39 +206,12 @@ button {
     overflow: hidden;
 }
 
-#cg {
-    background: -webkit-repeating-linear-gradient(-45deg, rgba(0,0,0,0), rgba(0,0,0,0.1) 5%, rgba(0,0,0,0) 10%);
-    background: -o-repeating-linear-gradient(-45deg, rgba(0,0,0,0), rgba(0,0,0,0.1) 5%, rgba(0,0,0,0) 10%);
-    background: -moz-repeating-linear-gradient(-45deg, rgba(0,0,0,0), rgba(0,0,0,0.1) 5%, rgba(0,0,0,0) 10%);
-    background: repeating-linear-gradient(-45deg, rgba(0,0,0,0), rgba(0,0,0,0.1) 5%, rgba(0,0,0,0) 10%);
-    font-family: "Courier New", monospace;
-    font-size: 1rem;
-}
-
 #cg-body {
     background: rgb(240, 240, 240);
     border-radius: 0.75rem;
     border-style: inset;
     border-color: rgba(240, 240, 240, 0.33);
     border-width: medium 0rem;
-}
-
-#cg-body-texture {
-    background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAQAAABuBnYAAAAAU0lEQVQIHQXBwRGDIBAAwO2/AMcCDHAcPjIRxjJ8Je1kl1uqUgphsWu6w0sIG6npLpcUBql4e/wsVRKabrkNTacIYbMrwsF06rqUhsnXVKVT+Hj+Ue4rPSONk4kAAAAASUVORK5CYII=);
-}
-
-#cg-body-shade {
-    background: -webkit-radial-gradient(rgba(255,255,255,0.75), rgba(255,255,255,0.66), rgba(255,255,255,0.33));
-    background: -o-radial-gradient(rgba(255,255,255,0.75), rgba(255,255,255,0.66), rgba(255,255,255,0.33));
-    background: -moz-radial-gradient(rgba(255,255,255,0.75), rgba(255,255,255,0.66), rgba(255,255,255,0.33));
-    background: radial-gradient(rgba(255,255,255,0.75), rgba(255,255,255,0.66), rgba(255,255,255,0.33));
-}
-
-#cg-main {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    border-radius: 0.64rem;
 }
 
 #cg-title-link {
