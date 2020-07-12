@@ -1,4 +1,4 @@
-.cg-about-tab {
+.cg-tab-about-setup {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
@@ -6,21 +6,21 @@
     justify-content: space-around;
 }
 
-.cg-about-tab > div > span:first-child {
+.cg-tab-about-setup > div > span:first-child {
     display: inline-block;
     padding-top: 2ch;
     padding-bottom: 1ch;
     opacity: 0.5;
 }
 
-.cg-about-tab > div:nth-child(1) > span::after { content:   "I"; }
-.cg-about-tab > div:nth-child(2) > span::after { content:  "II"; }
-.cg-about-tab > div:nth-child(3) > span::after { content: "III"; }
-.cg-about-tab > div:nth-child(4) > span::after { content:  "IV"; }
-.cg-about-tab > div:nth-child(5) > span::after { content:   "V"; }
-.cg-about-tab > div:nth-child(6) > span::after { content:  "VI"; }
+.cg-tab-about-setup > div:nth-child(1) > span::after { content:   "I"; }
+.cg-tab-about-setup > div:nth-child(2) > span::after { content:  "II"; }
+.cg-tab-about-setup > div:nth-child(3) > span::after { content: "III"; }
+.cg-tab-about-setup > div:nth-child(4) > span::after { content:  "IV"; }
+.cg-tab-about-setup > div:nth-child(5) > span::after { content:   "V"; }
+.cg-tab-about-setup > div:nth-child(6) > span::after { content:  "VI"; }
 
-.cg-about-tab p {
+.cg-tab-about-setup p {
     display: block;
     max-width: 80ch;
     margin: 0 auto 1ch;

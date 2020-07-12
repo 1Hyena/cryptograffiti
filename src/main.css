@@ -196,9 +196,9 @@ button {
 .cg-appear {
     opacity: 0;
     -webkit-animation-name: cg-appear-anim;
-    -webkit-animation-duration: 0.5s;
+    -webkit-animation-duration: 0.250s;
     animation-name: cg-appear-anim;
-    animation-duration: 0.5s;
+    animation-duration: 0.250s;
     -webkit-animation-fill-mode: forwards;
     animation-fill-mode: forwards;
 }
@@ -215,9 +215,9 @@ button {
 .cg-disappear {
     opacity: 1;
     -webkit-animation-name: cg-disappear-anim;
-    -webkit-animation-duration: 0.5s;
+    -webkit-animation-duration: 0.250s;
     animation-name: cg-disappear-anim;
-    animation-duration: 0.5s;
+    animation-duration: 0.250s;
     -webkit-animation-fill-mode: forwards;
     animation-fill-mode: forwards;
 }

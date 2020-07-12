@@ -185,3 +185,19 @@ function formatBytes(bytes) {
     else if (bytes < 1073741824) return (bytes/   1048576).toFixed(2) + " MiB";
     else                         return (bytes/1073741824).toFixed(2) + " GiB";
 }
+
+function hex2binary(hex) {
+    for (var bytes = [], c = 0; c < hex.length; c += 2)
+    bytes.push(parseInt(hex.substr(c, 2), 16));
+    return bytes;
+}
+
+function arrayBufferToBase64(buffer) {
+    var binary = '';
+    var bytes = new Uint8Array(buffer);
+    var len = bytes.byteLength;
+    for (var i=0; i<len; i++) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+    return window.btoa( binary );
+}

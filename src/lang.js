@@ -213,6 +213,35 @@ var CG_TXT_MAIN_ERROR_ENCODER_IS_DOWN =
 ////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////
+//  WALL TAB TRANSLATIONS BEGIN                                               //
+////////////////////////////////////////////////////////////////////////////////
+
+var CG_TXT_WALL_LOADING_TX_METADATA =
+{
+    en : "Loading transaction metadata.",
+    et : "Laen ülekannete eelandmeid.",
+    ru : "(Loading transaction metadata.)" // NEEDS TRANSLATION
+};
+
+var CG_TXT_WALL_LOADING_TX_METADATA_ERROR =
+{
+    en : "Could not load transaction metadata.",
+    et : "Ülekannete eelandmete laadimine ebaõnnestus.",
+    ru : "(Could not load transaction metadata.)" // NEEDS TRANSLATION
+};
+
+var CG_TXT_WALL_LOADING_TX_METADATA_TIMEOUT =
+{
+    en : "Attempt to load transaction metadata timed out.",
+    et : "Ülekannete eelandmete laadimise katse aegus.",
+    ru : "(Attempt to load transaction metadata timed out.)" // NEEDS TRANSLATION
+};
+
+////////////////////////////////////////////////////////////////////////////////
+//  WALL TAB TRANSLATIONS END                                                 //
+////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////
 //  ABOUT TAB TRANSLATIONS BEGIN                                              //
 ////////////////////////////////////////////////////////////////////////////////
 var CG_TXT_ABOUT_P1 =

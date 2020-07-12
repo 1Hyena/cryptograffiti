@@ -9,10 +9,11 @@ var GIuGDtd14GQaDKh9TfVKGQJS = {
     "hashtag"    : null,
     "status"     : [],
     "constants"  : null,
-    "decoder"    : null,
-    "encoder"    : null,
+    "decoder"    : true,
+    "encoder"    : true,
     "online"     : null,
     "tab"        : null,
+    "tabs"       : {},
     "scroll_key" : false
 };
 
@@ -119,7 +120,7 @@ function cg_main() {
 
         cg_load_constants();
         cg_startup(cg_main);
-    }, 500);
+    }, 250);
 }
 
 function cg_setup_parameters(params) {
@@ -229,6 +230,17 @@ function cg_main_loop() {
             }
         }
     }
+
+    setTimeout(function(){
+        var tab_id = cg_get_global("tab");
+        var tab = cg_get_global("tabs")[tab_id];
+
+        switch (tab_id) {
+            case "cg-tab-wall":  cg_step_wall(tab);  break;
+            case "cg-tab-about": cg_step_about(tab); break;
+            default: break;
+        }
+    }, 0);
 
     setTimeout(function(){
         cg_main_loop();
@@ -370,7 +382,7 @@ function cg_construct_footer() {
         languages.classList.add("cg-footer-languages");
 
         footer.appendChild(languages);
-    }, 500);
+    }, 250);
 }
 
 function cg_refresh_footer_status() {
@@ -460,9 +472,6 @@ function cg_load_constants() {
                 }
                 else {
                     cg_handle_error(json);
-                    if (cg_get_global("constants").length === 0) {
-                        status = cg_translate(CG_TXT_MAIN_ERROR);
-                    }
                 }
             }
 
@@ -639,7 +648,7 @@ function cg_construct_header() {
                 }, 1000);
             }
         }, 0);
-    }, 500);
+    }, 250);
 }
 
 function cg_activate_interface() {
@@ -649,7 +658,7 @@ function cg_activate_interface() {
         cg.removeChild(cg.lastChild);
     }
 
-    var btn = document.getElementById("cg-btn-tab-about");
+    var btn = document.getElementById("cg-btn-tab-wall");
     btn.disabled = false;
     btn.click();
 }
@@ -709,7 +718,7 @@ function cg_button_click(btn, fun) {
         fun(cg_main);
         cg_main.classList.remove("cg-disappear");
         cg_main.classList.add("cg-appear");
-    }, 500);
+    }, 250);
 }
 
 function cg_init_tab(main, tab_id) {
@@ -740,7 +749,11 @@ function cg_init_tab(main, tab_id) {
 
     main.appendChild(div);
 
-    return div;
+    cg_get_global("tabs")[tab_id] = {
+        element : div
+    };
+
+    return cg_get_global("tabs")[tab_id];
 }
 
 function cg_button_click_about() {

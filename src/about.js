@@ -11,10 +11,12 @@ var CG_ABOUT_IMG_DOMAIN = (
 );
 
 function cg_construct_about(main) {
-    var div = cg_init_tab(main, 'cg-tab-about');
-    if (div === null) return;
+    var tab = cg_init_tab(main, 'cg-tab-about');
+    if (tab === null) return;
 
-    div.classList.add("cg-about-tab");
+    var div = tab.element;
+
+    div.classList.add("cg-tab-about-setup");
 
     var elements = [];
     var ps = [
@@ -184,4 +186,7 @@ function cg_construct_about(main) {
             cg_sfx_spray();
         }, 750+250*i, child);
     }
+}
+
+function cg_step_about(tab) {
 }
