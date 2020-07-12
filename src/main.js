@@ -108,18 +108,18 @@ function cg_main() {
         document.createTextNode(CG_TXT_MAIN_CREDITS[cg_get_global("language")])
     );
 
-    cg_main.classList.add("disappear");
+    cg_main.classList.add("cg-disappear");
 
     setTimeout(function(){
-        cg_main.classList.remove("disappear");
-        cg_main.classList.add("appear");
+        cg_main.classList.remove("cg-disappear");
+        cg_main.classList.add("cg-appear");
         while (cg_main.hasChildNodes()) {
             cg_main.removeChild(cg_main.lastChild);
         }
 
         cg_load_constants();
         cg_startup(cg_main);
-    }, 0);
+    }, 500);
 }
 
 function cg_setup_parameters(params) {
@@ -191,6 +191,13 @@ function cg_startup(cg) {
     if (cg_get_global("constants") !== null) {
         cg_construct(cg);
         document.onkeydown = cg_check_key;
+        document.addEventListener(
+            'keydown',
+            function(event){
+                cg_check_key(event);
+            }
+        );
+
         cg_main_loop();
     }
     else {
@@ -223,34 +230,12 @@ function cg_main_loop() {
         }
     }
 
-    var tab_write = document.getElementById("cg-tab-write");
-    if (tab_write && !tab_write.classList.contains("cg-inactive-tab")) {
-        cg_write_update(false);
-    }
-
-    var tab_captcha = document.getElementById("cg-tab-captcha");
-    if (tab_captcha && !tab_captcha.classList.contains("cg-inactive-tab")) {
-        cg_captcha_update();
-    }
-
-    var tab_view = document.getElementById("cg-tab-view");
-    if (tab_view && !tab_view.classList.contains("cg-inactive-tab")) {
-        cg_view_update();
-    }
-
-    var tab_save = document.getElementById("cg-tab-save");
-    if (tab_save && !tab_save.classList.contains("cg-inactive-tab")) {
-        cg_save_update();
-    }
-
     setTimeout(function(){
         cg_main_loop();
     }, 1000);
 }
 
 function cg_check_key(e) {
-    e = e || window.event;
-
     if (e.keyCode == '38') {
         // up arrow
         cg_set_global("scroll_key", true);
@@ -385,7 +370,7 @@ function cg_construct_footer() {
         languages.classList.add("cg-footer-languages");
 
         footer.appendChild(languages);
-    }, 0);
+    }, 500);
 }
 
 function cg_refresh_footer_status() {
@@ -469,10 +454,7 @@ function cg_load_constants() {
             else {
                 json = JSON.parse(response);
                 if ("constants" in json
-                &&  "TXS_PER_QUERY" in json.constants
-                &&  "ENCODER_FEE_AMPLIFIER" in json.constants
-                &&  "MIN_BTC_OUTPUT" in json.constants
-                &&  "SATOSHIS_PER_BITCOIN" in json.constants) {
+                &&  "TXS_PER_QUERY" in json.constants) {
                     cg_set_global("constants",  json.constants);
                     status = cg_translate(CG_TXT_MAIN_CONSTANTS_LOADED);
                 }
@@ -657,7 +639,7 @@ function cg_construct_header() {
                 }, 1000);
             }
         }, 0);
-    }, 0);
+    }, 500);
 }
 
 function cg_activate_interface() {
@@ -674,6 +656,11 @@ function cg_activate_interface() {
 
 function cg_construct_buttons(tabs) {
     var buttons = [
+        {
+            id: "cg-btn-tab-wall",
+            label : CG_TXT_MAIN_BTN_WALL,
+            click_fun : cg_button_click_wall
+        },
         {
             id: "cg-btn-tab-about",
             label : CG_TXT_MAIN_BTN_ABOUT,
@@ -759,6 +746,11 @@ function cg_init_tab(main, tab_id) {
 function cg_button_click_about() {
     var btn = document.getElementById("cg-btn-tab-about");
     cg_button_click(btn, cg_construct_about);
+}
+
+function cg_button_click_wall() {
+    var btn = document.getElementById("cg-btn-tab-wall");
+    cg_button_click(btn, cg_construct_wall);
 }
 
 function cg_init_sound() {

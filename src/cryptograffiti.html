@@ -20,6 +20,7 @@
 <link rel="canonical" href="https://cryptograffiti.info/" />
 <!-- BEGIN EXTERNAL CSS -->
 <link href="./main.css"  rel="stylesheet" type="text/css">
+<link href="./wall.css"  rel="stylesheet" type="text/css">
 <link href="./about.css" rel="stylesheet" type="text/css">
 <!-- END EXTERNAL CSS -->
 
@@ -31,13 +32,14 @@
 <script src="./lang.js"         type="text/javascript" charset="UTF-8"></script>
 <script src="./main.js"         type="text/javascript" charset="UTF-8"></script>
 <script src="./utils.js"        type="text/javascript" charset="UTF-8"></script>
+<script src="./wall.js"         type="text/javascript" charset="UTF-8"></script>
 <script src="./about.js"        type="text/javascript" charset="UTF-8"></script>
 <!-- END EXTERNAL SCRIPTS -->
 <!--<script src="https://www.moneybutton.com/moneybutton.js"></script>-->
 </head>
 <body>
 
-<div id="cg" class="appear"><!--
+<div id="cg" class="cg-appear"><!--
     --><div><!--
         --><div id="cg-header-wrapper"><!--
             --><div id="cg-header"><!--
@@ -97,8 +99,13 @@ function show_progress(text) {
 function fade_out() {
     var cg = document.getElementById("cg");
     if (cg !== null) {
-        if (cg.classList.contains('appear'))     cg.classList.remove('appear');
-        if (!cg.classList.contains('disappear')) cg.classList.add('disappear');
+        if (cg.classList.contains('cg-appear')) {
+            cg.classList.remove('cg-appear');
+        }
+
+        if (!cg.classList.contains('cg-disappear')) {
+            cg.classList.add('cg-disappear');
+        }
     }
 }
 window.onbeforeunload = fade_out;

@@ -17,12 +17,11 @@ function cg_construct_about(main) {
     div.classList.add("cg-about-tab");
 
     var elements = [];
-    var ps = [CG_TXT_ABOUT_P1,
-              CG_TXT_ABOUT_P2,
-              CG_TXT_ABOUT_P3,
-              CG_TXT_ABOUT_P4,
-              CG_TXT_ABOUT_P5,
-              CG_TXT_ABOUT_P6];
+    var ps = [
+        CG_TXT_ABOUT_P1,
+        CG_TXT_ABOUT_P2,
+        CG_TXT_ABOUT_P3
+    ];
 
     for (var i=0; i<ps.length; ++i) {
         if (cg_translate(ps[i]).length === 0) continue;

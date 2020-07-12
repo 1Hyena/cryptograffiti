@@ -149,46 +149,6 @@ button {
    content: "dff"+attr(data-status);
 }
 
-.appear {
-    opacity: 0;
-    -webkit-animation-name: appear-anim;
-    -webkit-animation-duration: 1s;
-    animation-name: appear-anim;
-    animation-duration: 1s;
-    -webkit-animation-fill-mode: forwards;
-    animation-fill-mode: forwards;
-}
-
-@-webkit-keyframes appear-anim {
-    0%   {opacity: 0;}
-    100% {opacity: 1;}
-}
-
-@keyframes appear-anim {
-    0%   {opacity: 0;}
-    100% {opacity: 1;}
-}
-
-.disappear {
-    opacity: 1;
-    -webkit-animation-name: disappear-anim;
-    -webkit-animation-duration: 0.5s;
-    animation-name: disappear-anim;
-    animation-duration: 0.5s;
-    -webkit-animation-fill-mode: forwards;
-    animation-fill-mode: forwards;
-}
-
-@-webkit-keyframes disappear-anim {
-    0%   {opacity: 1;}
-    100% {opacity: 0;}
-}
-
-@keyframes disappear-anim {
-    0%   {opacity: 1;}
-    100% {opacity: 0;}
-}
-
 #cg-title-link {
     display: inline-block;
     vertical-align: bottom;
@@ -229,7 +189,7 @@ button {
     padding: 0.5rem;
 }
 
-.cg-inactive-tab {
+.cg-tab.cg-inactive-tab {
     display: none;
 }
 
