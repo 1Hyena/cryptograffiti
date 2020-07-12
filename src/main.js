@@ -1,8 +1,19 @@
+var CG_LOG_NORMAL  = 0;
+var CG_LOG_ALERT   = 1;
+var CG_LOG_WARNING = 2;
+
 var GIuGDtd14GQaDKh9TfVKGQJS = {
-    "version" : "2.00",
-    "language" : "en",
-    "api_url" : "",
-    "hashtag" : null
+    "version"    : "2.00",
+    "language"   : "en",
+    "api_url"    : "",
+    "hashtag"    : null,
+    "status"     : [],
+    "constants"  : null,
+    "decoder"    : null,
+    "encoder"    : null,
+    "online"     : null,
+    "tab"        : null,
+    "scroll_key" : false
 };
 
 function cg_get_global(name) {
@@ -10,6 +21,8 @@ function cg_get_global(name) {
         return GIuGDtd14GQaDKh9TfVKGQJS[name];
     }
     else console.error("Could not get global variable '"+name+"'.");
+
+    return null;
 }
 
 function cg_set_global(name, value) {
@@ -23,30 +36,11 @@ function cg_set_global(name, value) {
     }
 }
 
-var CG_API_URL     = "";
-var CG_HASHTAG     = null;
-/******************************************************************************/
-var CG_CONSTANTS   = null;
-var CG_STATUS      = [];
-var CG_LAST_STATUS = "";
-var CG_ONLINE      = null;
-var CG_SAT_BYTE    = 0;
-var CG_HOLD_STATUS = 0;
-var CG_HOLD_DELAY  = false;
-var CG_TX_NR       = null;
-var CG_TX_HASH     = null;
-var CG_TX_TYPE     = null;
-var CG_SCROLL_KEY  = false;
-var CG_ACTIVE_TAB  = null;
-var CG_DECODER_OK  = true; // Decoder is online?
-var CG_ENCODER_OK  = true; // Encoder is online?
-var CG_LAST_HASH   = "";
-
 function cg_main() {
     var metas = document.getElementsByTagName("META");
     for (var i=0; i < metas.length; ++i) {
         if (metas[i].name === "application-name") {
-            CG_API_URL = metas[i].getAttribute('data-api');
+            cg_set_global("api_url", metas[i].getAttribute('data-api'));
             break;
         }
     }
@@ -70,7 +64,7 @@ function cg_main() {
     cg_parse_hashtag();
     cg_setup_parameters();
 
-    if (CG_HASHTAG.lang === null) {
+    if (cg_get_global("hashtag").lang === null) {
         var lang = (
             navigator.languages
                 ? navigator.languages[0]
@@ -131,9 +125,12 @@ function cg_main() {
 function cg_setup_parameters(params) {
     params = (typeof params !== 'undefined') ?  params : null;
 
-    for (var key in CG_HASHTAG) {
-        if (CG_HASHTAG.hasOwnProperty(key)) {
-            var val = CG_HASHTAG[key];
+    var hashtag = cg_get_global("hashtag");
+
+    for (var key in hashtag) {
+        if (hashtag.hasOwnProperty(key)) {
+            var val = hashtag[key];
+
             if (val === null) continue;
             if (params !== null && key in params == false) continue;
 
@@ -146,39 +143,27 @@ function cg_setup_parameters(params) {
 }
 
 function cg_parse_hashtag() {
-    CG_HASHTAG = {
-        lang        : null,
-        tx_nr       : null,
-        tx_hash     : null,
-        filter_addr : null,
-        filter_key  : null,
-        censor_txs  : null,
-        write_txt   : null,
-        order_nr    : null,
-        pay         : null,
-        mimetype    : null
+    var hashtag = {
+        lang : null
     };
 
     var hashes = location.hash.substring(1).split("#");
     for (var i=0, sz=hashes.length; i<sz; ++i) {
         var hash = decodeURIComponent(hashes[i]);
-             if (hash === "en") CG_HASHTAG.lang = hash;
-        else if (hash === "ru") CG_HASHTAG.lang = hash;
-        else if (hash === "et") CG_HASHTAG.lang = hash;
+             if (hash === "en") hashtag.lang = hash;
+        else if (hash === "ru") hashtag.lang = hash;
+        else if (hash === "et") hashtag.lang = hash;
     }
-}
 
-function cg_prepare_status(status) {
-    if (status.charAt(0) === '!' || status.charAt(0) === '_') {
-        status = status.substr(1);
-    }
-    return status;
+    cg_set_global("hashtag", hashtag);
 }
 
 function cg_startup(cg) {
-    if (CG_STATUS.length > 0) {
+    if (cg_get_global("status").length > 0) {
         var text = (
-            document.createTextNode(cg_prepare_status(CG_STATUS.shift()))
+            document.createTextNode(
+                cg_pop_status().text
+            )
         );
 
         while (cg.hasChildNodes()) {
@@ -203,7 +188,7 @@ function cg_startup(cg) {
         cg.appendChild(table);
     }
 
-    if (CG_CONSTANTS !== null) {
+    if (cg_get_global("constants") !== null) {
         cg_construct(cg);
         document.onkeydown = cg_check_key;
         cg_main_loop();
@@ -215,42 +200,8 @@ function cg_startup(cg) {
     }
 }
 
-function cg_main_set_hash(update) {
-    var setup_params = {};
-    for (var key in update) {
-        if (update.hasOwnProperty(key)) {
-            CG_HASHTAG[key] = update[key];
-            setup_params[key] = true;
-        }
-    }
-
-    var hashtag = "";
-
-    for (var key in CG_HASHTAG) {
-        if (CG_HASHTAG.hasOwnProperty(key)) {
-            var val = CG_HASHTAG[key];
-            if (val === null) continue;
-
-            switch (key) {
-                case "lang" : hashtag += "#"+val; break;
-                default     : break;
-            }
-        }
-    }
-
-    if (CG_LAST_HASH  !== location.hash
-    ||  CG_LAST_HASH  !== hashtag) {
-        if (hashtag.length == 0) hashtag = "#";
-        if (history.pushState) history.pushState(null, null, hashtag);
-        else location.hash = hashtag;
-    }
-    CG_LAST_HASH = hashtag;
-
-    cg_setup_parameters(setup_params);
-}
-
 function cg_main_loop() {
-    CG_SCROLL_KEY  = false;
+    cg_set_global("scroll_key", false);
 
     cg_parse_hashtag();
 
@@ -302,11 +253,11 @@ function cg_check_key(e) {
 
     if (e.keyCode == '38') {
         // up arrow
-        CG_SCROLL_KEY = true;
+        cg_set_global("scroll_key", true);
     }
     else if (e.keyCode == '40') {
         // down arrow
-        CG_SCROLL_KEY = true;
+        cg_set_global("scroll_key", true);
     }
     else if (e.keyCode == '37') {
        // left arrow
@@ -361,8 +312,10 @@ function cg_construct_footer() {
             footer.removeChild(footer.lastChild);
         }
         var status = document.createElement("DIV");
+        status.setAttribute('data-status', "");
+        status.id="cg-footer-status";
         footer.appendChild(status);
-        cg_refresh_status(status);
+        cg_refresh_footer_status();
 
         var languages = document.createElement("DIV");
 
@@ -387,21 +340,41 @@ function cg_construct_footer() {
         a_en.title = cg_translate(CG_TXT_MAIN_TRANSLATE_TO_EN);
         a_en.href  = "#en"+options;
         a_en.classList.add("hvr-glow");
-        a_en.onclick=function(){fade_out(); setTimeout(function(){location.reload();}, 500); return true;};
+        a_en.onclick=function(){
+            fade_out();
+            setTimeout(function(){
+                location.reload();
+            }, 500);
+            return true;
+        };
         a_en.style.margin="0ch 0.25ch";
 
-        var a_ru = document.createElement("a"); a_ru.appendChild(img_ru);
+        var a_ru = document.createElement("a");
+        a_ru.appendChild(img_ru);
         a_ru.title = cg_translate(CG_TXT_MAIN_TRANSLATE_TO_RU);
         a_ru.href  = "#ru"+options;
         a_ru.classList.add("hvr-glow");
-        a_ru.onclick=function(){fade_out(); setTimeout(function(){location.reload();}, 500); return true;};
+        a_ru.onclick=function(){
+            fade_out();
+            setTimeout(function(){
+                location.reload();
+            }, 500);
+            return true;
+        };
         a_ru.style.margin="0ch 0.25ch";
 
-        var a_ee = document.createElement("a"); a_ee.appendChild(img_ee);
+        var a_ee = document.createElement("a");
+        a_ee.appendChild(img_ee);
         a_ee.title = cg_translate(CG_TXT_MAIN_TRANSLATE_TO_EE);
         a_ee.href  = "#et"+options;
         a_ee.classList.add("hvr-glow");
-        a_ee.onclick=function(){fade_out(); setTimeout(function(){location.reload();}, 500); return true;};
+        a_ee.onclick=function(){
+            fade_out();
+            setTimeout(function(){
+                location.reload();
+            }, 500);
+            return true;
+        };
         a_ee.style.margin="0ch 0.25ch";
 
         if (cg_get_global("language") !== "en") languages.appendChild(a_en);
@@ -415,56 +388,65 @@ function cg_construct_footer() {
     }, 0);
 }
 
-function cg_refresh_status(div) {
+function cg_refresh_footer_status() {
+    var div = document.getElementById("cg-footer-status");
     if (!div.hasChildNodes() && !div.classList.contains("cg-status")) {
         div.classList.add("cg-status");
     }
 
-    var status = "";
-    if (CG_HOLD_STATUS > 0) {
-        status = CG_LAST_STATUS;
-        CG_HOLD_STATUS--;
-        if (CG_HOLD_DELAY && CG_STATUS.length > 0) {
-            CG_HOLD_STATUS = 0;
-            CG_HOLD_DELAY = false;
+    var last_status_message = div.getAttribute('data-status');
+
+    var status_message = "";
+    var status_level   = CG_LOG_NORMAL;
+
+    if (cg_first_status() !== null) {
+        var status = cg_first_status();
+
+        status_message = status.text;
+        status_level   = status.level;
+
+        if (status.presentation_timestamp === null) {
+            status.presentation_timestamp = Math.floor(Date.now() / 1000);
         }
-    }
-    else if (CG_STATUS.length === 0) {
-        if (CG_ONLINE === null) status = cg_translate(CG_TXT_MAIN_PLEASE_WAIT);
-        else                    status = CG_ONLINE;
+
+        var time_to_live = 2+2*status_level;
+
+        if (get_timestamp_age(status.presentation_timestamp) > time_to_live) {
+            cg_pop_status();
+        }
     }
     else {
-        status = CG_STATUS.shift();
-        if (CG_STATUS.length === 0){
-            CG_HOLD_STATUS = 20;
-            CG_HOLD_DELAY  = true;
+        if (cg_get_global("online") === null) {
+            status_message = cg_translate(CG_TXT_MAIN_PLEASE_WAIT);
         }
-        else CG_HOLD_STATUS = 0;
-
-        if (status.charAt(0) === '!'
-        ||  status.charAt(0) === '_') CG_HOLD_STATUS = 6;
+        else {
+            status_message = cg_get_global("online");
+        }
     }
 
-    if (CG_LAST_STATUS !== status) {
+    if (last_status_message !== status_message) {
         while (div.hasChildNodes()) {
             div.removeChild(div.lastChild);
         }
 
-        var buf = cg_prepare_status(status);
-
-        div.appendChild(document.createTextNode(buf));
-        CG_LAST_STATUS = status;
+        div.appendChild(document.createTextNode(status_message));
+        div.setAttribute('data-status', status_message);
     }
 
-    if (div.classList.contains("cg-status-warning")) {
+    if (div.classList.contains("cg-status-warning")
+    ||  div.classList.contains("cg-status-alert")) {
         div.classList.remove("cg-status-warning");
+        div.classList.remove("cg-status-alert");
     }
-    else if (status.charAt(0) === '!') {
+    else if (status_level === CG_LOG_WARNING) {
         div.classList.add("cg-status-warning");
+    }
+    else if (status_level === CG_LOG_ALERT) {
+        div.classList.add("cg-status-alert");
     }
 
     setTimeout(function(){
-        cg_refresh_status(div);
+        cg_refresh_footer_status();
     }, 500);
 }
 
@@ -472,13 +454,18 @@ function cg_load_constants() {
     var data_obj = {};
     var json_str = encodeURIComponent(JSON.stringify(data_obj));
 
-    CG_STATUS.push(cg_translate(CG_TXT_MAIN_LOADING_CONSTANTS));
-    xmlhttpPost(CG_API_URL, 'fun=get_constants&data='+json_str,
+    cg_push_status(cg_translate(CG_TXT_MAIN_LOADING_CONSTANTS));
+
+    xmlhttpPost(cg_get_global("api_url"), 'fun=get_constants&data='+json_str,
         function(response) {
             var status = "";
 
-                 if (response === false) status = cg_translate(CG_TXT_MAIN_ERROR);
-            else if (response === null ) status = cg_translate(CG_TXT_MAIN_TIMEOUT);
+            if (response === false) {
+                status = cg_translate(CG_TXT_MAIN_ERROR);
+            }
+            else if (response === null ) {
+                status = cg_translate(CG_TXT_MAIN_TIMEOUT);
+            }
             else {
                 json = JSON.parse(response);
                 if ("constants" in json
@@ -486,24 +473,29 @@ function cg_load_constants() {
                 &&  "ENCODER_FEE_AMPLIFIER" in json.constants
                 &&  "MIN_BTC_OUTPUT" in json.constants
                 &&  "SATOSHIS_PER_BITCOIN" in json.constants) {
-                   CG_CONSTANTS = json.constants;
-                   status = cg_translate(CG_TXT_MAIN_CONSTANTS_LOADED);
-                   CG_WRITE_MIN_BTC_OUTPUT = CG_CONSTANTS["MIN_BTC_OUTPUT"] / CG_CONSTANTS["SATOSHIS_PER_BITCOIN"];
+                    cg_set_global("constants",  json.constants);
+                    status = cg_translate(CG_TXT_MAIN_CONSTANTS_LOADED);
                 }
                 else {
                     cg_handle_error(json);
-                    if (CG_STATUS.length === 0) status = cg_translate(CG_TXT_MAIN_ERROR);
+                    if (cg_get_global("constants").length === 0) {
+                        status = cg_translate(CG_TXT_MAIN_ERROR);
+                    }
                 }
             }
 
-            if (status.length > 0) CG_STATUS.push(status);
+            if (status.length > 0) cg_push_status(status);
 
-            if (CG_CONSTANTS !== null) {
-                setTimeout(function(){cg_load_stats();}, 100);
+            if (cg_get_global("constants") !== null) {
+                setTimeout(function(){
+                    cg_load_stats();}, 100
+                );
                 return;
             }
 
-            setTimeout(function(){cg_load_constants();}, 10000);
+            setTimeout(function(){
+                cg_load_constants();
+            }, 10000);
         }
     );
 
@@ -514,42 +506,80 @@ function cg_load_stats() {
     var data_obj = {};
     var json_str = encodeURIComponent(JSON.stringify(data_obj));
 
-    CG_STATUS.push(cg_translate(CG_TXT_MAIN_ONLINE)+": ...");
-    xmlhttpPost(CG_API_URL, 'fun=get_stats&data='+json_str,
+    cg_push_status(cg_translate(CG_TXT_MAIN_ONLINE)+": ...");
+
+    xmlhttpPost(cg_get_global("api_url"), 'fun=get_stats&data='+json_str,
         function(response) {
             var online = "???";
 
-                 if (response === false) online = cg_translate(CG_TXT_MAIN_ERROR);
-            else if (response === null ) online = cg_translate(CG_TXT_MAIN_TIMEOUT);
+            if (response === false) {
+                online = cg_translate(CG_TXT_MAIN_ERROR);
+            }
+            else if (response === null ) {
+                online = cg_translate(CG_TXT_MAIN_TIMEOUT);
+            }
             else {
                 json = JSON.parse(response);
                 if ("stats" in json && json.stats.length === 1
                 &&  "sessions" in json.stats[0]
                 &&  "IPs" in json.stats[0]
                 &&  "decoder" in json.stats[0]
-                &&  "encoder" in json.stats[0]
-                &&  "sat_byte" in json.stats[0]) {
-                    CG_SAT_BYTE = json.stats[0].sat_byte;
-                    var units = (json.stats[0].sessions == 1 ? cg_translate(CG_TXT_MAIN_SESSION) : cg_translate(CG_TXT_MAIN_SESSIONS));
-                    online = json.stats[0].IPs/*+" ("+json.stats[0].sessions+" "+units+")"*/;
+                &&  "encoder" in json.stats[0]) {
+                    var units = (
+                        json.stats[0].sessions == 1
+                            ? cg_translate(CG_TXT_MAIN_SESSION)
+                            : cg_translate(CG_TXT_MAIN_SESSIONS)
+                    );
+
+                    online = json.stats[0].IPs;
+
                     var decoder_ok = (json.stats[0].decoder !== "0");
                     var encoder_ok = (json.stats[0].encoder !== "0");
-                    if (decoder_ok != CG_DECODER_OK) {
-                       if (!decoder_ok) CG_STATUS.push("!"+cg_translate(CG_TXT_MAIN_DECODER_APPEARS_OFFLINE));
-                       else CG_STATUS.push("_"+cg_translate(CG_TXT_MAIN_DECODER_APPEARS_ONLINE));
+
+                    if (decoder_ok !== cg_get_global("decoder")) {
+                        if (!decoder_ok) {
+                            cg_push_status(
+                                cg_translate(
+                                    CG_TXT_MAIN_DECODER_APPEARS_OFFLINE
+                                ), CG_LOG_WARNING
+                            );
+                        }
+                        else {
+                            cg_push_status(
+                                cg_translate(
+                                    CG_TXT_MAIN_DECODER_APPEARS_ONLINE
+                                ), CG_LOG_ALERT
+                            );
+                        }
                     }
-                    if (encoder_ok != CG_ENCODER_OK) {
-                       if (!encoder_ok) CG_STATUS.push("!"+cg_translate(CG_TXT_MAIN_ENCODER_APPEARS_OFFLINE));
-                       else CG_STATUS.push("_"+cg_translate(CG_TXT_MAIN_ENCODER_APPEARS_ONLINE));
+
+                    if (encoder_ok != cg_get_global("decoder")) {
+                        if (!encoder_ok) {
+                            cg_push_status(
+                                cg_translate(
+                                    CG_TXT_MAIN_ENCODER_APPEARS_OFFLINE
+                                ), CG_LOG_WARNING
+                            );
+                        }
+                        else {
+                            cg_push_status(
+                                cg_translate(
+                                    CG_TXT_MAIN_ENCODER_APPEARS_ONLINE
+                                ), CG_LOG_ALERT
+                            );
+                        }
                     }
-                    CG_DECODER_OK = decoder_ok;
-                    CG_ENCODER_OK = encoder_ok;
+
+                    cg_set_global("decoder", decoder_ok);
+                    cg_set_global("encoder", encoder_ok);
                 }
                 else cg_handle_error(json);
             }
 
-            CG_ONLINE=cg_translate(CG_TXT_MAIN_ONLINE)+": "+online;
-            CG_STATUS.push(CG_ONLINE);
+            cg_set_global(
+                "online", cg_translate(CG_TXT_MAIN_ONLINE)+": "+online
+            );
+            cg_push_status(cg_get_global("online"));
 
             setTimeout(function(){
                 cg_load_stats();
@@ -561,9 +591,12 @@ function cg_load_stats() {
 function cg_handle_error(obj) {
     if ("error" in obj && "code" in obj.error) {
         if (obj.error.code === "ERROR_ACCESS_DENIED") {
-            CG_STATUS.push("!"+cg_translate(CG_TXT_MAIN_ERROR_ACCESS_DENIED));
+            cg_push_status(
+                cg_translate(CG_TXT_MAIN_ERROR_ACCESS_DENIED), CG_LOG_WARNING
+            );
         }
     }
+
     return;
 }
 
@@ -637,84 +670,40 @@ function cg_activate_interface() {
     var btn = document.getElementById("cg-btn-tab-about");
     btn.disabled = false;
     btn.click();
-
-    /*
-    if (CG_TX_HASH !== null) {
-        var btn = document.getElementById("cg-btn-tab-read");
-        cg_button_click(btn, cg_construct_view);
-        read_btn.disabled = false;
-    }
-    else if (CG_WRITE_TEXT    === null
-         &&  CG_SAVE_ORDER_NR === null) {
-        read_btn.disabled = false;
-        read_btn.click();
-    }
-    else {
-        write_btn.disabled = false;
-        write_btn.click();
-    }
-    */
 }
 
 function cg_construct_buttons(tabs) {
-    //var btn_1 = document.createElement("BUTTON"); btn_1.classList.add("cg-btn");
-    //var btn_2 = document.createElement("BUTTON"); btn_2.classList.add("cg-btn");
-    //var btn_3 = document.createElement("BUTTON"); btn_3.classList.add("cg-btn");
-    //var btn_4 = document.createElement("BUTTON"); btn_4.classList.add("cg-btn");
-    var btn_5 = document.createElement("BUTTON"); btn_5.classList.add("cg-btn");
+    var buttons = [
+        {
+            id: "cg-btn-tab-about",
+            label : CG_TXT_MAIN_BTN_ABOUT,
+            click_fun : cg_button_click_about
+        }
+    ];
 
-    //btn_1.addEventListener("click", cg_button_click_read );
-    //btn_2.addEventListener("click", cg_button_click_write);
-    //btn_3.addEventListener("click", cg_button_click_tools);
-    //btn_4.addEventListener("click", cg_button_click_help );
-    btn_5.addEventListener("click", cg_button_click_about);
+    while (buttons.length > 0) {
+        var template = buttons.shift();
 
-    //var txt_1 = document.createTextNode(CG_TXT_MAIN_BTN_READ [CG_LANGUAGE]);
-    //var txt_2 = document.createTextNode(CG_TXT_MAIN_BTN_WRITE[CG_LANGUAGE]);
-    //var txt_3 = document.createTextNode(CG_TXT_MAIN_BTN_TOOLS[CG_LANGUAGE]);
-    //var txt_4 = document.createTextNode(CG_TXT_MAIN_BTN_HELP [CG_LANGUAGE]);
-    var txt_5 = document.createTextNode(cg_translate(CG_TXT_MAIN_BTN_ABOUT));
+        var btn = document.createElement("BUTTON");
+        btn.classList.add("cg-btn");
+        btn.addEventListener("click", template.click_fun);
 
-    //btn_1.appendChild(txt_1); btn_1.id = "cg-btn-tab-read";
-    //btn_2.appendChild(txt_2); btn_2.id = "cg-btn-tab-write";
-    //btn_3.appendChild(txt_3); btn_3.id = "cg-btn-tab-tools";
-    //btn_4.appendChild(txt_4); btn_4.id = "cg-btn-tab-help";
-    btn_5.appendChild(txt_5); btn_5.id = "cg-btn-tab-about";
+        var txt = document.createTextNode(cg_translate(template.label));
+        btn.appendChild(txt);
+        btn.id = template.id;
+
+        tabs.appendChild(btn);
+    }
 
     setTimeout(
         function(){
-            /*
-            tabs.appendChild(btn_1);
-            tabs.appendChild(btn_2);
-            tabs.appendChild(btn_3);
-            tabs.appendChild(btn_4);
-            */
-            tabs.appendChild(btn_5);
-
-            setTimeout(
-                function(){
-                    cg_activate_interface();
-                }, 0
-            );
-
+            cg_activate_interface();
         }, 0
     );
-
-    /*
-    var spawn_delay = 0;
-    setTimeout(function(){tabs.appendChild(btn_1);}, 0*spawn_delay);
-    setTimeout(function(){
-        tabs.appendChild(btn_2);
-        cg_click_initial_buttons(btn_1, btn_2);
-    }, 1*spawn_delay);
-    setTimeout(function(){tabs.appendChild(btn_3);}, 2*spawn_delay);
-    setTimeout(function(){tabs.appendChild(btn_4);}, 3*spawn_delay);
-    setTimeout(function(){tabs.appendChild(btn_5);}, 4*spawn_delay);
-    */
 }
 
 function cg_button_click(btn, fun) {
-    if (CG_CONSTANTS === null) return;
+    if (cg_get_global("constants") === null) return;
 
     var x = document.getElementsByClassName("cg-btn");
     for (var i = 0; i < x.length; i++) {
@@ -725,35 +714,19 @@ function cg_button_click(btn, fun) {
     var cg_main = document.getElementById("cg-main");
 
     cg_sfx_rattle();
-    if (CG_ACTIVE_TAB !== 'cg-tab-read') {
-        cg_main.classList.remove("cg-poofin");
-        cg_main.classList.add("cg-poofout");
-    }
-    else {
-        cg_main.classList.remove("cg-appear");
-        cg_main.classList.add("cg-disappear");
-    }
 
-    if (fun !== cg_construct_about) {
-        setTimeout(function(){
-            fun(cg_main);
-            cg_main.classList.remove("cg-disappear");
-            cg_main.classList.remove("cg-poofout");
-            cg_main.classList.add("cg-poofin");
-        }, (CG_ACTIVE_TAB === 'cg-tab-read') ? 500 : 200);
-    }
-    else {
-        setTimeout(function(){
-            fun(cg_main);
-            cg_main.classList.remove("cg-disappear");
-            cg_main.classList.remove("cg-poofout");
-            cg_main.classList.add("cg-appear");
-        }, (CG_ACTIVE_TAB === 'cg-tab-read') ? 500 : 200);
-    }
+    cg_main.classList.remove("cg-appear");
+    cg_main.classList.add("cg-disappear");
+
+    setTimeout(function(){
+        fun(cg_main);
+        cg_main.classList.remove("cg-disappear");
+        cg_main.classList.add("cg-appear");
+    }, 500);
 }
 
 function cg_init_tab(main, tab_id) {
-    CG_ACTIVE_TAB = tab_id;
+    cg_set_global("tab", tab_id);
     var tabs = main.children;
     var i, e, d;
     var div = false;
@@ -783,50 +756,9 @@ function cg_init_tab(main, tab_id) {
     return div;
 }
 
-function cg_button_click_read() {
-    var btn = document.getElementById("cg-btn-tab-read");
-    cg_button_click(btn, cg_construct_read);
-}
-
-function cg_button_click_write() {
-    var btn = document.getElementById("cg-btn-tab-write");
-    if (CG_SAVE_ORDER_NR !== null) {
-        cg_button_click(btn, cg_construct_save);
-        return;
-    }
-    cg_button_click(btn, cg_construct_write);
-}
-
-function cg_button_click_captcha(next, back) {
-    CG_CAPTCHA_NEXT_FUN = next;
-    CG_CAPTCHA_BACK_FUN = back;
-    var btn = document.getElementById("cg-btn-tab-write");
-    cg_button_click(btn, cg_construct_captcha);
-}
-
-function cg_button_click_tools() {
-    var btn = document.getElementById("cg-btn-tab-tools");
-    cg_button_click(btn, cg_construct_tools);
-}
-
-function cg_button_click_help() {
-    var btn = document.getElementById("cg-btn-tab-help");
-    cg_button_click(btn, cg_construct_help);
-}
-
 function cg_button_click_about() {
     var btn = document.getElementById("cg-btn-tab-about");
     cg_button_click(btn, cg_construct_about);
-}
-
-function cg_loadcss(url) {
-    var head = document.getElementsByTagName('head')[0];
-    var link = document.createElement('link');
-    link.type = 'text/css';
-    link.rel = 'stylesheet';
-    link.href = url;
-    head.appendChild(link);
-    return link;
 }
 
 function cg_init_sound() {
@@ -848,8 +780,12 @@ function cg_sfx(s, r) {
 
     for (a=0; a<audiochannels.length; a++) {
         var thistime = new Date();
-        if (audiochannels[a]['finished'] < thistime.getTime()) { // is this channel finished?
-            audiochannels[a]['finished'] = thistime.getTime() + sfx.duration*(1000/r);
+        if (audiochannels[a]['finished'] < thistime.getTime()) {
+            // is this channel finished?
+
+            audiochannels[a]['finished'] = (
+                thistime.getTime() + sfx.duration*(1000/r)
+            );
             audiochannels[a]['channel'].src = sfx.src;
             audiochannels[a]['channel'].load();
             audiochannels[a]['channel'].playbackRate=r;
@@ -883,6 +819,46 @@ function cg_translate(text) {
     return text[cg_get_global("language")];
 }
 
-var CG_IMG_US = "data:image/gif;base64,R0lGODlhHAAQALMAAAAAmWaZ//8AAP+Z///MAP/MM//MZv/Mmf/MzP/M////AP//M///Zv//mf//zP///ywAAAAAHAAQAAAEQhDISae4OGvwuO8g94xkWUoBkK6qpL3ZJ4dmfbYsC8D87NtAFG64471+M2CtwnQZNcqo8kmFSa+mqhaD7T62Wy82AgA7";
-var CG_IMG_RU = "data:image/gif;base64,R0lGODlhHAAQALMAAABmzMwAAP+ZzP+Z///MAP/MM//MZv/Mmf/MzP/M////AP//M///Zv//mf//zP///ywAAAAAHAAQAAAEKPDJSau9OOvNu/8gBYxkaZ5oqq5s675wLMNBbd94ru987//AoHB4iwAAOw==";
-var CG_IMG_EE = "data:image/gif;base64,R0lGODdhHAAQALMAAAAAAABmzP+ZzP+Z///MAP/MM//MZv/Mmf/MzP/M////AP//M///Zv//mf//zP///ywAAAAAHAAQAAAEKDDISau9OOvNu/8gBYxkaZ5oqq5s675wLMNPbd94ru987//AoHB4iwAAOw==";
+function cg_push_status(str, lvl) {
+    lvl = typeof lvl !== 'undefined' ? lvl : (CG_LOG_NORMAL);
+
+    var status = cg_get_global("status");
+    status.push(
+        {
+            text                   : str,
+            level                  : lvl,
+            creation_timestamp     : Math.floor(Date.now() / 1000),
+            presentation_timestamp : null
+        }
+    );
+}
+
+function cg_pop_status() {
+    var status = cg_get_global("status");
+    if (status.length === 0) return null;
+    return status.shift();
+}
+
+function cg_first_status() {
+    var status = cg_get_global("status");
+    if (status.length === 0) return null;
+    return status[0];
+}
+
+var CG_IMG_US = (
+    "data:image/gif;base64,R0lGODlhHAAQALMAAAAAmWaZ//8AAP+Z///MAP/MM//MZv/Mmf/"+
+    "MzP/M////AP//M///Zv//mf//zP///ywAAAAAHAAQAAAEQhDISae4OGvwuO8g94xkWUoBkK6q"+
+    "pL3ZJ4dmfbYsC8D87NtAFG64471+M2CtwnQZNcqo8kmFSa+mqhaD7T62Wy82AgA7"
+);
+
+var CG_IMG_RU = (
+    "data:image/gif;base64,R0lGODlhHAAQALMAAABmzMwAAP+ZzP+Z///MAP/MM//MZv/Mmf/"+
+    "MzP/M////AP//M///Zv//mf//zP///ywAAAAAHAAQAAAEKPDJSau9OOvNu/8gBYxkaZ5oqq5s"+
+    "675wLMNBbd94ru987//AoHB4iwAAOw=="
+);
+
+var CG_IMG_EE = (
+    "data:image/gif;base64,R0lGODdhHAAQALMAAAAAAABmzP+ZzP+Z///MAP/MM//MZv/Mmf/"+
+    "MzP/M////AP//M///Zv//mf//zP///ywAAAAAHAAQAAAEKDDISau9OOvNu/8gBYxkaZ5oqq5s"+
+    "675wLMNPbd94ru987//AoHB4iwAAOw=="
+);

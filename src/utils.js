@@ -133,8 +133,8 @@ function isHex(hex) {
     return true;
 }
 
-function timeConverter(UNIX_timestamp) {
-    var a = new Date(UNIX_timestamp*1000);
+function convert_timestamp(unix_timestamp) {
+    var a = new Date(unix_timestamp*1000);
     var months = [
         'Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'
     ];
@@ -148,6 +148,10 @@ function timeConverter(UNIX_timestamp) {
         date + '. ' + month + ' ' + year + ' ' + hour + ':' + min + ':' + sec
     );
     return time;
+}
+
+function get_timestamp_age(unix_timestamp) {
+    return Math.floor(Date.now() / 1000) - unix_timestamp;
 }
 
 function isOverflowed(element) {

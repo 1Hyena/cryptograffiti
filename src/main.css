@@ -145,6 +145,10 @@ button {
     overflow: hidden;
 }
 
+#cg-footer-status::after {
+   content: "dff"+attr(data-status);
+}
+
 .appear {
     opacity: 0;
     -webkit-animation-name: appear-anim;
@@ -344,6 +348,10 @@ button {
 
 .cg-status-warning {
     color: red;
+}
+
+.cg-status-alert {
+    color: blue;
 }
 
 .cg-status {
