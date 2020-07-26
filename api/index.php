@@ -199,8 +199,8 @@ if ($l = init_sql()) {
         exit;
     }
 
-    $fun      = $_POST['fun'];
-    $data     = $_POST['data'];
+    $fun  = $_POST['fun'];
+    $data = $_POST['data'];
 
     $r = null;
 
@@ -236,8 +236,8 @@ if ($l = init_sql()) {
     if (strlen($data) > MAX_DATA_SIZE) $r = make_failure(ERROR_MISUSE, '`data` size exceeds '.MAX_DATA_SIZE.' byte limit.');
 
     if ($r === null) {
-        $ARGS     = extract_args($data);
-        $GUID     = $ARGS['guid'];
+        $ARGS = extract_args($data);
+        $GUID = $ARGS['guid'];
 
         if ($GUID) {
             if ( ($session_nr = get_session_nr($l, $GUID)) === null && $fun != 'init') {

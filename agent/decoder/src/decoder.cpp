@@ -117,19 +117,27 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
                 chunk["error"] = std::string("unwanted mimetype");
             }
             else if (mimetype.find("image/") == 0) {
-                std::vector<unsigned char> errors;
+                if (mimetype.find("image/jpeg") == 0) {
+                    std::vector<unsigned char> errors;
 
-                if (!program->syspipe((const unsigned char *) &payload[0],
-                    payload.size(),
-                    "docker run --memory=64m --memory-swap=64m "
-                    "--memory-swappiness=0 --rm -i v4tech/imagemagick sh -c "
-                    "'identify -verbose - <&0 2>&1 1>/dev/null' 2>/dev/null",
-                    &errors)) {
-                    (*result)["error"] = "failed to identify file";
-                    return false;
+                    bool syscmd{
+                        program->syspipe(
+                            (const unsigned char *) &payload[0], payload.size(),
+                            "djpeg -fast -grayscale -onepass 2>&1 1>/dev/null",
+                            &errors
+                        )
+                    };
+
+                    if (!syscmd) {
+                        (*result)["error"] = "syspipe failure";
+                        return false;
+                    }
+                    else if (!errors.empty()) {
+                        chunk["error"] = std::string("corrupt file");
+                    }
                 }
-                else if (!errors.empty()) {
-                    chunk["error"] = std::string("corrupt file");
+                else {
+                    chunk["error"] = std::string("unsupported image file");
                 }
             }
             else {
@@ -376,4 +384,3 @@ bool DECODER::get_mimetype(const unsigned char *bytes, size_t len, std::string &
 
     return true;
 }
-

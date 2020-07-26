@@ -21,6 +21,7 @@ CANARY="::"
 WORKERS="16"
 BESTBLOCK=""
 TXS_PER_QUERY=0
+MAX_DATA_SIZE=0
 NONCE_ERRORS=0
 OTHER_ERRORS=0
 CACHE_ERRORS=0
@@ -136,13 +137,9 @@ config() {
         exit
     fi
 
-    if [ ! $(which "docker" 2>/dev/null ) ] ; then
-        log "Program not found: docker"
+    if [ ! $(which "djpeg" 2>/dev/null ) ] ; then
+        log "Program not found: djpeg"
         exit
-    else
-        local docker_img="v4tech/imagemagick:latest"
-        docker inspect "${docker_img}" > /dev/null 2>&1 \
-            || { log "Docker image not found: ${docker_img}" ; exit ; }
     fi
 
     return 0
@@ -159,46 +156,23 @@ get_cgd_cmd() {
 }
 
 compile_graffiti_json() {
-    local gbuf="{"
-    local tx_count=0
+    local jq_cmd="jq -r -M -c '"
+    jq_cmd+=".files=([.files[] | {fsize, hash, location, mimetype, offset, "
+    jq_cmd+="error} | .[\"type\"] = .mimetype | del(.mimetype)] | map_values( "
+    jq_cmd+=". + {\"fsize\": .fsize|tostring, \"offset\": .offset|tostring} ) |"
+    jq_cmd+=" [.[] | select(.error == null) | del(.error) ]) | {files, txid, "
+    jq_cmd+="size, time} | .[\"txsize\"] = (.size|tostring) | del(.size) | "
+    jq_cmd+=".[\"txtime\"] = (.time|tostring) | del(.time) | ( select(.txtime "
+    jq_cmd+="== \"null\") |= del(.txtime) )"
+    jq_cmd+="'"
 
-    local p1_1=".files[]"
-    local p1_2=".[\"type\"] = .mimetype"
-    local p1_3="del(.mimetype, .content, .entropy, .unicode)"
-    local p2=". + {\"fsize\": .fsize|tostring, \"offset\": .offset|tostring}"
-    local p3="[.[] | select(.error == null)]"
-    local jq_arg="[${p1_1} | ${p1_2} | ${p1_3}] | map_values( ${p2} ) | ${p3}"
+    local jq_out=$(
+        parallel --pipe --timeout 30 -P "${WORKERS}" "${jq_cmd}" <<< "${1}"
+    )
 
-    while IFS= read -r line; do
-        ((tx_count++))
-        if [ "${tx_count}" -gt "${TXS_PER_QUERY}" ]; then
-            return 1
-        fi
+    local jq_arg="map( {(.txid|tostring): del(.txid) } ) | add"
 
-        local txid=`printf "%s" "${line}" | jq -M -r '.txid'`
-        local txsz=`printf "%s" "${line}" | jq -M -r '.size'`
-        local txtm=`printf "%s" "${line}" | jq -M -r '.time'`
-
-        # We must convert all known integer values
-        # to strings because Cryptograffiti's API
-        # notoriously only recognizes string values.
-
-        local files=$(printf "%s" "${line}" | jq -M -r -c "${jq_arg}")
-
-        if [ "${gbuf}" != "{" ]; then
-            gbuf+=","
-        fi
-
-        if [ "${txtm}" == "null" ]; then
-            gbuf+="\"${txid}\":{\"txsize\":\"${txsz}\",\"files\":${files}}"
-        else
-            gbuf+="\"${txid}\":{\"txsize\":\"${txsz}\",\"txtime\":\"${txtm}\","
-            gbuf+="\"files\":${files}}"
-        fi
-    done <<< "${1}"
-    gbuf+="}"
-
-    printf "%s" "${gbuf}"
+    jq -M -r -s -c "${jq_arg}" <<< "${jq_out}"
     return 0
 }
 
@@ -252,6 +226,15 @@ init() {
         )
 
         log "TXS_PER_QUERY: ${TXS_PER_QUERY}"
+
+        MAX_DATA_SIZE=$(
+            printf "%s" "${response}" |
+            jq -r -M .constants       |
+            jq -r -M .MAX_DATA_SIZE
+        )
+
+        log "MAX_DATA_SIZE: ${MAX_DATA_SIZE}"
+
         return 0
     fi
 
@@ -287,7 +270,7 @@ loop() {
         && [ $(which tee)                    ] \
         && [ $(which parallel)               ] \
         && [ $(which jq)                     ] ; then
-            if ! step ; then
+            if ! step "${TXS_PER_QUERY}"  ; then
                 alert "Program step reported an error, breaking the loop."
                 break
             fi
@@ -324,6 +307,8 @@ loop() {
 }
 
 step() {
+    local txs_per_query="${1}"
+
     if [ -z "${CACHE}" ] ; then
         local newscount="0"
         local news=""
@@ -373,10 +358,10 @@ step() {
             newscount=`echo -n "${news}" | grep -c '^'`
         fi
 
-        if [ "${newscount}" -gt "${TXS_PER_QUERY}" ]; then
-            local skip=$((newscount-TXS_PER_QUERY))
+        if [ "${newscount}" -gt "${txs_per_query}" ]; then
+            local skip=$((newscount-txs_per_query))
             TXBUF=`printf "%s" "${news}" | tail "-${skip}"`
-            news=`printf "%s" "${news}" | head "-${TXS_PER_QUERY}"`
+            news=`printf "%s" "${news}" | head "-${txs_per_query}"`
             newscount=`echo -n "${news}" | grep -c '^'`
         fi
 
@@ -402,8 +387,6 @@ step() {
             )
             local state=$?
 
-            docker rm $(docker ps -a -q) 2>/dev/null
-
             if [ "${state}" -ge "1" ]; then
                 if [ "${state}" -eq "101" ]; then
                     alert "More than 100 jobs failed."
@@ -427,14 +410,14 @@ step() {
                 log "Decoding took ${decoding_time} seconds."
             fi
 
-            local msgcount=`echo -n "${graffiti}" | grep -c '^'`
+            local msgcount_before=`echo -n "${graffiti}" | grep -c '^'`
 
-            if [ "${msgcount}" -ge "1" ]; then
+            if [ "${msgcount_before}" -ge "1" ]; then
                 local plural=""
-                if [ "${msgcount}" -gt "1" ]; then
+                if [ "${msgcount_before}" -gt "1" ]; then
                     plural="s"
                 fi
-                log "Detected graffiti from ${msgcount} TX${plural}."
+                log "Detected graffiti from ${msgcount_before} TX${plural}."
 
                 local jqcmd="jq -C '.files[]? |= del(.content)'"
                 echo "${graffiti}" |
@@ -442,32 +425,34 @@ step() {
 
                 local graffiti_buffer=$(compile_graffiti_json "${graffiti}")
 
-                if [ -z "${graffiti_buffer}" ] ; then
-                    # This should never happen because previously we have made
-                    # sure that we are not decoding more TXs than TXS_PER_QUERY
-                    # allows per step (see how ${news} gets its value).
+                local msgcount_after=$(
+                    jq -r -M -c length <<< "${graffiti_buffer}"
+                )
+
+                if [ "${msgcount_before}" != "${msgcount_after}" ]; then
                     ((OTHER_ERRORS++))
-                    local tx_limit="${TXS_PER_QUERY}"
-                    alert "Error, TX count exceeds the limit of ${tx_limit}!"
-                else
-                    local tcount=`printf "%s" "${graffiti_buffer}" | jq length`
-                    local fcount=$(
-                        printf "%s" "${graffiti_buffer}" |
-                        jq -r -M '.[].files'             |
-                        jq -r -M -s add                  |
-                        jq length
-                    )
-
-                    if [ "${tcount}" -eq "1" ]; then
-                        log "Uploading ${fcount} graffiti from ${tcount} TX."
-                    else
-                        log "Uploading ${fcount} graffiti from ${tcount} TXs."
-                    fi
-
-                    CACHE="${graffiti_buffer}"
-
-                    #jq . >/dev/stderr <<< "${CACHE}"
+                    local before="${msgcount_before}"
+                    local after="${msgcount_after}"
+                    alert "Error, ${after} of ${before} TXs compiled!"
+                    printf "%s\n" "${graffiti_buffer}"
                 fi
+
+                local tcount=`printf "%s" "${graffiti_buffer}" | jq length`
+                local fcount=$(
+                    printf "%s" "${graffiti_buffer}" |
+                    jq -r -M '.[].files'             |
+                    jq -r -M -s add                  |
+                    jq length
+                )
+
+                if [ "${tcount}" -eq "1" ]; then
+                    log "Uploading ${fcount} graffiti from ${tcount} TX."
+                else
+                    log "Uploading ${fcount} graffiti from ${tcount} TXs."
+                fi
+
+                CACHE="${graffiti_buffer}"
+                #jq . >/dev/stderr <<< "${CACHE}"
             fi
         fi
     else
@@ -478,6 +463,11 @@ step() {
         return 0
     fi
 
+    local upload_txs=$(
+        jq -r -M -c 'keys | .[]' <<< "${CACHE}"
+    )
+
+    local old_nonce="${NONC}"
     NONC=$(
         printf "%s%s" "${NONC}" "${SEED}" | xxd -r -p | sha256sum | head -c 64
     )
@@ -487,11 +477,35 @@ step() {
         printf "${datafmt}" "${GUID}" "${NONC}" "${CACHE}" | xxd -p | tr -d '\n'
     )
 
-    # for debugging:
-    #for i in {1..131072}
-    #do
-    #   data+="2020"
-    #done
+    local datasz=$(( ${#data} / 2 ))
+
+    if [ "${datasz}" -gt "${MAX_DATA_SIZE}" ]; then
+        alert "Upload of ${datasz} bytes exceeds the limit of ${MAX_DATA_SIZE}".
+
+        local upload_tx_count=`echo -n "${upload_txs}" | grep -c '^'`
+
+        if [ "${upload_tx_count}" -gt "1" ]; then
+            local txbufsz=`echo -n "${TXBUF}" | grep -c '^'`
+
+            if [ "${txbufsz}" -ge "1" ]; then
+                TXBUF=$(printf "%s\n%s" "${upload_txs}" "${TXBUF}")
+            else
+                TXBUF="${upload_txs}"
+            fi
+
+            CACHE=""
+            txs_per_query=$(( ${upload_tx_count} / 2 ))
+
+            # We must revert the NONC because this upload is forbidden.
+            NONC="${old_nonce}"
+
+            if ! step "${txs_per_query}"  ; then
+                return 1
+            fi
+
+            return 0
+        fi
+    fi
 
     local response=$("${CALL}" "${CONF}" "set_txs" <<< "${data}")
     local state=$?

@@ -81,7 +81,7 @@ bool PROGRAM::init(int argc, char **argv) {
         "tail",
         "tr",
         "file",
-        "docker"
+        "djpeg"
     };
 
     for (const char *prg : prerequisites) {
@@ -89,19 +89,6 @@ bool PROGRAM::init(int argc, char **argv) {
         std::snprintf(buf, sizeof(buf), "which %s > /dev/null 2>&1", prg);
         if (system(buf) != 0) {
             log(get_name(), "%s: command not found", prg);
-            return false;
-        }
-    }
-
-    constexpr const char *docker_images[] = {
-        "v4tech/imagemagick:latest"
-    };
-
-    for (const char *img : docker_images) {
-        char buf[256];
-        std::snprintf(buf, sizeof(buf), "docker inspect --type=image %s > /dev/null 2>&1", img);
-        if (system(buf) != 0) {
-            log(get_name(), "%s: docker image not found", img);
             return false;
         }
     }
@@ -379,4 +366,3 @@ bool PROGRAM::syspipe(const unsigned char *input, size_t len, const std::string 
 
     return success;
 }
-
