@@ -147,14 +147,6 @@ config() {
 ################################################################################
 config
 ################################################################################
-get_cgd_cmd() {
-    local pipe1="${CLIF} ${DDIR} getrawtransaction {} 1"
-    local pipe2="${CGDF} --unicode-len 60 -M image/"
-    local pipe3="jq -r -M -c 'select(.graffiti == true)'"
-    printf "%s | %s | %s" "${pipe1}" "${pipe2}" "${pipe3}"
-    return 0
-}
-
 compile_graffiti_json() {
     local jq_cmd="jq -r -M -c '"
     jq_cmd+=".files=([.files[] | {fsize, hash, location, mimetype, offset, "
@@ -167,7 +159,7 @@ compile_graffiti_json() {
     jq_cmd+="'"
 
     local jq_out=$(
-        parallel --pipe --timeout 30 -P "${WORKERS}" "${jq_cmd}" <<< "${1}"
+        parallel --pipe -N 1 --timeout 30 -P "${WORKERS}" "${jq_cmd}" <<< "${1}"
     )
 
     local jq_arg="map( {(.txid|tostring): del(.txid) } ) | add"
@@ -306,6 +298,78 @@ loop() {
     return 0
 }
 
+handle_state() {
+    local state="${1}"
+    local command=${2}""
+
+    if [ "${state}" -ge "1" ]; then
+        if [ "${state}" -eq "101" ]; then
+            alert "More than 100 jobs failed (${command})."
+        else
+            if [ "${state}" -le "100" ]; then
+                if [ "${state}" -eq "1" ]; then
+                    alert "1 job failed (${command})."
+                else
+                    alert "${state} jobs failed (${command})."
+                fi
+            else
+                alert "Other error from parallel (${command})."
+            fi
+        fi
+        ((OTHER_ERRORS++))
+    fi
+
+    return 0
+}
+
+decode_graffiti() {
+    local buf="${1}"
+
+    if [ -z "${buf}" ] ; then
+        return 0
+    fi
+
+    local cli_cmd="${CLIF} ${DDIR} getrawtransaction {} 1"
+    buf=$(
+        parallel --timeout 30 -P ${WORKERS} "${cli_cmd}" <<< "${buf}"
+    )
+    local cli_state=$?
+    handle_state "${cli_state}" "${cli_cmd}"
+
+    if [ -z "${buf}" ] ; then
+        return 0
+    fi
+
+    buf=$(
+        jq -r -M -c <<< "${buf}"
+    )
+
+    if [ -z "${buf}" ] ; then
+        return 0
+    fi
+
+    local cgd_cmd="${CGDF} --unicode-len 60 -M image/"
+    buf=$(
+        parallel --pipe -N 1 --timeout 9 -P ${WORKERS} "${cgd_cmd}" <<< "${buf}"
+    )
+    local cgd_state=$?
+    handle_state "${cgd_state}" "${cgd_cmd}"
+
+    if [ -z "${buf}" ] ; then
+        return 0
+    fi
+
+    local jq2_cmd="jq -r -M -c 'select(.graffiti == true)'"
+    buf=$(
+        parallel --pipe -N 1 --timeout 9 -P ${WORKERS} "${jq2_cmd}" <<< "${buf}"
+    )
+    local jq2_state=$?
+    handle_state "${jq2_state}" "${jq2_cmd}"
+
+    printf "%s" "${buf}"
+    return 0
+}
+
 step() {
     local txs_per_query="${1}"
 
@@ -380,29 +444,7 @@ step() {
 
             local decoding_start=$SECONDS
 
-            local cgd_cmd=$(get_cgd_cmd)
-            local graffiti=$(
-                echo "${news}" |
-                parallel --timeout 30 -P ${WORKERS} "${cgd_cmd}"
-            )
-            local state=$?
-
-            if [ "${state}" -ge "1" ]; then
-                if [ "${state}" -eq "101" ]; then
-                    alert "More than 100 jobs failed."
-                else
-                    if [ "${state}" -le "100" ]; then
-                        if [ "${state}" -eq "1" ]; then
-                            alert "1 job failed."
-                        else
-                            alert "${state} jobs failed."
-                        fi
-                    else
-                        alert "Other error from parallel."
-                    fi
-                fi
-                ((OTHER_ERRORS++))
-            fi
+            local graffiti=$(decode_graffiti "${news}")
 
             local decoding_time=$(( SECONDS - decoding_start ))
 
@@ -420,8 +462,8 @@ step() {
                 log "Detected graffiti from ${msgcount_before} TX${plural}."
 
                 local jqcmd="jq -C '.files[]? |= del(.content)'"
-                echo "${graffiti}" |
-                parallel --pipe -P "${WORKERS}" "${jqcmd}"
+
+                parallel --pipe -N 1 -P "${WORKERS}" "${jqcmd}" <<<"${graffiti}"
 
                 local graffiti_buffer=$(compile_graffiti_json "${graffiti}")
 
