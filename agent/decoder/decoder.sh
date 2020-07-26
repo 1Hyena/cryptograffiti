@@ -159,7 +159,7 @@ compile_graffiti_json() {
     jq_cmd+="'"
 
     local jq_out=$(
-        parallel --pipe -N 1 --timeout 30 -P "${WORKERS}" "${jq_cmd}" <<< "${1}"
+        parallel --pipe -N 1 --timeout 10 -P "${WORKERS}" "${jq_cmd}" <<< "${1}"
     )
 
     local jq_arg="map( {(.txid|tostring): del(.txid) } ) | add"
@@ -303,20 +303,20 @@ handle_state() {
     local command=${2}""
 
     if [ "${state}" -ge "1" ]; then
+        ((OTHER_ERRORS++))
         if [ "${state}" -eq "101" ]; then
-            alert "More than 100 jobs failed (${command})."
+            alert "More than 100 jobs failed."
         else
             if [ "${state}" -le "100" ]; then
                 if [ "${state}" -eq "1" ]; then
-                    alert "1 job failed (${command})."
+                    alert "1 job failed."
                 else
-                    alert "${state} jobs failed (${command})."
+                    alert "${state} jobs failed."
                 fi
             else
                 alert "Other error from parallel (${command})."
             fi
         fi
-        ((OTHER_ERRORS++))
     fi
 
     return 0
@@ -324,16 +324,34 @@ handle_state() {
 
 decode_graffiti() {
     local buf="${1}"
+    local prevbuf=""
 
     if [ -z "${buf}" ] ; then
         return 0
     fi
 
     local cli_cmd="${CLIF} ${DDIR} getrawtransaction {} 1"
+    prevbuf="${buf}"
     buf=$(
-        parallel --timeout 30 -P ${WORKERS} "${cli_cmd}" <<< "${buf}"
+        parallel          \
+        --halt now,fail=1 \
+        --timeout 30      \
+        -P ${WORKERS}     \
+        "${cli_cmd}" <<< "${buf}"
     )
     local cli_state=$?
+
+    if [ "${cli_state}" -ge "1" ]; then
+        buf="${prevbuf}"
+        buf=$(
+            parallel      \
+            --timeout 30  \
+            -P ${WORKERS} \
+            "${cli_cmd}" <<< "${buf}" 2>/dev/null
+        )
+        cli_state=$?
+    fi
+
     handle_state "${cli_state}" "${cli_cmd}"
 
     if [ -z "${buf}" ] ; then
@@ -349,10 +367,31 @@ decode_graffiti() {
     fi
 
     local cgd_cmd="${CGDF} --unicode-len 60 -M image/"
+    prevbuf="${buf}"
     buf=$(
-        parallel --pipe -N 1 --timeout 9 -P ${WORKERS} "${cgd_cmd}" <<< "${buf}"
+        parallel          \
+        --halt now,fail=1 \
+        --pipe            \
+        -N 1              \
+        --timeout 9       \
+        -P ${WORKERS}     \
+        "${cgd_cmd}" <<< "${buf}"
     )
     local cgd_state=$?
+
+    if [ "${cgd_state}" -ge "1" ]; then
+        buf="${prevbuf}"
+        buf=$(
+            parallel      \
+            --pipe        \
+            -N 1          \
+            --timeout 9   \
+            -P ${WORKERS} \
+            "${cgd_cmd}" <<< "${buf}" 2>/dev/null
+        )
+        cgd_state=$?
+    fi
+
     handle_state "${cgd_state}" "${cgd_cmd}"
 
     if [ -z "${buf}" ] ; then
@@ -360,10 +399,31 @@ decode_graffiti() {
     fi
 
     local jq2_cmd="jq -r -M -c 'select(.graffiti == true)'"
+    prevbuf="${buf}"
     buf=$(
-        parallel --pipe -N 1 --timeout 9 -P ${WORKERS} "${jq2_cmd}" <<< "${buf}"
+        parallel          \
+        --halt now,fail=1 \
+        --pipe            \
+        -N 1              \
+        --timeout 9       \
+        -P ${WORKERS}     \
+        "${jq2_cmd}" <<< "${buf}"
     )
     local jq2_state=$?
+
+    if [ "${jq2_state}" -ge "1" ]; then
+        buf="${prevbuf}"
+        buf=$(
+            parallel      \
+            --pipe        \
+            -N 1          \
+            --timeout 9   \
+            -P ${WORKERS} \
+            "${jq2_cmd}" <<< "${buf}" 2>/dev/null
+        )
+        jq2_state=$?
+    fi
+
     handle_state "${jq2_state}" "${jq2_cmd}"
 
     printf "%s" "${buf}"
