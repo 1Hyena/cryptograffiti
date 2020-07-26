@@ -24,6 +24,7 @@ TXS_PER_QUERY=0
 MAX_DATA_SIZE=0
 NONCE_ERRORS=0
 OTHER_ERRORS=0
+CHEAP_ERRORS=0
 CACHE_ERRORS=0
 PULSE_PERIOD=30
 CACHE=""
@@ -31,7 +32,9 @@ TXBUF=""
 
 log() {
     if [ "${OTHER_ERRORS}" -ge "1" ]; then
-        CANARY="\033[0;31m::\033[0m" # Canary is "dead", we got errors.
+        CANARY="\033[1;31m::\033[0m"
+    elif [ "${CHEAP_ERRORS}" -ge "1" ]; then
+        CANARY="\033[0;31m::\033[0m"
     fi
 
     local now=`date +"${DATE_FORMAT}"`
@@ -40,7 +43,9 @@ log() {
 
 alert() {
     if [ "${OTHER_ERRORS}" -ge "1" ]; then
-        CANARY="\033[0;31m::\033[0m" # Canary is "dead", we got errors.
+        CANARY="\033[1;31m::\033[0m"
+    elif [ "${CHEAP_ERRORS}" -ge "1" ]; then
+        CANARY="\033[0;31m::\033[0m"
     fi
 
     local now=`date +"${DATE_FORMAT}"`
@@ -298,31 +303,37 @@ loop() {
     return 0
 }
 
-handle_state() {
-    local state="${1}"
-    local command=${2}""
+decode_graffiti() {
+    handle_state() {
+        local state="${1}"
+        local command=${2}""
 
-    if [ "${state}" -ge "1" ]; then
-        ((OTHER_ERRORS++))
-        if [ "${state}" -eq "101" ]; then
-            alert "More than 100 jobs failed."
-        else
-            if [ "${state}" -le "100" ]; then
-                if [ "${state}" -eq "1" ]; then
-                    alert "1 job failed."
-                else
-                    alert "${state} jobs failed."
-                fi
+        if [ "${state}" -ge "1" ]; then
+            ((CHEAP_ERRORS++))
+            if [ "${state}" -eq "101" ]; then
+                alert "More than 100 jobs failed."
             else
-                alert "Other error from parallel (${command})."
+                if [ "${state}" -le "100" ]; then
+                    if [ "${state}" -eq "1" ]; then
+                        alert "1 job failed."
+                    else
+                        alert "${state} jobs failed."
+                    fi
+                else
+                    alert "Other error from parallel (${command})."
+                fi
             fi
         fi
-    fi
 
-    return 0
-}
+        return 0
+    }
 
-decode_graffiti() {
+    # Since this function could modify the CHEAP_ERRORS global variable via the
+    # handle_state function, we must not call this function from a subshell. For
+    # that reason, we use the DECODED_GRAFFITI global variable where we store
+    # the result of this function.
+    DECODED_GRAFFITI=""
+
     local buf="${1}"
     local prevbuf=""
 
@@ -426,7 +437,7 @@ decode_graffiti() {
 
     handle_state "${jq2_state}" "${jq2_cmd}"
 
-    printf "%s" "${buf}"
+    DECODED_GRAFFITI="${buf}"
     return 0
 }
 
@@ -504,7 +515,8 @@ step() {
 
             local decoding_start=$SECONDS
 
-            local graffiti=$(decode_graffiti "${news}")
+            decode_graffiti "${news}" # Subshell must be avoided here.
+            local graffiti="${DECODED_GRAFFITI}"
 
             local decoding_time=$(( SECONDS - decoding_start ))
 
