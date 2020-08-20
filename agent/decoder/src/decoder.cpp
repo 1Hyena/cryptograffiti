@@ -88,14 +88,30 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
             std::vector<unsigned char> &payload = graffiti.front().payload;
 
             switch (graffiti.front().where) {
-                case LOCATION::NULL_DATA: chunk["location"] = std::string("NULL_DATA"); break;
-                case LOCATION::P2PKH:     chunk["location"] = std::string("P2PKH");     break;
-                default:                  chunk["location"] = std::string("UNKNOWN");   break;
+                case LOCATION::NULL_DATA: {
+                    chunk["location"] = std::string("NULL_DATA");
+                    break;
+                }
+                case LOCATION::P2PKH: {
+                    chunk["location"] = std::string("P2PKH");
+                    break;
+                }
+                default: {
+                    chunk["location"] = std::string("UNKNOWN");
+                    break;
+                }
             }
 
             size_t old_sz = payload.size();
             std::string mimetype;
-            if (!get_mimetype((const unsigned char *) &payload[0], payload.size(), mimetype)) {
+            bool mimetype_detected{
+                get_mimetype(
+                    (const unsigned char *) &payload[0], payload.size(),
+                    mimetype
+                )
+            };
+
+            if (!mimetype_detected) {
                 (*result)["error"] = "failed to detect mimetype";
                 return false;
             }
@@ -144,7 +160,12 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
                 trim_utf8(payload);
                 size_t new_sz = payload.size();
 
-                double entropy = calc_entropy((const unsigned char *) &payload[0], payload.size());
+                double entropy{
+                    calc_entropy(
+                        (const unsigned char *) &payload[0], payload.size()
+                    )
+                };
+
                 if (std::isnan(entropy)) chunk["entropy"] = nullptr;
                 else                     chunk["entropy"] = entropy;
 
@@ -166,9 +187,6 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
                     }
                     else if (nlohmann::json::accept(str)) {
                         chunk["error"] = std::string("json string");
-                    }
-                    else if (validate_bitcoin_address(str, nullptr, 0) >= 0) {
-                        chunk["error"] = std::string("bitcoin address");
                     }
 
                     payload.pop_back();
@@ -259,7 +277,9 @@ bool DECODER::decode(const std::string &hex, std::queue<graffiti_type> &to) {
     return true;
 }
 
-bool DECODER::get_opret_segments(std::vector<unsigned char> &bytes, std::map<size_t, size_t> &to) {
+bool DECODER::get_opret_segments(
+    std::vector<unsigned char> &bytes, std::map<size_t, size_t> &to
+) {
     size_t sz = bytes.size();
     size_t start_pos = 0;
 
@@ -286,7 +306,8 @@ bool DECODER::get_opret_segments(std::vector<unsigned char> &bytes, std::map<siz
                     }
 
                     if (i + 1 + segment_size > sz) {
-                        to.insert( { 0, sz } ); // Does not follow pushdata protocol.
+                        to.insert( { 0, sz } );
+                        // Does not follow pushdata protocol.
                         return true;
                     }
 
@@ -369,7 +390,9 @@ void DECODER::set_mime_types(const std::string &types) {
     if (!buf.empty() || mimetypes.empty()) mimetypes.insert(buf);
 }
 
-bool DECODER::get_mimetype(const unsigned char *bytes, size_t len, std::string &mimetype) const {
+bool DECODER::get_mimetype(
+    const unsigned char *bytes, size_t len, std::string &mimetype
+) const {
     std::vector<unsigned char> result;
 
     if (!program->syspipe(bytes, len, "file -r -k -b --mime-type -", &result)) {
