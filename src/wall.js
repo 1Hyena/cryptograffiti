@@ -237,8 +237,7 @@ function cg_wall_decode_tx(tab, txdiv, rawtx) {
 
         if (location === "NULL_DATA"
         &&  mimetype.indexOf("image/") === 0) {
-            var n = rawtx.indexOf("006a") + 4;
-            var hex = rawtx.substr(n+2*offset, 2*fsize);
+            var hex = rawtx.substr(2*offset, 2*fsize);
 
             var media = document.createElement("DIV");
             media.classList.add("cg-wall-media");

@@ -8,77 +8,62 @@
 
 bool DECODER::decode(const std::string &data, nlohmann::json *result) {
     nlohmann::json buf = nlohmann::json();
-    nlohmann::json tx  = nlohmann::json();
 
     if (result == nullptr) result = &buf;
 
-    std::exception_ptr eptr;
-    try         {tx   = nlohmann::json::parse(data);    }
-    catch (...) {eptr = std::current_exception();       }
-    try         {if (eptr) std::rethrow_exception(eptr);}
-    catch (const std::exception& e) {
-        (*result)["error"] = e.what();
-        return false;
-    }
+    std::vector<unsigned char> bin;
 
-    if (!tx.count("txid") || !tx["txid"].is_string()) {
-        (*result)["error"] = "invalid or missing txid";
-        return false;
-    }
-
-    (*result)["txid"] = tx["txid"].get<std::string>();
-
-    if (tx.count("time") && !tx["time"].is_number()) {
-        (*result)["error"] = "invalid time";
-        return false;
-    }
-
-    if (tx.count("time")) (*result)["time"] = tx["time"];
-    else                  (*result)["time"] = nullptr;
-
-    if (!tx.count("size") || !tx["size"].is_number()) {
-        (*result)["error"] = "invalid or missing size";
-        return false;
-    }
-
-    (*result)["size"] = tx["size"];
-
-    if (!tx.count("vout") || !tx["vout"].is_array()) {
-        (*result)["error"] = "invalid vout structure";
+    if (!hex2bin(data.c_str(), &bin)) {
+        (*result)["error"] = "input is not a valid hex string";
         return false;
     }
 
     std::queue<graffiti_type> graffiti;
 
-    for (auto &vout : tx["vout"]) {
-        if (!vout.count("scriptPubKey")
-        ||  !vout.at("scriptPubKey").is_object()) {
-            (*result)["error"] = "invalid scriptPubKey structure";
-            return false;
-        }
+    (*result)["size"] = bin.size();
+    (*result)["graffiti"] = false;
+    (*result)["time"] = nullptr;
+    (*result)["txid"] = calc_txid(bin.data(), bin.size());
 
-        auto &spk = vout["scriptPubKey"];
+    const unsigned char *rawtx = bin.data();
 
-        if (!spk.count("hex") || !spk.at("hex").is_string()) {
-            (*result)["error"] = "invalid hex structure";
-            return false;
-        }
+    uint32_t version = read_uint32(&rawtx);
+    uint64_t num_vin = read_varint(&rawtx);
 
-        const std::string &hex = spk["hex"];
-        if (!decode(hex, graffiti)) {
-            (*result)["error"] = "failed to decode scriptPubKey['hex']";
-            return false;
-        }
+    (*result)["version"] = version;
+    (*result)["inputs"] = num_vin;
+
+    for (size_t i=0; i<num_vin; ++i) {
+        rawtx += 32; // Skip previous TX hash.
+        rawtx += 4;  // Skip previous output index.
+
+        uint64_t script_size = read_varint(&rawtx);
+        rawtx += script_size; // Skip the Unlocking-Script.
+        rawtx += 4; // Skip the Sequence Number.
     }
+
+    uint64_t num_vout = read_varint(&rawtx);
+    (*result)["outputs"] = num_vout;
+
+    for (size_t i=0; i<num_vout; ++i) {
+        rawtx += 8; // Skip the amount.
+        uint64_t script_size = read_varint(&rawtx);
+        size_t offset = ((char *) rawtx) - ((char *) bin.data());
+
+        if (!decode(rawtx, script_size, graffiti, offset)) {
+            (*result)["error"] = "failed to decode";
+            return false;
+        }
+
+        rawtx += script_size; // Skip the Locking-Script.
+    }
+
+    uint32_t locktime = read_uint32(&rawtx);
+    (*result)["locktime"] = locktime;
 
     size_t valid_files = 0;
-    (*result)["confirmations"] = 0;
     (*result)["graffiti"] = false;
     (*result)["files"] = nlohmann::json::array();
-
-    if (tx.count("confirmations") && tx["confirmations"].is_number()) {
-        (*result)["confirmations"] = tx["confirmations"];
-    }
 
     if (!graffiti.empty()) {
         nlohmann::json chunkbuf = nlohmann::json::array();
@@ -235,40 +220,47 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
     return true;
 }
 
-bool DECODER::decode(const std::string &hex, std::queue<graffiti_type> &to) {
+bool DECODER::decode(
+    const unsigned char *bytes, size_t bytes_len, std::queue<graffiti_type> &to,
+    size_t offset
+) const {
     LOCATION loc = LOCATION::NONE;
     size_t start_at = 0;
 
-    if (!hex.compare(0, 2, "6a")) {
+    if (bytes_len >= 1 && *bytes == 0x6a) {
         // Legacy OP_RETURN detected
         loc = LOCATION::NULL_DATA;
-        start_at = 2;
+        start_at = 1;
     }
-    else if (!hex.compare(0, 4, "006a")) {
+    else if (bytes_len >= 2 && bytes[0] == 0x00 && bytes[1] == 0x6a) {
         // OP_RETURN detected
         loc = LOCATION::NULL_DATA;
-        start_at = 4;
+        start_at = 2;
     }
 
     if (loc == LOCATION::NONE) {
         return true;
     }
 
-    std::vector<unsigned char> bin;
-    if (!hex2bin(hex.c_str()+start_at, &bin)) {
-        return false;
-    }
-
     if (loc == LOCATION::NULL_DATA) {
+        const unsigned char *opret_body = bytes + start_at;
+        size_t opret_size = bytes_len - start_at;
+
         std::map<size_t, size_t> segments;
-        if (!get_opret_segments(bin, segments)) return false;
+        if (!get_opret_segments(opret_body, opret_size, segments)) {
+            return false;
+        }
 
         for (auto &segment : segments) {
             size_t pos = segment.first;
             size_t len = segment.second;
 
-            if (bin.size() > pos) {
-                to.emplace(make_graffiti(loc, pos, bin[pos], len));
+            if (opret_size > pos) {
+                to.emplace(
+                    make_graffiti(
+                        loc, offset+start_at+pos, opret_body[pos], len
+                    )
+                );
             }
             else return false;
         }
@@ -278,9 +270,8 @@ bool DECODER::decode(const std::string &hex, std::queue<graffiti_type> &to) {
 }
 
 bool DECODER::get_opret_segments(
-    std::vector<unsigned char> &bytes, std::map<size_t, size_t> &to
-) {
-    size_t sz = bytes.size();
+    const unsigned char *bytes, size_t sz, std::map<size_t, size_t> &to
+) const {
     size_t start_pos = 0;
 
     std::vector<unsigned char> segment_size_bytes;
@@ -406,4 +397,54 @@ bool DECODER::get_mimetype(
     }
 
     return true;
+}
+
+std::string DECODER::calc_txid(const unsigned char *rawtx, size_t sz) const {
+    std::vector<unsigned char> hash{sha256(rawtx, sz, false)};
+    std::vector<unsigned char> txid{sha256(hash.data(), hash.size(), false)};
+    std::reverse(txid.begin(), txid.end());
+    return bin2hex(txid.data(), txid.size());
+}
+
+uint32_t DECODER::read_uint32(const unsigned char **bytes) const {
+    uint32_t value = 0;
+    for (size_t i=0; i<4; ++i) {
+        value += **bytes << i*8;
+        (*bytes)++;
+    }
+
+    return value;
+}
+
+uint64_t DECODER::read_uint64(const unsigned char **bytes) const {
+    uint64_t value = 0;
+    for (size_t i=0; i<8; ++i) {
+        value += **bytes << i*8;
+        (*bytes)++;
+    }
+
+    return value;
+}
+
+uint64_t DECODER::read_varint(const unsigned char **bytes) const {
+    unsigned char first_byte = **bytes;
+
+    (*bytes)++;
+
+    size_t num_bytes = 0;
+
+    switch (first_byte) {
+        default : return first_byte;
+        case 253: num_bytes = 2; break; // fd
+        case 254: num_bytes = 4; break; // fe
+        case 255: num_bytes = 8; break; // ff
+    }
+
+    uint64_t value = 0;
+    for (size_t i=0; i<num_bytes; ++i) {
+        value += **bytes << i*8;
+        (*bytes)++;
+    }
+
+    return value;
 }

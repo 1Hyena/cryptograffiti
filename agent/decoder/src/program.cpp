@@ -35,6 +35,11 @@ void PROGRAM::run() {
     std::string input(std::istreambuf_iterator<char>(std::cin), {});
     nlohmann::json result = nlohmann::json();
 
+    while (!input.empty()) {
+        if (input.back() != '\n') break;
+        input.pop_back();
+    }
+
     bool success = decoder.decode(input, &result);
 
     if (result.count("txid") && result.at("txid").is_string()) {

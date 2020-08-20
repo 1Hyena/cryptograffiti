@@ -36,12 +36,22 @@ class DECODER {
         const unsigned char *bytes, size_t len, std::string &mimetype
     ) const;
 
+    std::string calc_txid(const unsigned char *, size_t) const;
+
+    uint32_t read_uint32(const unsigned char **) const;
+    uint64_t read_uint64(const unsigned char **) const;
+    uint64_t read_varint(const unsigned char **) const;
+
     private:
 
-    bool decode(const std::string &hex, std::queue<graffiti_type> &to);
+    bool decode(
+        const unsigned char *bytes, size_t len, std::queue<graffiti_type> &to,
+        size_t offset
+    ) const;
+
     bool get_opret_segments(
-        std::vector<unsigned char> &bytes, std::map<size_t, size_t> &to
-    );
+        const unsigned char* bytes, size_t len, std::map<size_t, size_t> &to
+    ) const;
 
     static void drop_log(const char *, const char *, ...) {}
 

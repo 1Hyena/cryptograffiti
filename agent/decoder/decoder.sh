@@ -341,7 +341,7 @@ decode_graffiti() {
         return 0
     fi
 
-    local cli_cmd="${CLIF} ${DDIR} getrawtransaction {} 1"
+    local cli_cmd="${CLIF} ${DDIR} getrawtransaction {} "
     prevbuf="${buf}"
     buf=$(
         parallel          \
@@ -364,14 +364,6 @@ decode_graffiti() {
     fi
 
     handle_state "${cli_state}" "${cli_cmd}"
-
-    if [ -z "${buf}" ] ; then
-        return 0
-    fi
-
-    buf=$(
-        jq -r -M -c <<< "${buf}"
-    )
 
     if [ -z "${buf}" ] ; then
         return 0

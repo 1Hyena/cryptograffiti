@@ -163,4 +163,3 @@ do
         log "Trying to synchronize the nonce (${NONCE_ERRORS})."
     fi
 done
-
