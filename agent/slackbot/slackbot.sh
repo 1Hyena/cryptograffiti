@@ -136,7 +136,7 @@ do
 
                         txid=`printf "%s" "${line}" | jq -r -M .txid`
                         ghash=`printf "%s" "${line}" | jq -r -M .hash`
-                        graffiti=`${CLIF} ${DDIR} getrawtransaction ${txid} 1 | ${CGDF} --content --hash "${ghash}"`
+                        graffiti=`${CLIF} ${DDIR} getrawtransaction ${txid} | ${CGDF} --content --hash "${ghash}"`
                         gfiles=`printf "%s" "${graffiti}" | jq -r -M --compact-output .files[]`
 
                         log "Extracting TX ${txid}."
@@ -261,4 +261,3 @@ do
 
     sleep 5
 done
-
