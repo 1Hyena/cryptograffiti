@@ -297,7 +297,13 @@ if ($l = init_sql()) {
         case 'get_msg_metadata'  : $r=fun_get_msg_metadata ($l, $USER, $GUID, $ARGS['txids']);                                                    break;
         case 'get_btc_graffiti'  : $r=fun_get_btc_graffiti ($l, $USER, $GUID, $ARGS['nr'],  $ARGS['count'], $ARGS['back'], $ARGS['mimetype']);    break;
         case 'get_graffiti'      : $r=fun_get_graffiti     ($l, $USER, $GUID, $ARGS['nr'],  $ARGS['count'], $ARGS['back'], $ARGS['mimetype']);    break;
-        case 'get_txs'           : $r=fun_get_txs          ($l, $USER, $GUID, $ARGS['nr'],  $ARGS['count'], $ARGS['back'], $ARGS['mimetype']);    break;
+        case 'get_txs'           : {
+            $r=fun_get_txs(
+                $l, $USER, $GUID, $ARGS['nr'],  $ARGS['count'], $ARGS['back'],
+                $ARGS['mimetype'], $ARGS['cache']
+            );
+            break;
+        }
         case 'get_btc_donations' : $r=fun_get_btc_donations($l, $USER, $GUID, $ARGS['nr'],  $ARGS['count'], $ARGS['back'], $ARGS['mimetype']);    break;
         case 'set_btc_txs'       : $r=fun_set_btc_txs      ($l, $USER, $GUID, $ARGS['txs']);                                                      break;
         case 'set_txs'           : $r=fun_set_txs          ($l, $USER, $GUID, $ARGS['graffiti']);                                                 break;

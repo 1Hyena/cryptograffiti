@@ -502,6 +502,7 @@ function extract_args($data) {
     extract_bool     ('live',        $args, $result);
     extract_bool     ('scam',        $args, $result);
     extract_bool     ('back',        $args, $result);
+    extract_bool     ('cache',       $args, $result);
     extract_bool     ('inclusive',   $args, $result);
     extract_bool     ('filled',      $args, $result);
     extract_bool     ('accepted',    $args, $result);
@@ -2004,8 +2005,12 @@ function fun_get_graffiti($link, $user, $guid, $graffiti_nr, $count, $back, $mim
     return make_success($response);
 }
 
-function fun_get_txs($link, $user, $guid, $tx_nr, $count, $back, $mimetype) {
-    if ($count  === null) return make_failure(ERROR_INVALID_ARGUMENTS, '`count` is invalid.');
+function fun_get_txs(
+    $link, $user, $guid, $tx_nr, $count, $back, $mimetype, $cache
+) {
+    if ($count  === null) {
+        return make_failure(ERROR_INVALID_ARGUMENTS, '`count` is invalid.');
+    }
 
     if ($mimetype !== null) $mimetype = $link->real_escape_string($mimetype);
 
@@ -2025,26 +2030,64 @@ function fun_get_txs($link, $user, $guid, $tx_nr, $count, $back, $mimetype) {
         $subwhere = "AND `graffiti`.`mimetype` LIKE '".$mimetype."%'";
     }
 
+    $cache_condition = "TRUE";
+
+    if ($cache === '1') {
+        $cache_condition = "`cache` = TRUE";
+    }
+    else if ($cache === '0') {
+        $cache_condition = "`cache` = FALSE";
+    }
+
     if ($tx_nr === null) {
-        $query = "SELECT `txnr`, `txsize`, `ic`.`txid`, `ic`.`nr` AS gnr, `location`, `fsize`, `offset`, `mimetype`, `hash` ".
-                 "FROM ((select `nr` AS txnr, `txid`, `size` AS txsize from `tx` ".
-                 "where exists (SELECT `nr` FROM `graffiti` WHERE `graffiti`.`txid` = `tx`.`txid` ".$subwhere.") ".
-                 "order by `txnr` desc limit ".$limit.") im) ".
-                 "INNER JOIN `graffiti` ic ON `im`.`txid` = `ic`.`txid` ".$where." ORDER BY `txnr` DESC";
+        $query = $cache === null ? (
+            "SELECT `txnr`, `txsize`, `ic`.`txid`, `ic`.`nr` AS gnr, ".
+            "`location`, `fsize`, `offset`, `mimetype`, `hash` FROM ((select ".
+            "`nr` AS txnr, `txid`, `size` AS txsize from `tx` where (".
+            $cache_condition.") AND exists (SELECT `nr` FROM `graffiti` WHERE ".
+            "`graffiti`.`txid` = `tx`.`txid` ".$subwhere.") order by `txnr` ".
+            "desc limit ".$limit.") im) INNER JOIN `graffiti` ic ON ".
+            "`im`.`txid` = `ic`.`txid` ".$where." ORDER BY `txnr` DESC"
+        ) : (
+            // Here we retrieve the transactions that have been modified within
+            // the last hour. We order them descendingly by the number of
+            // requests. The Courier bots can therefore easily determine which
+            // raw transaction details need to be uploaded to the server.
+
+            "SELECT `txnr`, `txsize`, `ic`.`txid`, `ic`.`nr` AS gnr, ".
+            "`location`, `fsize`, `offset`, `mimetype`, `hash` FROM ((select ".
+            "`nr` AS txnr, `txid`, `size` AS txsize from `tx` where (".
+            $cache_condition.") AND `modified` IS NOT NULL AND `modified` > ".
+            "(NOW() - INTERVAL 1 hour) AND exists (SELECT `nr` FROM ".
+            "`graffiti` WHERE `graffiti`.`txid` = `tx`.`txid` ".$subwhere.") ".
+            "order by `requests` desc limit ".$limit.") im) INNER JOIN ".
+            "`graffiti` ic ON `im`.`txid` = `ic`.`txid` ".$where." ORDER BY ".
+            "`txnr` DESC"
+        );
     }
     else if ($back === '1') {
-        $query = "SELECT `txnr`, `txsize`, `ic`.`txid`, `ic`.`nr` AS gnr, `location`, `fsize`, `offset`, `mimetype`, `hash` ".
-                 "FROM ((select `nr` AS txnr, `txid`, `size` AS txsize from `tx` ".
-                 "where `nr` <= '".$tx_nr."' and exists (SELECT `nr` FROM `graffiti` WHERE `graffiti`.`txid` = `tx`.`txid` ".$subwhere.") ".
-                 "order by `txnr` desc limit ".$limit.") im) ".
-                 "INNER JOIN `graffiti` ic ON `im`.`txid` = `ic`.`txid` ".$where." ORDER BY `txnr` DESC";
+        $query = (
+            "SELECT `txnr`, `txsize`, `ic`.`txid`, `ic`.`nr` AS gnr, ".
+            "`location`, `fsize`, `offset`, `mimetype`, `hash` FROM ((select ".
+            "`nr` AS txnr, `txid`, `size` AS txsize from `tx` where (".
+            $cache_condition.") AND `nr` <= '".$tx_nr."' and exists (SELECT ".
+            "`nr` FROM `graffiti` WHERE `graffiti`.`txid` = `tx`.`txid` ".
+            $subwhere.") order by `txnr` desc limit ".$limit.") im) INNER ".
+            "JOIN `graffiti` ic ON `im`.`txid` = `ic`.`txid` ".$where." ORDER ".
+            "BY `txnr` DESC"
+        );
     }
     else if ($back === '0' || $back === null) {
-        $query = "SELECT `txnr`, `txsize`, `ic`.`txid`, `ic`.`nr` AS gnr, `location`, `fsize`, `offset`, `mimetype`, `hash` ".
-                 "FROM ((select `nr` AS txnr, `txid`, `size` AS txsize from `tx` ".
-                 "where `nr` >= '".$tx_nr."' and exists (SELECT `nr` FROM `graffiti` WHERE `graffiti`.`txid` = `tx`.`txid` ".$subwhere.") ".
-                 "order by `txnr` asc limit ".$limit.") im) ".
-                 "INNER JOIN `graffiti` ic ON `im`.`txid` = `ic`.`txid` ".$where." ORDER BY `txnr` ASC";
+        $query = (
+            "SELECT `txnr`, `txsize`, `ic`.`txid`, `ic`.`nr` AS gnr, ".
+            "`location`, `fsize`, `offset`, `mimetype`, `hash` FROM ((select ".
+            "`nr` AS txnr, `txid`, `size` AS txsize from `tx` where (".
+            $cache_condition.") AND `nr` >= '".$tx_nr."' and exists (SELECT ".
+            "`nr` FROM `graffiti` WHERE `graffiti`.`txid` = `tx`.`txid` ".
+            $subwhere.") order by `txnr` asc limit ".$limit.") im) INNER JOIN ".
+            "`graffiti` ic ON `im`.`txid` = `ic`.`txid` ".$where." ORDER BY ".
+            "`txnr` ASC"
+        );
     }
 
     if ($query === null) {
