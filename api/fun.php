@@ -2128,14 +2128,22 @@ function fun_get_txs(
         $response['txs']   = array();
 
         foreach ($tx_buf as $nr => $tx) {
-            $response['txs'][] = $tx;
-
-            if (file_exists("../cache/".$tx['txid'])) {
+            if (file_exists("../rawtx/".$tx['txid'])) {
                 $txnrs_cache_true[] = $nr;
+
+                if ($cache === '0') continue;
+
+                $tx['cache'] = true;
             }
             else {
                 $txnrs_cache_false[] = $nr;
+
+                if ($cache === '1') continue;
+
+                $tx['cache'] = false;
             }
+
+            $response['txs'][] = $tx;
         }
 
         if (count($txnrs_cache_true) > 0) {
