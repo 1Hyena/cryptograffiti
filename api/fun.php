@@ -409,11 +409,15 @@ function assure_tx($link) {
  `txid` binary(32) NOT NULL COMMENT 'TX hash',
  `size` bigint(20) unsigned DEFAULT NULL COMMENT 'TX size in bytes',
  `time` bigint(20) DEFAULT NULL COMMENT 'TX time in seconds since epoch',
+ `cache` tinyint(1) NOT NULL,
+ `requests` bigint(20) unsigned NOT NULL,
  `created` timestamp NOT NULL DEFAULT current_timestamp() COMMENT 'creation timestamp',
  `modified` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT 'timestamp of the last update',
  PRIMARY KEY (`nr`),
- UNIQUE KEY `txid` (`txid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8");
+ UNIQUE KEY `txid` (`txid`),
+ KEY `cache` (`cache`) USING BTREE,
+ KEY `requests` (`requests`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8");
 }
 
 function assure_order($link) {
@@ -999,7 +1003,7 @@ function insert_hex_unique($link, $table, $vars) {
         $req .= "SELECT X'". join("', X'", $vars) ."' FROM DUAL ";
         $req .= "WHERE NOT EXISTS (SELECT 1 FROM `$table` WHERE ";
 
-        foreach ($vars AS $col => $val) $req .= "`$col`= X'$val' AND ";
+        foreach ($vars as $col => $val) $req .= "`$col`= X'$val' AND ";
 
         $req = substr($req, 0, -5) . ") LIMIT 1";
         $res = $link->query($req);
@@ -2076,16 +2080,54 @@ function fun_get_txs($link, $user, $guid, $tx_nr, $count, $back, $mimetype) {
         }
         $result->free();
 
-        $response['txs'] = array();
+        $txnrs_cache_false = array();
+        $txnrs_cache_true  = array();
+        $response['txs']   = array();
+
         foreach ($tx_buf as $nr => $tx) {
             $response['txs'][] = $tx;
+
+            if (file_exists("../cache/".$tx['txid'])) {
+                $txnrs_cache_true[] = $nr;
+            }
+            else {
+                $txnrs_cache_false[] = $nr;
+            }
+        }
+
+        if (count($txnrs_cache_true) > 0) {
+            $query_string = (
+                "UPDATE `tx` SET `requests` = `requests` + 1, `cache` = TRUE ".
+                "WHERE `nr` IN (".implode(',', $txnrs_cache_true).")"
+            );
+
+            $link->query($query_string);
+
+            if ($link->errno !== 0) {
+                set_critical_error($link, $link->error);
+            }
+        }
+
+        if (count($txnrs_cache_false) > 0) {
+            $query_string = (
+                "UPDATE `tx` SET `requests` = `requests` + 1, `cache` = FALSE ".
+                "WHERE `nr` IN (".implode(',', $txnrs_cache_false).")"
+            );
+
+            $link->query($query_string);
+
+            if ($link->errno !== 0) {
+                set_critical_error($link, $link->error);
+            }
         }
     }
     else {
         return make_failure(ERROR_SQL, $link->error);
     }
 
-    if ($tx_nr === null && is_array($response['txs'])) $response['txs'] = array_reverse($response['txs']);
+    if ($tx_nr === null && is_array($response['txs'])) {
+        $response['txs'] = array_reverse($response['txs']);
+    }
 
     return make_success($response);
 }
