@@ -1523,13 +1523,29 @@ function fun_set_btc_txs($link, $user, $guid, $txs) {
 }
 
 function fun_set_txs($link, $user, $guid, $graffiti) {
-    if ($guid      === null) return make_failure(ERROR_INVALID_ARGUMENTS, '`guid` is invalid.');
-    if ($graffiti  === null) return make_failure(ERROR_INVALID_ARGUMENTS, '`graffiti` is invalid.');
-    if (!has_access($link, $guid, ROLE_DECODER)) return make_failure(ERROR_MISUSE, 'Access denied!');
-    if (is_paralyzed($link, $guid)) return make_failure(ERROR_NO_CHANGE, 'Failed to set graffiti, session is paralyzed!');
+    if ($guid === null) {
+        return make_failure(ERROR_INVALID_ARGUMENTS, '`guid` is invalid.');
+    }
+
+    if ($graffiti === null) {
+        return make_failure(ERROR_INVALID_ARGUMENTS, '`graffiti` is invalid.');
+    }
+
+    if (!has_access($link, $guid, ROLE_DECODER)) {
+        return make_failure(ERROR_MISUSE, 'Access denied!');
+    }
+
+    if (is_paralyzed($link, $guid)) {
+        return make_failure(
+            ERROR_NO_CHANGE, 'Failed to set graffiti, session is paralyzed!'
+        );
+    }
 
     if (($c=count($txs)) > TXS_PER_QUERY) {
-        return make_failure(ERROR_MISUSE, '`txs` contains '.$c.' elements exceeding the limit of '.TXS_PER_QUERY.'.');
+        return make_failure(
+            ERROR_MISUSE, '`txs` contains '.$c.
+            ' elements exceeding the limit of '.TXS_PER_QUERY.'.'
+        );
     }
 
     $errno            = 0;
@@ -1548,10 +1564,13 @@ function fun_set_txs($link, $user, $guid, $graffiti) {
         $spam = true;
 
         foreach ($tx['files'] as $file) {
-            $qstr = "SELECT `nr` FROM `graffiti` WHERE `hash` = X'"
-                   .$file['hash']."' AND `txid` != X'".$tx_hash
-                   ."' AND `created` IS NOT NULL AND"
-                   ." `created` > (NOW() - INTERVAL 30 day) LIMIT 1";
+            $qstr = (
+                "SELECT `nr` FROM `graffiti` WHERE `hash` = X'".
+                $file['hash']."' AND `txid` != X'".$tx_hash.
+                "' AND `created` IS NOT NULL AND".
+                " `created` > (NOW() - INTERVAL 30 day) LIMIT 1"
+            );
+
             $q = db_query($link, $qstr);
 
             if ($q['errno'] === 0) {
@@ -1585,19 +1604,32 @@ function fun_set_txs($link, $user, $guid, $graffiti) {
         }
 
         $tx_nr = insert_hex_unique($link, 'tx', array('txid' => $tx_hash));
+
         if ($tx_nr === false) {
-            db_log($link, $user, "SQL failure when inserting TX ".$tx_hash.", retrying.", LOG_LEVEL_ALERT);
-            $tx_nr = insert_hex_unique($link, 'btc_tx', array('txid' => $tx_hash));
+            db_log(
+                $link, $user, "SQL failure when inserting TX ".$tx_hash.
+                ", retrying.", LOG_LEVEL_ALERT
+            );
+
+            $tx_nr = insert_hex_unique(
+                $link, 'tx', array('txid' => $tx_hash)
+            );
+
             if ($tx_nr === false) {
-                db_log($link, $user, "Repeated failure when inserting TX ".$tx_hash.".", LOG_LEVEL_ALERT);
+                db_log(
+                    $link, $user, "Repeated failure when inserting TX ".
+                    $tx_hash.".", LOG_LEVEL_ALERT
+                );
             }
         }
 
         if ($tx_nr === null) {
-            $query_string = "UPDATE `tx` SET ".
-                         ($txtime !== null ? "`time` = '".$txtime."', " : "").
-                         "`size` = '".$txsize."' ".
-                         "WHERE `txid` = X'".$tx_hash."'";
+            $query_string = (
+                "UPDATE `tx` SET ".
+                ($txtime !== null ? "`time` = '".$txtime."', " : "").
+                "`size` = '".$txsize."' WHERE `txid` = X'".$tx_hash."'"
+            );
+
             $link->query($query_string);
 
             if ($errno === 0 && $link->errno !== 0) {
@@ -1610,14 +1642,56 @@ function fun_set_txs($link, $user, $guid, $graffiti) {
                 db_log($link, $user, $query_string);
                 $changed_txs++;
             }
+
+            // Now let's delete all graffiti records of this TX which are not
+            // included in $tx['files'].
+
+            $subq = array();
+            foreach ($tx['files'] as $file) {
+                $subq[] = (
+                    "(`location` = '".$file['location']."' AND `offset` = '".
+                    $file['offset']."')"
+                );
+            }
+
+            if (count($subq) > 0) {
+                $qstr = (
+                    "DELETE FROM `graffiti` WHERE `txid` = X'".$tx_hash."'".
+                    " AND NOT (".implode(' OR ', $subq).")"
+                );
+
+                $q = db_query($link, $qstr);
+
+                if ($q['errno'] === 0) {
+                    $deleted_graffiti = $q['affected_rows'];
+
+                    if ($deleted_graffiti > 0) {
+                        db_log(
+                            $link, $user,
+                            'Deleted '.$deleted_graffiti.' graffiti record'.
+                            ($deleted_graffiti === 1 ? '' : 's').
+                            ' from TX '.$tx_hash.'.'
+                        );
+                    }
+                }
+                else {
+                    if ($errno === 0 && $q['errno'] !== 0) {
+                        $errno = $q['errno'];
+                        $error = $q['error'];
+                        set_critical_error($link, $error);
+                    }
+                }
+            }
         }
         else if ($tx_nr !== false) {
             $added_txs++;
 
-            $query_string = "UPDATE `tx` SET ".
-                         "`size` = '".$txsize."', ".
-                         ($txtime !== null ? "`time` = '".$txtime."', " : "").
-                         "`created` = NOW() WHERE `nr` = '".$tx_nr."'";
+            $query_string = (
+                "UPDATE `tx` SET `size` = '".$txsize."', ".
+                ($txtime !== null ? "`time` = '".$txtime."', " : "").
+                "`created` = NOW() WHERE `nr` = '".$tx_nr."'"
+            );
+
             $link->query($query_string);
 
             if ($errno === 0 && $link->errno !== 0) {
@@ -1627,7 +1701,11 @@ function fun_set_txs($link, $user, $guid, $graffiti) {
             }
 
             if ($link->affected_rows === 0) {
-                db_log($link, $user, "TX nr `".$tx_nr."` was not updated after its creation.", LOG_LEVEL_ALERT);
+                db_log(
+                    $link, $user,
+                    "TX nr `".$tx_nr."` was not updated after its creation.",
+                    LOG_LEVEL_ALERT
+                );
             }
             else db_log($link, $user, $query_string);
         }
@@ -1658,22 +1736,25 @@ function fun_set_txs($link, $user, $guid, $graffiti) {
 
                 if ($nr === false) {
                     db_log($link, $user,
-                        "Repeated SQL failure when inserting ".$file['location'].":".
-                        $file['offset']." graffiti from TX ".$tx_hash.", retrying.",
+                        "Repeated SQL failure when inserting ".
+                        $file['location'].":".$file['offset'].
+                        " graffiti from TX ".$tx_hash.", retrying.",
                         LOG_LEVEL_ALERT
                     );
                 }
             }
 
             if ($nr === null) {
-                $query_string =
+                $query_string = (
                     "UPDATE `graffiti` SET ".
                     "`fsize` = '".$file['fsize']."', ".
                     "`mimetype` = '".$file['type']."', ".
                     "`hash` = X'".$file['hash']."' ".
                     "WHERE `txid` = X'".$tx_hash."'".
                     " AND `location` = '".$file['location']."'".
-                    " AND `offset` = '".$file['offset']."'";
+                    " AND `offset` = '".$file['offset']."'"
+                );
+
                 $link->query($query_string);
 
                 if ($errno === 0 && $link->errno !== 0) {
@@ -1690,12 +1771,14 @@ function fun_set_txs($link, $user, $guid, $graffiti) {
             else if ($nr !== false) {
                 $added_graffiti++;
 
-                $query_string =
+                $query_string = (
                     "UPDATE `graffiti` SET ".
                     "`fsize` = '".$file['fsize']."', ".
                     "`mimetype` = '".$file['type']."', ".
                     "`hash` = X'".$file['hash']."', ".
-                    "`created` = NOW() WHERE `nr` = '".$nr."'";
+                    "`created` = NOW() WHERE `nr` = '".$nr."'"
+                );
+
                 $link->query($query_string);
 
                 if ($errno === 0 && $link->errno !== 0) {
@@ -1705,21 +1788,46 @@ function fun_set_txs($link, $user, $guid, $graffiti) {
                 }
 
                 if ($link->affected_rows === 0) {
-                    db_log($link, $user, "Graffiti nr `".$nr."` was not updated after its creation.", LOG_LEVEL_ALERT);
+                    db_log(
+                        $link, $user,
+                        "Graffiti nr `".$nr.
+                        "` was not updated after its creation.",
+                        LOG_LEVEL_ALERT
+                    );
                 }
                 else db_log($link, $user, $query_string);
             }
         }
     }
 
-    db_log($link, $user, 'Added '.$added_txs.', updated '.$changed_txs.' TX'.($changed_txs === 1 ? '.' : 's.'));
-    db_log($link, $user, 'Added '.$added_graffiti.', updated '.$changed_graffiti.' graffiti row'.($changed_graffiti === 1 ? '.' : 's.'));
+    db_log(
+        $link, $user,
+        'Added '.$added_txs.', updated '.$changed_txs.' TX'.
+        ($changed_txs === 1 ? '.' : 's.')
+    );
+
+    db_log(
+        $link, $user, 'Added '.$added_graffiti.', updated '.$changed_graffiti.
+        ' graffiti row'.($changed_graffiti === 1 ? '.' : 's.')
+    );
+
     if ($spam_count > 0) {
-        if ($spam_count === 1) db_log($link, $user, 'Ignored the graffiti from TX '.$spam_txid.' (spam detected).');
-        else                   db_log($link, $user, 'Ignored '.$spam_count.' graffiti TXs (spam detected).');
+        if ($spam_count === 1) {
+            db_log(
+                $link, $user, 'Ignored the graffiti from TX '.$spam_txid.
+                ' (spam detected).'
+            );
+        }
+        else {
+            db_log(
+                $link, $user, 'Ignored '.$spam_count.
+                ' graffiti TXs (spam detected).'
+            );
+        }
     }
 
     if ($errno !== 0) return make_failure(ERROR_SQL, $error);
+
     return make_success();
 }
 
