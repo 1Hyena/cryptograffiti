@@ -289,7 +289,9 @@ loop() {
             if [ "${delta_time}" -lt "${PULSE_PERIOD}" ]; then
                 local stime=$((PULSE_PERIOD-delta_time))
 
-                if [ ! -z "${TXBUF}" ] || [ ! -z "${CACHE}" ] ; then
+                if [ ! -z "${TXBUF}" ] \
+                || [ ! -z "${CACHE}" ] \
+                || [ ! -z "${VOLATILE_TXS}" ] ; then
                     log "Too much work in queue, skipping the nap of ${stime}s."
                 else
                     log "Sleeping for ${stime}s."
