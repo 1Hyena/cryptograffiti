@@ -20,7 +20,6 @@ DATE_FORMAT="%Y-%m-%d %H:%M:%S"
 CANARY="::"
 WORKERS="16"
 TXS_PER_QUERY=0
-MAX_DATA_SIZE=0
 NONCE_ERRORS=0
 OTHER_ERRORS=0
 CHEAP_ERRORS=0
@@ -35,7 +34,7 @@ log() {
         CANARY="\033[0;31m::\033[0m"
     fi
 
-    local now=`date +"${DATE_FORMAT}"`
+    local now=$(date +"${DATE_FORMAT}")
     printf "\033[1;36m%s\033[0m ${CANARY} %s\n" "$now" "$1" >/dev/stderr
 }
 
@@ -46,7 +45,7 @@ alert() {
         CANARY="\033[0;31m::\033[0m"
     fi
 
-    local now=`date +"${DATE_FORMAT}"`
+    local now=$(date +"${DATE_FORMAT}")
     local format="\033[1;36m%s\033[0m ${CANARY} \033[1;33m%s\033[0m\n"
     printf "${format}" "$now" "$1" >/dev/stderr
 }
@@ -95,13 +94,17 @@ config() {
 
     if [[ -r ${CONF} ]] ; then
         local cfg=$(<"$CONF")
-        NAME=`printf "%s" "${cfg}" | jq -r -M '.title | select (.!=null)'`
-        INIT=`printf "%s" "${cfg}" | jq -r -M '.["init.sh"] | select (.!=null)'`
-        CALL=`printf "%s" "${cfg}" | jq -r -M '.["call.sh"] | select (.!=null)'`
-        ADDR=`printf "%s" "${cfg}" | jq -r -M .api`
-        RWTX=`printf "%s" "${cfg}" | jq -r -M .rawtx`
-        CLIF=`printf "%s" "${cfg}" | jq -r -M '.["bitcoin-cli"]'`
-        DDIR=`printf "%s" "${cfg}" | jq -r -M '.["bitcoin-dat"]'`
+        NAME=$(printf "%s" "${cfg}" | jq -r -M '.title | select (.!=null)')
+        INIT=$(
+            printf "%s" "${cfg}" | jq -r -M '.["init.sh"] | select (.!=null)'
+        )
+        CALL=$(
+            printf "%s" "${cfg}" | jq -r -M '.["call.sh"] | select (.!=null)'
+        )
+        ADDR=$(printf "%s" "${cfg}" | jq -r -M .api)
+        RWTX=$(printf "%s" "${cfg}" | jq -r -M .rawtx)
+        CLIF=$(printf "%s" "${cfg}" | jq -r -M '.["bitcoin-cli"]')
+        DDIR=$(printf "%s" "${cfg}" | jq -r -M '.["bitcoin-dat"]')
 
         if [ ! -z "${DDIR}" ] ; then
             DDIR="-datadir=${DDIR}"
@@ -147,10 +150,10 @@ config
 ################################################################################
 
 init() {
-    local wdir=`pwd`
+    local wdir=$(pwd)
     log "${wdir}"
     log "${INIT} ${CONF}"
-    local config=`"${INIT}" "${CONF}"`
+    local config=$("${INIT}" "${CONF}")
 
     SKEY=$(jq -r -M .sec_key <<< "${config}" | xxd -r -p | xxd -p | tr -d '\n')
     SEED=$(jq -r -M .seed    <<< "${config}" | xxd -r -p | xxd -p | tr -d '\n')
@@ -186,9 +189,10 @@ init() {
         tr -d '\n'
     )
 
-    local response=`"${CALL}" "${CONF}" "get_constants" "${data}"`
+    local response=$("${CALL}" "${CONF}" "get_constants" "${data}")
 
-    local result=`printf "%s" "${response}" | jq -r -M .result`
+    local result=$(printf "%s" "${response}" | jq -r -M .result)
+
     if [ "${result}" == "SUCCESS" ]; then
         printf "%s" "${response}" | jq .constants
 
@@ -200,14 +204,6 @@ init() {
         )
 
         log "TXS_PER_QUERY: ${TXS_PER_QUERY}"
-
-        MAX_DATA_SIZE=$(
-            printf "%s" "${response}" |
-            jq -r -M .constants       |
-            jq -r -M .MAX_DATA_SIZE
-        )
-
-        log "MAX_DATA_SIZE: ${MAX_DATA_SIZE}"
 
         return 0
     fi
@@ -230,7 +226,7 @@ init() {
 loop() {
     while :
     do
-        local pulse_start=`date +%s`
+        local pulse_start=$(date +%s)
 
         if [ $(which "${CLIF}" 2>/dev/null ) ] \
         && [ $(which sort)                   ] \
@@ -252,7 +248,7 @@ loop() {
             exit
         fi
 
-        local pulse_end=`date +%s`
+        local pulse_end=$(date +%s)
 
         if [ "${pulse_end}" -ge "${pulse_start}" ]; then
             local delta_time=$((pulse_end-pulse_start))
@@ -279,36 +275,38 @@ loop() {
     return 0
 }
 
-resolve_txs() {
-    handle_state() {
-        local state="${1}"
-        local command=${2}""
+handle_parallel_state() {
+    # Since this function could modify the CHEAP_ERRORS global variable we must
+    # not call this function from a subshell.
+    local state="${1}"
+    local command=${2}""
 
-        if [ "${state}" -ge "1" ]; then
-            ((CHEAP_ERRORS++))
-            if [ "${state}" -eq "101" ]; then
-                alert "More than 100 jobs failed."
-            else
-                if [ "${state}" -le "100" ]; then
-                    if [ "${state}" -eq "1" ]; then
-                        alert "1 job failed."
-                    else
-                        alert "${state} jobs failed."
-                    fi
+    if [ "${state}" -ge "1" ]; then
+        ((CHEAP_ERRORS++))
+        if [ "${state}" -eq "101" ]; then
+            alert "More than 100 jobs failed."
+        else
+            if [ "${state}" -le "100" ]; then
+                if [ "${state}" -eq "1" ]; then
+                    alert "1 job failed."
                 else
-                    alert "Other error from parallel (${command})."
+                    alert "${state} jobs failed."
                 fi
+            else
+                alert "Other error from parallel (${command})."
             fi
         fi
+    fi
 
-        return 0
-    }
+    return 0
+}
 
+get_rawtxs() {
     # Since this function could modify the CHEAP_ERRORS global variable via the
-    # handle_state function, we must not call this function from a subshell. For
-    # that reason, we use the RESOLVED_TXS global variable where we store
-    # the result of this function.
-    RESOLVED_TXS=""
+    # handle_parallel_state function, we must not call this function from a
+    # subshell. For that reason, we use the RAWTXS global variable where
+    # we store the result of this function.
+    RAWTXS=""
 
     local buf="${1}"
     local prevbuf=""
@@ -340,13 +338,13 @@ resolve_txs() {
         cli_state=$?
     fi
 
-    handle_state "${cli_state}" "${cli_cmd}"
+    handle_parallel_state "${cli_state}" "${cli_cmd}"
 
     if [ -z "${buf}" ] ; then
         return 0
     fi
 
-    RESOLVED_TXS="${buf}"
+    RAWTXS="${buf}"
     return 0
 }
 
@@ -387,16 +385,19 @@ step() {
                 ((OTHER_ERRORS++))
                 alert "Call script returned nothing."
             else
-                local result=`printf "%s" "${response}" | jq -r -M .result`
-                local rpm=`printf "%s" "${response}" | jq -r -M .api_usage.rpm`
-                local max_rpm=`printf "%s" "${response}" | jq -r -M .api_usage.max_rpm`
+                local result=$(printf "%s" "${response}" | jq -r -M .result)
+                local rpm=$(printf "%s" "${response}" | jq -r -M .api_usage.rpm)
+                local max_rpm=$(
+                    printf "%s" "${response}" | jq -r -M .api_usage.max_rpm
+                )
 
                 if [ "${result}" == "SUCCESS" ]; then
                     news=$(
                         printf "%s" "${response}" | jq -r -M '.txs[] | .txid'
                     )
 
-                    local news_count=`echo -n "${news}" | grep -c '^'`
+                    local news_count=$(echo -n "${news}" | grep -c '^')
+
                     if [ "${news_count}" -ge "1" ] ; then
                         local plural=" is"
                         if [ "${news_count}" -gt "1" ]; then
@@ -435,8 +436,9 @@ step() {
 
                 ((rpm+=10))
                 if [ "${rpm}" -ge "${max_rpm}" ]; then
-                    local msg="API usage is reaching its hard limit of ${max_rpm} RPM, "
-                    msg+="throttling!"
+                    local msg=""
+                    msg+="API usage is reaching its hard limit of ${max_rpm} "
+                    msg+="RPM, throttling!"
                     log "${msg}"
                     sleep 60
                 fi
@@ -454,61 +456,64 @@ step() {
             mv ${NEWSFILE} ${OLDSFILE} && \
             mv ${TEMPFILE} ${NEWSFILE}
 
-            newscount=`echo -n "${news}" | grep -c '^'`
+            newscount=$(echo -n "${news}" | grep -c '^')
         fi
 
-        local bufsz=`echo -n "${TXBUF}" | grep -c '^'`
+        local bufsz=$(echo -n "${TXBUF}" | grep -c '^')
+
         if [ "${bufsz}" -ge "1" ]; then
             if [ "${newscount}" -ge "1" ]; then
-                news=`printf "%s\n%s" "${TXBUF}" "${news}"`
+                news=$(printf "%s\n%s" "${TXBUF}" "${news}")
             else
                 news="${TXBUF}"
             fi
 
             TXBUF=""
-            newscount=`echo -n "${news}" | grep -c '^'`
+            newscount=$(echo -n "${news}" | grep -c '^')
         fi
 
         if [ "${newscount}" -gt "${txs_per_query}" ]; then
             local skip=$((newscount-txs_per_query))
-            TXBUF=`printf "%s" "${news}" | tail "-${skip}"`
-            news=`printf "%s" "${news}" | head "-${txs_per_query}"`
-            newscount=`echo -n "${news}" | grep -c '^'`
+            TXBUF=$(printf "%s" "${news}" | tail "-${skip}")
+            news=$(printf "%s" "${news}" | head "-${txs_per_query}")
+            newscount=$(echo -n "${news}" | grep -c '^')
         fi
 
         if [ "$newscount" -ge "1" ]; then
             if [ "$newscount" -gt "1" ]; then
-                local line_queue=`echo -n "${TXBUF}" | grep -c '^'`
+                local line_queue=$(echo -n "${TXBUF}" | grep -c '^')
                 if [ "${line_queue}" -ge "1" ]; then
-                    log "Resolving ${newscount} TXs (${line_queue} in queue)."
+                    log "Getting ${newscount} raw TXs (${line_queue} in queue)."
                 else
-                    log "Resolving ${newscount} TXs."
+                    log "Getting ${newscount} raw TXs."
                 fi
             else
-                local txhash=`printf "%s" "${news}" | tr -d '\n'`
-                log "Resolving TX ${txhash}."
+                local txhash=$(printf "%s" "${news}" | tr -d '\n')
+                log "Getting the hex string of TX ${txhash}."
             fi
 
             local resolving_start=$SECONDS
 
-            resolve_txs "${news}" # Subshell must be avoided here.
-            local rawtxs="${RESOLVED_TXS}"
+            get_rawtxs "${news}" # Subshell must be avoided here.
+            local rawtxs="${RAWTXS}"
 
             local resolving_time=$(( SECONDS - resolving_start ))
 
-            if [ "${resolving_time}" -gt "1" ]; then
-                log "Resolving took ${resolving_time} seconds."
+            rawtx_count=$(echo -n "${rawtxs}" | grep -c '^')
+            local rawtx_count_plural=""
+            if [ "${rawtx_count}" -gt "1" ]; then
+                rawtx_count_plural="s"
             fi
 
-            rawtx_count=`echo -n "${rawtxs}" | grep -c '^'`
+            if [ "${resolving_time}" -gt "1" ]; then
+                local logstr=""
+                logstr+="Got ${rawtx_count} raw TX${rawtx_count_plural} in "
+                logstr+="${resolving_time} seconds."
+                log "${logstr}"
+            fi
 
             if [ "${rawtx_count}" -ge "1" ]; then
-                local plural=""
-                if [ "${rawtx_count}" -gt "1" ]; then
-                    plural="s"
-                fi
-
-                log "Uploading ${rawtx_count} TX${plural}."
+                log "Uploading ${rawtx_count} TX${rawtx_count_plural}."
 
                 CACHE="${rawtxs}"
             fi
@@ -551,25 +556,11 @@ step() {
         curl_state=$?
     fi
 
-    if [ "${curl_state}" -ge "1" ]; then
-        ((CHEAP_ERRORS++))
-        if [ "${curl_state}" -eq "101" ]; then
-            alert "More than 100 jobs failed."
-        else
-            if [ "${curl_state}" -le "100" ]; then
-                if [ "${curl_state}" -eq "1" ]; then
-                    alert "1 job failed."
-                else
-                    alert "${curl_state} jobs failed."
-                fi
-            else
-                alert "Other error from parallel (${curl_cmd})."
-            fi
-        fi
-    fi
+    handle_parallel_state "${curl_state}" "${curl_cmd}"
 
-    local upload_count=`echo -n "${curl_out}" | grep -c '^'`
+    local upload_count=$(echo -n "${curl_out}" | grep -c '^')
     local plural=""
+
     if [ "${rawtx_count}" -gt "1" ]; then
         plural="s"
     fi
