@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ################################################################################
-# Example usage: ./decoder.sh config.json (TX hash)                            #
+# Example usage: ./courier.sh config.json (TX hash)                            #
 ################################################################################
 CONF="$1"                                                                      #
 TXID="$2"                                                                      #
@@ -11,21 +11,19 @@ GUID=""                                                                        #
 TOKN=""                                                                        #
 NONC=""                                                                        #
 ADDR=""                                                                        #
+RWTX=""                                                                        #
 NAME=""                                                                        #
 CLIF=""                                                                        #
-CGDF=""                                                                        #
 DDIR=""                                                                        #
 ################################################################################
 DATE_FORMAT="%Y-%m-%d %H:%M:%S"
 CANARY="::"
 WORKERS="16"
-BESTBLOCK=""
 TXS_PER_QUERY=0
 MAX_DATA_SIZE=0
 NONCE_ERRORS=0
 OTHER_ERRORS=0
 CHEAP_ERRORS=0
-CACHE_ERRORS=0
 PULSE_PERIOD=30
 CACHE=""
 TXBUF=""
@@ -53,10 +51,10 @@ alert() {
     printf "${format}" "$now" "$1" >/dev/stderr
 }
 
-LOCKFILE=/tmp/7Ngp0oRoKc7QHIqC
-NEWSFILE=/tmp/Y9Jx4Gvab0MYNjH0
-OLDSFILE=/tmp/dVDvED7qzF0wHFp1
-TEMPFILE=/tmp/g2xEyKg2hqoDuCii
+LOCKFILE=/tmp/GIGWiaTQ1psAeeI5
+NEWSFILE=/tmp/A5vP9NQz4nxf187o
+OLDSFILE=/tmp/PxmriBfE7uuA6jbN
+TEMPFILE=/tmp/IG4qo2b3L0wUSWw6
 touch $LOCKFILE
 read LAST_PID < $LOCKFILE
 
@@ -101,7 +99,7 @@ config() {
         INIT=`printf "%s" "${cfg}" | jq -r -M '.["init.sh"] | select (.!=null)'`
         CALL=`printf "%s" "${cfg}" | jq -r -M '.["call.sh"] | select (.!=null)'`
         ADDR=`printf "%s" "${cfg}" | jq -r -M .api`
-        CGDF=`printf "%s" "${cfg}" | jq -r -M .cgd`
+        RWTX=`printf "%s" "${cfg}" | jq -r -M .rawtx`
         CLIF=`printf "%s" "${cfg}" | jq -r -M '.["bitcoin-cli"]'`
         DDIR=`printf "%s" "${cfg}" | jq -r -M '.["bitcoin-dat"]'`
 
@@ -132,8 +130,8 @@ config() {
         exit
     fi
 
-    if [ ! $(which "${CGDF}" 2>/dev/null ) ] ; then
-        log "Program not found: ${CGDF}"
+    if [ -z "$RWTX" ] ; then
+        log "Raw TX address not provided, exiting."
         exit
     fi
 
@@ -142,36 +140,11 @@ config() {
         exit
     fi
 
-    if [ ! $(which "djpeg" 2>/dev/null ) ] ; then
-        log "Program not found: djpeg"
-        exit
-    fi
-
     return 0
 }
 ################################################################################
 config
 ################################################################################
-compile_graffiti_json() {
-    local jq_cmd="jq -r -M -c '"
-    jq_cmd+=".files=([.files[] | {fsize, hash, location, mimetype, offset, "
-    jq_cmd+="error} | .[\"type\"] = .mimetype | del(.mimetype)] | map_values( "
-    jq_cmd+=". + {\"fsize\": .fsize|tostring, \"offset\": .offset|tostring} ) |"
-    jq_cmd+=" [.[] | select(.error == null) | del(.error) ]) | {files, txid, "
-    jq_cmd+="size, time} | .[\"txsize\"] = (.size|tostring) | del(.size) | "
-    jq_cmd+=".[\"txtime\"] = (.time|tostring) | del(.time) | ( select(.txtime "
-    jq_cmd+="== \"null\") |= del(.txtime) )"
-    jq_cmd+="'"
-
-    local jq_out=$(
-        parallel --pipe -N 1 --timeout 10 -P "${WORKERS}" "${jq_cmd}" <<< "${1}"
-    )
-
-    local jq_arg="map( {(.txid|tostring): del(.txid) } ) | add"
-
-    jq -M -r -s -c "${jq_arg}" <<< "${jq_out}"
-    return 0
-}
 
 init() {
     local wdir=`pwd`
@@ -185,15 +158,19 @@ init() {
     TOKN=$(jq -r -M .token   <<< "${config}" | xxd -r -p | xxd -p | tr -d '\n')
     NONC=$(jq -r -M .nonce   <<< "${config}" | xxd -r -p | xxd -p | tr -d '\n')
     ADDR=$(jq -r -M .api     <<< "${config}")
+    # Do not try to read custom configuration variables from here.
+    # The init script only forwards a specific set of configuration parameters.
 
     if [ ! -z "${SKEY}" ] \
     && [ ! -z "${SEED}" ] \
     && [ ! -z "${TOKN}" ] \
     && [ ! -z "${ADDR}" ] \
+    && [ ! -z "${RWTX}" ] \
     && [ ! -z "${NONC}" ] \
     && [ ! -z "${GUID}" ] ; then
         log "Session has been initialized successfully."
         log "API URL: ${ADDR}"
+        log "Raw TX URL: ${RWTX}"
     else
         alert "Failed to initialize the session, exiting."
         exit
@@ -256,7 +233,6 @@ loop() {
         local pulse_start=`date +%s`
 
         if [ $(which "${CLIF}" 2>/dev/null ) ] \
-        && [ $(which "${CGDF}" 2>/dev/null ) ] \
         && [ $(which sort)                   ] \
         && [ $(which uniq)                   ] \
         && [ $(which echo)                   ] \
@@ -291,7 +267,7 @@ loop() {
                 fi
             elif [ "${delta_time}" -gt "${PULSE_PERIOD}" ]; then
                 local lost_time=$((delta_time-PULSE_PERIOD))
-                alert "Decoder falls behind schedule by ${lost_time}s."
+                alert "Courier falls behind schedule by ${lost_time}s."
             fi
         else
             ((OTHER_ERRORS++))
@@ -303,7 +279,7 @@ loop() {
     return 0
 }
 
-decode_graffiti() {
+resolve_txs() {
     handle_state() {
         local state="${1}"
         local command=${2}""
@@ -330,9 +306,9 @@ decode_graffiti() {
 
     # Since this function could modify the CHEAP_ERRORS global variable via the
     # handle_state function, we must not call this function from a subshell. For
-    # that reason, we use the DECODED_GRAFFITI global variable where we store
+    # that reason, we use the RESOLVED_TXS global variable where we store
     # the result of this function.
-    DECODED_GRAFFITI=""
+    RESOLVED_TXS=""
 
     local buf="${1}"
     local prevbuf=""
@@ -370,99 +346,104 @@ decode_graffiti() {
         return 0
     fi
 
-    local cgd_cmd="${CGDF} --unicode-len 60 -M image/"
-    local cgd_state
-    prevbuf="${buf}"
-    buf=$(
-        parallel          \
-        --halt now,fail=1 \
-        --pipe            \
-        -N 1              \
-        --timeout 9       \
-        -P ${WORKERS}     \
-        "${cgd_cmd}" <<< "${buf}"
-    )
-    cgd_state=$?
-
-    if [ "${cgd_state}" -ge "1" ]; then
-        buf="${prevbuf}"
-        buf=$(
-            parallel      \
-            --pipe        \
-            -N 1          \
-            --timeout 9   \
-            -P ${WORKERS} \
-            "${cgd_cmd}" <<< "${buf}" 2>/dev/null
-        )
-        cgd_state=$?
-    fi
-
-    handle_state "${cgd_state}" "${cgd_cmd}"
-
-    if [ -z "${buf}" ] ; then
-        return 0
-    fi
-
-    local jq2_cmd="jq -r -M -c 'select(.graffiti == true)'"
-    local jq2_state
-    prevbuf="${buf}"
-    buf=$(
-        parallel          \
-        --halt now,fail=1 \
-        --pipe            \
-        -N 1              \
-        --timeout 9       \
-        -P ${WORKERS}     \
-        "${jq2_cmd}" <<< "${buf}"
-    )
-    jq2_state=$?
-
-    if [ "${jq2_state}" -ge "1" ]; then
-        buf="${prevbuf}"
-        buf=$(
-            parallel      \
-            --pipe        \
-            -N 1          \
-            --timeout 9   \
-            -P ${WORKERS} \
-            "${jq2_cmd}" <<< "${buf}" 2>/dev/null
-        )
-        jq2_state=$?
-    fi
-
-    handle_state "${jq2_state}" "${jq2_cmd}"
-
-    DECODED_GRAFFITI="${buf}"
+    RESOLVED_TXS="${buf}"
     return 0
 }
 
 step() {
     local txs_per_query="${1}"
+    local rawtx_count="0"
 
     if [ -z "${CACHE}" ] ; then
         local newscount="0"
         local news=""
 
         if [ -z "${TXBUF}" ] ; then
-            local bestblock=`${CLIF} ${DDIR} getbestblockhash`
-            if [ "${bestblock}" != "${BESTBLOCK}" ]; then
-                log "Loading block ${bestblock}."
-                BESTBLOCK="${bestblock}"
-            fi
-
-            local pool=`${CLIF} ${DDIR} getrawmempool | jq -M -r .[]`
-            news=$(
-                ${CLIF} ${DDIR} getblock ${bestblock} |
-                jq -M -r '.tx | .[]'
+            NONC=$(
+                printf "%s%s" "${NONC}" "${SEED}" |
+                xxd -r -p                         |
+                sha256sum                         |
+                head -c 64
             )
 
-            local nfmt="%s%s\n"
-            if [[ ! -z "${pool}" ]]; then
-                nfmt="%s\n%s\n"
+            local datafmt=""
+            datafmt+="{\"guid\":\"%s\",\"nonce\":\"%s\",\"count\":\"%s\","
+            datafmt+="\"cache\":\"0\"}"
+            local data=$(
+                printf "${datafmt}" "${GUID}" "${NONC}" "${txs_per_query}" |
+                xxd -p                                                     |
+                tr -d '\n'
+            )
+
+            local state
+            local response
+            response=$("${CALL}" "${CONF}" "get_txs" <<< "${data}")
+            state=$?
+
+            if [ "${state}" -ge "1" ] ; then
+                ((OTHER_ERRORS++))
+                alert "${CALL}: Exit code ${state}."
+            elif [ -z "${response}" ] ; then
+                ((OTHER_ERRORS++))
+                alert "Call script returned nothing."
+            else
+                local result=`printf "%s" "${response}" | jq -r -M .result`
+                local rpm=`printf "%s" "${response}" | jq -r -M .api_usage.rpm`
+                local max_rpm=`printf "%s" "${response}" | jq -r -M .api_usage.max_rpm`
+
+                if [ "${result}" == "SUCCESS" ]; then
+                    news=$(
+                        printf "%s" "${response}" | jq -r -M '.txs[] | .txid'
+                    )
+
+                    local news_count=`echo -n "${news}" | grep -c '^'`
+                    if [ "${news_count}" -ge "1" ] ; then
+                        local plural=" is"
+                        if [ "${news_count}" -gt "1" ]; then
+                            plural="s are"
+                        fi
+
+                        local logmsg=""
+                        logmsg+="At least ${news_count} more TX${plural} "
+                        logmsg+="queued for caching (RPM: ${rpm}/${max_rpm})."
+
+                        log "${logmsg}"
+                    fi
+                elif [ "${result}" == "FAILURE" ]; then
+                    printf "%s" "${response}" | jq .error >/dev/stderr
+                    local error_code=$(
+                        jq -r -M .error <<< "${response}" | jq -r -M .code
+                    )
+
+                    if [ "${error_code}" == "ERROR_NONCE" ]; then
+                        ((NONCE_ERRORS++))
+                        return 1
+                    else
+                        local error_message=$(
+                            jq -r -M '.error | .message' <<< "${response}"
+                        )
+                        alert "Failed to download TXs: ${error_message}"
+                    fi
+                else
+                    # Invalid output from the call script.
+                    alert "Call script returned invalid output:"
+                    printf "%s\n" "${response}" >/dev/stderr
+
+                    ((OTHER_ERRORS++))
+                    return 1
+                fi
+
+                ((rpm+=10))
+                if [ "${rpm}" -ge "${max_rpm}" ]; then
+                    local msg="API usage is reaching its hard limit of ${max_rpm} RPM, "
+                    msg+="throttling!"
+                    log "${msg}"
+                    sleep 60
+                fi
             fi
 
             news=$(
-                printf "${nfmt}" "${pool}" "${news}" |
+                printf "%s\n" "${news}" |
                 sort                                 |
                 uniq                                 |
                 tee ${NEWSFILE}                      |
@@ -499,69 +480,37 @@ step() {
             if [ "$newscount" -gt "1" ]; then
                 local line_queue=`echo -n "${TXBUF}" | grep -c '^'`
                 if [ "${line_queue}" -ge "1" ]; then
-                    log "Decoding ${newscount} TXs (${line_queue} in queue)."
+                    log "Resolving ${newscount} TXs (${line_queue} in queue)."
                 else
-                    log "Decoding ${newscount} TXs."
+                    log "Resolving ${newscount} TXs."
                 fi
             else
                 local txhash=`printf "%s" "${news}" | tr -d '\n'`
-                log "Decoding TX ${txhash}."
+                log "Resolving TX ${txhash}."
             fi
 
-            local decoding_start=$SECONDS
+            local resolving_start=$SECONDS
 
-            decode_graffiti "${news}" # Subshell must be avoided here.
-            local graffiti="${DECODED_GRAFFITI}"
+            resolve_txs "${news}" # Subshell must be avoided here.
+            local rawtxs="${RESOLVED_TXS}"
 
-            local decoding_time=$(( SECONDS - decoding_start ))
+            local resolving_time=$(( SECONDS - resolving_start ))
 
-            if [ "${decoding_time}" -gt "1" ]; then
-                log "Decoding took ${decoding_time} seconds."
+            if [ "${resolving_time}" -gt "1" ]; then
+                log "Resolving took ${resolving_time} seconds."
             fi
 
-            local msgcount_before=`echo -n "${graffiti}" | grep -c '^'`
+            rawtx_count=`echo -n "${rawtxs}" | grep -c '^'`
 
-            if [ "${msgcount_before}" -ge "1" ]; then
+            if [ "${rawtx_count}" -ge "1" ]; then
                 local plural=""
-                if [ "${msgcount_before}" -gt "1" ]; then
+                if [ "${rawtx_count}" -gt "1" ]; then
                     plural="s"
                 fi
-                log "Detected graffiti from ${msgcount_before} TX${plural}."
 
-                local jqcmd="jq -C '.files[]? |= del(.content)'"
+                log "Uploading ${rawtx_count} TX${plural}."
 
-                parallel --pipe -N 1 -P "${WORKERS}" "${jqcmd}" <<<"${graffiti}"
-
-                local graffiti_buffer=$(compile_graffiti_json "${graffiti}")
-
-                local msgcount_after=$(
-                    jq -r -M -c length <<< "${graffiti_buffer}"
-                )
-
-                if [ "${msgcount_before}" != "${msgcount_after}" ]; then
-                    ((OTHER_ERRORS++))
-                    local before="${msgcount_before}"
-                    local after="${msgcount_after}"
-                    alert "Error, ${after} of ${before} TXs compiled!"
-                    printf "%s\n" "${graffiti_buffer}"
-                fi
-
-                local tcount=`printf "%s" "${graffiti_buffer}" | jq length`
-                local fcount=$(
-                    printf "%s" "${graffiti_buffer}" |
-                    jq -r -M '.[].files'             |
-                    jq -r -M -s add                  |
-                    jq length
-                )
-
-                if [ "${tcount}" -eq "1" ]; then
-                    log "Uploading ${fcount} graffiti from ${tcount} TX."
-                else
-                    log "Uploading ${fcount} graffiti from ${tcount} TXs."
-                fi
-
-                CACHE="${graffiti_buffer}"
-                #jq . >/dev/stderr <<< "${CACHE}"
+                CACHE="${rawtxs}"
             fi
         fi
     else
@@ -572,122 +521,66 @@ step() {
         return 0
     fi
 
-    local upload_txs=$(
-        jq -r -M -c 'keys | .[]' <<< "${CACHE}"
+    local curl_cmd=""
+    curl_cmd+="xxd -r -p | "
+    curl_cmd+="curl -s --show-error -f -X POST --data-binary @- ${RWTX}"
+
+    local curl_state
+    local curl_out
+
+    curl_out=$(
+        parallel          \
+        --halt now,fail=1 \
+        --timeout 30      \
+        --pipe            \
+        -N 1              \
+        -P ${WORKERS}     \
+        "${curl_cmd}" <<< "${CACHE}"
     )
+    curl_state=$?
 
-    local old_nonce="${NONC}"
-    NONC=$(
-        printf "%s%s" "${NONC}" "${SEED}" | xxd -r -p | sha256sum | head -c 64
-    )
-
-    local datafmt="{\"guid\":\"%s\",\"nonce\":\"%s\",\"graffiti\":%s}"
-    local data=$(
-        printf "${datafmt}" "${GUID}" "${NONC}" "${CACHE}" | xxd -p | tr -d '\n'
-    )
-
-    local datasz=$(( ${#data} / 2 ))
-
-    if [ "${datasz}" -gt "${MAX_DATA_SIZE}" ]; then
-        alert "Upload of ${datasz} bytes exceeds the limit of ${MAX_DATA_SIZE}".
-
-        local upload_tx_count=`echo -n "${upload_txs}" | grep -c '^'`
-
-        if [ "${upload_tx_count}" -gt "1" ]; then
-            local txbufsz=`echo -n "${TXBUF}" | grep -c '^'`
-
-            if [ "${txbufsz}" -ge "1" ]; then
-                TXBUF=$(printf "%s\n%s" "${upload_txs}" "${TXBUF}")
-            else
-                TXBUF="${upload_txs}"
-            fi
-
-            CACHE=""
-            txs_per_query=$(( ${upload_tx_count} / 2 ))
-
-            # We must revert the NONC because this upload is forbidden.
-            NONC="${old_nonce}"
-
-            if ! step "${txs_per_query}"  ; then
-                return 1
-            fi
-
-            return 0
-        fi
+    if [ "${curl_state}" -ge "1" ]; then
+        curl_out=$(
+            parallel      \
+            --timeout 30  \
+            --pipe        \
+            -N 1          \
+            -P ${WORKERS} \
+            "${curl_cmd}" <<< "${CACHE}" 2>/dev/null
+        )
+        curl_state=$?
     fi
 
-    local state
-    local response
-    response=$("${CALL}" "${CONF}" "set_txs" <<< "${data}")
-    state=$?
-
-    if [ "${state}" -ge "1" ] ; then
-        ((OTHER_ERRORS++))
-        alert "${CALL}: Exit code ${state}, dumping the cache."
-        printf "%s\n" "${CACHE}" >/dev/stderr
-
-        CACHE=""
-    elif [ -z "${response}" ] ; then
-        ((OTHER_ERRORS++))
-        alert "Call script returned nothing."
-        alert "Dumping the cache and dropping it."
-        printf "%s\n" "${CACHE}" >/dev/stderr
-        CACHE=""
-    else
-        local result=`printf "%s" "${response}" | jq -r -M .result`
-        local rpm=`printf "%s" "${response}" | jq -r -M .api_usage.rpm`
-        local max_rpm=`printf "%s" "${response}" | jq -r -M .api_usage.max_rpm`
-
-        if [ "${result}" == "SUCCESS" ]; then
-            log "Upload completed successfully (RPM: ${rpm}/${max_rpm})."
-            CACHE=""
-        elif [ "${result}" == "FAILURE" ]; then
-            printf "%s" "${response}" | jq .error >/dev/stderr
-            local error_code=$(
-                jq -r -M .error <<< "${response}" | jq -r -M .code
-            )
-
-            if [ "${error_code}" == "ERROR_NONCE" ]; then
-                ((NONCE_ERRORS++))
-                return 1
-            else
-                local error_message=$(
-                    jq -r -M '.error | .message' <<< "${response}"
-                )
-                alert "Failed to upload the cache: ${error_message}"
-                ((CACHE_ERRORS++))
-
-                if [ "${CACHE_ERRORS}" -ge "5" ]; then
-                    alert "Too many failed attempts when uploading the cache."
-                    alert "Dumping the cache and dropping it."
-                    printf "%s\n" "${CACHE}" >/dev/stderr
-                    CACHE=""
-                    CACHE_ERRORS=0
-                    ((OTHER_ERRORS++))
-                    return 1
-                fi
-            fi
+    if [ "${curl_state}" -ge "1" ]; then
+        ((CHEAP_ERRORS++))
+        if [ "${curl_state}" -eq "101" ]; then
+            alert "More than 100 jobs failed."
         else
-            # Invalid output from the call script.
-            alert "Call script returned invalid output:"
-            printf "%s\n" "${response}" >/dev/stderr
-
-            ((OTHER_ERRORS++))
-            alert "Dumping the cache."
-            printf "%s\n" "${CACHE}" >/dev/stderr
-
-            CACHE=""
-            return 1
-        fi
-
-        ((rpm+=10))
-        if [ "${rpm}" -ge "${max_rpm}" ]; then
-            local msg="API usage is reaching its hard limit of ${max_rpm} RPM, "
-            msg+="throttling!"
-            log "${msg}"
-            sleep 60
+            if [ "${curl_state}" -le "100" ]; then
+                if [ "${curl_state}" -eq "1" ]; then
+                    alert "1 job failed."
+                else
+                    alert "${curl_state} jobs failed."
+                fi
+            else
+                alert "Other error from parallel (${curl_cmd})."
+            fi
         fi
     fi
+
+    local upload_count=`echo -n "${curl_out}" | grep -c '^'`
+    local plural=""
+    if [ "${rawtx_count}" -gt "1" ]; then
+        plural="s"
+    fi
+
+    if [ "${upload_count}" == "${rawtx_count}" ]; then
+        log "Uploaded ${upload_count} of ${rawtx_count} TX${plural}."
+    else
+        alert "Uploaded ${upload_count} of ${rawtx_count} TX${plural}."
+    fi
+
+    CACHE=""
 
     return 0
 }

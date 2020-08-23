@@ -77,5 +77,5 @@ fwrite($fp, $postdata);
 fclose($fp);
 
 http_response_code(201);
-print $fname;
+print $fname."\n";
 ?>
