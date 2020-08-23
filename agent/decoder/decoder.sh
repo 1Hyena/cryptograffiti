@@ -37,7 +37,7 @@ log() {
         CANARY="\033[0;31m::\033[0m"
     fi
 
-    local now=`date +"${DATE_FORMAT}"`
+    local now=$(date +"${DATE_FORMAT}")
     printf "\033[1;36m%s\033[0m ${CANARY} %s\n" "$now" "$1" >/dev/stderr
 }
 
@@ -48,7 +48,7 @@ alert() {
         CANARY="\033[0;31m::\033[0m"
     fi
 
-    local now=`date +"${DATE_FORMAT}"`
+    local now=$(date +"${DATE_FORMAT}")
     local format="\033[1;36m%s\033[0m ${CANARY} \033[1;33m%s\033[0m\n"
     printf "${format}" "$now" "$1" >/dev/stderr
 }
@@ -97,13 +97,17 @@ config() {
 
     if [[ -r ${CONF} ]] ; then
         local cfg=$(<"$CONF")
-        NAME=`printf "%s" "${cfg}" | jq -r -M '.title | select (.!=null)'`
-        INIT=`printf "%s" "${cfg}" | jq -r -M '.["init.sh"] | select (.!=null)'`
-        CALL=`printf "%s" "${cfg}" | jq -r -M '.["call.sh"] | select (.!=null)'`
-        ADDR=`printf "%s" "${cfg}" | jq -r -M .api`
-        CGDF=`printf "%s" "${cfg}" | jq -r -M .cgd`
-        CLIF=`printf "%s" "${cfg}" | jq -r -M '.["bitcoin-cli"]'`
-        DDIR=`printf "%s" "${cfg}" | jq -r -M '.["bitcoin-dat"]'`
+        NAME=$(printf "%s" "${cfg}" | jq -r -M '.title | select (.!=null)')
+        INIT=$(
+            printf "%s" "${cfg}" | jq -r -M '.["init.sh"] | select (.!=null)'
+        )
+        CALL=$(
+            printf "%s" "${cfg}" | jq -r -M '.["call.sh"] | select (.!=null)'
+        )
+        ADDR=$(printf "%s" "${cfg}" | jq -r -M .api)
+        CGDF=$(printf "%s" "${cfg}" | jq -r -M .cgd)
+        CLIF=$(printf "%s" "${cfg}" | jq -r -M '.["bitcoin-cli"]')
+        DDIR=$(printf "%s" "${cfg}" | jq -r -M '.["bitcoin-dat"]')
 
         if [ ! -z "${DDIR}" ] ; then
             DDIR="-datadir=${DDIR}"
@@ -174,10 +178,10 @@ compile_graffiti_json() {
 }
 
 init() {
-    local wdir=`pwd`
+    local wdir=$(pwd)
     log "${wdir}"
     log "${INIT} ${CONF}"
-    local config=`"${INIT}" "${CONF}"`
+    local config=$("${INIT}" "${CONF}")
 
     SKEY=$(jq -r -M .sec_key <<< "${config}" | xxd -r -p | xxd -p | tr -d '\n')
     SEED=$(jq -r -M .seed    <<< "${config}" | xxd -r -p | xxd -p | tr -d '\n')
@@ -209,9 +213,9 @@ init() {
         tr -d '\n'
     )
 
-    local response=`"${CALL}" "${CONF}" "get_constants" "${data}"`
+    local response=$("${CALL}" "${CONF}" "get_constants" "${data}")
+    local result=$(printf "%s" "${response}" | jq -r -M .result)
 
-    local result=`printf "%s" "${response}" | jq -r -M .result`
     if [ "${result}" == "SUCCESS" ]; then
         printf "%s" "${response}" | jq .constants
 
@@ -253,7 +257,7 @@ init() {
 loop() {
     while :
     do
-        local pulse_start=`date +%s`
+        local pulse_start=$(date +%s)
 
         if [ $(which "${CLIF}" 2>/dev/null ) ] \
         && [ $(which "${CGDF}" 2>/dev/null ) ] \
@@ -276,7 +280,7 @@ loop() {
             exit
         fi
 
-        local pulse_end=`date +%s`
+        local pulse_end=$(date +%s)
 
         if [ "${pulse_end}" -ge "${pulse_start}" ]; then
             local delta_time=$((pulse_end-pulse_start))
@@ -444,13 +448,14 @@ step() {
         local news=""
 
         if [ -z "${TXBUF}" ] ; then
-            local bestblock=`${CLIF} ${DDIR} getbestblockhash`
+            local bestblock=$(${CLIF} ${DDIR} getbestblockhash)
             if [ "${bestblock}" != "${BESTBLOCK}" ]; then
                 log "Loading block ${bestblock}."
                 BESTBLOCK="${bestblock}"
             fi
 
-            local pool=`${CLIF} ${DDIR} getrawmempool | jq -M -r .[]`
+            local pool=$(${CLIF} ${DDIR} getrawmempool | jq -M -r .[])
+
             news=$(
                 ${CLIF} ${DDIR} getblock ${bestblock} |
                 jq -M -r '.tx | .[]'
@@ -473,38 +478,38 @@ step() {
             mv ${NEWSFILE} ${OLDSFILE} && \
             mv ${TEMPFILE} ${NEWSFILE}
 
-            newscount=`echo -n "${news}" | grep -c '^'`
+            newscount=$(echo -n "${news}" | grep -c '^')
         fi
 
-        local bufsz=`echo -n "${TXBUF}" | grep -c '^'`
+        local bufsz=$(echo -n "${TXBUF}" | grep -c '^')
         if [ "${bufsz}" -ge "1" ]; then
             if [ "${newscount}" -ge "1" ]; then
-                news=`printf "%s\n%s" "${TXBUF}" "${news}"`
+                news=$(printf "%s\n%s" "${TXBUF}" "${news}")
             else
                 news="${TXBUF}"
             fi
 
             TXBUF=""
-            newscount=`echo -n "${news}" | grep -c '^'`
+            newscount=$(echo -n "${news}" | grep -c '^')
         fi
 
         if [ "${newscount}" -gt "${txs_per_query}" ]; then
             local skip=$((newscount-txs_per_query))
-            TXBUF=`printf "%s" "${news}" | tail "-${skip}"`
-            news=`printf "%s" "${news}" | head "-${txs_per_query}"`
-            newscount=`echo -n "${news}" | grep -c '^'`
+            TXBUF=$(printf "%s" "${news}" | tail "-${skip}")
+            news=$(printf "%s" "${news}" | head "-${txs_per_query}")
+            newscount=$(echo -n "${news}" | grep -c '^')
         fi
 
         if [ "$newscount" -ge "1" ]; then
             if [ "$newscount" -gt "1" ]; then
-                local line_queue=`echo -n "${TXBUF}" | grep -c '^'`
+                local line_queue=$(echo -n "${TXBUF}" | grep -c '^')
                 if [ "${line_queue}" -ge "1" ]; then
                     log "Decoding ${newscount} TXs (${line_queue} in queue)."
                 else
                     log "Decoding ${newscount} TXs."
                 fi
             else
-                local txhash=`printf "%s" "${news}" | tr -d '\n'`
+                local txhash=$(printf "%s" "${news}" | tr -d '\n')
                 log "Decoding TX ${txhash}."
             fi
 
@@ -519,7 +524,7 @@ step() {
                 log "Decoding took ${decoding_time} seconds."
             fi
 
-            local msgcount_before=`echo -n "${graffiti}" | grep -c '^'`
+            local msgcount_before=$(echo -n "${graffiti}" | grep -c '^')
 
             if [ "${msgcount_before}" -ge "1" ]; then
                 local plural=""
@@ -546,7 +551,7 @@ step() {
                     printf "%s\n" "${graffiti_buffer}"
                 fi
 
-                local tcount=`printf "%s" "${graffiti_buffer}" | jq length`
+                local tcount=$(printf "%s" "${graffiti_buffer}" | jq length)
                 local fcount=$(
                     printf "%s" "${graffiti_buffer}" |
                     jq -r -M '.[].files'             |
@@ -561,7 +566,6 @@ step() {
                 fi
 
                 CACHE="${graffiti_buffer}"
-                #jq . >/dev/stderr <<< "${CACHE}"
             fi
         fi
     else
@@ -591,10 +595,10 @@ step() {
     if [ "${datasz}" -gt "${MAX_DATA_SIZE}" ]; then
         alert "Upload of ${datasz} bytes exceeds the limit of ${MAX_DATA_SIZE}".
 
-        local upload_tx_count=`echo -n "${upload_txs}" | grep -c '^'`
+        local upload_tx_count=$(echo -n "${upload_txs}" | grep -c '^')
 
         if [ "${upload_tx_count}" -gt "1" ]; then
-            local txbufsz=`echo -n "${TXBUF}" | grep -c '^'`
+            local txbufsz=$(echo -n "${TXBUF}" | grep -c '^')
 
             if [ "${txbufsz}" -ge "1" ]; then
                 TXBUF=$(printf "%s\n%s" "${upload_txs}" "${TXBUF}")
@@ -634,9 +638,9 @@ step() {
         printf "%s\n" "${CACHE}" >/dev/stderr
         CACHE=""
     else
-        local result=`printf "%s" "${response}" | jq -r -M .result`
-        local rpm=`printf "%s" "${response}" | jq -r -M .api_usage.rpm`
-        local max_rpm=`printf "%s" "${response}" | jq -r -M .api_usage.max_rpm`
+        local result=$(printf "%s" "${response}" | jq -r -M .result)
+        local rpm=$(printf "%s" "${response}" | jq -r -M .api_usage.rpm)
+        local max_rpm=$(printf "%s" "${response}" | jq -r -M .api_usage.max_rpm)
 
         if [ "${result}" == "SUCCESS" ]; then
             log "Upload completed successfully (RPM: ${rpm}/${max_rpm})."
@@ -682,7 +686,8 @@ step() {
 
         ((rpm+=10))
         if [ "${rpm}" -ge "${max_rpm}" ]; then
-            local msg="API usage is reaching its hard limit of ${max_rpm} RPM, "
+            local msg=""
+            msg+="API usage is reaching its hard limit of ${max_rpm} RPM, "
             msg+="throttling!"
             log "${msg}"
             sleep 60
