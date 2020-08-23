@@ -162,10 +162,12 @@ compile_graffiti_json() {
     jq_cmd+="error} | .[\"type\"] = .mimetype | del(.mimetype)] | map_values( "
     jq_cmd+=". + {\"fsize\": .fsize|tostring, \"offset\": .offset|tostring} ) |"
     jq_cmd+=" [.[] | select(.error == null) | del(.error) ]) | {files, txid, "
-    jq_cmd+="size, time} | .[\"txsize\"] = (.size|tostring) | del(.size) | "
-    jq_cmd+=".[\"txtime\"] = (.time|tostring) | del(.time) | ( select(.txtime "
-    jq_cmd+="== \"null\") |= del(.txtime) )"
-    jq_cmd+="'"
+    jq_cmd+="size, blocktime, blockheight} | .[\"txsize\"] = (.size|tostring) "
+    jq_cmd+="| del(.size) | .[\"txtime\"] = (.blocktime|tostring) | "
+    jq_cmd+="del(.blocktime) | .[\"txheight\"] = (.blockheight|tostring) | "
+    jq_cmd+="del(.blockheight) | ( select(.txtime == \"null\") |= "
+    jq_cmd+="del(.txtime) ) | ( select(.txheight == \"null\") |= "
+    jq_cmd+="del(.txheight) ) '"
 
     local jq_out=$(
         parallel --pipe -N 1 --timeout 10 -P "${WORKERS}" "${jq_cmd}" <<< "${1}"
@@ -351,7 +353,7 @@ decode_graffiti() {
     buf=$(
         parallel          \
         --halt now,fail=1 \
-        --timeout 30      \
+        --timeout 20      \
         -P ${WORKERS}     \
         "${cli_cmd}" <<< "${buf}"
     )
@@ -361,7 +363,7 @@ decode_graffiti() {
         buf="${prevbuf}"
         buf=$(
             parallel      \
-            --timeout 30  \
+            --timeout 20  \
             -P ${WORKERS} \
             "${cli_cmd}" <<< "${buf}" 2>/dev/null
         )
@@ -382,7 +384,7 @@ decode_graffiti() {
         --halt now,fail=1 \
         --pipe            \
         -N 1              \
-        --timeout 9       \
+        --timeout 10      \
         -P ${WORKERS}     \
         "${cgd_cmd}" <<< "${buf}"
     )
@@ -394,7 +396,7 @@ decode_graffiti() {
             parallel      \
             --pipe        \
             -N 1          \
-            --timeout 9   \
+            --timeout 10  \
             -P ${WORKERS} \
             "${cgd_cmd}" <<< "${buf}" 2>/dev/null
         )
@@ -415,7 +417,7 @@ decode_graffiti() {
         --halt now,fail=1 \
         --pipe            \
         -N 1              \
-        --timeout 9       \
+        --timeout 10      \
         -P ${WORKERS}     \
         "${jq2_cmd}" <<< "${buf}"
     )
@@ -427,7 +429,7 @@ decode_graffiti() {
             parallel      \
             --pipe        \
             -N 1          \
-            --timeout 9   \
+            --timeout 10  \
             -P ${WORKERS} \
             "${jq2_cmd}" <<< "${buf}" 2>/dev/null
         )
@@ -436,8 +438,163 @@ decode_graffiti() {
 
     handle_state "${jq2_state}" "${jq2_cmd}"
 
-    DECODED_GRAFFITI="${buf}"
+    local txids=$(jq -M -r -c -s '.[].txid' <<< "${buf}")
+
+    local extra=""
+
+    if [ ! -z "${txids}" ] ; then
+        local extra_cmd
+        local extra_state
+
+        extra_cmd="${CLIF} ${DDIR} getrawtransaction {} 1 "
+        extra=$(
+            parallel          \
+            --halt now,fail=1 \
+            --timeout 20      \
+            -P ${WORKERS}     \
+            "${extra_cmd}" <<< "${txids}"
+        )
+        extra_state=$?
+
+        if [ "${extra_state}" -ge "1" ]; then
+            extra=$(
+                parallel      \
+                --timeout 20  \
+                -P ${WORKERS} \
+                "${extra_cmd}" <<< "${txids}" 2>/dev/null
+            )
+            extra_state=$?
+        fi
+
+        handle_state "${extra_state}" "${extra_cmd}"
+
+        extra=$(jq -M -r -c '{txid, blocktime, blockheight}' <<< "${extra}")
+    fi
+
+    if [ -z "${extra}" ] ; then
+        DECODED_GRAFFITI="${buf}"
+    else
+        local jqarg=''
+        jqarg+='map( {(.txid|tostring): . } ) | '
+        jqarg+='reduce .[] as $item ({}; . * $item) | .[]'
+
+        DECODED_GRAFFITI=$(
+            printf "%s\n%s" "${buf}" "${extra}" | jq -M -r -s -c "${jqarg}"
+        )
+    fi
+
     return 0
+}
+
+get_volatile_txs() {
+    # Since this function could modify global variables, we must not call this
+    # function from a subshell. For that reason, we set global variables where
+    # store the return values of this function.
+    if [ -z "${VOLATILE_TXS_FROM_BLOCKHEIGHT}" ] ; then
+        return 0
+    fi
+
+    if [ -z "${VOLATILE_TXS_FROM_NR}" ] ; then
+        VOLATILE_TXS_FROM_NR="0"
+    fi
+
+    VOLATILE_TXS=""
+
+    local blockheight="${VOLATILE_TXS_FROM_BLOCKHEIGHT}"
+    local max_txs="${1}"
+
+    NONC=$(
+        printf "%s%s" "${NONC}" "${SEED}" |
+        xxd -r -p                         |
+        sha256sum                         |
+        head -c 64
+    )
+
+    local datafmt=""
+    datafmt+="{\"guid\":\"%s\",\"nonce\":\"%s\",\"count\":\"%s\","
+    datafmt+="\"height\":\"${blockheight}\",\"nr\":\"${VOLATILE_TXS_FROM_NR}\"}"
+    local data=$(
+        printf "${datafmt}" "${GUID}" "${NONC}" "${max_txs}" |
+        xxd -p                                                     |
+        tr -d '\n'
+    )
+
+    local state
+    local response
+    response=$("${CALL}" "${CONF}" "get_txs" <<< "${data}")
+    state=$?
+
+    if [ "${state}" -ge "1" ] ; then
+        ((OTHER_ERRORS++))
+        alert "${CALL}: Exit code ${state}."
+    elif [ -z "${response}" ] ; then
+        ((OTHER_ERRORS++))
+        alert "Call script returned nothing."
+    else
+        local result=$(printf "%s" "${response}" | jq -r -M .result)
+        local rpm=$(printf "%s" "${response}" | jq -r -M .api_usage.rpm)
+        local max_rpm=$(
+            printf "%s" "${response}" | jq -r -M .api_usage.max_rpm
+        )
+
+        if [ "${result}" == "SUCCESS" ]; then
+            VOLATILE_TXS=$(
+                printf "%s" "${response}" | jq -r -M '.txs[] | .txid'
+            )
+
+            local news_count=$(echo -n "${VOLATILE_TXS}" | grep -c '^')
+
+            if [ "${news_count}" -ge "1" ] ; then
+                local plural=" is"
+                if [ "${news_count}" -gt "1" ]; then
+                    plural="s are"
+                fi
+
+                local logmsg=""
+                logmsg+="At least ${news_count} more TX${plural} "
+                logmsg+="queued for refreshing, starting from "
+                logmsg+="#${VOLATILE_TXS_FROM_NR} (RPM: ${rpm}/${max_rpm})."
+                log "${logmsg}"
+
+                VOLATILE_TXS_FROM_NR=$(
+                    printf "%s" "${response}" | jq -r -M '.txs[] | .nr' |
+                    sort -rn | head -n 1
+                )
+                VOLATILE_TXS_FROM_NR=$((VOLATILE_TXS_FROM_NR+1))
+            fi
+        elif [ "${result}" == "FAILURE" ]; then
+            printf "%s" "${response}" | jq .error >/dev/stderr
+            local error_code=$(
+                jq -r -M .error <<< "${response}" | jq -r -M .code
+            )
+
+            if [ "${error_code}" == "ERROR_NONCE" ]; then
+                ((NONCE_ERRORS++))
+                return 1
+            else
+                local error_message=$(
+                    jq -r -M '.error | .message' <<< "${response}"
+                )
+                alert "Failed to get volatile TXs: ${error_message}"
+            fi
+        else
+            # Invalid output from the call script.
+            alert "Call script returned invalid output:"
+            printf "%s\n" "${response}" >/dev/stderr
+
+            ((OTHER_ERRORS++))
+            return 1
+        fi
+
+        ((rpm+=10))
+        if [ "${rpm}" -ge "${max_rpm}" ]; then
+            local msg=""
+            msg+="API usage is reaching its hard limit of ${max_rpm} "
+            msg+="RPM, throttling!"
+            log "${msg}"
+            sleep 60
+        fi
+    fi
 }
 
 step() {
@@ -448,13 +605,48 @@ step() {
         local news=""
 
         if [ -z "${TXBUF}" ] ; then
+            local pool=$(${CLIF} ${DDIR} getrawmempool | jq -M -r .[])
             local bestblock=$(${CLIF} ${DDIR} getbestblockhash)
+
             if [ "${bestblock}" != "${BESTBLOCK}" ]; then
-                log "Loading block ${bestblock}."
+                local blockheight=$(
+                    ${CLIF} ${DDIR} getblockheader "${bestblock}" |
+                    jq -M -r .height
+                )
+
+                if [ ! -z "${blockheight}" ] ; then
+                    local txheight=$((
+                        blockheight >= 100 ? blockheight-100 : 0
+                    ))
+
+                    local volatile_txs_count=$(
+                        echo -n "${VOLATILE_TXS}" | grep -c '^'
+                    )
+
+                    if [ "${volatile_txs_count}" -lt "1"       ] \
+                    || [ -z "${VOLATILE_TXS_FROM_BLOCKHEIGHT}" ] ; then
+                        VOLATILE_TXS_FROM_NR="0"
+                        VOLATILE_TXS_FROM_BLOCKHEIGHT="${txheight}"
+                        log "Refreshing TXs since block ${txheight}."
+                    fi
+                else
+                    alert "Invalid block height."
+                fi
+
+                log "Latest block is now ${bestblock}."
                 BESTBLOCK="${bestblock}"
             fi
 
-            local pool=$(${CLIF} ${DDIR} getrawmempool | jq -M -r .[])
+            get_volatile_txs "${txs_per_query}" # Subshell must be avoided here.
+
+            local pfmt="%s%s\n"
+            if [[ ! -z "${pool}" ]]; then
+                pfmt="%s\n%s\n"
+            fi
+
+            pool=$(
+                printf "${pfmt}" "${pool}" "${VOLATILE_TXS}"
+            )
 
             news=$(
                 ${CLIF} ${DDIR} getblock ${bestblock} |
@@ -538,6 +730,8 @@ step() {
                 parallel --pipe -N 1 -P "${WORKERS}" "${jqcmd}" <<<"${graffiti}"
 
                 local graffiti_buffer=$(compile_graffiti_json "${graffiti}")
+
+                #jq <<< "${graffiti_buffer}"
 
                 local msgcount_after=$(
                     jq -r -M -c length <<< "${graffiti_buffer}"

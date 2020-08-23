@@ -536,7 +536,7 @@ step() {
     curl_out=$(
         parallel          \
         --halt now,fail=1 \
-        --timeout 30      \
+        --timeout 60      \
         --pipe            \
         -N 1              \
         -P ${WORKERS}     \
@@ -547,7 +547,7 @@ step() {
     if [ "${curl_state}" -ge "1" ]; then
         curl_out=$(
             parallel      \
-            --timeout 30  \
+            --timeout 60  \
             --pipe        \
             -N 1          \
             -P ${WORKERS} \

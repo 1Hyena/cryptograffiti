@@ -290,6 +290,9 @@ These values can be received with an API call of `get_constants` function.
     only those TX records that have their raw transaction details available on
     the server. If `cache` parameter is set to '0', then fetch only those TX
     records that have their raw transaction details missing from the server.
+    If the `height` parameter is set, then only those TXs will be returned
+    that have their block height equal to or greater than the value of the said
+    parameter.
 
     _POST Parameters:_
     * `fun`            --- `get_txs`
@@ -300,6 +303,7 @@ These values can be received with an API call of `get_constants` function.
         * `back`       --- if '1' get `count` earlier than `nr` rows (optional)
         * `mimetype`   --- expected file type, may be partial (optional)
         * `cache`      --- presence of the raw transaction in cache (optional)
+        * `height`     --- minimum block height of the TXs (optional)
         * `nonce`      --- 64 bytes hex string (ALS)
     * `sec_hash`       --- SHA256(`sec_key`) as a 64-byte hex string (ALS)
     * `salt`           --- 32-byte hex string, must differ on each request (ALS)
@@ -611,7 +615,8 @@ These values can be received with an API call of `get_constants` function.
       * `guid`         --- 64 bytes random hex string,
       * `graffiti`     --- array of key-value pairs where TX hash is the key
         * `txsize`     --- total size of the transaction
-        * `txtime`     --- TX time in seconds since epoch (optional)
+        * `txtime`     --- TX block time in seconds since epoch (optional)
+        * `txheight`   --- TX block height (optional)
         * `files`      --- array of graffiti objects
           * `location` --- location of the file within the TX
           * `fsize`    --- file size

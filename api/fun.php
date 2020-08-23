@@ -409,6 +409,7 @@ function assure_tx($link) {
  `txid` binary(32) NOT NULL COMMENT 'TX hash',
  `size` bigint(20) unsigned DEFAULT NULL COMMENT 'TX size in bytes',
  `time` bigint(20) DEFAULT NULL COMMENT 'TX time in seconds since epoch',
+ `height` int(10) unsigned DEFAULT NULL COMMENT 'Block height of the TX.',
  `cache` tinyint(1) NOT NULL,
  `requests` bigint(20) unsigned NOT NULL,
  `created` timestamp NOT NULL DEFAULT current_timestamp() COMMENT 'creation timestamp',
@@ -416,7 +417,8 @@ function assure_tx($link) {
  PRIMARY KEY (`nr`),
  UNIQUE KEY `txid` (`txid`),
  KEY `cache` (`cache`) USING BTREE,
- KEY `requests` (`requests`) USING BTREE
+ KEY `requests` (`requests`) USING BTREE,
+ KEY `height` (`height`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8");
 }
 
@@ -499,6 +501,7 @@ function extract_args($data) {
     extract_num      ('fee',         $args, $result);
     extract_num      ('amount',      $args, $result);
     extract_num      ('executive',   $args, $result);
+    extract_num      ('height',      $args, $result);
     extract_bool     ('live',        $args, $result);
     extract_bool     ('scam',        $args, $result);
     extract_bool     ('back',        $args, $result);
@@ -710,16 +713,24 @@ function extract_graffiti($var, $args, &$result) {
             && (!array_key_exists('txtime', $data)
              || $data['txtime'] === null
              || (is_num($data['txtime']) && intval($data['txtime']) > 0))
+            && (!array_key_exists('txheight', $data)
+             || $data['txheight'] === null
+             || (is_num($data['txheight']) && intval($data['txheight']) >= 0))
             &&  array_key_exists('txsize', $data)
             &&  is_num($data['txsize'])
             &&  intval($data['txsize']) > 0) {
                 $buf = array('txsize' => intval($data['txsize']),
                              'txtime' => null,
+                             'txheight' => null,
                              'files'  => array()
                 );
 
                 if (array_key_exists('txtime', $data)) {
                     $buf['txtime'] = intval($data['txtime']);
+                }
+
+                if (array_key_exists('txheight', $data)) {
+                    $buf['txheight'] = intval($data['txheight']);
                 }
 
                 foreach ($data['files'] as $nr => $fdata) {
@@ -1563,8 +1574,9 @@ function fun_set_txs($link, $user, $guid, $graffiti) {
     $added_txs        = 0;
 
     foreach ($graffiti as $tx_hash => $tx) {
-        $txsize = $tx['txsize'];
-        $txtime = $tx['txtime'];
+        $txsize   = $tx['txsize'];
+        $txtime   = $tx['txtime'];
+        $txheight = $tx['txheight'];
 
         $spam = true;
 
@@ -1632,6 +1644,7 @@ function fun_set_txs($link, $user, $guid, $graffiti) {
             $query_string = (
                 "UPDATE `tx` SET ".
                 ($txtime !== null ? "`time` = '".$txtime."', " : "").
+                ($txheight !== null ? "`height` = '".$txheight."', " : "").
                 "`size` = '".$txsize."' WHERE `txid` = X'".$tx_hash."'"
             );
 
@@ -1694,6 +1707,7 @@ function fun_set_txs($link, $user, $guid, $graffiti) {
             $query_string = (
                 "UPDATE `tx` SET `size` = '".$txsize."', ".
                 ($txtime !== null ? "`time` = '".$txtime."', " : "").
+                ($txheight !== null ? "`height` = '".$txheight."', " : "").
                 "`created` = NOW() WHERE `nr` = '".$tx_nr."'"
             );
 
@@ -2006,7 +2020,7 @@ function fun_get_graffiti($link, $user, $guid, $graffiti_nr, $count, $back, $mim
 }
 
 function fun_get_txs(
-    $link, $user, $guid, $tx_nr, $count, $back, $mimetype, $cache
+    $link, $user, $guid, $tx_nr, $count, $back, $mimetype, $cache, $height
 ) {
     if ($count  === null) {
         return make_failure(ERROR_INVALID_ARGUMENTS, '`count` is invalid.');
@@ -2039,15 +2053,22 @@ function fun_get_txs(
         $cache_condition = "`cache` = FALSE";
     }
 
+    $height_condition = "TRUE";
+
+    if ($height !== null) {
+        $height_condition = "`height` IS NULL OR `height` >= '".$height."'";
+    }
+
     if ($tx_nr === null) {
         $query = $cache === null ? (
             "SELECT `txnr`, `txsize`, `ic`.`txid`, `ic`.`nr` AS gnr, ".
             "`location`, `fsize`, `offset`, `mimetype`, `hash` FROM ((select ".
             "`nr` AS txnr, `txid`, `size` AS txsize from `tx` where (".
-            $cache_condition.") AND exists (SELECT `nr` FROM `graffiti` WHERE ".
-            "`graffiti`.`txid` = `tx`.`txid` ".$subwhere.") order by `txnr` ".
-            "desc limit ".$limit.") im) INNER JOIN `graffiti` ic ON ".
-            "`im`.`txid` = `ic`.`txid` ".$where." ORDER BY `txnr` DESC"
+            $cache_condition.") AND (".$height_condition.") AND exists ".
+            "(SELECT `nr` FROM `graffiti` WHERE `graffiti`.`txid` = ".
+            "`tx`.`txid` ".$subwhere.") order by `txnr` desc limit ".$limit.
+            ") im) INNER JOIN `graffiti` ic ON `im`.`txid` = `ic`.`txid` ".
+            $where." ORDER BY `txnr` DESC"
         ) : (
             // Here we retrieve the transactions that have been modified within
             // the last hour. We order them descendingly by the number of
@@ -2057,12 +2078,12 @@ function fun_get_txs(
             "SELECT `txnr`, `txsize`, `ic`.`txid`, `ic`.`nr` AS gnr, ".
             "`location`, `fsize`, `offset`, `mimetype`, `hash` FROM ((select ".
             "`nr` AS txnr, `txid`, `size` AS txsize from `tx` where (".
-            $cache_condition.") AND `modified` IS NOT NULL AND `modified` > ".
-            "(NOW() - INTERVAL 1 hour) AND exists (SELECT `nr` FROM ".
-            "`graffiti` WHERE `graffiti`.`txid` = `tx`.`txid` ".$subwhere.") ".
-            "order by `requests` desc limit ".$limit.") im) INNER JOIN ".
-            "`graffiti` ic ON `im`.`txid` = `ic`.`txid` ".$where." ORDER BY ".
-            "`txnr` DESC"
+            $cache_condition.") AND (".$height_condition.") AND `modified` IS ".
+            "NOT NULL AND `modified` > (NOW() - INTERVAL 1 hour) AND exists ".
+            "(SELECT `nr` FROM `graffiti` WHERE `graffiti`.`txid` = ".
+            "`tx`.`txid` ".$subwhere.") order by `requests` desc limit ".
+            $limit.") im) INNER JOIN `graffiti` ic ON `im`.`txid` = ".
+            "`ic`.`txid` ".$where." ORDER BY `txnr` DESC"
         );
     }
     else if ($back === '1') {
@@ -2070,11 +2091,11 @@ function fun_get_txs(
             "SELECT `txnr`, `txsize`, `ic`.`txid`, `ic`.`nr` AS gnr, ".
             "`location`, `fsize`, `offset`, `mimetype`, `hash` FROM ((select ".
             "`nr` AS txnr, `txid`, `size` AS txsize from `tx` where (".
-            $cache_condition.") AND `nr` <= '".$tx_nr."' and exists (SELECT ".
-            "`nr` FROM `graffiti` WHERE `graffiti`.`txid` = `tx`.`txid` ".
-            $subwhere.") order by `txnr` desc limit ".$limit.") im) INNER ".
-            "JOIN `graffiti` ic ON `im`.`txid` = `ic`.`txid` ".$where." ORDER ".
-            "BY `txnr` DESC"
+            $cache_condition.") AND (".$height_condition.") AND `nr` <= '".
+            $tx_nr."' and exists (SELECT `nr` FROM `graffiti` WHERE ".
+            "`graffiti`.`txid` = `tx`.`txid` ".$subwhere.") order by `txnr` ".
+            "desc limit ".$limit.") im) INNER JOIN `graffiti` ic ON ".
+            "`im`.`txid` = `ic`.`txid` ".$where." ORDER BY `txnr` DESC"
         );
     }
     else if ($back === '0' || $back === null) {
@@ -2082,11 +2103,11 @@ function fun_get_txs(
             "SELECT `txnr`, `txsize`, `ic`.`txid`, `ic`.`nr` AS gnr, ".
             "`location`, `fsize`, `offset`, `mimetype`, `hash` FROM ((select ".
             "`nr` AS txnr, `txid`, `size` AS txsize from `tx` where (".
-            $cache_condition.") AND `nr` >= '".$tx_nr."' and exists (SELECT ".
-            "`nr` FROM `graffiti` WHERE `graffiti`.`txid` = `tx`.`txid` ".
-            $subwhere.") order by `txnr` asc limit ".$limit.") im) INNER JOIN ".
-            "`graffiti` ic ON `im`.`txid` = `ic`.`txid` ".$where." ORDER BY ".
-            "`txnr` ASC"
+            $cache_condition.") AND (".$height_condition.") AND `nr` >= '".
+            $tx_nr."' and exists (SELECT `nr` FROM `graffiti` WHERE ".
+            "`graffiti`.`txid` = `tx`.`txid` ".$subwhere.") order by `txnr` ".
+            "asc limit ".$limit.") im) INNER JOIN `graffiti` ic ON ".
+            "`im`.`txid` = `ic`.`txid` ".$where." ORDER BY `txnr` ASC"
         );
     }
 

@@ -22,7 +22,6 @@ bool DECODER::decode(const std::string &data, nlohmann::json *result) {
 
     (*result)["size"] = bin.size();
     (*result)["graffiti"] = false;
-    (*result)["time"] = nullptr;
     (*result)["txid"] = calc_txid(bin.data(), bin.size());
 
     const unsigned char *rawtx = bin.data();
@@ -387,6 +386,14 @@ bool DECODER::get_mimetype(
     std::vector<unsigned char> result;
 
     if (!program->syspipe(bytes, len, "file -r -k -b --mime-type -", &result)) {
+        return false;
+    }
+
+    if (result.empty()) {
+        log(
+            program->get_name(), "%s: empty mimetype (%s:%d)",
+            __FUNCTION__, __FILE__, __LINE__
+        );
         return false;
     }
 
