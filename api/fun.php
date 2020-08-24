@@ -1580,7 +1580,22 @@ function fun_set_txs($link, $user, $guid, $graffiti) {
 
         $spam = true;
 
+        {
+            $result = $link->query(
+                "SELECT `nr` FROM `tx` WHERE `txid` = X'".$tx_hash."' LIMIT 1"
+            );
+
+            if ($link->errno === 0) {
+                if ( ($row = $result->fetch_assoc()) ) {
+                    $spam = false;
+                }
+            }
+            else set_critical_error($link, $link->error);
+        }
+
         foreach ($tx['files'] as $file) {
+            if ($spam === false) break;
+
             $qstr = (
                 "SELECT `nr` FROM `graffiti` WHERE `hash` = X'".
                 $file['hash']."' AND `txid` != X'".$tx_hash.
