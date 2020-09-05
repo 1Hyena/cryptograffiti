@@ -48,7 +48,15 @@ function cg_step_wall(tab) {
             txdiv = document.createElement("div");
             txdiv.id = key;
             txdiv.classList.add("cg-wall-txdiv");
-            txdiv.setAttribute("data-timestamp", tx.nr);
+
+            if (tx.txtime === null) {
+                txdiv.setAttribute("data-timestamp", timestamp);
+            }
+            else {
+                txdiv.setAttribute("data-timestamp", tx.txtime);
+            }
+
+            txdiv.setAttribute("data-nr", tx.nr);
 
             for (var i=0; i<tab.txs[key].graffiti.length; ++i) {
                 var gdata = tab.txs[key].graffiti[i];
@@ -88,13 +96,18 @@ function cg_wall_add(tab, txdiv) {
     }
 
     var newest_timestamp = parseInt(newest.getAttribute("data-timestamp"));
+    var newest_nr        = parseInt(newest.getAttribute("data-nr"));
     var oldest_timestamp = parseInt(oldest.getAttribute("data-timestamp"));
-    var timestamp = parseInt(txdiv.getAttribute("data-timestamp"));
+    var oldest_nr        = parseInt(oldest.getAttribute("data-nr"));
+    var timestamp        = parseInt(txdiv.getAttribute("data-timestamp"));
+    var nr               = parseInt(txdiv.getAttribute("data-nr"));
 
     var send_to = null;
 
-         if (timestamp >= newest_timestamp) send_to = headbuf;
-    else if (timestamp <= oldest_timestamp) send_to = tailbuf;
+         if (timestamp > newest_timestamp) send_to = headbuf;
+    else if (timestamp < oldest_timestamp) send_to = tailbuf;
+    else if (nr > newest_nr) send_to = headbuf;
+    else if (nr < oldest_nr) send_to = tailbuf;
     else {
         // TODO: Send to either head or tail depending on the position of the
         // scrollbar.
@@ -121,6 +134,8 @@ function cg_wall_refresh_buffers(tab) {
     for (var i=0; i<news.length; ++i) {
         var txdiv = news[i];
 
+        if (!txdiv.classList.contains("cg-wall-txdiv")) continue;
+
         if (!txdiv.classList.contains("cg-wall-txdiv-decoded")
         &&  !txdiv.classList.contains("cg-wall-txdiv-broken")) break;
 
@@ -145,6 +160,12 @@ function cg_wall_refresh_buffers(tab) {
             headbuf.removeChild(headbuf.lastChild);
         }
 
+        if (bodybuf.hasChildNodes()) {
+            bodybuf.insertBefore(
+                document.createElement("hr"), bodybuf.firstChild
+            );
+        }
+
         while (add_to_body_head.length > 0) {
             bodybuf.insertBefore(add_to_body_head.shift(), bodybuf.firstChild);
         }
@@ -157,6 +178,8 @@ function cg_wall_refresh_buffers(tab) {
     var olds = tailbuf.children;
     for (var i=0; i<olds.length; ++i) {
         var txdiv = olds[i];
+
+        if (!txdiv.classList.contains("cg-wall-txdiv")) continue;
 
         if (!txdiv.classList.contains("cg-wall-txdiv-decoded")
         &&  !txdiv.classList.contains("cg-wall-txdiv-broken")) break;
@@ -182,6 +205,10 @@ function cg_wall_refresh_buffers(tab) {
             tailbuf.removeChild(tailbuf.lastChild);
         }
 
+        if (bodybuf.hasChildNodes()) {
+            bodybuf.appendChild(document.createElement("hr"));
+        }
+
         while (add_to_body_tail.length > 0) {
             bodybuf.appendChild(add_to_body_tail.shift());
         }
@@ -196,15 +223,19 @@ function cg_wall_resolve_rawtxs(tab) {
     var timestamp = Math.floor(Date.now() / 1000);
 
     if (tab.downloading_rawtx < 0
-    ||  timestamp - tab.downloading_rawtx < 3) {
+    ||  timestamp - tab.downloading_rawtx < 2) {
         return;
     }
 
-    var scan = [
-        document.getElementById("cg-wall-bodybuf"),
-        document.getElementById("cg-wall-headbuf"),
-        document.getElementById("cg-wall-tailbuf"),
-    ];
+    var scan = [document.getElementById("cg-wall-bodybuf")];
+
+    if (cg_wall_scrolled_top()) {
+        scan.push(document.getElementById("cg-wall-headbuf"));
+    }
+
+    if (cg_wall_scrolled_bottom()) {
+        scan.push(document.getElementById("cg-wall-tailbuf"));
+    }
 
     while (scan.length > 0) {
         var buf = scan.shift();
@@ -212,6 +243,8 @@ function cg_wall_resolve_rawtxs(tab) {
 
         for (var i=0; i<children.length; ++i) {
             var txdiv = children[i];
+
+            if (!txdiv.classList.contains("cg-wall-txdiv")) continue;
 
             if (!txdiv.classList.contains("cg-wall-txdiv-decoded")
             &&  !txdiv.classList.contains("cg-wall-txdiv-broken")) {
@@ -257,8 +290,30 @@ function cg_wall_decode_tx(tab, txdiv, rawtx) {
 
 function cg_wall_get_txs(tab) {
     var data_obj = {
-        count : ""+Math.min(cg_get_global("constants").TXS_PER_QUERY, 8)
+        count : ""+Math.min(cg_get_global("constants").TXS_PER_QUERY, 100)
     };
+
+    var bodybuf = document.getElementById("cg-wall-bodybuf");
+    if (!bodybuf.hasChildNodes()) {
+        data_obj.count = "1";
+    }
+
+    if (cg_wall_should_load_old_txs()) {
+        data_obj["back"] = "1";
+
+        var nr = cg_wall_get_smallest_tx_nr();
+        if (nr !== null) data_obj["nr"] = ""+nr;
+    }
+    else if (cg_wall_should_load_new_txs()) {
+        data_obj["back"] = "0";
+
+        var nr = cg_wall_get_greatest_tx_nr();
+        if (nr !== null) data_obj["nr"] = ""+nr;
+    }
+    else {
+        tab.loading_txs = 0;
+        return;
+    }
 
     var json_str = encodeURIComponent(JSON.stringify(data_obj));
 
@@ -332,4 +387,126 @@ function cg_wall_get_rawtx(tab, txid) {
     );
 
     return;
+}
+
+function cg_wall_scrolled_top() {
+    var wall = document.getElementById("cg-tab-wall");
+    return Math.ceil(wall.scrollTop) === 0;
+}
+
+function cg_wall_scrolled_bottom() {
+    var wall = document.getElementById("cg-tab-wall");
+    return Math.ceil(wall.scrollHeight - wall.scrollTop) === wall.clientHeight;
+}
+
+function cg_wall_head_clogged() {
+    var headbuf = document.getElementById("cg-wall-headbuf");
+
+    var last_offset = 0;
+
+    var news = headbuf.children;
+    for (var i=0; i<news.length; ++i) {
+        var txdiv = news[i];
+
+        if (i === 0) {
+            last_offset = txdiv.offsetTop;
+            continue;
+        }
+
+        if (txdiv.offsetTop > last_offset) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function cg_wall_tail_clogged() {
+    var tailbuf = document.getElementById("cg-wall-tailbuf");
+
+    var last_offset = 0;
+
+    var olds = tailbuf.children;
+    for (var i=0; i<olds.length; ++i) {
+        var txdiv = olds[i];
+
+        if (i === 0) {
+            last_offset = txdiv.offsetTop;
+            continue;
+        }
+
+        if (txdiv.offsetTop > last_offset) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function cg_wall_should_load_new_txs() {
+    return cg_wall_scrolled_top() && !cg_wall_head_clogged();
+}
+
+function cg_wall_should_load_old_txs() {
+    return cg_wall_scrolled_bottom() && !cg_wall_tail_clogged();
+}
+
+function cg_wall_get_greatest_tx_nr() {
+    var nr = null;
+    var containers = [
+        "cg-wall-headbuf",
+        "cg-wall-tailbuf",
+        "cg-wall-bodybuf"
+    ];
+
+    for (var i=0; i<containers.length; ++i) {
+        var container = document.getElementById(containers[i]);
+
+        var contents = container.children;
+        for (var j=0; j<contents.length; j++) {
+            var content = contents[j];
+
+            if (!content.classList.contains("cg-wall-txdiv")) continue;
+
+            var txnr = parseInt(content.getAttribute("data-nr"));
+            if (nr === null) {
+                nr = txnr;
+            }
+            else if (txnr > nr) {
+                nr = txnr;
+            }
+        }
+    }
+
+    return nr;
+}
+
+function cg_wall_get_smallest_tx_nr() {
+    var nr = null;
+    var containers = [
+        "cg-wall-headbuf",
+        "cg-wall-tailbuf",
+        "cg-wall-bodybuf"
+    ];
+
+    for (var i=0; i<containers.length; ++i) {
+        var container = document.getElementById(containers[i]);
+
+        var contents = container.children;
+        for (var j=0; j<contents.length; j++) {
+            var content = contents[j];
+
+            if (!content.classList.contains("cg-wall-txdiv")) continue;
+
+            var txnr = parseInt(content.getAttribute("data-nr"));
+            if (nr === null) {
+                nr = txnr;
+            }
+            else if (txnr < nr) {
+                nr = txnr;
+            }
+        }
+    }
+
+    return nr;
 }

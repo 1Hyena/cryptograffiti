@@ -2076,53 +2076,56 @@ function fun_get_txs(
 
     if ($tx_nr === null) {
         $query = $cache === null ? (
-            "SELECT `txnr`, `txsize`, `ic`.`txid`, `ic`.`nr` AS gnr, ".
-            "`location`, `fsize`, `offset`, `mimetype`, `hash` FROM ((select ".
-            "`nr` AS txnr, `txid`, `size` AS txsize from `tx` where (".
-            $cache_condition.") AND (".$height_condition.") AND exists ".
-            "(SELECT `nr` FROM `graffiti` WHERE `graffiti`.`txid` = ".
-            "`tx`.`txid` ".$subwhere.") order by `txnr` desc limit ".$limit.
-            ") im) INNER JOIN `graffiti` ic ON `im`.`txid` = `ic`.`txid` ".
-            $where." ORDER BY `txnr` DESC"
+            "SELECT `txnr`, `txsize`, `txtime`, `ic`.`txid`, `ic`.`nr` AS ".
+            "gnr, `location`, `fsize`, `offset`, `mimetype`, `hash` FROM ".
+            "((select `nr` AS txnr, `time` AS txtime, `txid`, `size` AS ".
+            "txsize from `tx` where (".$cache_condition.") AND (".
+            $height_condition.") AND exists (SELECT `nr` FROM `graffiti` ".
+            "WHERE `graffiti`.`txid` = `tx`.`txid` ".$subwhere.") order by ".
+            "`txnr` desc limit ".$limit.") im) INNER JOIN `graffiti` ic ON ".
+            "`im`.`txid` = `ic`.`txid` ".$where." ORDER BY `txnr` DESC"
         ) : (
             // Here we retrieve the transactions that have been modified within
             // the last hour. We order them descendingly by the number of
             // requests. The Courier bots can therefore easily determine which
             // raw transaction details need to be uploaded to the server.
 
-            "SELECT `txnr`, `txsize`, `ic`.`txid`, `ic`.`nr` AS gnr, ".
-            "`location`, `fsize`, `offset`, `mimetype`, `hash` FROM ((select ".
-            "`nr` AS txnr, `txid`, `size` AS txsize from `tx` where (".
-            $cache_condition.") AND (".$height_condition.") AND `modified` IS ".
-            "NOT NULL AND `modified` > (NOW() - INTERVAL 1 hour) AND exists ".
-            "(SELECT `nr` FROM `graffiti` WHERE `graffiti`.`txid` = ".
-            "`tx`.`txid` ".$subwhere.") order by `requests` desc limit ".
-            $limit.") im) INNER JOIN `graffiti` ic ON `im`.`txid` = ".
-            "`ic`.`txid` ".$where." ORDER BY `txnr` DESC"
+            "SELECT `txnr`, `txsize`, `txtime`, `ic`.`txid`, `ic`.`nr` AS ".
+            "gnr, `location`, `fsize`, `offset`, `mimetype`, `hash` FROM ".
+            "((select `nr` AS txnr, `time` as txtime, `txid`, `size` AS ".
+            "txsize from `tx` where (".$cache_condition.") AND (".
+            $height_condition.") AND `modified` IS NOT NULL AND `modified` ".
+            "> (NOW() - INTERVAL 1 hour) AND exists (SELECT `nr` FROM ".
+            "`graffiti` WHERE `graffiti`.`txid` = `tx`.`txid` ".$subwhere.") ".
+            "order by `requests` desc limit ".$limit.") im) INNER JOIN ".
+            "`graffiti` ic ON `im`.`txid` = `ic`.`txid` ".$where." ORDER BY ".
+            "`txnr` DESC"
         );
     }
     else if ($back === '1') {
         $query = (
-            "SELECT `txnr`, `txsize`, `ic`.`txid`, `ic`.`nr` AS gnr, ".
-            "`location`, `fsize`, `offset`, `mimetype`, `hash` FROM ((select ".
-            "`nr` AS txnr, `txid`, `size` AS txsize from `tx` where (".
-            $cache_condition.") AND (".$height_condition.") AND `nr` <= '".
-            $tx_nr."' and exists (SELECT `nr` FROM `graffiti` WHERE ".
-            "`graffiti`.`txid` = `tx`.`txid` ".$subwhere.") order by `txnr` ".
-            "desc limit ".$limit.") im) INNER JOIN `graffiti` ic ON ".
-            "`im`.`txid` = `ic`.`txid` ".$where." ORDER BY `txnr` DESC"
+            "SELECT `txnr`, `txsize`, `txtime`, `ic`.`txid`, `ic`.`nr` AS ".
+            "gnr, `location`, `fsize`, `offset`, `mimetype`, `hash` FROM ".
+            "((select `nr` AS txnr, `txid`, `time` AS txtime, `size` AS ".
+            "txsize from `tx` where (".$cache_condition.") AND (".
+            $height_condition.") AND `nr` <= '".$tx_nr."' and exists (SELECT ".
+            "`nr` FROM `graffiti` WHERE `graffiti`.`txid` = `tx`.`txid` ".
+            $subwhere.") order by `txnr` desc limit ".$limit.") im) INNER ".
+            "JOIN `graffiti` ic ON `im`.`txid` = `ic`.`txid` ".$where.
+            " ORDER BY `txnr` DESC"
         );
     }
     else if ($back === '0' || $back === null) {
         $query = (
-            "SELECT `txnr`, `txsize`, `ic`.`txid`, `ic`.`nr` AS gnr, ".
-            "`location`, `fsize`, `offset`, `mimetype`, `hash` FROM ((select ".
-            "`nr` AS txnr, `txid`, `size` AS txsize from `tx` where (".
-            $cache_condition.") AND (".$height_condition.") AND `nr` >= '".
-            $tx_nr."' and exists (SELECT `nr` FROM `graffiti` WHERE ".
-            "`graffiti`.`txid` = `tx`.`txid` ".$subwhere.") order by `txnr` ".
-            "asc limit ".$limit.") im) INNER JOIN `graffiti` ic ON ".
-            "`im`.`txid` = `ic`.`txid` ".$where." ORDER BY `txnr` ASC"
+            "SELECT `txnr`, `txsize`, `txtime`, `ic`.`txid`, `ic`.`nr` AS ".
+            "gnr, `location`, `fsize`, `offset`, `mimetype`, `hash` FROM ".
+            "((select `nr` AS txnr, `txid`, `size` AS txsize, `time` AS ".
+            "txtime from `tx` where (".$cache_condition.") AND (".
+            $height_condition.") AND `nr` >= '".$tx_nr."' and exists (SELECT ".
+            "`nr` FROM `graffiti` WHERE `graffiti`.`txid` = `tx`.`txid` ".
+            $subwhere.") order by `txnr` asc limit ".$limit.") im) INNER JOIN ".
+            "`graffiti` ic ON `im`.`txid` = `ic`.`txid` ".$where." ORDER BY ".
+            "`txnr` ASC"
         );
     }
 
@@ -2138,12 +2141,14 @@ function fun_get_txs(
             $txnr = "".$row['txnr'];
             $txid = bin2hex($row['txid']);
             $txsize = $row['txsize'];
+            $txtime = $row['txtime'];
 
             if (!array_key_exists($txnr, $tx_buf)) {
                 $tx_buf[$txnr] = array(
                     "nr" => $row['txnr'],
                     "txid" => $txid,
                     "txsize" => $txsize,
+                    "txtime" => $txtime,
                     "graffiti" => array()
                 );
             }

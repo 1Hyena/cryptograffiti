@@ -24,6 +24,10 @@
     bottom: 0;
 }
 
+#cg-wall-bodybuf > hr {
+    opacity: 0;
+}
+
 #cg-wall-tailbuf {
     display: inline-block;
     position: absolute;
@@ -51,11 +55,22 @@
 
 .cg-wall-graffiti {
     display: inline-block;
-    width: 100px;
-    height: 50px;
+    width: 10rem;
+    height: 10rem;
     background-color: yellow;
     border: 1px solid;
     vertical-align: top;
     margin: 2px;
     overflow: hidden;
+}
+
+.cg-wall-media {
+    width: 100%;
+    height: 100%;
+}
+
+.cg-wall-media > img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
