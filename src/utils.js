@@ -213,3 +213,23 @@ function arrayBufferToBase64(buffer) {
     }
     return window.btoa( binary );
 }
+
+function is_visible(container, element, partial) {
+    //Get container properties
+    var cTop = container.scrollTop;
+    var cBottom = cTop + container.clientHeight;
+
+    //Get element properties
+    var eTop = element.offsetTop;
+    var eBottom = eTop + element.clientHeight;
+
+    //Check if in view
+    var isTotal = (eTop >= cTop && eBottom <= cBottom);
+    var isPartial = partial && (
+        (eTop < cTop && eBottom > cTop) ||
+        (eBottom > cBottom && eTop < cBottom)
+    );
+
+    //Return outcome
+    return (isTotal || isPartial);
+}

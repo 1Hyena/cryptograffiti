@@ -45,23 +45,26 @@
     border: 1px solid;
 }
 
-/*.cg-wall-txdiv-broken {
-    background-color: red;
-}*/
-
-.cg-wall-txdiv-decoded {
-    background-color: green;
+.cg-wall-txdiv-visible {
+    background-color: blue;
 }
 
 .cg-wall-graffiti {
     display: inline-block;
     width: 10rem;
     height: 10rem;
-    background-color: yellow;
     border: 1px solid;
     vertical-align: top;
     margin: 2px;
     overflow: hidden;
+}
+
+.cg-wall-graffiti-loading {
+    background-color: black;
+}
+
+.cg-wall-graffiti-decoding {
+    background-color: orange;
 }
 
 .cg-wall-media {
