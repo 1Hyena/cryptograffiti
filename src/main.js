@@ -828,6 +828,7 @@ function cg_push_status(str, lvl) {
     lvl = typeof lvl !== 'undefined' ? lvl : (CG_LOG_NORMAL);
 
     var status = cg_get_global("status");
+
     status.push(
         {
             text                   : str,

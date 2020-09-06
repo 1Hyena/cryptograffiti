@@ -5,7 +5,7 @@ function cg_construct_wall(main) {
     tab["txs"] = {};
     tab["loading_txs"] = 0;
     tab["last_update"] = 0;
-    tab["downloading_rawtx"] = 0;
+    //tab["downloading_rawtx"] = 0;
 
     var headbuf = document.createElement("div");
     var bodybuf = document.createElement("div");
@@ -63,11 +63,11 @@ function cg_step_wall(tab) {
                 var graffiti = document.createElement("div");
                 graffiti.classList.add("cg-wall-graffiti");
 
-                graffiti.setAttribute("location", gdata.location);
-                graffiti.setAttribute("fsize",    gdata.fsize);
-                graffiti.setAttribute("offset",   gdata.offset);
-                graffiti.setAttribute("mimetype", gdata.mimetype);
-                graffiti.setAttribute("hash",     gdata.hash);
+                graffiti.setAttribute("data-location", gdata.location);
+                graffiti.setAttribute("data-fsize",    gdata.fsize);
+                graffiti.setAttribute("data-offset",   gdata.offset);
+                graffiti.setAttribute("data-mimetype", gdata.mimetype);
+                graffiti.setAttribute("data-hash",     gdata.hash);
 
                 txdiv.appendChild(graffiti);
             }
@@ -78,7 +78,9 @@ function cg_step_wall(tab) {
 
     tab.txs = {};
 
-    cg_wall_refresh_buffers(tab);
+    while (cg_wall_refresh_buffers(tab) > 0) {
+    }
+
     cg_wall_resolve_rawtxs(tab);
 }
 
@@ -119,6 +121,8 @@ function cg_wall_add(tab, txdiv) {
 }
 
 function cg_wall_refresh_buffers(tab) {
+    var updated = 0;
+
     var headbuf = document.getElementById("cg-wall-headbuf");
     var bodybuf = document.getElementById("cg-wall-bodybuf");
     var tailbuf = document.getElementById("cg-wall-tailbuf");
@@ -137,7 +141,7 @@ function cg_wall_refresh_buffers(tab) {
         if (!txdiv.classList.contains("cg-wall-txdiv")) continue;
 
         if (!txdiv.classList.contains("cg-wall-txdiv-decoded")
-        &&  !txdiv.classList.contains("cg-wall-txdiv-broken")) break;
+        /*&&  !txdiv.classList.contains("cg-wall-txdiv-broken")*/) break;
 
         if (i === 0) {
             last_offset = txdiv.offsetTop;
@@ -182,7 +186,7 @@ function cg_wall_refresh_buffers(tab) {
         if (!txdiv.classList.contains("cg-wall-txdiv")) continue;
 
         if (!txdiv.classList.contains("cg-wall-txdiv-decoded")
-        &&  !txdiv.classList.contains("cg-wall-txdiv-broken")) break;
+        /*&&  !txdiv.classList.contains("cg-wall-txdiv-broken")*/) break;
 
         if (i === 0) {
             last_offset = txdiv.offsetTop;
@@ -211,21 +215,30 @@ function cg_wall_refresh_buffers(tab) {
 
         while (add_to_body_tail.length > 0) {
             bodybuf.appendChild(add_to_body_tail.shift());
+            ++updated;
         }
 
         while (add_to_tail.length > 0) {
             tailbuf.appendChild(add_to_tail.shift());
+            ++updated;
         }
     }
+
+    return updated;
 }
 
 function cg_wall_resolve_rawtxs(tab) {
+    /*
     var timestamp = Math.floor(Date.now() / 1000);
 
     if (tab.downloading_rawtx < 0
     ||  timestamp - tab.downloading_rawtx < 2) {
         return;
     }
+    */
+
+    var resolving = document.getElementsByClassName("cg-wall-graffiti-loading");
+    if (resolving.length !== 0) return;
 
     var scan = [document.getElementById("cg-wall-bodybuf")];
 
@@ -237,6 +250,8 @@ function cg_wall_resolve_rawtxs(tab) {
         scan.push(document.getElementById("cg-wall-tailbuf"));
     }
 
+    var max_requests = 16;
+
     while (scan.length > 0) {
         var buf = scan.shift();
         var children = buf.children;
@@ -246,27 +261,48 @@ function cg_wall_resolve_rawtxs(tab) {
 
             if (!txdiv.classList.contains("cg-wall-txdiv")) continue;
 
-            if (!txdiv.classList.contains("cg-wall-txdiv-decoded")
-            &&  !txdiv.classList.contains("cg-wall-txdiv-broken")) {
-                tab.downloading_rawtx = -1;
-                cg_wall_get_rawtx(tab, txdiv.id);
-                return;
+            if (txdiv.classList.contains("cg-wall-txdiv-decoded")
+            /*||  txdiv.classList.contains("cg-wall-txdiv-broken")*/) continue;
+
+            var graffiti = txdiv.children;
+
+            for (var j=0; j<graffiti.length; ++j) {
+                var gdiv = graffiti[j];
+
+                if (gdiv.classList.contains("cg-wall-graffiti")
+                && !gdiv.classList.contains("cg-wall-graffiti-loading")
+                && !gdiv.classList.contains("cg-wall-graffiti-decoding")
+                && !gdiv.classList.contains("cg-wall-graffiti-decoded")) {
+                    gdiv.classList.add("cg-wall-graffiti-loading");
+                    cg_wall_get_rawtx_range(
+                        tab, txdiv.id,
+                        parseInt(gdiv.getAttribute("data-offset")),
+                        parseInt(gdiv.getAttribute("data-fsize")),
+                        gdiv.getAttribute("data-hash")
+                    );
+
+                    if (--max_requests <= 0) return;
+                }
             }
+
+            //tab.downloading_rawtx = -1;
+            //cg_wall_get_rawtx(tab, txdiv.id);
+            //return;
         }
     }
 }
-
+/*
 function cg_wall_decode_tx(tab, txdiv, rawtx) {
     var children = txdiv.children;
 
     for (var i=0; i<children.length; ++i) {
         var graffiti = children[i];
 
-        var location = graffiti.getAttribute("location");
-        var fsize    = parseInt(graffiti.getAttribute("fsize"), 10);
-        var offset   = parseInt(graffiti.getAttribute("offset"), 10);
-        var mimetype = graffiti.getAttribute("mimetype");
-        var hash     = graffiti.getAttribute("hash");
+        var location = graffiti.getAttribute("data-location");
+        var fsize    = parseInt(graffiti.getAttribute("data-fsize"), 10);
+        var offset   = parseInt(graffiti.getAttribute("data-offset"), 10);
+        var mimetype = graffiti.getAttribute("data-mimetype");
+        var hash     = graffiti.getAttribute("data-hash");
 
         if (location === "NULL_DATA"
         &&  mimetype.indexOf("image/") === 0) {
@@ -281,11 +317,60 @@ function cg_wall_decode_tx(tab, txdiv, rawtx) {
 
             media.appendChild(img);
             graffiti.appendChild(media);
+
+            graffiti.classList.remove("cg-wall-graffiti-decoding");
+            graffiti.classList.add("cg-wall-graffiti-decoded");
         }
     }
 
     txdiv.classList.add("cg-wall-txdiv-decoded");
     txdiv.classList.remove("cg-wall-txdiv-broken");
+}
+*/
+function cg_wall_decode_graffiti(tab, txid, hash, data) {
+    var txdiv = document.getElementById(txid);
+    var children = txdiv.children;
+
+    if (data !== null && data !== false) {
+        for (var i=0; i<children.length; ++i) {
+            var graffiti = children[i];
+
+            if (graffiti.hasChildNodes()) continue;
+            if (graffiti.getAttribute("data-hash") !== hash) continue;
+
+            var location = graffiti.getAttribute("data-location");
+            var mimetype = graffiti.getAttribute("data-mimetype");
+
+            if (location === "NULL_DATA"
+            &&  mimetype.indexOf("image/") === 0) {
+                var media = document.createElement("DIV");
+                media.classList.add("cg-wall-media");
+
+                var b64imgData = arrayBufferToBase64(data);
+                var img = new Image();
+                img.src = "data:"+mimetype+";base64,"+b64imgData;
+
+                media.appendChild(img);
+                graffiti.appendChild(media);
+
+                graffiti.classList.remove("cg-wall-graffiti-decoding");
+                graffiti.classList.add("cg-wall-graffiti-decoded");
+            }
+        }
+    }
+
+    for (var i=0; i<children.length; ++i) {
+        var graffiti = children[i];
+
+        if (graffiti.classList.contains("cg-wall-graffiti")
+        && graffiti.classList.contains("cg-wall-graffiti-loading")) {
+            // Some graffiti is still loading. Cannot finalize the TX.
+            return;
+        }
+    }
+
+    txdiv.classList.add("cg-wall-txdiv-decoded");
+    //txdiv.classList.remove("cg-wall-txdiv-broken");
 }
 
 function cg_wall_get_txs(tab) {
@@ -349,7 +434,7 @@ function cg_wall_get_txs(tab) {
 
     return;
 }
-
+/*
 function cg_wall_get_rawtx(tab, txid) {
     cg_push_status(cg_translate(CG_TXT_WALL_LOADING_TX_METADATA));
 
@@ -384,6 +469,49 @@ function cg_wall_get_rawtx(tab, txid) {
 
             if (status.length > 0) cg_push_status(status);
         }
+    );
+
+    return;
+}
+*/
+function cg_wall_find_graffiti(txid, hash) {
+    var txdiv = document.getElementById(txid);
+    var children = txdiv.children;
+
+    for (var i=0; i<children.length; ++i) {
+        var graffiti = children[i];
+
+        if (graffiti.getAttribute("data-hash") === hash) return graffiti;
+    }
+
+    return null;
+}
+
+function cg_wall_get_rawtx_range(tab, txid, offset, fsize, hash) {
+    cg_push_status(cg_translate(CG_TXT_WALL_LOADING_RAWTX_SEGMENT));
+
+    xmlhttpGet(
+        "https://cryptograffiti.info/rawtx/"+txid, "",
+        function(response) {
+            var status = "";
+            var graffiti = cg_wall_find_graffiti(txid, hash);
+
+            graffiti.classList.remove("cg-wall-graffiti-loading");
+            graffiti.classList.add("cg-wall-graffiti-decoding");
+
+            if (response === false) {
+                status = cg_translate(CG_TXT_WALL_LOADING_RAWTX_SEGMENT_ERROR);
+            }
+            else if (response === null ) {
+                status = cg_translate(
+                    CG_TXT_WALL_LOADING_RAWTX_SEGMENT_TIMEOUT
+                );
+            }
+
+            cg_wall_decode_graffiti(tab, txid, hash, response);
+
+            if (status.length > 0) cg_push_status(status);
+        }, 20000, { offset: offset, length: fsize }
     );
 
     return;

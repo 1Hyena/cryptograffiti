@@ -55,8 +55,9 @@ function xmlhttpPost(strURL, strParams, fun, timeout) {
     self.xmlHttpReq.send(strParams);
 }
 
-function xmlhttpGet(strURL, strParams, fun, timeout) {
+function xmlhttpGet(strURL, strParams, fun, timeout, range) {
     timeout = typeof timeout !== 'undefined' ? timeout : (20000);
+    range   = typeof range   !== 'undefined' ? range : null;
     //if (Math.random() > 0.5) timeout = 10;
 
     var self = {
@@ -92,12 +93,23 @@ function xmlhttpGet(strURL, strParams, fun, timeout) {
         'Content-Type', 'application/x-www-form-urlencoded'
     );
 
+    if (range !== null) {
+        self.xmlHttpReq.setRequestHeader(
+            'Range', 'bytes='+range.offset+'-'+(range.offset+range.length)
+        );
+
+        self.xmlHttpReq.responseType = 'arraybuffer';
+    }
+
     self.xmlHttpReq.onreadystatechange = function() {
         if (self.xmlHttpReq.readyState == 4) {
             clearTimeout(requestTimer);
             if (self.id in CG_UTILS_HTTP_REQUESTS) {
                 if (self.xmlHttpReq.status == 200) {
                     fun(self.xmlHttpReq.responseText);
+                }
+                else if (self.xmlHttpReq.status == 206 && range !== null) {
+                    fun(new Uint8Array(self.xmlHttpReq.response));
                 }
                 else fun(false);
 

@@ -1,0 +1,5 @@
+<FilesMatch "(?<!index\.php)$">
+    Header set Access-Control-Allow-Headers "Range"
+    Header always set Access-Control-Allow-Origin "*"
+    Header set Content-Type "application/octet-stream"
+</FilesMatch>

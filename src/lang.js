@@ -237,6 +237,27 @@ var CG_TXT_WALL_LOADING_TX_METADATA_TIMEOUT =
     ru : "(Attempt to load transaction metadata timed out.)" // NEEDS TRANSLATION
 };
 
+var CG_TXT_WALL_LOADING_RAWTX_SEGMENT =
+{
+    en : "Loading a transaction segment.",
+    et : "Laen ülekande segmenti.",
+    ru : "(Loading a transaction segment.)" // NEEDS TRANSLATION
+};
+
+var CG_TXT_WALL_LOADING_RAWTX_SEGMENT_ERROR =
+{
+    en : "Could not load a transaction segment.",
+    et : "Ülekande segmendi allalaadimine ebaõnnestus.",
+    ru : "(Could not load a transaction segment.)" // NEEDS TRANSLATION
+};
+
+var CG_TXT_WALL_LOADING_RAWTX_SEGMENT_TIMEOUT =
+{
+    en : "Attempt to load a transaction segment timed out.",
+    et : "Ülekande segmendi allalaadimise katse aegus.",
+    ru : "(Attempt to load a transaction segment timed out.)" // NEEDS TRANSLATION
+};
+
 ////////////////////////////////////////////////////////////////////////////////
 //  WALL TAB TRANSLATIONS END                                                 //
 ////////////////////////////////////////////////////////////////////////////////
