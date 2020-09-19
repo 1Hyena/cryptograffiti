@@ -224,12 +224,33 @@ init() {
 }
 
 loop() {
+    local tick_start=$(date +%s)
+
     while :
     do
+        local tick_end=$(date +%s)
+
+        if [ "${tick_end}" -ge "${tick_start}" ]; then
+            local delta_time=$((tick_end-tick_start))
+
+            if [ "${delta_time}" -ge "60" ]; then
+                tick_start=$(date +%s)
+                # log "Tick!"
+
+                # Periodically truncating these files allows missing TXs to
+                # be tried again in case they might have arrived to our node
+                # within the last tick.
+                truncate -s 0 $NEWSFILE
+                truncate -s 0 $OLDSFILE
+                truncate -s 0 $TEMPFILE
+            fi
+        fi
+
         local pulse_start=$(date +%s)
 
         if [ $(which "${CLIF}" 2>/dev/null ) ] \
         && [ $(which sort)                   ] \
+        && [ $(which shuf)                   ] \
         && [ $(which uniq)                   ] \
         && [ $(which echo)                   ] \
         && [ $(which grep)                   ] \
@@ -241,11 +262,20 @@ loop() {
         && [ $(which jq)                     ] ; then
             if ! step "${TXS_PER_QUERY}"  ; then
                 alert "Program step reported an error, breaking the loop."
+                TXBUF=""
                 break
             fi
         else
             log "Some of the required commands are not available."
             exit
+        fi
+
+        if [ ! -z "${TXBUF}" ] ; then
+            # We clear the TXBUF because some of it may already have
+            # been resolved by another Courier instance. Emptying
+            # TXBUF here will allow us to get the most up to date
+            # list of TXs later on.
+            TXBUF=""
         fi
 
         local pulse_end=$(date +%s)
@@ -258,7 +288,7 @@ loop() {
                 if [ ! -z "${TXBUF}" ] || [ ! -z "${CACHE}" ] ; then
                     log "Too much work in queue, skipping the nap of ${stime}s."
                 else
-                    log "Sleeping for ${stime}s."
+                    # log "Sleeping for ${stime}s."
                     sleep "${stime}"
                 fi
             elif [ "${delta_time}" -gt "${PULSE_PERIOD}" ]; then
@@ -351,6 +381,7 @@ get_rawtxs() {
 step() {
     local txs_per_query="${1}"
     local rawtx_count="0"
+    local max_rawtx_count="3"
 
     if [ -z "${CACHE}" ] ; then
         local newscount="0"
@@ -417,6 +448,16 @@ step() {
                         logmsg+="queued for caching (RPM: ${rpm}/${max_rpm})."
 
                         log "${logmsg}"
+
+                        if [ "${news_count}" -gt "${max_rawtx_count}" ] ; then
+                            local skip=$((news_count-max_rawtx_count))
+                            news=$(printf "%s" "${news}" | shuf)
+                            TXBUF=$(printf "%s" "${news}" | tail "-${skip}")
+                            news=$(
+                                printf "%s" "${news}" |
+                                head "-${max_rawtx_count}"
+                            )
+                        fi
                     fi
                 elif [ "${result}" == "FAILURE" ]; then
                     printf "%s" "${response}" | jq .error >/dev/stderr
@@ -463,29 +504,12 @@ step() {
             mv ${OLDSFILE} ${TEMPFILE} && \
             mv ${NEWSFILE} ${OLDSFILE} && \
             mv ${TEMPFILE} ${NEWSFILE}
-
-            newscount=$(echo -n "${news}" | grep -c '^')
-        fi
-
-        local bufsz=$(echo -n "${TXBUF}" | grep -c '^')
-
-        if [ "${bufsz}" -ge "1" ]; then
-            if [ "${newscount}" -ge "1" ]; then
-                news=$(printf "%s\n%s" "${TXBUF}" "${news}")
-            else
-                news="${TXBUF}"
-            fi
-
+        else
+            news="${TXBUF}"
             TXBUF=""
-            newscount=$(echo -n "${news}" | grep -c '^')
         fi
 
-        if [ "${newscount}" -gt "${txs_per_query}" ]; then
-            local skip=$((newscount-txs_per_query))
-            TXBUF=$(printf "%s" "${news}" | tail "-${skip}")
-            news=$(printf "%s" "${news}" | head "-${txs_per_query}")
-            newscount=$(echo -n "${news}" | grep -c '^')
-        fi
+        newscount=$(echo -n "${news}" | grep -c '^')
 
         if [ "$newscount" -ge "1" ]; then
             if [ "$newscount" -gt "1" ]; then
@@ -497,7 +521,7 @@ step() {
                 fi
             else
                 local txhash=$(printf "%s" "${news}" | tr -d '\n')
-                log "Getting the hex string of TX ${txhash}."
+                log "Getting the raw content of TX ${txhash}."
             fi
 
             local resolving_start=$SECONDS

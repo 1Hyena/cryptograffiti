@@ -2086,7 +2086,7 @@ function fun_get_txs(
             "`im`.`txid` = `ic`.`txid` ".$where." ORDER BY `txnr` DESC"
         ) : (
             // Here we retrieve the transactions that have been modified within
-            // the last hour. We order them descendingly by the number of
+            // the last minute. We order them descendingly by the number of
             // requests. The Courier bots can therefore easily determine which
             // raw transaction details need to be uploaded to the server.
 
@@ -2095,7 +2095,7 @@ function fun_get_txs(
             "((select `nr` AS txnr, `time` as txtime, `txid`, `size` AS ".
             "txsize from `tx` where (".$cache_condition.") AND (".
             $height_condition.") AND `modified` IS NOT NULL AND `modified` ".
-            "> (NOW() - INTERVAL 1 hour) AND exists (SELECT `nr` FROM ".
+            "> (NOW() - INTERVAL 1 minute) AND exists (SELECT `nr` FROM ".
             "`graffiti` WHERE `graffiti`.`txid` = `tx`.`txid` ".$subwhere.") ".
             "order by `requests` desc limit ".$limit.") im) INNER JOIN ".
             "`graffiti` ic ON `im`.`txid` = `ic`.`txid` ".$where." ORDER BY ".
@@ -2420,33 +2420,39 @@ function fun_default($link, $user) {
     }
 }
 
-// curl --connect-timeout 300 --silent -d "task=cron_alarm&pass=CRON_PASSWORD_HERE&T=5" -X POST 'https://cryptograffiti.info/api/'
+// curl --connect-timeout 299 --silent -d "task=cron_alarm&pass=CRON_PASSWORD_HERE&T=5" -X POST 'https://cryptograffiti.info/api/'
 function cron_alarm($link, $T) {
+    $alarm_time = microtime(true);
+
     db_log($link, null, 'CRON T'.$T.' alarm signal received.', LOG_LEVEL_MINOR);
 
-    $alarm_time = microtime(true);
-    $overload = false;
     $PPM = 20; // Pulse Per Minute
-    for ($t = 0; $t < $T; $t++) {
-        cron_tick($link);
+    $pulses = $PPM * $T;
+    $total_time = $T * 60;
+    $overload = false;
 
-        for ($i = 0; $i < $PPM; $i++) {
-            $time_start = microtime(true);
-
-            if ($overload) {
-                increase_stat($link, "overload");
-                $overload = false;
-            }
-
-            cron_pulse($link);
-
-            if ($i+1 < $PPM || $t+1 < $T) {
-                $time_end = microtime(true);
-                $time = (60/$PPM)*1000000 - round(1000000*($time_end - $time_start));
-                if ($time > 0) usleep($time);
-                else $overload = true;
-            }
+    for ($pulse = 0; $pulse < $pulses; $pulse++) {
+        if ($pulse % $PPM === 0) {
+            cron_tick($link);
         }
+
+        cron_pulse($link);
+
+        if ($pulse + 1 >= $pulses) break;
+
+        $time_spent = microtime(true) - $alarm_time;
+        $time_left = $total_time - $time_spent;
+        $pulses_left = $pulses - ($pulse + 1);
+        $time_needed = $pulses_left * (60/$PPM);
+
+        if ($time_needed < $time_left) {
+            usleep(round(($time_left - $time_needed) * 1000000));
+        }
+        else $overload = true;
+    }
+
+    if ($overload) {
+        increase_stat($link, "overload");
     }
 
     $alarm_time = microtime(true) - $alarm_time;
@@ -2481,6 +2487,22 @@ function http_get($url, $params=array()) {
 
 // curl --connect-timeout 300 --silent -d "task=cron_tick&pass=CRON_PASSWORD_HERE&T=5" -X POST 'https://amaraca.com/db/'
 function cron_tick($link) {
+    $result = $link->query("SELECT `sessions`, `max_sessions`, `IPs` FROM `stats` ORDER BY `nr` DESC LIMIT 1");
+
+         if ($link->errno !== 0) set_critical_error($link, $link->error);
+    else if ($row = $result->fetch_assoc()) {
+        $IPs = intval($row['IPs']);
+        $sessions = intval($row['sessions']);
+        $max_sessions = intval($row['max_sessions']);
+
+        db_log(
+            $link, null,
+            'Online: '.$sessions.'/'.$max_sessions.' ('.$IPs.
+            ' IP'.($IPs === 1 ? '' : 's').').',
+            LOG_LEVEL_MINOR
+        );
+    }
+
     $IPs    = 0;
     $result = $link->query("SELECT COUNT(`ip`) AS `IPs` FROM `address` WHERE `rpm` > 0");
 
