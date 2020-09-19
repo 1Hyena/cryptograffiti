@@ -357,12 +357,14 @@ step() {
         local news=""
 
         if [ -z "${TXBUF}" ] ; then
+            local old_nonce="${NONC}"
             NONC=$(
                 printf "%s%s" "${NONC}" "${SEED}" |
                 xxd -r -p                         |
                 sha256sum                         |
                 head -c 64
             )
+            local new_nonce="${NONC}"
 
             local datafmt=""
             datafmt+="{\"guid\":\"%s\",\"nonce\":\"%s\",\"count\":\"%s\","
@@ -378,6 +380,8 @@ step() {
             response=$("${CALL}" "${CONF}" "get_txs" <<< "${data}")
             state=$?
 
+            NONC="${old_nonce}" # By default, we revert the nonce.
+
             if [ "${state}" -ge "1" ] ; then
                 ((OTHER_ERRORS++))
                 alert "${CALL}: Exit code ${state}."
@@ -385,6 +389,10 @@ step() {
                 ((OTHER_ERRORS++))
                 alert "Call script returned nothing."
             else
+                # The API call did not fail on the network level, now it is safe
+                # to actually update the nonce.
+                NONC="${new_nonce}"
+
                 local result=$(printf "%s" "${response}" | jq -r -M .result)
                 local rpm=$(printf "%s" "${response}" | jq -r -M .api_usage.rpm)
                 local max_rpm=$(

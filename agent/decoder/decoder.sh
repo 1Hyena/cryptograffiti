@@ -505,12 +505,14 @@ get_volatile_txs() {
     local blockheight="${VOLATILE_TXS_FROM_BLOCKHEIGHT}"
     local max_txs="${1}"
 
+    local old_nonce="${NONC}"
     NONC=$(
         printf "%s%s" "${NONC}" "${SEED}" |
         xxd -r -p                         |
         sha256sum                         |
         head -c 64
     )
+    local new_nonce="${NONC}"
 
     local datafmt=""
     datafmt+="{\"guid\":\"%s\",\"nonce\":\"%s\",\"count\":\"%s\","
@@ -526,6 +528,8 @@ get_volatile_txs() {
     response=$("${CALL}" "${CONF}" "get_txs" <<< "${data}")
     state=$?
 
+    NONC="${old_nonce}" # By default, we revert the nonce.
+
     if [ "${state}" -ge "1" ] ; then
         ((OTHER_ERRORS++))
         alert "${CALL}: Exit code ${state}."
@@ -533,6 +537,10 @@ get_volatile_txs() {
         ((OTHER_ERRORS++))
         alert "Call script returned nothing."
     else
+        # The API call did not fail on the network level, now it is safe to
+        # actually update the nonce.
+        NONC="${new_nonce}"
+
         local result=$(printf "%s" "${response}" | jq -r -M .result)
         local rpm=$(printf "%s" "${response}" | jq -r -M .api_usage.rpm)
         local max_rpm=$(
@@ -780,6 +788,7 @@ step() {
     NONC=$(
         printf "%s%s" "${NONC}" "${SEED}" | xxd -r -p | sha256sum | head -c 64
     )
+    local new_nonce="${NONC}"
 
     local datafmt="{\"guid\":\"%s\",\"nonce\":\"%s\",\"graffiti\":%s}"
     local data=$(
@@ -787,6 +796,8 @@ step() {
     )
 
     local datasz=$(( ${#data} / 2 ))
+
+    NONC="${old_nonce}" # By default, we revert the nonce.
 
     if [ "${datasz}" -gt "${MAX_DATA_SIZE}" ]; then
         alert "Upload of ${datasz} bytes exceeds the limit of ${MAX_DATA_SIZE}".
@@ -804,9 +815,6 @@ step() {
 
             CACHE=""
             txs_per_query=$(( ${upload_tx_count} / 2 ))
-
-            # We must revert the NONC because this upload is forbidden.
-            NONC="${old_nonce}"
 
             if ! step "${txs_per_query}"  ; then
                 return 1
@@ -834,6 +842,10 @@ step() {
         printf "%s\n" "${CACHE}" >/dev/stderr
         CACHE=""
     else
+        # The API call did not fail on the network level, now it is safe to
+        # actually update the nonce.
+        NONC="${new_nonce}"
+
         local result=$(printf "%s" "${response}" | jq -r -M .result)
         local rpm=$(printf "%s" "${response}" | jq -r -M .api_usage.rpm)
         local max_rpm=$(printf "%s" "${response}" | jq -r -M .api_usage.max_rpm)
