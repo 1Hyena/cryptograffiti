@@ -144,8 +144,8 @@ step() {
                 local curl_response
                 local curl_exit_code
                 curl_response=$(
-                    curl -f -s -X GET "${CACH}?hash=${ghash}" |
-                    xxd -p                                    |
+                    curl -f -s -X GET "${CACH}${ghash}" |
+                    xxd -p                              |
                     tr -d '\n'
                 )
                 curl_exit_code="$?"
@@ -173,7 +173,7 @@ step() {
 
                         local slack_req=$(
                             jq -M -nc --arg str "${slack_msg}" --arg imgurl \
-                            "${CACH}?hash=${ghash}"                         \
+                            "${CACH}${ghash}"                               \
                             --arg fhash "${ghash}" "${slack_req_json}"
                         )
 
@@ -222,7 +222,7 @@ step() {
                         local slack_req=$(
                             jq -M -nc --arg str "${slack_msg}"              \
                             --arg ts "${TIMESTAMP}" --arg chid "${CHAN_ID}" \
-                            --arg imgurl "${CACH}?hash=${ghash}"            \
+                            --arg imgurl "${CACH}${ghash}"                  \
                             --arg fhash "${ghash}" "${slack_req_json}"
                         )
 
@@ -261,7 +261,7 @@ step() {
                                 slack_req=$(
                                     jq -M -nc --arg str "${LAST_TEXT}"       \
                                     --arg ts "${TIMESTAMP}"                  \
-                                    --arg imgurl "${CACH}?hash=${LAST_HASH}" \
+                                    --arg imgurl "${CACH}${LAST_HASH}"       \
                                     --arg fhash "${LAST_HASH}"               \
                                     "${slack_req_json}"
                                 )
