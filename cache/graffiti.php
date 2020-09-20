@@ -55,6 +55,36 @@ if ($errno === 0) {
 
     $rawtx = "../rawtx/".$txid;
 
+    for ($retries = 5; $retries >= 0; $retries--) {
+        if (file_exists($rawtx)) break;
+
+        $retry = $retries > 0 ? true : false;
+
+        $query = (
+            "UPDATE `tx` SET `requests` = `requests` + 1, `cache` = FALSE ".
+            "WHERE `txid` = X'".$link->real_escape_string($txid)."'"
+        );
+
+        $result = $link->query($query);
+        $errno  = $link->errno;
+
+        if ($errno === 0) {
+            if ($link->affected_rows === 0) {
+                shutdown($link, 500, "INTERNAL ERROR (".__LINE__.")");
+            }
+
+            if ($retry) {
+                usleep(1000000);
+                continue;
+            }
+
+            header('Retry-After:5');
+            shutdown($link, 503, "TRY AGAIN LATER");
+        }
+
+        shutdown($link, 500, "INTERNAL ERROR (".__LINE__.")");
+    }
+
     if (!file_exists($rawtx)) {
         $query = (
             "UPDATE `tx` SET `requests` = `requests` + 1, `cache` = FALSE ".
