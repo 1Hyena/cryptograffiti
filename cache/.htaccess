@@ -1,2 +1,2 @@
 RewriteEngine On
-RewriteRule ^/?cache/([a-f0-9]{40})?$ cache/?hash=$1 [L,QSA]
+RewriteRule ^/?([a-f0-9]{40})$ ?hash=$1 [L,QSA]
