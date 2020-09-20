@@ -139,13 +139,13 @@ step() {
                 filesize=$(printf "%s" "${line}" | jq -r -M .fsize)
                 mimetype=$(printf "%s" "${line}" | jq -r -M .mimetype)
 
-                log "Downloading ${mimetype} of size ${filesize} (${ghash})."
+                log "Caching ${mimetype} of size ${filesize} (${ghash})."
 
                 local curl_response
                 local curl_exit_code
                 curl_response=$(
                     curl -f -s -X GET "${CACH}?hash=${ghash}" |
-                    xxd -p |
+                    xxd -p                                    |
                     tr -d '\n'
                 )
                 curl_exit_code="$?"
@@ -155,7 +155,7 @@ step() {
                 elif [[ -z "${curl_response}" ]]; then
                     alert "Received an empty response."
                 elif [[ ! -z "${AUTH}" ]]; then
-                    log "Uploading ${filesize} bytes to Slack."
+                    log "Posting ${ghash} to Slack."
 
                     local slack_msg=$(
                         printf      \
@@ -294,7 +294,7 @@ step() {
                                     jq . >/dev/stderr <<< "${slack_resp}"
                                 fi
                             else
-                                log "Error. Unexpected program flow."
+                                alert "Unexpected program flow."
                             fi
 
                             LAST_TEXT="${slack_msg}"

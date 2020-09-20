@@ -1,80 +1,153 @@
 <?php
-header('Content-Type:text/plain');
-
-if ($_SERVER['REQUEST_METHOD'] != 'POST') {
-    header('Allow:POST');
-    http_response_code(405);
-    print "METHOD NOT ALLOWED";
+function shutdown($link, $code, $text) {
+    if ($link !== null) $link->close();
+    header('Content-Type:text/plain');
+    http_response_code($code);
+    print $text;
     exit;
 }
 
-$size = (int) $_SERVER['CONTENT_LENGTH'];
-if ($size === 0) {
-    http_response_code(400);
-    print "EMPTY POST BODY";
-    exit;
-}
-$postdata = file_get_contents("php://input");
-$hash = hash("ripemd160", $postdata, false);
-
-if (strlen($hash) !== 40) {
-    http_response_code(500);
-    print "INTERNAL ERROR (".__LINE__.")";
-    exit;
+if ($_SERVER['REQUEST_METHOD'] != 'GET') {
+    header('Allow:GET');
+    shutdown(null, 405, "METHOD NOT ALLOWED");
 }
 
-{
-    require('../api/auth.php');
+$hash = isset($_GET['hash']) ? $_GET['hash'] : null;
 
-    $host     = SQL_HOST;
-    $username = SQL_USERNAME;
-    $password = SQL_PASSWORD;
-    $db_name  = SQL_DATABASE;
+if ($hash === null || strlen($hash) !== 40 || !ctype_xdigit($hash)) {
+    shutdown(null, 404, "BAD PARAMETER");
+}
 
-    // Connect to server and select databse.
-    $link = new mysqli($host, $username, $password, $db_name);
-    if ($link->connect_error) {
-        http_response_code(500);
-        print "INTERNAL ERROR (".__LINE__.")";
-        exit;
+require('../api/auth.php');
+
+$host     = SQL_HOST;
+$username = SQL_USERNAME;
+$password = SQL_PASSWORD;
+$db_name  = SQL_DATABASE;
+
+// Connect to server and select databse.
+$link = new mysqli($host, $username, $password, $db_name);
+if ($link->connect_error) shutdown($link, 500, "INTERNAL ERROR (".__LINE__.")");
+
+$query = (
+    "SELECT `txid`, `location`, `fsize`, `offset`, `mimetype` ".
+    "FROM `graffiti` WHERE `hash` = X'".$link->real_escape_string($hash).
+    "' LIMIT 1"
+);
+
+$result = $link->query($query);
+$errno  = $link->errno;
+
+if ($errno === 0) {
+    if (!($row = $result->fetch_assoc()) ) {
+        shutdown($link, 404, "NOT FOUND");
     }
 
-    $query="SELECT `nr` FROM `graffiti` WHERE `hash` = X'"
-          .$link->real_escape_string($hash)."' LIMIT 1";
+    $txid = bin2hex($row['txid']);
+    $location = $row['location'];
+    $fsize = intval($row['fsize']);
+    $offset = intval($row['offset']);
+    $mimetype = $row['mimetype'];
 
-    {
+    if ($location !== "NULL_DATA") {
+        shutdown($link, 500, "INTERNAL ERROR (".__LINE__.")");
+    }
+
+    $rawtx = "../rawtx/".$txid;
+
+    for ($retries = 5; $retries >= 0; $retries--) {
+        if (file_exists($rawtx)) break;
+
+        $retry = $retries > 0 ? true : false;
+
+        $query = (
+            "UPDATE `tx` SET `requests` = `requests` + 1, `cache` = FALSE ".
+            "WHERE `txid` = X'".$link->real_escape_string($txid)."'"
+        );
+
         $result = $link->query($query);
         $errno  = $link->errno;
-        $link->close();
 
         if ($errno === 0) {
-            if ( !($row = $result->fetch_assoc()) ) {
-                // Payload is not any of the known graffiti.
-                http_response_code(400);
-                print "UNKNOWN PAYLOAD";
-                exit;
+            if ($link->affected_rows === 0) {
+                shutdown($link, 500, "INTERNAL ERROR (".__LINE__.")");
             }
+
+            if ($retry) {
+                usleep(1000000);
+                continue;
+            }
+
+            header('Retry-After:5');
+            shutdown($link, 503, "TRY AGAIN LATER");
         }
-        else {
-            http_response_code(500);
-            print "INTERNAL ERROR (".__LINE__.")";
-            exit;
-        }
+
+        shutdown($link, 500, "INTERNAL ERROR (".__LINE__.")");
     }
-}
 
-$fname=$hash;
+    if (!file_exists($rawtx)) {
+        $query = (
+            "UPDATE `tx` SET `requests` = `requests` + 1, `cache` = FALSE ".
+            "WHERE `txid` = X'".$link->real_escape_string($txid)."'"
+        );
 
-$fp = fopen($fname, "w");
-if ($fp == false) {
-    http_response_code(500);
-    print "INTERNAL ERROR (".__LINE__.")";
+        $result = $link->query($query);
+        $errno  = $link->errno;
+
+        if ($errno === 0) {
+            if ($link->affected_rows === 0) {
+                shutdown($link, 500, "INTERNAL ERROR (".__LINE__.")");
+            }
+
+            header('Retry-After:5');
+            shutdown($link, 503, "TRY AGAIN LATER");
+        }
+
+        shutdown($link, 500, "INTERNAL ERROR (".__LINE__.")");
+    }
+
+    if (filesize($rawtx) < $offset + $fsize) {
+        shutdown($link, 500, "INTERNAL ERROR (".__LINE__.")");
+    }
+
+    $fp = fopen($rawtx, "rb");
+    if ($fp == false) {
+        shutdown($link, 500, "INTERNAL ERROR (".__LINE__.")");
+    }
+
+    if (fseek($fp, $offset) !== 0) {
+        fclose($fp);
+        shutdown($link, 500, "INTERNAL ERROR (".__LINE__.")");
+    }
+
+    $chunks = array();
+    $fsize_remaining = $fsize;
+
+    while (!feof($fp)) {
+        $chunk = fread($fp, $fsize_remaining);
+
+        if ($chunk === false) {
+            fclose($fp);
+            shutdown($link, 500, "INTERNAL ERROR (".__LINE__.")");
+        }
+
+        $fsize_remaining -= strlen($chunk);
+        $chunks[] = $chunk;
+
+        if ($fsize_remaining <= 0) break;
+    }
+
+    fclose($fp);
+
+    $link->close();
+
+    header('Content-Type:'.$mimetype);
+    header("Content-Length:".$fsize);
+    http_response_code(200);
+    echo implode($chunks);
     exit;
 }
 
-fwrite($fp, $postdata);
-fclose($fp);
+shutdown($link, 500, "INTERNAL ERROR (".__LINE__.")");
 
-http_response_code(201);
-print $fname;
 ?>
