@@ -6,6 +6,8 @@ function cg_construct_wall(main) {
     tab["loading_txs"] = 0;
     tab["last_update"] = 0;
     tab["scrolled"] = false;
+    tab["scrolled_bottom"] = false;
+    tab["scrolled_top"] = false;
 
     var headbuf = document.createElement("div");
     var bodybuf = document.createElement("div");
@@ -18,7 +20,40 @@ function cg_construct_wall(main) {
     tab.element.addEventListener(
         'scroll',
         function(e) {
+            var call_step = false;
             tab.scrolled = true;
+
+            if (cg_wall_scrolled_bottom()) {
+                if (tab.scrolled_bottom === false) {
+                    tab.scrolled_bottom = true;
+                    call_step = true;
+                }
+            }
+            else {
+                tab.scrolled_bottom = false;
+            }
+
+            if (cg_wall_scrolled_top()) {
+                if (tab.scrolled_top === false) {
+                    tab.scrolled_top = true;
+                    call_step = true;
+                }
+            }
+            else {
+                tab.scrolled_top = false;
+            }
+
+            if (call_step === true) {
+                setTimeout(
+                    function(){
+                        tab.last_update = 0;
+
+                        if (tab.loading_txs >= 0) tab.loading_txs = 0;
+
+                        cg_step_wall(tab);
+                    }, 0
+                );
+            }
         }
     );
 
@@ -32,6 +67,7 @@ function cg_construct_wall(main) {
 function cg_wall_refresh_visible(tab) {
     var bodybuf = document.getElementById("cg-wall-bodybuf");
     var contents = bodybuf.children;
+
     for (var i=0; i<contents.length; ++i) {
         var txdiv = contents[i];
 
@@ -387,7 +423,7 @@ function cg_wall_decode_graffiti(tab, txid, hash, data) {
 
 function cg_wall_get_txs(tab) {
     var data_obj = {
-        count : ""+Math.min(cg_get_global("constants").TXS_PER_QUERY, 16)
+        count : ""+Math.min(cg_get_global("constants").TXS_PER_QUERY, 32)
     };
 
     var bodybuf = document.getElementById("cg-wall-bodybuf");
@@ -433,6 +469,13 @@ function cg_wall_get_txs(tab) {
                 if ("txs" in json) {
                     for (var i=0; i<json.txs.length; ++i) {
                         tab.txs[json.txs[i].txid] = json.txs[i];
+                    }
+
+                    if (tab.scrolled_bottom || tab.scrolled_top) {
+                        setTimeout(function(){
+                            tab.last_update = 0;
+                            cg_step_wall(tab);
+                        }, 0);
                     }
                 }
                 else {
