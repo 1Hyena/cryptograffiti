@@ -25,7 +25,7 @@ alert() {
 
 NR="${2}"
 HR=""
-TS=""
+TIMESTAMP=""
 LAST_TEXT=""
 LAST_HASH=""
 CHAN_ID=""
@@ -105,7 +105,7 @@ step() {
             # This is needed so that we would create a new topic on
             # Slack every time the hour of the day changes.
             HR="${hr}"
-            TS=""
+            TIMESTAMP=""
         fi
 
         while read -r line; do
@@ -163,7 +163,7 @@ step() {
                             "<https://bchsvexplorer.com/tx/${txid}|${txid}>"
                     )
 
-                    if [ -z "${TS}" ] ; then
+                    if [ -z "${TIMESTAMP}" ] ; then
                         local slack_req_json=""
                         slack_req_json+='{"channel":"cryptograffiti",'
                         slack_req_json+='"unfurl_links":true,'
@@ -173,7 +173,7 @@ step() {
 
                         local slack_req=$(
                             jq -M -nc --arg str "${slack_msg}" --arg imgurl \
-                            "${CACH}?hash=${ghash}"                      \
+                            "${CACH}?hash=${ghash}"                         \
                             --arg fhash "${ghash}" "${slack_req_json}"
                         )
 
@@ -191,25 +191,38 @@ step() {
                                 printf "%s" "${slack_resp}" | jq -M -r '.ts'
                             )
 
-                            log "A link to ${ghash} has been posted to Slack as a new thread (${new_ts})."
-                            TS="${new_ts}"
+                            local logline=""
+                            logline+="A link to ${ghash} has been posted to "
+                            logline+="Slack as a new thread (${new_ts})."
 
+                            log "${logline}"
+                            TIMESTAMP="${new_ts}"
                             LAST_TEXT="${slack_msg}"
                             LAST_HASH="${ghash}"
-                            CHAN_ID=`printf "%s" "${slack_resp}" | jq -M -r '.channel'`
+                            CHAN_ID=$(
+                                printf "%s" "${slack_resp}" |
+                                jq -M -r '.channel'
+                            )
 
                             printf "%s" "${slack_resp}" | jq . >/dev/stderr
                         else
-                            log "A link to ${ghash} could not be posted to Slack (1)."
+                            local logline=""
+                            logline+="A link to ${ghash} could not be posted "
+                            logline+="to Slack (1)."
+                            log "${logline}"
                             printf "%s" "${slack_resp}" | jq . >/dev/stderr
                         fi
                     else
                         local slack_req_json=""
-                        slack_req_json+='{"unfurl_links":true,"unfurl_media":true,"channel":$chid,"ts":$ts,"text":$str,"attachments":[{"image_url":$imgurl,"title":$fhash}]}'
+                        slack_req_json+='{"unfurl_links":true,'
+                        slack_req_json+='"unfurl_media":true,"channel":$chid,'
+                        slack_req_json+='"ts":$ts,"text":$str,"attachments":'
+                        slack_req_json+='[{"image_url":$imgurl,'
+                        slack_req_json+='"title":$fhash}]}'
                         local slack_req=$(
-                            jq -M -nc --arg str "${slack_msg}"       \
-                            --arg ts "${TS}" --arg chid "${CHAN_ID}" \
-                            --arg imgurl "${CACH}?hash=${ghash}"        \
+                            jq -M -nc --arg str "${slack_msg}"              \
+                            --arg ts "${TIMESTAMP}" --arg chid "${CHAN_ID}" \
+                            --arg imgurl "${CACH}?hash=${ghash}"            \
                             --arg fhash "${ghash}" "${slack_req_json}"
                         )
 
@@ -217,7 +230,8 @@ step() {
                             printf "%s" "${slack_req}" |
                             curl -s -H "Authorization: Bearer ${AUTH}"      \
                                 -H "Content-Type: application/json" -X POST \
-                                --data-binary @- https://slack.com/api/chat.update
+                                --data-binary @-                            \
+                                "https://slack.com/api/chat.update"
                         )
 
                         local ok=$(printf "%s" "${slack_resp}" | jq -M -r '.ok')
@@ -227,22 +241,57 @@ step() {
                                 printf "%s" "${slack_resp}" | jq -M -r '.ts'
                             )
 
-                            log "A link to ${ghash} has been posted to Slack as a thread replacement (${new_ts})."
-                            TS="${new_ts}"
+                            local logline=""
+                            logline+="A link to ${ghash} has been posted to "
+                            logline+="Slack as a thread replacement "
+                            logline+="(${new_ts})."
 
-                            if [[ ! -z "${LAST_TEXT}" ]] && [[ ! -z "${LAST_HASH}" ]]; then
-                                slack_req=`jq -M -nc --arg str "${LAST_TEXT}" --arg ts "${TS}" --arg imgurl "${CACH}?hash=${LAST_HASH}" --arg fhash "${LAST_HASH}" '{"channel":"cryptograffiti","unfurl_links":true,"unfurl_media":true,"thread_ts":$ts,"text":$str,"attachments":[{"image_url":$imgurl,"title":$fhash}]}'`
-                                head1="Authorization: Bearer ${AUTH}"
-                                head2="Content-Type: application/json"
+                            log "${logline}"
+                            TIMESTAMP="${new_ts}"
 
-                                slack_resp=`printf "%s" "${slack_req}" | curl -s -H "${head1}" -H "${head2}" -X POST --data-binary @- https://slack.com/api/chat.postMessage`
-                                ok=`printf "%s" "${slack_resp}" | jq -M -r '.ok'`
+                            if [[ ! -z "${LAST_TEXT}" ]] \
+                            && [[ ! -z "${LAST_HASH}" ]] ; then
+                                slack_req_json=""
+                                slack_req_json+='{"channel":"cryptograffiti",'
+                                slack_req_json+='"unfurl_links":true,'
+                                slack_req_json+='"unfurl_media":true,'
+                                slack_req_json+='"thread_ts":$ts,"text":$str,'
+                                slack_req_json+='"attachments":[{"image_url":'
+                                slack_req_json+='$imgurl,"title":$fhash}]}'
+                                slack_req=$(
+                                    jq -M -nc --arg str "${LAST_TEXT}"       \
+                                    --arg ts "${TIMESTAMP}"                  \
+                                    --arg imgurl "${CACH}?hash=${LAST_HASH}" \
+                                    --arg fhash "${LAST_HASH}"               \
+                                    "${slack_req_json}"
+                                )
+                                local head1="Authorization: Bearer ${AUTH}"
+                                local head2="Content-Type: application/json"
+
+                                slack_resp=$(
+                                    printf "%s" "${slack_req}"          |
+                                    curl -s -H "${head1}" -H "${head2}" \
+                                    -X POST --data-binary @-            \
+                                    "https://slack.com/api/chat.postMessage"
+                                )
+                                ok=$(
+                                    printf "%s" "${slack_resp}" | jq -M -r '.ok'
+                                )
 
                                 if [ "${ok}" = "true" ]; then
-                                    log "A link to ${LAST_HASH} has been posted to the end of thread ${TS} in Slack."
+                                    local logline=""
+                                    logline+="A link to ${LAST_HASH} has been "
+                                    logline+="posted to the end of thread "
+                                    logline+="${TIMESTAMP} in Slack."
+                                    log "${logline}"
                                 else
-                                    log "A link to ${LAST_HASH} could not be posted to the end of thread ${TS} in Slack."
-                                    printf "%s" "${slack_resp}" | jq . >/dev/stderr
+                                    local logline=""
+                                    logline+="A link to ${LAST_HASH} could not "
+                                    logline+="be posted to the end of thread "
+                                    logline+="${TIMESTAMP} in Slack."
+                                    log "${logline}"
+
+                                    jq . >/dev/stderr <<< "${slack_resp}"
                                 fi
                             else
                                 log "Error. Unexpected program flow."
@@ -251,11 +300,14 @@ step() {
                             LAST_TEXT="${slack_msg}"
                             LAST_HASH="${ghash}"
                         else
-                            log "A link to ${ghash} could not be posted to Slack (2)."
-                            printf "%s" "${slack_resp}" | jq . >/dev/stderr
+                            local logline=""
+                            logline+="A link to ${ghash} could not be posted "
+                            logline+="to Slack (2)."
+                            log "${logline}"
+
+                            jq . >/dev/stderr <<< "${slack_resp}"
                         fi
                     fi
-
                 fi
             fi
         done <<< "${lines}"
@@ -309,7 +361,9 @@ loop() {
             done
         else
             local ecode
-            ecode=$(printf "%s" "${response}" | jq -r -M .error | jq -r -M .code)
+            ecode=$(
+                printf "%s" "${response}" | jq -r -M .error | jq -r -M .code
+            )
             log "Failed to get constants: ${ecode}"
             printf "%s" "${response}" | jq .error >/dev/stderr
             sleep 10
