@@ -15,6 +15,7 @@ RWTX=""                                                                        #
 NAME=""                                                                        #
 CLIF=""                                                                        #
 DDIR=""                                                                        #
+CFGF=""                                                                        #
 ################################################################################
 DATE_FORMAT="%Y-%m-%d %H:%M:%S"
 CANARY="::"
@@ -105,9 +106,14 @@ config() {
         RWTX=$(printf "%s" "${cfg}" | jq -r -M .rawtx)
         CLIF=$(printf "%s" "${cfg}" | jq -r -M '.["bitcoin-cli"]')
         DDIR=$(printf "%s" "${cfg}" | jq -r -M '.["bitcoin-dat"]')
+        CFGF=$(printf "%s" "${cfg}" | jq -r -M '.["bitcoin-cfg"]')
 
         if [ ! -z "${DDIR}" ] ; then
             DDIR="-datadir=${DDIR}"
+        fi
+
+        if [ ! -z "${CFGF}" ] ; then
+            CFGF="-conf=${CFGF}"
         fi
 
         if [ ! -z "${NAME}" ] ; then
@@ -345,7 +351,7 @@ get_rawtxs() {
         return 0
     fi
 
-    local cli_cmd="${CLIF} ${DDIR} getrawtransaction {} "
+    local cli_cmd="${CLIF} ${DDIR} ${CFGF} getrawtransaction {} "
     local cli_state
     prevbuf="${buf}"
     buf=$(

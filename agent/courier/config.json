@@ -10,5 +10,6 @@
   "init.sh": "../init.sh",
   "call.sh": "../call.sh",
   "bitcoin-cli": "bitcoin-cli",
-  "bitcoin-dat": ""
+  "bitcoin-dat": "",
+  "bitcoin-cfg": ""
 }
