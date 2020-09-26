@@ -15,6 +15,7 @@ NAME=""                                                                        #
 CLIF=""                                                                        #
 CGDF=""                                                                        #
 DDIR=""                                                                        #
+CFGF=""                                                                        #
 ################################################################################
 DATE_FORMAT="%Y-%m-%d %H:%M:%S"
 CANARY="::"
@@ -108,9 +109,14 @@ config() {
         CGDF=$(printf "%s" "${cfg}" | jq -r -M .cgd)
         CLIF=$(printf "%s" "${cfg}" | jq -r -M '.["bitcoin-cli"]')
         DDIR=$(printf "%s" "${cfg}" | jq -r -M '.["bitcoin-dat"]')
+        CFGF=$(printf "%s" "${cfg}" | jq -r -M '.["bitcoin-cfg"]')
 
         if [ ! -z "${DDIR}" ] ; then
             DDIR="-datadir=${DDIR}"
+        fi
+
+        if [ ! -z "${CFGF}" ] ; then
+            CFGF="-conf=${CFGF}"
         fi
 
         if [ ! -z "${NAME}" ] ; then
@@ -349,7 +355,7 @@ decode_graffiti() {
         return 0
     fi
 
-    local cli_cmd="${CLIF} ${DDIR} getrawtransaction {} "
+    local cli_cmd="${CLIF} ${CFGF} ${DDIR} getrawtransaction {} "
     local cli_state
     prevbuf="${buf}"
     buf=$(
@@ -448,7 +454,7 @@ decode_graffiti() {
         local extra_cmd
         local extra_state
 
-        extra_cmd="${CLIF} ${DDIR} getrawtransaction {} 1 "
+        extra_cmd="${CLIF} ${CFGF} ${DDIR} getrawtransaction {} 1 "
         extra=$(
             parallel          \
             --halt now,fail=1 \
@@ -615,12 +621,12 @@ step() {
         local news=""
 
         if [ -z "${TXBUF}" ] ; then
-            local pool=$(${CLIF} ${DDIR} getrawmempool | jq -M -r .[])
-            local bestblock=$(${CLIF} ${DDIR} getbestblockhash)
+            local pool=$(${CLIF} ${CFGF} ${DDIR} getrawmempool | jq -M -r .[])
+            local bestblock=$(${CLIF} ${CFGF} ${DDIR} getbestblockhash)
 
             if [ "${bestblock}" != "${BESTBLOCK}" ]; then
                 local blockheight=$(
-                    ${CLIF} ${DDIR} getblockheader "${bestblock}" |
+                    ${CLIF} ${CFGF} ${DDIR} getblockheader "${bestblock}" |
                     jq -M -r .height
                 )
 
@@ -659,7 +665,7 @@ step() {
             )
 
             news=$(
-                ${CLIF} ${DDIR} getblock ${bestblock} |
+                ${CLIF} ${CFGF} ${DDIR} getblock ${bestblock} |
                 jq -M -r '.tx | .[]'
             )
 

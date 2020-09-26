@@ -10,6 +10,6 @@
   "call.sh": "../call.sh",
   "cgd": "../decoder/cgd",
   "bitcoin-cli": "bitcoin-cli",
-  "bitcoin-dat": ""
+  "bitcoin-dat": "",
+  "bitcoin-cfg": ""
 }
-
