@@ -69,15 +69,15 @@ function cg_wall_refresh_visible(tab) {
     var contents = bodybuf.children;
 
     for (var i=0; i<contents.length; ++i) {
-        var txdiv = contents[i];
+        var frame = contents[i];
 
-        if (!txdiv.classList.contains("cg-wall-txdiv")) continue;
+        if (!frame.classList.contains("cg-wall-graffiti-frame")) continue;
 
-        if (is_visible(tab.element, txdiv, false)) {
-            txdiv.classList.add("cg-wall-txdiv-visible");
+        if (is_visible(tab.element, frame, false)) {
+            frame.classList.add("cg-wall-graffiti-frame-visible");
         }
         else {
-            txdiv.classList.remove("cg-wall-txdiv-visible");
+            frame.classList.remove("cg-wall-graffiti-frame-visible");
         }
     }
 }
@@ -105,40 +105,47 @@ function cg_step_wall(tab) {
     for (var key in tab.txs) {
         if (!tab.txs.hasOwnProperty(key)) continue;
 
-        var txdiv = document.getElementById(key);
+        for (var i=0; i<tab.txs[key].graffiti.length; ++i) {
+            var gdat = tab.txs[key].graffiti[i];
 
-        if (txdiv == null) {
+            var frame_id = "cg-wall-graffiti-frame-"+gdat.nr;
+
+            var frame = document.getElementById(frame_id);
+
+            if (frame !== null) continue;
+
             var tx = tab.txs[key];
 
-            txdiv = document.createElement("div");
-            txdiv.id = key;
-            txdiv.classList.add("cg-wall-txdiv");
+            frame = document.createElement("div");
+            frame.id = frame_id;
+            frame.classList.add("cg-wall-graffiti-frame");
+            frame.classList.add("cg-wall-graffiti-frame-"+key);
 
             if (tx.txtime === null) {
-                txdiv.setAttribute("data-timestamp", timestamp);
+                frame.setAttribute("data-timestamp", timestamp);
             }
             else {
-                txdiv.setAttribute("data-timestamp", tx.txtime);
+                frame.setAttribute("data-timestamp", tx.txtime);
             }
 
-            txdiv.setAttribute("data-nr", tx.nr);
+            frame.setAttribute("data-txid", key);
+            frame.setAttribute("data-graffiti-nr", gdat.nr);
+            frame.setAttribute("data-tx-nr", tx.nr);
 
-            for (var i=0; i<tab.txs[key].graffiti.length; ++i) {
-                var gdata = tab.txs[key].graffiti[i];
-                var graffiti = document.createElement("div");
-                graffiti.classList.add("cg-wall-graffiti");
+            var graffiti = document.createElement("div");
+            graffiti.classList.add("cg-wall-graffiti");
 
-                graffiti.setAttribute("data-location",  gdata.location);
-                graffiti.setAttribute("data-fsize",     gdata.fsize);
-                graffiti.setAttribute("data-offset",    gdata.offset);
-                graffiti.setAttribute("data-mimetype",  gdata.mimetype);
-                graffiti.setAttribute("data-hash",      gdata.hash);
-                graffiti.setAttribute("data-timestamp", "0");
+            graffiti.setAttribute("data-nr",        gdat.nr);
+            graffiti.setAttribute("data-location",  gdat.location);
+            graffiti.setAttribute("data-fsize",     gdat.fsize);
+            graffiti.setAttribute("data-offset",    gdat.offset);
+            graffiti.setAttribute("data-mimetype",  gdat.mimetype);
+            graffiti.setAttribute("data-hash",      gdat.hash);
+            graffiti.setAttribute("data-timestamp", "0");
 
-                txdiv.appendChild(graffiti);
-            }
+            frame.appendChild(graffiti);
 
-            cg_wall_add(tab, txdiv);
+            cg_wall_add(tab, frame);
         }
     }
 
@@ -155,7 +162,7 @@ function cg_step_wall(tab) {
     cg_wall_resolve_rawtxs(tab);
 }
 
-function cg_wall_add(tab, txdiv) {
+function cg_wall_add(tab, frame) {
     var headbuf = document.getElementById("cg-wall-headbuf");
     var bodybuf = document.getElementById("cg-wall-bodybuf");
     var tailbuf = document.getElementById("cg-wall-tailbuf");
@@ -164,17 +171,17 @@ function cg_wall_add(tab, txdiv) {
     var oldest = bodybuf.lastChild;
 
     if (newest == null && oldest == null) {
-        bodybuf.appendChild(txdiv);
+        bodybuf.appendChild(frame);
         cg_wall_refresh_visible(tab);
         return;
     }
 
     var newest_timestamp = parseInt(newest.getAttribute("data-timestamp"));
-    var newest_nr        = parseInt(newest.getAttribute("data-nr"));
+    var newest_nr        = parseInt(newest.getAttribute("data-graffiti-nr"));
     var oldest_timestamp = parseInt(oldest.getAttribute("data-timestamp"));
-    var oldest_nr        = parseInt(oldest.getAttribute("data-nr"));
-    var timestamp        = parseInt(txdiv.getAttribute("data-timestamp"));
-    var nr               = parseInt(txdiv.getAttribute("data-nr"));
+    var oldest_nr        = parseInt(oldest.getAttribute("data-graffiti-nr"));
+    var timestamp        = parseInt(frame.getAttribute("data-timestamp"));
+    var nr               = parseInt(frame.getAttribute("data-graffiti-nr"));
 
     var send_to = null;
 
@@ -189,11 +196,11 @@ function cg_wall_add(tab, txdiv) {
         else                     send_to = tailbuf;
     }
 
-    send_to.appendChild(txdiv);
+    send_to.appendChild(frame);
 }
 
-function cg_wall_txdiv_is_ready(txdiv) {
-    var contents = txdiv.children;
+function cg_wall_frame_is_ready(frame) {
+    var contents = frame.children;
 
     for (var i=0; i<contents.length; ++i) {
         var content = contents[i];
@@ -226,18 +233,18 @@ function cg_wall_refresh_buffers(tab) {
 
     var news = headbuf.children;
     for (var i=0; i<news.length; ++i) {
-        var txdiv = news[i];
+        var frame = news[i];
 
-        if (!txdiv.classList.contains("cg-wall-txdiv")) continue;
+        if (!frame.classList.contains("cg-wall-graffiti-frame")) continue;
 
-        if (!cg_wall_txdiv_is_ready(txdiv)) break;
+        if (!cg_wall_frame_is_ready(frame)) break;
 
         if (i === 0) {
-            last_offset = txdiv.offsetTop;
+            last_offset = frame.offsetTop;
             continue;
         }
 
-        if (txdiv.offsetTop > last_offset) {
+        if (frame.offsetTop > last_offset) {
             for (var j=0; j<i; ++j) {
                 add_to_body_head.push(news[j]);
             }
@@ -270,18 +277,18 @@ function cg_wall_refresh_buffers(tab) {
 
     var olds = tailbuf.children;
     for (var i=0; i<olds.length; ++i) {
-        var txdiv = olds[i];
+        var frame = olds[i];
 
-        if (!txdiv.classList.contains("cg-wall-txdiv")) continue;
+        if (!frame.classList.contains("cg-wall-graffiti-frame")) continue;
 
-        if (!cg_wall_txdiv_is_ready(txdiv)) break;
+        if (!cg_wall_frame_is_ready(frame)) break;
 
         if (i === 0) {
-            last_offset = txdiv.offsetTop;
+            last_offset = frame.offsetTop;
             continue;
         }
 
-        if (txdiv.offsetTop > last_offset) {
+        if (frame.offsetTop > last_offset) {
             for (var j=0; j<i; ++j) {
                 add_to_body_tail.push(olds[j]);
             }
@@ -319,12 +326,14 @@ function cg_wall_resolve_rawtxs(tab) {
     var resolving = document.getElementsByClassName("cg-wall-graffiti-loading");
     if (resolving.length !== 0) return;
 
-    var txdivs = [];
+    var frames = [];
 
-    var collection = document.getElementsByClassName("cg-wall-txdiv-visible");
+    var collection = document.getElementsByClassName(
+        "cg-wall-graffiti-frame-visible"
+    );
 
     for (var i = 0; i < collection.length; i++) {
-        txdivs.push(collection[i]);
+        frames.push(collection[i]);
     }
 
     var buffers = [];
@@ -342,18 +351,18 @@ function cg_wall_resolve_rawtxs(tab) {
         var children = buffer.children;
 
         for (var i=0; i<children.length; ++i) {
-            var txdiv = children[i];
-            if (!txdiv.classList.contains("cg-wall-txdiv")) continue;
+            var frame = children[i];
+            if (!frame.classList.contains("cg-wall-graffiti-frame")) continue;
 
-            txdivs.push(txdiv);
+            frames.push(frame);
         }
     }
 
     var max_requests = 16;
 
-    while (txdivs.length > 0) {
-        var txdiv = txdivs.shift();
-        var graffiti = txdiv.children;
+    while (frames.length > 0) {
+        var frame = frames.shift();
+        var graffiti = frame.children;
 
         for (var j=0; j<graffiti.length; ++j) {
             var gdiv = graffiti[j];
@@ -370,7 +379,7 @@ function cg_wall_resolve_rawtxs(tab) {
                 gdiv.classList.add("cg-wall-graffiti-loading");
 
                 cg_wall_get_rawtx_range(
-                    tab, txdiv.id,
+                    tab, frame.getAttribute("data-txid"),
                     parseInt(gdiv.getAttribute("data-offset")),
                     parseInt(gdiv.getAttribute("data-fsize")),
                     gdiv.getAttribute("data-hash")
@@ -382,10 +391,10 @@ function cg_wall_resolve_rawtxs(tab) {
     }
 }
 
-function cg_wall_decode_graffiti(tab, txid, hash, data) {
+function cg_wall_decode_graffiti(tab, frame_id, hash, data) {
     var timestamp = Math.floor(Date.now() / 1000);
-    var txdiv = document.getElementById(txid);
-    var children = txdiv.children;
+    var frame = document.getElementById(frame_id);
+    var children = frame.children;
 
     for (var i=0; i<children.length; ++i) {
         var graffiti = children[i];
@@ -496,13 +505,19 @@ function cg_wall_get_txs(tab) {
 }
 
 function cg_wall_find_graffiti(txid, hash) {
-    var txdiv = document.getElementById(txid);
-    var children = txdiv.children;
+    var collection = document.getElementsByClassName(
+        "cg-wall-graffiti-frame-"+txid
+    );
 
-    for (var i=0; i<children.length; ++i) {
-        var graffiti = children[i];
+    for (var i = 0; i < collection.length; i++) {
+        var frame = collection[i];
+        var children = frame.children;
 
-        if (graffiti.getAttribute("data-hash") === hash) return graffiti;
+        for (var j=0; j<children.length; ++j) {
+            var graffiti = children[j];
+
+            if (graffiti.getAttribute("data-hash") === hash) return graffiti;
+        }
     }
 
     return null;
@@ -516,6 +531,9 @@ function cg_wall_get_rawtx_range(tab, txid, offset, fsize, hash) {
         function(response) {
             var status = "";
             var graffiti = cg_wall_find_graffiti(txid, hash);
+            var frame_id = "cg-wall-graffiti-frame-";
+
+            frame_id += graffiti.getAttribute("data-nr");
 
             graffiti.classList.remove("cg-wall-graffiti-loading");
             graffiti.classList.add("cg-wall-graffiti-decoding");
@@ -529,7 +547,7 @@ function cg_wall_get_rawtx_range(tab, txid, offset, fsize, hash) {
                 );
             }
 
-            cg_wall_decode_graffiti(tab, txid, hash, response);
+            cg_wall_decode_graffiti(tab, frame_id, hash, response);
 
             if (status.length > 0) cg_push_status(status);
         }, 20000, { offset: offset, length: fsize }
@@ -555,14 +573,14 @@ function cg_wall_head_clogged() {
 
     var news = headbuf.children;
     for (var i=0; i<news.length; ++i) {
-        var txdiv = news[i];
+        var frame = news[i];
 
         if (i === 0) {
-            last_offset = txdiv.offsetTop;
+            last_offset = frame.offsetTop;
             continue;
         }
 
-        if (txdiv.offsetTop > last_offset) {
+        if (frame.offsetTop > last_offset) {
             return true;
         }
     }
@@ -577,14 +595,14 @@ function cg_wall_tail_clogged() {
 
     var olds = tailbuf.children;
     for (var i=0; i<olds.length; ++i) {
-        var txdiv = olds[i];
+        var frame = olds[i];
 
         if (i === 0) {
-            last_offset = txdiv.offsetTop;
+            last_offset = frame.offsetTop;
             continue;
         }
 
-        if (txdiv.offsetTop > last_offset) {
+        if (frame.offsetTop > last_offset) {
             return true;
         }
     }
@@ -615,9 +633,9 @@ function cg_wall_get_greatest_tx_nr() {
         for (var j=0; j<contents.length; j++) {
             var content = contents[j];
 
-            if (!content.classList.contains("cg-wall-txdiv")) continue;
+            if (!content.classList.contains("cg-wall-graffiti-frame")) continue;
 
-            var txnr = parseInt(content.getAttribute("data-nr"));
+            var txnr = parseInt(content.getAttribute("data-tx-nr"));
             if (nr === null) {
                 nr = txnr;
             }
@@ -645,9 +663,9 @@ function cg_wall_get_smallest_tx_nr() {
         for (var j=0; j<contents.length; j++) {
             var content = contents[j];
 
-            if (!content.classList.contains("cg-wall-txdiv")) continue;
+            if (!content.classList.contains("cg-wall-graffiti-frame")) continue;
 
-            var txnr = parseInt(content.getAttribute("data-nr"));
+            var txnr = parseInt(content.getAttribute("data-tx-nr"));
             if (nr === null) {
                 nr = txnr;
             }

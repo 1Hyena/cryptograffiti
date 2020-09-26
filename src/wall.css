@@ -38,14 +38,14 @@
     overflow: hidden;
 }
 
-.cg-wall-txdiv {
+.cg-wall-graffiti-frame {
     display: inline-block;
     max-width: 100vw;
     background-color: grey;
     border: 1px solid;
 }
 
-.cg-wall-txdiv-visible {
+.cg-wall-graffiti-frame-visible {
     background-color: blue;
 }
 
@@ -75,5 +75,5 @@
 .cg-wall-media > a > img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
 }
