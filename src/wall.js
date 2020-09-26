@@ -412,7 +412,12 @@ function cg_wall_decode_graffiti(tab, txid, hash, data) {
             var img = new Image();
             img.src = "data:"+mimetype+";base64,"+b64imgData;
 
-            media.appendChild(img);
+            var link = document.createElement("a");
+            link.href = "https://cryptograffiti.info/cache/"+hash;
+            link.target = "_blank";
+
+            link.appendChild(img);
+            media.appendChild(link);
             graffiti.appendChild(media);
 
             graffiti.classList.remove("cg-wall-graffiti-decoding");
