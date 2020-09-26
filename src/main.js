@@ -414,7 +414,9 @@ function cg_refresh_footer_status() {
             while ( (status = cg_first_status()) !== null ) {
                 var ts_age = get_timestamp_age(status.creation_timestamp);
 
-                if (ts_age > time_to_live) {
+                status_level = status.level;
+
+                if (ts_age > (2+2*status_level)) {
                     cg_pop_status();
                 }
                 else break;
