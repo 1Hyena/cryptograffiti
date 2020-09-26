@@ -55,7 +55,7 @@ if ($errno === 0) {
 
     $rawtx = "../rawtx/".$txid;
 
-    for ($retries = 5; $retries >= 0; $retries--) {
+    for ($retries = 10; $retries >= 0; $retries--) {
         if (file_exists($rawtx)) break;
 
         $retry = $retries > 0 ? true : false;
