@@ -410,6 +410,15 @@ function cg_refresh_footer_status() {
 
         if (get_timestamp_age(status.presentation_timestamp) > time_to_live) {
             cg_pop_status();
+
+            while ( (status = cg_first_status()) !== null ) {
+                var ts_age = get_timestamp_age(status.creation_timestamp);
+
+                if (ts_age > time_to_live) {
+                    cg_pop_status();
+                }
+                else break;
+            }
         }
     }
     else {
