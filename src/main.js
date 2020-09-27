@@ -236,8 +236,8 @@ function cg_main_loop() {
         var tab = cg_get_global("tabs")[tab_id];
 
         switch (tab_id) {
-            case "cg-tab-wall":  cg_step_wall(tab);  break;
-            case "cg-tab-about": cg_step_about(tab); break;
+            case "cg-tab-wall":  cg_wall_step(tab);  break;
+            case "cg-tab-about": cg_about_step(tab); break;
             default: break;
         }
     }, 0);
@@ -769,12 +769,12 @@ function cg_init_tab(main, tab_id) {
 
 function cg_button_click_about() {
     var btn = document.getElementById("cg-btn-tab-about");
-    cg_button_click(btn, cg_construct_about);
+    cg_button_click(btn, cg_about_construct);
 }
 
 function cg_button_click_wall() {
     var btn = document.getElementById("cg-btn-tab-wall");
-    cg_button_click(btn, cg_construct_wall);
+    cg_button_click(btn, cg_wall_construct);
 }
 
 function cg_init_sound() {

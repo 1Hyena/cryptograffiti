@@ -185,7 +185,8 @@ button {
 .cg-tab {
     width: 100%;
     height: 100%;
-    overflow: auto; /* Buggy in Chrome: scrollbar resets on content changes. */
+    overflow-y: scroll;
+    overflow-x: auto;
     padding: 0.5rem;
 }
 

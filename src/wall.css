@@ -38,25 +38,32 @@
     overflow: hidden;
 }
 
-.cg-wall-graffiti-frame {
+.cg-wall-frame {
     display: inline-block;
-    max-width: 100vw;
-    background-color: grey;
     border: 1px solid;
+    width: 100%;
+    height: 10rem;
+    max-width: 10rem;
+    vertical-align: middle;
 }
 
-.cg-wall-graffiti-frame-visible {
-    background-color: blue;
+.cg-wall-frame-empty {
+    border: 1px solid grey;
+}
+
+.cg-wall-frame-origin {
+    background-color: yellow;
 }
 
 .cg-wall-graffiti {
     display: inline-block;
-    width: 10rem;
-    height: 10rem;
-    border: 1px solid;
-    vertical-align: top;
-    margin: 2px;
-    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    border: 1px solid red;
+}
+
+.cg-wall-frame-visible {
+    background-color: blue;
 }
 
 .cg-wall-graffiti-loading {
@@ -68,6 +75,11 @@
 }
 
 .cg-wall-media {
+    width: 100%;
+    height: 100%;
+}
+
+.cg-wall-media > a {
     width: 100%;
     height: 100%;
 }

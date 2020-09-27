@@ -233,3 +233,12 @@ function is_visible(container, element, partial) {
     //Return outcome
     return (isTotal || isPartial);
 }
+
+function is_empty(obj){
+    for(var key in obj) {
+        if (!obj.hasOwnProperty(key)) continue;
+        return false;
+    }
+
+    return true;
+}

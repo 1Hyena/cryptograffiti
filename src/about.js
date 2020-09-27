@@ -10,7 +10,7 @@ var CG_ABOUT_IMG_DOMAIN = (
     "1erJzso4o/jB/oi3Grspyp9wAAAABJRU5ErkJggg=="
 );
 
-function cg_construct_about(main) {
+function cg_about_construct(main) {
     var tab = cg_init_tab(main, 'cg-tab-about');
     if (tab === null) return;
 
@@ -188,5 +188,5 @@ function cg_construct_about(main) {
     }
 }
 
-function cg_step_about(tab) {
+function cg_about_step(tab) {
 }

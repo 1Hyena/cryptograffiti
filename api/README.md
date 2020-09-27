@@ -188,7 +188,7 @@ These values can be received with an API call of `get_constants` function.
     * `checksum`       --- 32-byte hex string (ALS)
 
 
-* __Get Message Metadata__
+* __Get Message Metadata (deprecated)__
     `POST https://cryptograffiti.info/api/`
 
     Takes an array of transaction hashes as an argument. Returns an array of TX
@@ -319,7 +319,7 @@ These values can be received with an API call of `get_constants` function.
     * `checksum`       --- 32-byte hex string (ALS)
 
 
-* __Get Bitcoin Donations__
+* __Get Bitcoin Donations (deprecated)__
     `POST https://cryptograffiti.info/api/`
 
     Returns the graffiti TXs that have donations included in the defined range.
