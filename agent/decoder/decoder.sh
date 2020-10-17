@@ -280,6 +280,7 @@ loop() {
         if [ $(which "${CLIF}" 2>/dev/null ) ] \
         && [ $(which "${CGDF}" 2>/dev/null ) ] \
         && [ $(which sort)                   ] \
+        && [ $(which shuf)                   ] \
         && [ $(which uniq)                   ] \
         && [ $(which echo)                   ] \
         && [ $(which grep)                   ] \
@@ -364,6 +365,9 @@ decode_graffiti() {
     if [ -z "${buf}" ] ; then
         return 0
     fi
+
+    # We shuffle the TXs to report more different errors in case there are many.
+    buf=$(shuf <<< "${buf}")
 
     local cli_cmd="${CLIF} ${CFGF} ${DDIR} getrawtransaction {} "
     local cli_state
