@@ -104,9 +104,19 @@ config() {
         )
         ADDR=$(printf "%s" "${cfg}" | jq -r -M .api)
         RWTX=$(printf "%s" "${cfg}" | jq -r -M .rawtx)
-        CLIF=$(printf "%s" "${cfg}" | jq -r -M '.["bitcoin-cli"]')
-        DDIR=$(printf "%s" "${cfg}" | jq -r -M '.["bitcoin-dat"]')
-        CFGF=$(printf "%s" "${cfg}" | jq -r -M '.["bitcoin-cfg"]')
+        CLIF=$(
+            printf "%s" "${cfg}" |
+            jq -r -M '.["bitcoin-cli"] | select (.!=null)'
+        )
+        DDIR=$(
+            printf "%s" "${cfg}" |
+            jq -r -M '.["bitcoin-dat"] | select (.!=null)'
+        )
+        CFGF=$(
+            printf "%s" "${cfg}" |
+            jq -r -M '.["bitcoin-cfg"] | select (.!=null)'
+        )
+
 
         if [ ! -z "${DDIR}" ] ; then
             DDIR="-datadir=${DDIR}"

@@ -20,6 +20,7 @@ CFGF=""                                                                        #
 DATE_FORMAT="%Y-%m-%d %H:%M:%S"
 CANARY="::"
 WORKERS="16"
+BLOCKSZ="8M"
 BESTBLOCK=""
 TXS_PER_QUERY=0
 MAX_DATA_SIZE=0
@@ -107,9 +108,18 @@ config() {
         )
         ADDR=$(printf "%s" "${cfg}" | jq -r -M .api)
         CGDF=$(printf "%s" "${cfg}" | jq -r -M .cgd)
-        CLIF=$(printf "%s" "${cfg}" | jq -r -M '.["bitcoin-cli"]')
-        DDIR=$(printf "%s" "${cfg}" | jq -r -M '.["bitcoin-dat"]')
-        CFGF=$(printf "%s" "${cfg}" | jq -r -M '.["bitcoin-cfg"]')
+        CLIF=$(
+            printf "%s" "${cfg}" |
+            jq -r -M '.["bitcoin-cli"] | select (.!=null)'
+        )
+        DDIR=$(
+            printf "%s" "${cfg}" |
+            jq -r -M '.["bitcoin-dat"] | select (.!=null)'
+        )
+        CFGF=$(
+            printf "%s" "${cfg}" |
+            jq -r -M '.["bitcoin-cfg"] | select (.!=null)'
+        )
 
         if [ ! -z "${DDIR}" ] ; then
             DDIR="-datadir=${DDIR}"
@@ -388,12 +398,13 @@ decode_graffiti() {
     local cgd_state
     prevbuf="${buf}"
     buf=$(
-        parallel          \
-        --halt now,fail=1 \
-        --pipe            \
-        -N 1              \
-        --timeout 10      \
-        -P ${WORKERS}     \
+        parallel           \
+        --block ${BLOCKSZ} \
+        --halt now,fail=1  \
+        --pipe             \
+        -N 1               \
+        --timeout 10       \
+        -P ${WORKERS}      \
         "${cgd_cmd}" <<< "${buf}"
     )
     cgd_state=$?
@@ -401,11 +412,12 @@ decode_graffiti() {
     if [ "${cgd_state}" -ge "1" ]; then
         buf="${prevbuf}"
         buf=$(
-            parallel      \
-            --pipe        \
-            -N 1          \
-            --timeout 10  \
-            -P ${WORKERS} \
+            parallel           \
+            --block ${BLOCKSZ} \
+            --pipe             \
+            -N 1               \
+            --timeout 10       \
+            -P ${WORKERS}      \
             "${cgd_cmd}" <<< "${buf}" 2>/dev/null
         )
         cgd_state=$?
@@ -741,9 +753,9 @@ step() {
                 fi
                 log "Detected graffiti from ${msgcount_before} TX${plural}."
 
-                local jqcmd="jq -C '.files[]? |= del(.content)'"
-
-                parallel --pipe -N 1 -P "${WORKERS}" "${jqcmd}" <<<"${graffiti}"
+                # Here we could dump what CGD has returned us:
+                # local jqcmd="jq -C '.files[]? |= del(.content)'"
+                # parallel --pipe -N 1 -P ${WORKERS} "${jqcmd}" <<<"${graffiti}"
 
                 local graffiti_buffer=$(compile_graffiti_json "${graffiti}")
 
