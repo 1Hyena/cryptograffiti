@@ -650,6 +650,7 @@ function cg_wall_decode_graffiti(tab, graffiti, data) {
             var b64imgData = arrayBufferToBase64(data);
             var img = new Image();
             img.src = "data:"+mimetype+";base64,"+b64imgData;
+            img.classList.add("cg-poofin");
 
             var link = document.createElement("a");
             link.href = "https://cryptograffiti.info/cache/"+hash;
@@ -700,6 +701,8 @@ function cg_wall_should_load_new_txs(tab) {
                     }
                 }
             }
+
+            if (newest_graffiti === null) return false;
 
             var sibling = newest_graffiti.previousSibling;
 
@@ -755,6 +758,8 @@ function cg_wall_should_load_old_txs(tab) {
                     }
                 }
             }
+
+            if (oldest_graffiti === null) return false;
 
             var sibling = oldest_graffiti.nextSibling;
 

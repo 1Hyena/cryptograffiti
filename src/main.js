@@ -14,7 +14,8 @@ var GIuGDtd14GQaDKh9TfVKGQJS = {
     "online"     : null,
     "tab"        : null,
     "tabs"       : {},
-    "scroll_key" : false
+    "scroll_key" : false,
+    "debug"      : false
 };
 
 function cg_get_global(name) {
@@ -48,17 +49,19 @@ function cg_main() {
 
     var cg_main = document.getElementById("cg-main");
 
-    (function() {
-        var link = (
-            document.querySelector("link[rel*='icon']") ||
-            document.createElement('link')
-        );
+    (
+        function() {
+            var link = (
+                document.querySelector("link[rel*='icon']") ||
+                document.createElement('link')
+            );
 
-        link.type = 'image/x-icon';
-        link.rel = 'shortcut icon';
-        link.href = document.getElementById("gfx_icon").src;
-        document.getElementsByTagName('head')[0].appendChild(link);
-    })();
+            link.type = 'image/x-icon';
+            link.rel = 'shortcut icon';
+            link.href = document.getElementById("gfx_icon").src;
+            document.getElementsByTagName('head')[0].appendChild(link);
+        }
+    )();
 
     cg_init_sound();
 
@@ -95,6 +98,11 @@ function cg_main() {
              if (lang === "ET") cg_set_global("language", "et");
         else if (lang === "RU") cg_set_global("language", "ru");
         else                    cg_set_global("language", "en");
+    }
+
+    if (cg_get_global("debug")) {
+        var cg = document.getElementById("cg");
+        cg.classList.add("cg-debug");
     }
 
     document.title = CG_TXT_MAIN_TITLE[cg_get_global("language")];
@@ -137,6 +145,7 @@ function cg_setup_parameters(params) {
 
             switch (key) {
                 case "lang" : cg_set_global("language", val); break;
+                case "debug": cg_set_global("debug",    val); break;
                 default     : break;
             }
         }
@@ -145,15 +154,17 @@ function cg_setup_parameters(params) {
 
 function cg_parse_hashtag() {
     var hashtag = {
-        lang : null
+        lang : null,
+        debug: false
     };
 
     var hashes = location.hash.substring(1).split("#");
     for (var i=0, sz=hashes.length; i<sz; ++i) {
         var hash = decodeURIComponent(hashes[i]);
-             if (hash === "en") hashtag.lang = hash;
-        else if (hash === "ru") hashtag.lang = hash;
-        else if (hash === "et") hashtag.lang = hash;
+             if (hash ===    "en") hashtag.lang  = hash;
+        else if (hash ===    "ru") hashtag.lang  = hash;
+        else if (hash ===    "et") hashtag.lang  = hash;
+        else if (hash === "debug") hashtag.debug = true;
     }
 
     cg_set_global("hashtag", hashtag);

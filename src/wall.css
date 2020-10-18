@@ -40,18 +40,21 @@
 
 .cg-wall-frame {
     display: inline-block;
-    border: 1px solid;
     width: 100%;
     height: 10rem;
     max-width: 10rem;
     vertical-align: middle;
 }
 
-.cg-wall-frame-empty {
+.cg-debug .cg-wall-frame {
+    border: 1px solid;
+}
+
+.cg-debug .cg-wall-frame-empty {
     border: 1px solid grey;
 }
 
-.cg-wall-frame-origin {
+.cg-debug .cg-wall-frame-origin {
     background-color: yellow;
 }
 
@@ -59,18 +62,21 @@
     display: inline-block;
     width: 100%;
     height: 100%;
+}
+
+.cg-debug .cg-wall-graffiti {
     border: 1px solid red;
 }
 
-.cg-wall-frame-visible {
+.cg-debug .cg-wall-frame-visible {
     background-color: blue;
 }
 
-.cg-wall-graffiti-loading {
+.cg-debug .cg-wall-graffiti-loading {
     background-color: black;
 }
 
-.cg-wall-graffiti-decoding {
+.cg-debug .cg-wall-graffiti-decoding {
     background-color: orange;
 }
 
@@ -85,7 +91,9 @@
 }
 
 .cg-wall-media > a > img {
-    width: 100%;
-    height: 100%;
+    width: calc(100% - 0.5rem);
+    height: calc(100% - 0.5rem);
     object-fit: contain;
+    filter: drop-shadow(0.125rem 0.25rem 0.5rem black);
 }
+
