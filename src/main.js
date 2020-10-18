@@ -798,8 +798,10 @@ function cg_init_sound() {
     }
 }
 
-function cg_sfx(s, r) {
+function cg_sfx(s, v, r) {
+    v = typeof v !== 'undefined' ? v : (1.0);
     r = typeof r !== 'undefined' ? r : (0.9 + Math.random()/5.0);
+
     if (audiochannels === null) return;
 
     var sfx = document.getElementById(s);
@@ -819,6 +821,7 @@ function cg_sfx(s, r) {
             audiochannels[a]['channel'].preservesPitch=false;
             audiochannels[a]['channel'].mozPreservesPitch=false;
             audiochannels[a]['channel'].webkitPreservesPitch=false;
+            audiochannels[a]['channel'].volume = v;
             var audio = audiochannels[a]['channel'];
             var promise = audio.play();
             if (promise !== undefined) {
@@ -832,12 +835,14 @@ function cg_sfx(s, r) {
     }
 }
 
-function cg_sfx_spray() {
+function cg_sfx_spray(volume) {
+    volume = typeof volume !== 'undefined' ? volume : (1.0);
     var snd = Math.floor((Math.random() * 2) + 1);
-    cg_sfx("sfx_spray_"+snd);
+    cg_sfx("sfx_spray_"+snd, volume);
 }
 
-function cg_sfx_rattle() {
+function cg_sfx_rattle(volume) {
+    volume = typeof volume !== 'undefined' ? volume : (1.0);
     var snd = Math.floor((Math.random() * 5) + 1);
     cg_sfx("sfx_rattle_"+snd);
 }

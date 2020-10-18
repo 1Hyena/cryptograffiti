@@ -650,7 +650,6 @@ function cg_wall_decode_graffiti(tab, graffiti, data) {
             var b64imgData = arrayBufferToBase64(data);
             var img = new Image();
             img.src = "data:"+mimetype+";base64,"+b64imgData;
-            img.classList.add("cg-poofin");
 
             var link = document.createElement("a");
             link.href = "https://cryptograffiti.info/cache/"+hash;
@@ -658,7 +657,14 @@ function cg_wall_decode_graffiti(tab, graffiti, data) {
 
             link.appendChild(img);
             media.appendChild(link);
-            graffiti.appendChild(media);
+
+            setTimeout(
+                function(g, m){
+                    m.classList.add("cg-poofin");
+                    g.appendChild(m);
+                },
+                Math.floor(Math.random() * 1000), graffiti, media
+            );
 
             graffiti.classList.remove("cg-wall-graffiti-decoding");
             graffiti.classList.add("cg-wall-graffiti-decoded");
