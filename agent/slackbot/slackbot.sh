@@ -164,17 +164,20 @@ step() {
                     )
 
                     if [ -z "${TIMESTAMP}" ] ; then
+                        local slack_img="${CACH}${ghash}"
+
+                        slack_img=$(
+                            printf "%s\n " "${slack_img}"
+                        )
+
                         local slack_req_json=""
                         slack_req_json+='{"channel":"cryptograffiti",'
                         slack_req_json+='"unfurl_links":true,'
                         slack_req_json+='"unfurl_media":true,"text":$str,'
-                        slack_req_json+='"attachments":[{"image_url":$imgurl,'
-                        slack_req_json+='"title":$fhash}]}'
-
+                        slack_req_json+='"attachments":[]}'
                         local slack_req=$(
-                            jq -M -nc --arg str "${slack_msg}" --arg imgurl \
-                            "${CACH}${ghash}"                               \
-                            --arg fhash "${ghash}" "${slack_req_json}"
+                            jq -M -nc --arg str "${slack_img}${slack_msg}" \
+                            "${slack_req_json}"
                         )
 
                         local slack_resp=$(
