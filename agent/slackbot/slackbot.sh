@@ -213,17 +213,21 @@ step() {
                             printf "%s" "${slack_resp}" | jq . >/dev/stderr
                         fi
                     else
+                        local slack_img="${CACH}${ghash}"
+
+                        slack_img=$(
+                            printf "%s\n " "${slack_img}"
+                        )
+
                         local slack_req_json=""
                         slack_req_json+='{"unfurl_links":true,'
                         slack_req_json+='"unfurl_media":true,"channel":$chid,'
                         slack_req_json+='"ts":$ts,"text":$str,"attachments":'
-                        slack_req_json+='[{"image_url":$imgurl,'
-                        slack_req_json+='"title":$fhash}]}'
+                        slack_req_json+='[]}'
                         local slack_req=$(
-                            jq -M -nc --arg str "${slack_msg}"              \
+                            jq -M -nc --arg str "${slack_img}${slack_msg}"  \
                             --arg ts "${TIMESTAMP}" --arg chid "${CHAN_ID}" \
-                            --arg imgurl "${CACH}${ghash}"                  \
-                            --arg fhash "${ghash}" "${slack_req_json}"
+                            "${slack_req_json}"
                         )
 
                         local slack_resp=$(
