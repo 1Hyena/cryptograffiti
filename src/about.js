@@ -1,26 +1,39 @@
-function cg_construct_about(main) {
-    var div = cg_init_tab(main, 'cg-tab-about');
-    if (div === null) return;
+var CG_ABOUT_IMG_DOMAIN = (
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJwAAAAQBAMAAAAR5AvdAAAAG1B"+
+    "MVEX////f39+/v79/f39fX18/Pz8fHx+fn58AAAC1SdELAAAAAXRSTlMAQObYZgAAAVZJREFU"+
+    "OI3lUj1PwzAUfE6VhtEIqWSM6FCPXUoyFgmqjh2gzRhRoBkj0o+MCSFpfjY+O+7HxNIJzno6+"+
+    "87vyfYz0f/Ctn4+W/davq+ig9aJKxWi0D6YThheOyvTik4heKtv8qPm36m4TbQPBgzD07hKKL"+
+    "WbzT6O5AjrpNs0EZsupc5m0GmuNaU3BRkGwHH4SianPQwLqlGWyFGuSyvYefYqGAvOOHQarHM"+
+    "mNQT1C7JaVpCcLSbE2hxzNzEke/xEwqMAgus5ueBxDd0K5RGwCWEVRwYsWIJMjlTcRNd0ij3K"+
+    "ZZgL7uSud6PKuIv+b+W4yVFPvntUF/iISCzTklx/3lttx/ZqXUB3/dEXGMH6ew/+NdjihHUmB"+
+    "7yuzNEf5QFPSdmQxKROqNMs2PSN2KQeQnfi92/TCrVP+oq7M9WCOAp1m2TO2Qc5/JFLYPBClH"+
+    "1erJzso4o/jB/oi3Grspyp9wAAAABJRU5ErkJggg=="
+);
 
-    div.classList.add("cg-about-tab");
+function cg_about_construct(main) {
+    var tab = cg_init_tab(main, 'cg-tab-about');
+    if (tab === null) return;
+
+    var div = tab.element;
+
+    div.classList.add("cg-tab-about-setup");
 
     var elements = [];
-    var ps = [CG_TXT_ABOUT_P1,
-              CG_TXT_ABOUT_P2,
-              CG_TXT_ABOUT_P3,
-              CG_TXT_ABOUT_P4,
-              CG_TXT_ABOUT_P5,
-              CG_TXT_ABOUT_P6];
+    var ps = [
+        CG_TXT_ABOUT_P1,
+        CG_TXT_ABOUT_P2,
+        CG_TXT_ABOUT_P3
+    ];
 
     for (var i=0; i<ps.length; ++i) {
-        if (ps[i][CG_LANGUAGE].length === 0) continue;
+        if (cg_translate(ps[i]).length === 0) continue;
 
         var w = document.createElement("div");
 
         var s = document.createElement("span");
         w.appendChild(s);
 
-        var t = document.createTextNode(ps[i][CG_LANGUAGE]);
+        var t = document.createTextNode(cg_translate(ps[i]));
         var p = document.createElement("p");
         p.appendChild(t);
         w.style.opacity = "0";
@@ -31,7 +44,7 @@ function cg_construct_about(main) {
 
     {
         var contact = document.createElement("div");
-        contact.classList.add("cg-contact");
+        contact.classList.add("cg-about-contact");
         contact.classList.add("cg-borderbox");
 
         var table = document.createElement("table");
@@ -62,14 +75,18 @@ function cg_construct_about(main) {
         table.classList.add("cg-about-table");
 
         var table_wrapper = document.createElement("div");
-        table_wrapper.id = "cg-contact-table-wrapper";
+        table_wrapper.id = "cg-about-contact-table-wrapper";
         table_wrapper.appendChild(table);
 
         var t_email  = document.createTextNode("support@");
-        var t_source = document.createTextNode("github.com/1Hyena/cryptograffiti");
+        var t_source = document.createTextNode(
+            "github.com/1Hyena/cryptograffiti"
+        );
 
-        var a_source   = document.createElement("a"); a_source.appendChild(t_source);
-        a_source.title = CG_TXT_ABOUT_SOURCE[CG_LANGUAGE];
+        var a_source = document.createElement("a");
+        a_source.appendChild(t_source);
+
+        a_source.title = cg_translate(CG_TXT_ABOUT_SOURCE);
         a_source.href  = "https://github.com/1Hyena/cryptograffiti";
         a_source.target= "_blank";
 
@@ -80,21 +97,38 @@ function cg_construct_about(main) {
         a_bsvinfo.href  = "https://bitcoinsv.io/";
         a_bsvinfo.target= "_blank";
 
-        var t_wrightpaper = document.createTextNode("A P2P Electronic Cash System");
+        var t_wrightpaper = document.createTextNode(
+            "A P2P Electronic Cash System"
+        );
+
         var a_wrightpaper = document.createElement("a");
         a_wrightpaper.appendChild(t_wrightpaper);
         a_wrightpaper.title = "Bitcoin: A Peer-to-Peer Electronic Cash System";
-        a_wrightpaper.href  = "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3440802";
+        a_wrightpaper.href = (
+            "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3440802"
+        );
+
         a_wrightpaper.target= "_blank";
 
         var img_domain = document.createElement("img");
-        img_domain.setAttribute('src', CG_IMG_DOMAIN);
-        img_domain.setAttribute('title', CG_TXT_ABOUT_EMAIL_ALT[CG_LANGUAGE]);
+        img_domain.setAttribute('src', CG_ABOUT_IMG_DOMAIN);
+        img_domain.setAttribute('title', cg_translate(CG_TXT_ABOUT_EMAIL_ALT));
         img_domain.style.verticalAlign="bottom";
 
-        td2_1.appendChild(document.createTextNode(CG_TXT_ABOUT_SOURCE_CODE[CG_LANGUAGE])); td2_2.appendChild(a_source);
-        td3_1.appendChild(document.createTextNode(CG_TXT_ABOUT_CONTACT_US [CG_LANGUAGE])); td3_2.appendChild(t_email); td3_2.appendChild(img_domain);
-        td4_1.appendChild(document.createTextNode(CG_TXT_ABOUT_FRIENDS[CG_LANGUAGE]));
+        td2_1.appendChild(
+            document.createTextNode(cg_translate(CG_TXT_ABOUT_SOURCE_CODE))
+        );
+
+        td2_2.appendChild(a_source);
+        td3_1.appendChild(
+            document.createTextNode(cg_translate(CG_TXT_ABOUT_CONTACT_US))
+        );
+
+        td3_2.appendChild(t_email);
+        td3_2.appendChild(img_domain);
+        td4_1.appendChild(
+            document.createTextNode(cg_translate(CG_TXT_ABOUT_FRIENDS))
+        );
         td5_1.appendChild(document.createTextNode("Bitcoin:"));
         td5_2.appendChild(a_bsvinfo);
         td5_2.appendChild(document.createElement("br"));
@@ -110,7 +144,7 @@ function cg_construct_about(main) {
             var t_friend = document.createTextNode(key);
             var a_friend = document.createElement("a");
             a_friend.appendChild(t_friend);
-            a_friend.title = CG_TXT_ABOUT_FRIEND_LIST[key][CG_LANGUAGE];
+            a_friend.title = cg_translate(CG_TXT_ABOUT_FRIEND_LIST[key]);
             a_friend.href  = CG_TXT_ABOUT_FRIEND_LIST[key].website;
             a_friend.target= "_blank";
             td4_2.appendChild(a_friend);
@@ -122,13 +156,13 @@ function cg_construct_about(main) {
             cash_img.src = document.getElementById("gfx_cash").src;
             cash_img.width = "128";
             cash_img.height= "128";
-            cash_img.title = CG_TXT_THE_ORIGINAL_BITCOIN[CG_LANGUAGE];
+            cash_img.title = cg_translate(CG_TXT_THE_ORIGINAL_BITCOIN);
 
             var core_img = document.createElement("img");
             core_img.src = document.getElementById("gfx_core").src;
             core_img.width = "128";
             core_img.height= "128";
-            core_img.title = CG_TXT_THE_FAKE_BITCOIN[CG_LANGUAGE];
+            core_img.title = cg_translate(CG_TXT_THE_FAKE_BITCOIN);
 
             contact.appendChild(cash_img);
             contact.appendChild(table_wrapper);
@@ -154,5 +188,5 @@ function cg_construct_about(main) {
     }
 }
 
-var CG_IMG_DOMAIN = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJwAAAAQBAMAAAAR5AvdAAAAG1BMVEX////f39+/v79/f39fX18/Pz8fHx+fn58AAAC1SdELAAAAAXRSTlMAQObYZgAAAVZJREFUOI3lUj1PwzAUfE6VhtEIqWSM6FCPXUoyFgmqjh2gzRhRoBkj0o+MCSFpfjY+O+7HxNIJzno6+87vyfYz0f/Ctn4+W/davq+ig9aJKxWi0D6YThheOyvTik4heKtv8qPm36m4TbQPBgzD07hKKLWbzT6O5AjrpNs0EZsupc5m0GmuNaU3BRkGwHH4SianPQwLqlGWyFGuSyvYefYqGAvOOHQarHMmNQT1C7JaVpCcLSbE2hxzNzEke/xEwqMAgus5ueBxDd0K5RGwCWEVRwYsWIJMjlTcRNd0ij3KZZgL7uSud6PKuIv+b+W4yVFPvntUF/iISCzTklx/3lttx/ZqXUB3/dEXGMH6ew/+NdjihHUmB7yuzNEf5QFPSdmQxKROqNMs2PSN2KQeQnfi92/TCrVP+oq7M9WCOAp1m2TO2Qc5/JFLYPBClH1erJzso4o/jB/oi3Grspyp9wAAAABJRU5ErkJggg==";
-
+function cg_about_step(tab) {
+}

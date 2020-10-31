@@ -14,7 +14,9 @@ void trim_utf8(std::vector<unsigned char>& hairy) {
     smooth.reserve(len);
     const unsigned char *bytes = (const unsigned char *) &(hairy[0]);
 
-    auto read_utf8 = [](const unsigned char *bytes, size_t len, size_t *pos) -> unsigned {
+    auto read_utf8 = [](
+        const unsigned char *bytes, size_t len, size_t *pos
+    ) -> unsigned {
         int code_unit1 = 0;
         int code_unit2, code_unit3, code_unit4;
 
@@ -22,7 +24,9 @@ void trim_utf8(std::vector<unsigned char>& hairy) {
         code_unit1 = bytes[(*pos)++];
 
              if (code_unit1 < 0x80) return code_unit1;
-        else if (code_unit1 < 0xC2) goto ERROR1; // continuation or overlong 2-byte sequence
+        else if (code_unit1 < 0xC2) {
+            goto ERROR1; // continuation or overlong 2-byte sequence
+        }
         else if (code_unit1 < 0xE0) {
             if (*pos >= len) goto ERROR1;
             code_unit2 = bytes[(*pos)++]; //2-byte sequence
@@ -33,25 +37,38 @@ void trim_utf8(std::vector<unsigned char>& hairy) {
             if (*pos >= len) goto ERROR1;
             code_unit2 = bytes[(*pos)++]; // 3-byte sequence
             if ((code_unit2 & 0xC0) != 0x80) goto ERROR2;
-            if (code_unit1 == 0xE0 && code_unit2 < 0xA0) goto ERROR2; // overlong
+            if (code_unit1 == 0xE0 && code_unit2 < 0xA0) {
+                goto ERROR2; // overlong
+            }
             if (*pos >= len) goto ERROR2;
             code_unit3 = bytes[(*pos)++];
             if ((code_unit3 & 0xC0) != 0x80) goto ERROR3;
-            return (code_unit1 << 12) + (code_unit2 << 6) + code_unit3 - 0xE2080;
+            return (
+                (code_unit1 << 12) + (code_unit2 << 6) + code_unit3 - 0xE2080
+            );
         }
         else if (code_unit1 < 0xF5) {
             if (*pos >= len) goto ERROR1;
             code_unit2 = bytes[(*pos)++]; // 4-byte sequence
             if ((code_unit2 & 0xC0) != 0x80) goto ERROR2;
-            if (code_unit1 == 0xF0 && code_unit2 <  0x90) goto ERROR2; // overlong
-            if (code_unit1 == 0xF4 && code_unit2 >= 0x90) goto ERROR2; // > U+10FFFF
+            if (code_unit1 == 0xF0 && code_unit2 <  0x90) {
+                goto ERROR2; // overlong
+            }
+            if (code_unit1 == 0xF4 && code_unit2 >= 0x90) {
+                goto ERROR2; // > U+10FFFF
+            }
             if (*pos >= len) goto ERROR2;
             code_unit3 = bytes[(*pos)++];
             if ((code_unit3 & 0xC0) != 0x80) goto ERROR3;
             if (*pos >= len) goto ERROR3;
             code_unit4 = bytes[(*pos)++];
             if ((code_unit4 & 0xC0) != 0x80) goto ERROR4;
-            return (code_unit1 << 18) + (code_unit2 << 12) + (code_unit3 << 6) + code_unit4 - 0x3C82080;
+
+            return (
+                (code_unit1 << 18) +
+                (code_unit2 << 12) +
+                (code_unit3 <<  6) + code_unit4 - 0x3C82080
+            );
         }
         else goto ERROR1; // > U+10FFFF
 
@@ -104,7 +121,9 @@ void trim_utf8(std::vector<unsigned char>& hairy) {
     hairy.swap(smooth);
 }
 
-std::vector<unsigned char> sha256(const unsigned char *bytes, size_t len, bool hex) {
+std::vector<unsigned char> sha256(
+    const unsigned char *bytes, size_t len, bool hex
+) {
     char buf[256];
     SHA256_CTX context;
     unsigned char md[SHA256_DIGEST_LENGTH];
@@ -133,7 +152,9 @@ std::vector<unsigned char> sha256(const unsigned char *bytes, size_t len, bool h
     return result;
 }
 
-std::vector<unsigned char> ripemd160(const unsigned char *bytes, size_t len, bool hex) {
+std::vector<unsigned char> ripemd160(
+    const unsigned char *bytes, size_t len, bool hex
+) {
     char buf[256];
     RIPEMD160_CTX context;
     unsigned char md[RIPEMD160_DIGEST_LENGTH];
@@ -275,102 +296,6 @@ double calc_entropy(const unsigned char *bytes, size_t inlen) {
     return ((double) outlen) / ((double)inlen);
 }
 
-/* Based on libbase58, see https://github.com/luke-jr/libbase58 for reference.*/
-/* Returns the version of a valid Bitcoin address or a negative value if the  */
-/* address is invalid.                                                        */
-int validate_bitcoin_address(const char *address, unsigned char *payload, size_t payload_sz) {
-    static const int8_t b58digits_map[] = {
-        -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
-        -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
-        -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
-        -1, 0, 1, 2, 3, 4, 5, 6,  7, 8,-1,-1,-1,-1,-1,-1,
-        -1, 9,10,11,12,13,14,15, 16,-1,17,18,19,20,21,-1,
-        22,23,24,25,26,27,28,29, 30,31,32,-1,-1,-1,-1,-1,
-        -1,33,34,35,36,37,38,39, 40,41,42,43,-1,44,45,46,
-        47,48,49,50,51,52,53,54, 55,56,57,-1,-1,-1,-1,-1,
-    };
-
-    unsigned char addrbin[25];
-    size_t addrbinsz = sizeof(addrbin);
-
-    void *bin = (void *) addrbin;
-    size_t *binszp = &addrbinsz;
-    const char *b58 = address;
-    size_t b58sz = strlen(address);
-
-    {
-        const unsigned char *b58u = (const unsigned char *) b58;
-        unsigned char *binu = (unsigned char *) bin;
-        uint32_t outi[(25 + 3) / 4];
-        size_t outisz=(25 + 3) / 4;
-        uint64_t t;
-        uint32_t c;
-        size_t i, j;
-        uint8_t bytesleft = 25 % 4;
-        uint32_t zeromask = bytesleft ? (0xffffffff << (bytesleft * 8)) : 0;
-        unsigned zerocount = 0;
-
-        if (!b58sz) b58sz = strlen(b58);
-        memset(outi, 0, sizeof(outi));
-
-        /* Leading zeros, just count */
-        for (i = 0; i < b58sz && b58u[i] == '1'; ++i) ++zerocount;
-        for ( ; i < b58sz; ++i) {
-            if (b58u[i] & 0x80) return -1; /* High-bit set on invalid digit */
-		    if (b58digits_map[b58u[i]] == -1) return -2; /* Invalid base58 digit */
-
-            c = (unsigned)b58digits_map[b58u[i]];
-            for (j = outisz; j--; ) {
-                t = ((uint64_t)outi[j]) * 58 + c;
-                c = (uint32_t) ((t & 0x3f00000000) >> 32);
-                outi[j] = t & 0xffffffff;
-            }
-
-            if (c) return -3; /* Output number too big (carry to the next int32) */
-            if (outi[0] & zeromask) return -4; /* Output number too big (last int32 filled too far) */
-        }
-
-        j = 0;
-        switch (bytesleft) {
-            case 3: *(binu++) = (unsigned char) ((outi[0] &   0xff0000) >> 16); // fall through
-		    case 2: *(binu++) = (unsigned char) ((outi[0] &     0xff00) >>  8); // fall through
-		    case 1: *(binu++) = (unsigned char) ((outi[0] &       0xff));  ++j;
-		    default: break;
-        }
-
-        for (; j < outisz; ++j) {
-            *(binu++) = (unsigned char) ((outi[j] >> 0x18) & 0xff);
-            *(binu++) = (unsigned char) ((outi[j] >> 0x10) & 0xff);
-            *(binu++) = (unsigned char) ((outi[j] >>    8) & 0xff);
-            *(binu++) = (unsigned char) ((outi[j] >>    0) & 0xff);
-        }
-
-        binu = (unsigned char *) bin; /* Count canonical base58 byte count */
-        for (i = 0; i < 25; ++i) {
-            if (binu[i]) break;
-            --*binszp;
-        }
-        *binszp += zerocount;
-    }
-
-    if (addrbinsz != 25) return -5;
-    if (addrbin[0] != 0 && addrbin[0] != 5) return -6;
-
-    {
-        unsigned char d1[SHA256_DIGEST_LENGTH], d2[SHA256_DIGEST_LENGTH];
-        SHA256(SHA256(addrbin, 21, d1), SHA256_DIGEST_LENGTH, d2);
-        if (memcmp(addrbin + 21, d2, 4)) return -7;
-    }
-
-    if (payload != nullptr) {
-        for (size_t i=0; i<payload_sz && i < 21; ++i) {
-            payload[i] = addrbin[1+i];
-        }
-    }
-
-    return addrbin[0];
-}
-
 std::string prune_utf8(const char *utf8, size_t max_len) {
     size_t len = 0;
     size_t bytes = 0;
@@ -386,4 +311,3 @@ std::string prune_utf8(const char *utf8, size_t max_len) {
 
     return std::string(utf8);
 }
-

@@ -26,7 +26,10 @@ class PROGRAM {
     void run();
     int deinit();
     int get_status() const;
-    bool syspipe(const unsigned char *input, size_t len, const std::string &cmd, std::vector<unsigned char> *output) const;
+    bool syspipe(
+        const unsigned char *input, size_t len, const std::string &cmd,
+        std::vector<unsigned char> *output
+    ) const;
 
     const char *get_name() const;
     const char *get_version() const;
@@ -54,4 +57,3 @@ class PROGRAM {
 };
 
 #endif
-

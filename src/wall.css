@@ -1,0 +1,99 @@
+.cg-tab-wall-setup {
+    display: inline-block;
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+#cg-wall-headbuf {
+    display: inline-block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 0;
+    overflow: hidden;
+}
+
+#cg-wall-bodybuf {
+    display: inline-block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+#cg-wall-bodybuf > hr {
+    opacity: 0;
+}
+
+#cg-wall-tailbuf {
+    display: inline-block;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 0;
+    overflow: hidden;
+}
+
+.cg-wall-frame {
+    display: inline-block;
+    width: 100%;
+    height: 10rem;
+    max-width: 10rem;
+    vertical-align: middle;
+}
+
+.cg-debug .cg-wall-frame {
+    border: 1px solid;
+}
+
+.cg-debug .cg-wall-frame-empty {
+    border: 1px solid grey;
+}
+
+.cg-debug .cg-wall-frame-origin {
+    background-color: yellow;
+}
+
+.cg-wall-graffiti {
+    display: inline-block;
+    width: 100%;
+    height: 100%;
+}
+
+.cg-debug .cg-wall-graffiti {
+    border: 1px solid red;
+}
+
+.cg-debug .cg-wall-frame-visible {
+    background-color: blue;
+}
+
+.cg-debug .cg-wall-graffiti-loading {
+    background-color: black;
+}
+
+.cg-debug .cg-wall-graffiti-decoding {
+    background-color: orange;
+}
+
+.cg-wall-media {
+    width: 100%;
+    height: 100%;
+}
+
+.cg-wall-media > a {
+    width: 100%;
+    height: 100%;
+}
+
+.cg-wall-media > a > img {
+    width: calc(100% - 0.5rem);
+    height: calc(100% - 0.5rem);
+    object-fit: contain;
+    filter: drop-shadow(0.125rem 0.25rem 0.5rem black);
+}
+

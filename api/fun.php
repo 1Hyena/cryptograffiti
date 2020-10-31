@@ -409,11 +409,17 @@ function assure_tx($link) {
  `txid` binary(32) NOT NULL COMMENT 'TX hash',
  `size` bigint(20) unsigned DEFAULT NULL COMMENT 'TX size in bytes',
  `time` bigint(20) DEFAULT NULL COMMENT 'TX time in seconds since epoch',
+ `height` int(10) unsigned DEFAULT NULL COMMENT 'Block height of the TX.',
+ `cache` tinyint(1) NOT NULL,
+ `requests` bigint(20) unsigned NOT NULL,
  `created` timestamp NOT NULL DEFAULT current_timestamp() COMMENT 'creation timestamp',
  `modified` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT 'timestamp of the last update',
  PRIMARY KEY (`nr`),
- UNIQUE KEY `txid` (`txid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8");
+ UNIQUE KEY `txid` (`txid`),
+ KEY `cache` (`cache`) USING BTREE,
+ KEY `requests` (`requests`) USING BTREE,
+ KEY `height` (`height`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8");
 }
 
 function assure_order($link) {
@@ -495,9 +501,11 @@ function extract_args($data) {
     extract_num      ('fee',         $args, $result);
     extract_num      ('amount',      $args, $result);
     extract_num      ('executive',   $args, $result);
+    extract_num      ('height',      $args, $result);
     extract_bool     ('live',        $args, $result);
     extract_bool     ('scam',        $args, $result);
     extract_bool     ('back',        $args, $result);
+    extract_bool     ('cache',       $args, $result);
     extract_bool     ('inclusive',   $args, $result);
     extract_bool     ('filled',      $args, $result);
     extract_bool     ('accepted',    $args, $result);
@@ -705,16 +713,24 @@ function extract_graffiti($var, $args, &$result) {
             && (!array_key_exists('txtime', $data)
              || $data['txtime'] === null
              || (is_num($data['txtime']) && intval($data['txtime']) > 0))
+            && (!array_key_exists('txheight', $data)
+             || $data['txheight'] === null
+             || (is_num($data['txheight']) && intval($data['txheight']) >= 0))
             &&  array_key_exists('txsize', $data)
             &&  is_num($data['txsize'])
             &&  intval($data['txsize']) > 0) {
                 $buf = array('txsize' => intval($data['txsize']),
                              'txtime' => null,
+                             'txheight' => null,
                              'files'  => array()
                 );
 
                 if (array_key_exists('txtime', $data)) {
                     $buf['txtime'] = intval($data['txtime']);
+                }
+
+                if (array_key_exists('txheight', $data)) {
+                    $buf['txheight'] = intval($data['txheight']);
                 }
 
                 foreach ($data['files'] as $nr => $fdata) {
@@ -886,7 +902,6 @@ function set_stat($link, $stat, $val) {
 function get_stat($link, $stat, $days_back = 0) {
     $days_back = intval($days_back);
     $stat      = $link->real_escape_string($stat);
-    $val       = $link->real_escape_string($val);
 
     $result = $link->query("SELECT `".$stat."` FROM `stats` WHERE `date` = (CURDATE() - INTERVAL ".$days_back." day) LIMIT 1");
     if ($link->errno !== 0) {
@@ -999,7 +1014,7 @@ function insert_hex_unique($link, $table, $vars) {
         $req .= "SELECT X'". join("', X'", $vars) ."' FROM DUAL ";
         $req .= "WHERE NOT EXISTS (SELECT 1 FROM `$table` WHERE ";
 
-        foreach ($vars AS $col => $val) $req .= "`$col`= X'$val' AND ";
+        foreach ($vars as $col => $val) $req .= "`$col`= X'$val' AND ";
 
         $req = substr($req, 0, -5) . ") LIMIT 1";
         $res = $link->query($req);
@@ -1523,13 +1538,29 @@ function fun_set_btc_txs($link, $user, $guid, $txs) {
 }
 
 function fun_set_txs($link, $user, $guid, $graffiti) {
-    if ($guid      === null) return make_failure(ERROR_INVALID_ARGUMENTS, '`guid` is invalid.');
-    if ($graffiti  === null) return make_failure(ERROR_INVALID_ARGUMENTS, '`graffiti` is invalid.');
-    if (!has_access($link, $guid, ROLE_DECODER)) return make_failure(ERROR_MISUSE, 'Access denied!');
-    if (is_paralyzed($link, $guid)) return make_failure(ERROR_NO_CHANGE, 'Failed to set graffiti, session is paralyzed!');
+    if ($guid === null) {
+        return make_failure(ERROR_INVALID_ARGUMENTS, '`guid` is invalid.');
+    }
+
+    if ($graffiti === null) {
+        return make_failure(ERROR_INVALID_ARGUMENTS, '`graffiti` is invalid.');
+    }
+
+    if (!has_access($link, $guid, ROLE_DECODER)) {
+        return make_failure(ERROR_MISUSE, 'Access denied!');
+    }
+
+    if (is_paralyzed($link, $guid)) {
+        return make_failure(
+            ERROR_NO_CHANGE, 'Failed to set graffiti, session is paralyzed!'
+        );
+    }
 
     if (($c=count($txs)) > TXS_PER_QUERY) {
-        return make_failure(ERROR_MISUSE, '`txs` contains '.$c.' elements exceeding the limit of '.TXS_PER_QUERY.'.');
+        return make_failure(
+            ERROR_MISUSE, '`txs` contains '.$c.
+            ' elements exceeding the limit of '.TXS_PER_QUERY.'.'
+        );
     }
 
     $errno            = 0;
@@ -1542,16 +1573,35 @@ function fun_set_txs($link, $user, $guid, $graffiti) {
     $added_txs        = 0;
 
     foreach ($graffiti as $tx_hash => $tx) {
-        $txsize = $tx['txsize'];
-        $txtime = $tx['txtime'];
+        $txsize   = $tx['txsize'];
+        $txtime   = $tx['txtime'];
+        $txheight = $tx['txheight'];
 
         $spam = true;
 
+        {
+            $result = $link->query(
+                "SELECT `nr` FROM `tx` WHERE `txid` = X'".$tx_hash."' LIMIT 1"
+            );
+
+            if ($link->errno === 0) {
+                if ( ($row = $result->fetch_assoc()) ) {
+                    $spam = false;
+                }
+            }
+            else set_critical_error($link, $link->error);
+        }
+
         foreach ($tx['files'] as $file) {
-            $qstr = "SELECT `nr` FROM `graffiti` WHERE `hash` = X'"
-                   .$file['hash']."' AND `txid` != X'".$tx_hash
-                   ."' AND `created` IS NOT NULL AND"
-                   ." `created` > (NOW() - INTERVAL 30 day) LIMIT 1";
+            if ($spam === false) break;
+
+            $qstr = (
+                "SELECT `nr` FROM `graffiti` WHERE `hash` = X'".
+                $file['hash']."' AND `txid` != X'".$tx_hash.
+                "' AND `created` IS NOT NULL AND".
+                " `created` > (NOW() - INTERVAL 30 day) LIMIT 1"
+            );
+
             $q = db_query($link, $qstr);
 
             if ($q['errno'] === 0) {
@@ -1585,19 +1635,33 @@ function fun_set_txs($link, $user, $guid, $graffiti) {
         }
 
         $tx_nr = insert_hex_unique($link, 'tx', array('txid' => $tx_hash));
+
         if ($tx_nr === false) {
-            db_log($link, $user, "SQL failure when inserting TX ".$tx_hash.", retrying.", LOG_LEVEL_ALERT);
-            $tx_nr = insert_hex_unique($link, 'btc_tx', array('txid' => $tx_hash));
+            db_log(
+                $link, $user, "SQL failure when inserting TX ".$tx_hash.
+                ", retrying.", LOG_LEVEL_ALERT
+            );
+
+            $tx_nr = insert_hex_unique(
+                $link, 'tx', array('txid' => $tx_hash)
+            );
+
             if ($tx_nr === false) {
-                db_log($link, $user, "Repeated failure when inserting TX ".$tx_hash.".", LOG_LEVEL_ALERT);
+                db_log(
+                    $link, $user, "Repeated failure when inserting TX ".
+                    $tx_hash.".", LOG_LEVEL_ALERT
+                );
             }
         }
 
         if ($tx_nr === null) {
-            $query_string = "UPDATE `tx` SET ".
-                         ($txtime !== null ? "`time` = '".$txtime."', " : "").
-                         "`size` = '".$txsize."' ".
-                         "WHERE `txid` = X'".$tx_hash."'";
+            $query_string = (
+                "UPDATE `tx` SET ".
+                ($txtime !== null ? "`time` = '".$txtime."', " : "").
+                ($txheight !== null ? "`height` = '".$txheight."', " : "").
+                "`size` = '".$txsize."' WHERE `txid` = X'".$tx_hash."'"
+            );
+
             $link->query($query_string);
 
             if ($errno === 0 && $link->errno !== 0) {
@@ -1610,14 +1674,57 @@ function fun_set_txs($link, $user, $guid, $graffiti) {
                 db_log($link, $user, $query_string);
                 $changed_txs++;
             }
+
+            // Now let's delete all graffiti records of this TX which are not
+            // included in $tx['files'].
+
+            $subq = array();
+            foreach ($tx['files'] as $file) {
+                $subq[] = (
+                    "(`location` = '".$file['location']."' AND `offset` = '".
+                    $file['offset']."')"
+                );
+            }
+
+            if (count($subq) > 0) {
+                $qstr = (
+                    "DELETE FROM `graffiti` WHERE `txid` = X'".$tx_hash."'".
+                    " AND NOT (".implode(' OR ', $subq).")"
+                );
+
+                $q = db_query($link, $qstr);
+
+                if ($q['errno'] === 0) {
+                    $deleted_graffiti = $q['affected_rows'];
+
+                    if ($deleted_graffiti > 0) {
+                        db_log(
+                            $link, $user,
+                            'Deleted '.$deleted_graffiti.' graffiti record'.
+                            ($deleted_graffiti === 1 ? '' : 's').
+                            ' from TX '.$tx_hash.'.'
+                        );
+                    }
+                }
+                else {
+                    if ($errno === 0 && $q['errno'] !== 0) {
+                        $errno = $q['errno'];
+                        $error = $q['error'];
+                        set_critical_error($link, $error);
+                    }
+                }
+            }
         }
         else if ($tx_nr !== false) {
             $added_txs++;
 
-            $query_string = "UPDATE `tx` SET ".
-                         "`size` = '".$txsize."', ".
-                         ($txtime !== null ? "`time` = '".$txtime."', " : "").
-                         "`created` = NOW() WHERE `nr` = '".$tx_nr."'";
+            $query_string = (
+                "UPDATE `tx` SET `size` = '".$txsize."', ".
+                ($txtime !== null ? "`time` = '".$txtime."', " : "").
+                ($txheight !== null ? "`height` = '".$txheight."', " : "").
+                "`created` = NOW() WHERE `nr` = '".$tx_nr."'"
+            );
+
             $link->query($query_string);
 
             if ($errno === 0 && $link->errno !== 0) {
@@ -1627,7 +1734,11 @@ function fun_set_txs($link, $user, $guid, $graffiti) {
             }
 
             if ($link->affected_rows === 0) {
-                db_log($link, $user, "TX nr `".$tx_nr."` was not updated after its creation.", LOG_LEVEL_ALERT);
+                db_log(
+                    $link, $user,
+                    "TX nr `".$tx_nr."` was not updated after its creation.",
+                    LOG_LEVEL_ALERT
+                );
             }
             else db_log($link, $user, $query_string);
         }
@@ -1658,22 +1769,25 @@ function fun_set_txs($link, $user, $guid, $graffiti) {
 
                 if ($nr === false) {
                     db_log($link, $user,
-                        "Repeated SQL failure when inserting ".$file['location'].":".
-                        $file['offset']." graffiti from TX ".$tx_hash.", retrying.",
+                        "Repeated SQL failure when inserting ".
+                        $file['location'].":".$file['offset'].
+                        " graffiti from TX ".$tx_hash.", retrying.",
                         LOG_LEVEL_ALERT
                     );
                 }
             }
 
             if ($nr === null) {
-                $query_string =
+                $query_string = (
                     "UPDATE `graffiti` SET ".
                     "`fsize` = '".$file['fsize']."', ".
                     "`mimetype` = '".$file['type']."', ".
                     "`hash` = X'".$file['hash']."' ".
                     "WHERE `txid` = X'".$tx_hash."'".
                     " AND `location` = '".$file['location']."'".
-                    " AND `offset` = '".$file['offset']."'";
+                    " AND `offset` = '".$file['offset']."'"
+                );
+
                 $link->query($query_string);
 
                 if ($errno === 0 && $link->errno !== 0) {
@@ -1690,12 +1804,14 @@ function fun_set_txs($link, $user, $guid, $graffiti) {
             else if ($nr !== false) {
                 $added_graffiti++;
 
-                $query_string =
+                $query_string = (
                     "UPDATE `graffiti` SET ".
                     "`fsize` = '".$file['fsize']."', ".
                     "`mimetype` = '".$file['type']."', ".
                     "`hash` = X'".$file['hash']."', ".
-                    "`created` = NOW() WHERE `nr` = '".$nr."'";
+                    "`created` = NOW() WHERE `nr` = '".$nr."'"
+                );
+
                 $link->query($query_string);
 
                 if ($errno === 0 && $link->errno !== 0) {
@@ -1705,21 +1821,46 @@ function fun_set_txs($link, $user, $guid, $graffiti) {
                 }
 
                 if ($link->affected_rows === 0) {
-                    db_log($link, $user, "Graffiti nr `".$nr."` was not updated after its creation.", LOG_LEVEL_ALERT);
+                    db_log(
+                        $link, $user,
+                        "Graffiti nr `".$nr.
+                        "` was not updated after its creation.",
+                        LOG_LEVEL_ALERT
+                    );
                 }
                 else db_log($link, $user, $query_string);
             }
         }
     }
 
-    db_log($link, $user, 'Added '.$added_txs.', updated '.$changed_txs.' TX'.($changed_txs === 1 ? '.' : 's.'));
-    db_log($link, $user, 'Added '.$added_graffiti.', updated '.$changed_graffiti.' graffiti row'.($changed_graffiti === 1 ? '.' : 's.'));
+    db_log(
+        $link, $user,
+        'Added '.$added_txs.', updated '.$changed_txs.' TX'.
+        ($changed_txs === 1 ? '.' : 's.')
+    );
+
+    db_log(
+        $link, $user, 'Added '.$added_graffiti.', updated '.$changed_graffiti.
+        ' graffiti row'.($changed_graffiti === 1 ? '.' : 's.')
+    );
+
     if ($spam_count > 0) {
-        if ($spam_count === 1) db_log($link, $user, 'Ignored the graffiti from TX '.$spam_txid.' (spam detected).');
-        else                   db_log($link, $user, 'Ignored '.$spam_count.' graffiti TXs (spam detected).');
+        if ($spam_count === 1) {
+            db_log(
+                $link, $user, 'Ignored the graffiti from TX '.$spam_txid.
+                ' (spam detected).'
+            );
+        }
+        else {
+            db_log(
+                $link, $user, 'Ignored '.$spam_count.
+                ' graffiti TXs (spam detected).'
+            );
+        }
     }
 
     if ($errno !== 0) return make_failure(ERROR_SQL, $error);
+
     return make_success();
 }
 
@@ -1892,8 +2033,12 @@ function fun_get_graffiti($link, $user, $guid, $graffiti_nr, $count, $back, $mim
     return make_success($response);
 }
 
-function fun_get_txs($link, $user, $guid, $tx_nr, $count, $back, $mimetype) {
-    if ($count  === null) return make_failure(ERROR_INVALID_ARGUMENTS, '`count` is invalid.');
+function fun_get_txs(
+    $link, $user, $guid, $tx_nr, $count, $back, $mimetype, $cache, $height
+) {
+    if ($count  === null) {
+        return make_failure(ERROR_INVALID_ARGUMENTS, '`count` is invalid.');
+    }
 
     if ($mimetype !== null) $mimetype = $link->real_escape_string($mimetype);
 
@@ -1913,26 +2058,74 @@ function fun_get_txs($link, $user, $guid, $tx_nr, $count, $back, $mimetype) {
         $subwhere = "AND `graffiti`.`mimetype` LIKE '".$mimetype."%'";
     }
 
+    $cache_condition = "TRUE";
+
+    if ($cache === '1') {
+        $cache_condition = "`cache` = TRUE";
+    }
+    else if ($cache === '0') {
+        $cache_condition = "`cache` = FALSE";
+    }
+
+    $height_condition = "TRUE";
+
+    if ($height !== null) {
+        $height_condition = "`height` IS NULL OR `height` >= '".$height."'";
+    }
+
     if ($tx_nr === null) {
-        $query = "SELECT `txnr`, `txsize`, `ic`.`txid`, `ic`.`nr` AS gnr, `location`, `fsize`, `offset`, `mimetype`, `hash` ".
-                 "FROM ((select `nr` AS txnr, `txid`, `size` AS txsize from `tx` ".
-                 "where exists (SELECT `nr` FROM `graffiti` WHERE `graffiti`.`txid` = `tx`.`txid` ".$subwhere.") ".
-                 "order by `txnr` desc limit ".$limit.") im) ".
-                 "INNER JOIN `graffiti` ic ON `im`.`txid` = `ic`.`txid` ".$where." ORDER BY `txnr` DESC";
+        $query = $cache === null ? (
+            "SELECT `txnr`, `txsize`, `txtime`, `ic`.`txid`, `ic`.`nr` AS ".
+            "gnr, `location`, `fsize`, `offset`, `mimetype`, `hash` FROM ".
+            "((select `nr` AS txnr, `time` AS txtime, `txid`, `size` AS ".
+            "txsize from `tx` where (".$cache_condition.") AND (".
+            $height_condition.") AND exists (SELECT `nr` FROM `graffiti` ".
+            "WHERE `graffiti`.`txid` = `tx`.`txid` ".$subwhere.") order by ".
+            "`txnr` desc limit ".$limit.") im) INNER JOIN `graffiti` ic ON ".
+            "`im`.`txid` = `ic`.`txid` ".$where." ORDER BY `txnr` DESC"
+        ) : (
+            // Here we retrieve the transactions that have been modified within
+            // the last minute. We order them descendingly by the number of
+            // requests. The Courier bots can therefore easily determine which
+            // raw transaction details need to be uploaded to the server.
+
+            "SELECT `txnr`, `txsize`, `txtime`, `ic`.`txid`, `ic`.`nr` AS ".
+            "gnr, `location`, `fsize`, `offset`, `mimetype`, `hash` FROM ".
+            "((select `nr` AS txnr, `time` as txtime, `txid`, `size` AS ".
+            "txsize from `tx` where (".$cache_condition.") AND (".
+            $height_condition.") AND `modified` IS NOT NULL AND `modified` ".
+            "> (NOW() - INTERVAL 1 minute) AND exists (SELECT `nr` FROM ".
+            "`graffiti` WHERE `graffiti`.`txid` = `tx`.`txid` ".$subwhere.") ".
+            "order by `requests` desc limit ".$limit.") im) INNER JOIN ".
+            "`graffiti` ic ON `im`.`txid` = `ic`.`txid` ".$where." ORDER BY ".
+            "`txnr` DESC"
+        );
     }
     else if ($back === '1') {
-        $query = "SELECT `txnr`, `txsize`, `ic`.`txid`, `ic`.`nr` AS gnr, `location`, `fsize`, `offset`, `mimetype`, `hash` ".
-                 "FROM ((select `nr` AS txnr, `txid`, `size` AS txsize from `tx` ".
-                 "where `nr` <= '".$tx_nr."' and exists (SELECT `nr` FROM `graffiti` WHERE `graffiti`.`txid` = `tx`.`txid` ".$subwhere.") ".
-                 "order by `txnr` desc limit ".$limit.") im) ".
-                 "INNER JOIN `graffiti` ic ON `im`.`txid` = `ic`.`txid` ".$where." ORDER BY `txnr` DESC";
+        $query = (
+            "SELECT `txnr`, `txsize`, `txtime`, `ic`.`txid`, `ic`.`nr` AS ".
+            "gnr, `location`, `fsize`, `offset`, `mimetype`, `hash` FROM ".
+            "((select `nr` AS txnr, `txid`, `time` AS txtime, `size` AS ".
+            "txsize from `tx` where (".$cache_condition.") AND (".
+            $height_condition.") AND `nr` <= '".$tx_nr."' and exists (SELECT ".
+            "`nr` FROM `graffiti` WHERE `graffiti`.`txid` = `tx`.`txid` ".
+            $subwhere.") order by `txnr` desc limit ".$limit.") im) INNER ".
+            "JOIN `graffiti` ic ON `im`.`txid` = `ic`.`txid` ".$where.
+            " ORDER BY `txnr` DESC"
+        );
     }
     else if ($back === '0' || $back === null) {
-        $query = "SELECT `txnr`, `txsize`, `ic`.`txid`, `ic`.`nr` AS gnr, `location`, `fsize`, `offset`, `mimetype`, `hash` ".
-                 "FROM ((select `nr` AS txnr, `txid`, `size` AS txsize from `tx` ".
-                 "where `nr` >= '".$tx_nr."' and exists (SELECT `nr` FROM `graffiti` WHERE `graffiti`.`txid` = `tx`.`txid` ".$subwhere.") ".
-                 "order by `txnr` asc limit ".$limit.") im) ".
-                 "INNER JOIN `graffiti` ic ON `im`.`txid` = `ic`.`txid` ".$where." ORDER BY `txnr` ASC";
+        $query = (
+            "SELECT `txnr`, `txsize`, `txtime`, `ic`.`txid`, `ic`.`nr` AS ".
+            "gnr, `location`, `fsize`, `offset`, `mimetype`, `hash` FROM ".
+            "((select `nr` AS txnr, `txid`, `size` AS txsize, `time` AS ".
+            "txtime from `tx` where (".$cache_condition.") AND (".
+            $height_condition.") AND `nr` >= '".$tx_nr."' and exists (SELECT ".
+            "`nr` FROM `graffiti` WHERE `graffiti`.`txid` = `tx`.`txid` ".
+            $subwhere.") order by `txnr` asc limit ".$limit.") im) INNER JOIN ".
+            "`graffiti` ic ON `im`.`txid` = `ic`.`txid` ".$where." ORDER BY ".
+            "`txnr` ASC"
+        );
     }
 
     if ($query === null) {
@@ -1947,12 +2140,14 @@ function fun_get_txs($link, $user, $guid, $tx_nr, $count, $back, $mimetype) {
             $txnr = "".$row['txnr'];
             $txid = bin2hex($row['txid']);
             $txsize = $row['txsize'];
+            $txtime = $row['txtime'];
 
             if (!array_key_exists($txnr, $tx_buf)) {
                 $tx_buf[$txnr] = array(
                     "nr" => $row['txnr'],
                     "txid" => $txid,
                     "txsize" => $txsize,
+                    "txtime" => $txtime,
                     "graffiti" => array()
                 );
             }
@@ -1968,16 +2163,62 @@ function fun_get_txs($link, $user, $guid, $tx_nr, $count, $back, $mimetype) {
         }
         $result->free();
 
-        $response['txs'] = array();
+        $txnrs_cache_false = array();
+        $txnrs_cache_true  = array();
+        $response['txs']   = array();
+
         foreach ($tx_buf as $nr => $tx) {
+            if (file_exists("../rawtx/".$tx['txid'])) {
+                $txnrs_cache_true[] = $nr;
+
+                if ($cache === '0') continue;
+
+                $tx['cache'] = true;
+            }
+            else {
+                $txnrs_cache_false[] = $nr;
+
+                if ($cache === '1') continue;
+
+                $tx['cache'] = false;
+            }
+
             $response['txs'][] = $tx;
+        }
+
+        if (count($txnrs_cache_true) > 0) {
+            $query_string = (
+                "UPDATE `tx` SET `requests` = `requests` + 1, `cache` = TRUE ".
+                "WHERE `nr` IN (".implode(',', $txnrs_cache_true).")"
+            );
+
+            $link->query($query_string);
+
+            if ($link->errno !== 0) {
+                set_critical_error($link, $link->error);
+            }
+        }
+
+        if (count($txnrs_cache_false) > 0) {
+            $query_string = (
+                "UPDATE `tx` SET `requests` = `requests` + 1, `cache` = FALSE ".
+                "WHERE `nr` IN (".implode(',', $txnrs_cache_false).")"
+            );
+
+            $link->query($query_string);
+
+            if ($link->errno !== 0) {
+                set_critical_error($link, $link->error);
+            }
         }
     }
     else {
         return make_failure(ERROR_SQL, $link->error);
     }
 
-    if ($tx_nr === null && is_array($response['txs'])) $response['txs'] = array_reverse($response['txs']);
+    if ($tx_nr === null && is_array($response['txs'])) {
+        $response['txs'] = array_reverse($response['txs']);
+    }
 
     return make_success($response);
 }
@@ -2178,33 +2419,39 @@ function fun_default($link, $user) {
     }
 }
 
-// curl --connect-timeout 300 --silent -d "task=cron_alarm&pass=CRON_PASSWORD_HERE&T=5" -X POST 'https://cryptograffiti.info/api/'
+// curl --connect-timeout 299 --silent -d "task=cron_alarm&pass=CRON_PASSWORD_HERE&T=5" -X POST 'https://cryptograffiti.info/api/'
 function cron_alarm($link, $T) {
+    $alarm_time = microtime(true);
+
     db_log($link, null, 'CRON T'.$T.' alarm signal received.', LOG_LEVEL_MINOR);
 
-    $alarm_time = microtime(true);
-    $overload = false;
     $PPM = 20; // Pulse Per Minute
-    for ($t = 0; $t < $T; $t++) {
-        cron_tick($link);
+    $pulses = $PPM * $T;
+    $total_time = $T * 60;
+    $overload = false;
 
-        for ($i = 0; $i < $PPM; $i++) {
-            $time_start = microtime(true);
-
-            if ($overload) {
-                increase_stat($link, "overload");
-                $overload = false;
-            }
-
-            cron_pulse($link);
-
-            if ($i+1 < $PPM || $t+1 < $T) {
-                $time_end = microtime(true);
-                $time = (60/$PPM)*1000000 - round(1000000*($time_end - $time_start));
-                if ($time > 0) usleep($time);
-                else $overload = true;
-            }
+    for ($pulse = 0; $pulse < $pulses; $pulse++) {
+        if ($pulse % $PPM === 0) {
+            cron_tick($link);
         }
+
+        cron_pulse($link);
+
+        if ($pulse + 1 >= $pulses) break;
+
+        $time_spent = microtime(true) - $alarm_time;
+        $time_left = $total_time - $time_spent;
+        $pulses_left = $pulses - ($pulse + 1);
+        $time_needed = $pulses_left * (60/$PPM);
+
+        if ($time_needed < $time_left) {
+            usleep(round(($time_left - $time_needed) * 1000000));
+        }
+        else $overload = true;
+    }
+
+    if ($overload) {
+        increase_stat($link, "overload");
     }
 
     $alarm_time = microtime(true) - $alarm_time;
@@ -2239,33 +2486,85 @@ function http_get($url, $params=array()) {
 
 // curl --connect-timeout 300 --silent -d "task=cron_tick&pass=CRON_PASSWORD_HERE&T=5" -X POST 'https://amaraca.com/db/'
 function cron_tick($link) {
-    $IPs    = 0;
-    $result = $link->query("SELECT COUNT(`ip`) AS `IPs` FROM `address` WHERE `rpm` > 0");
+    $result = $link->query(
+        "SELECT `sessions`, `max_sessions`, `IPs` FROM `stats` ORDER BY `nr` ".
+        "DESC LIMIT 1"
+    );
 
-         if ($link->errno !== 0) set_critical_error($link, $link->error);
+    if ($link->errno !== 0) {
+        set_critical_error($link, $link->error);
+    }
+    else if ($row = $result->fetch_assoc()) {
+        $IPs = intval($row['IPs']);
+        $sessions = intval($row['sessions']);
+        $max_sessions = intval($row['max_sessions']);
+
+        db_log(
+            $link, null,
+            'Online: '.$sessions.'/'.$max_sessions.' ('.$IPs.
+            ' IP'.($IPs === 1 ? '' : 's').').',
+            LOG_LEVEL_MINOR
+        );
+    }
+
+    $IPs    = 0;
+    $result = $link->query(
+        "SELECT COUNT(`ip`) AS `IPs` FROM `address` WHERE `rpm` > 0"
+    );
+
+    if ($link->errno !== 0) {
+        set_critical_error($link, $link->error);
+    }
     else if ($row = $result->fetch_assoc()) {
         $IPs = intval($row['IPs']);
     }
 
-    $result = $link->query("SELECT COUNT(`nr`) AS `sessions` FROM `session` WHERE `end_time` IS NULL");
+    $result = $link->query(
+        "SELECT COUNT(`nr`) AS `sessions` FROM `session` WHERE `end_time` IS ".
+        "NULL"
+    );
 
-
-         if ($link->errno !== 0) set_critical_error($link, $link->error);
+    if ($link->errno !== 0) {
+        set_critical_error($link, $link->error);
+    }
     else if ($row = $result->fetch_assoc()) {
-        // Race condition BUG here: if CURDATE() changes before the next query then the next query has no effect.
-        $query = "UPDATE `stats` SET `updates` = `updates` + '1', `IPs` = '".$IPs."', `sessions` = '".intval($row['sessions']).
-                 "', `max_IPs` = IF (`max_IPs` < '".$IPs."', '".$IPs.
-                 "', `max_IPs`), `max_sessions` = IF (`max_sessions` < '".intval($row['sessions'])."', '".intval($row['sessions']).
-                 "', `max_sessions`), `free_tokens` = '0' WHERE `date` = CURDATE()";
+        // Race condition BUG here: if CURDATE() changes before the next query
+        // then the next query has no effect.
+
+        $query = (
+            "UPDATE `stats` SET `updates` = `updates` + '1', `IPs` = '".$IPs.
+            "', `sessions` = '".intval($row['sessions'])."', `max_IPs` = IF ".
+            "(`max_IPs` < '".$IPs."', '".$IPs."', `max_IPs`), `max_sessions`".
+            " = IF (`max_sessions` < '".intval($row['sessions'])."', '".
+            intval($row['sessions'])."', `max_sessions`), `free_tokens` = '0' ".
+            "WHERE `date` = CURDATE()"
+        );
+
         $link->query($query);
-        if ($link->errno !== 0) set_critical_error($link, $link->error);
+
+        if ($link->errno !== 0) {
+            set_critical_error($link, $link->error);
+        }
         else {
             if ($link->affected_rows === 0) {
-                db_log($link, null, "Failed to update stats. Inserting a new row for the current date.");
-                $link->query("INSERT IGNORE INTO `stats` (`date`) VALUES(CURDATE())");
+                db_log(
+                    $link, null,
+                    "Failed to update stats. Inserting a new row for the ".
+                    "current date."
+                );
+
+                $link->query(
+                    "INSERT IGNORE INTO `stats` (`date`) VALUES(CURDATE())"
+                );
+
                 if ($link->errno !== 0) set_critical_error($link, $link->error);
+
                 if ($link->affected_rows === 0) {
-                    db_log($link, null, "Failed to insert a new row to `stats`.", LOG_LEVEL_ERROR);
+                    db_log(
+                        $link, null,
+                        "Failed to insert a new row to `stats`.",
+                        LOG_LEVEL_ERROR
+                    );
                 }
             }
         }
@@ -2273,6 +2572,7 @@ function cron_tick($link) {
 
     // Make sure donations are up to date:
     $result = $link->query("SELECT SUM(`amount`) AS `donations` FROM `btc_tx`");
+
     if ($link->errno !== 0) set_critical_error($link, $link->error);
     else if ($row = $result->fetch_assoc()) {
         $donations = intval($row['donations']);
@@ -2281,26 +2581,48 @@ function cron_tick($link) {
 
     // Inactive captchas get deleted so that the user must solve a new CAPTCHA
     $link->query(
-        "DELETE FROM `captcha` WHERE (`sticky` IS FALSE AND `last_update` < ( NOW() - INTERVAL ".CAPTCHA_TIMEOUT." second ) )"
+        "DELETE FROM `captcha` WHERE (`sticky` IS FALSE AND `last_update` < ( ".
+        "NOW() - INTERVAL ".CAPTCHA_TIMEOUT." second ) )"
     );
-    if ( ($ar = $link->affected_rows) > 0) {
-        db_log($link, null, $ar.' CAPTCHA'.($ar == 1 ? '' : 's').' deleted for being unused for '.CAPTCHA_TIMEOUT.' seconds.');
+
+    if (($ar = $link->affected_rows) > 0) {
+        db_log(
+            $link, null,
+            $ar.' CAPTCHA'.($ar == 1 ? '' : 's').
+            ' deleted for being unused for '.CAPTCHA_TIMEOUT.' seconds.'
+        );
     }
-    $link->query("DELETE FROM `captcha` WHERE `fused` IS TRUE AND `sticky` IS FALSE");
+
+    $link->query(
+        "DELETE FROM `captcha` WHERE `fused` IS TRUE AND `sticky` IS FALSE"
+    );
+
     if ( ($ar = $link->affected_rows) > 0) {
-        db_log($link, null, $ar.' fused token'.($ar == 1 ? '' : 's').' deleted.');
+        db_log(
+            $link, null, $ar.' fused token'.($ar == 1 ? '' : 's').' deleted.'
+        );
     }
 
     $link->query("UPDATE `address` SET `rpm` = '0' WHERE `rpm` > '0'");
-    $link->query("UPDATE `address` SET `max_rpm` = DEFAULT(`max_rpm`) WHERE `max_rpm` > DEFAULT(`max_rpm`)");
+
+    $link->query(
+        "UPDATE `address` SET `max_rpm` = DEFAULT(`max_rpm`) WHERE `max_rpm` ".
+        "> DEFAULT(`max_rpm`)"
+    );
+
     $link->query("UPDATE `captcha` SET `rpm` = '0' WHERE `rpm` > '0'");
-    $link->query("UPDATE `address` SET `free_tokens` = '0' WHERE `free_tokens` > '0'");
+
+    $link->query(
+        "UPDATE `address` SET `free_tokens` = '0' WHERE `free_tokens` > '0'"
+    );
 
     $link->query(
         "UPDATE `session` SET `end_time` = NOW() ".
         "WHERE `end_time` IS NULL ".
-        "AND (`last_request` IS NULL OR `last_request` < (NOW() - INTERVAL ".SESSION_TIMEOUT." second))"
+        "AND (`last_request` IS NULL OR `last_request` < (NOW() - INTERVAL ".
+        SESSION_TIMEOUT." second))"
     );
+
     $link->query(
         "UPDATE `session` SET `end_time` = NULL, `start_time` = NOW() ".
         "WHERE `end_time` IS NOT NULL ".
@@ -2310,14 +2632,29 @@ function cron_tick($link) {
 
     {
         // Check which critical fused sessions have appeared online lately:
-        $result = $link->query("SELECT `nr`, `alias` FROM `session` WHERE (`flags` & '".FLAG_CRITICAL."') AND (`flags` & '".FLAG_FUSED.
-                               "') AND (`end_time` IS NULL OR `end_time` > (NOW() - INTERVAL 3600 second))");
+        $result = $link->query(
+            "SELECT `nr`, `alias` FROM `session` WHERE (`flags` & '".
+            FLAG_CRITICAL."') AND (`flags` & '".FLAG_FUSED."') AND ".
+            "(`end_time` IS NULL OR `end_time` > (NOW() - INTERVAL ".
+            "3600 second))"
+        );
+
         if ($link->errno === 0) {
             while ($row = $result->fetch_assoc()) {
-                $link->query("UPDATE `session` SET `flags` = `flags` & ~".FLAG_FUSED." WHERE `nr` = '".$row['nr']."'");
+                $link->query(
+                    "UPDATE `session` SET `flags` = `flags` & ~".FLAG_FUSED.
+                    " WHERE `nr` = '".$row['nr']."'"
+                );
+
                 if ($link->errno === 0) {
-                    $text = "Session #".$row['nr'].($row['alias'] === null ? ' ' : ' ('.$row['alias'].') ').
-                            "appears to be online.";
+                    $text = (
+                        "Session #".$row['nr'].(
+                            $row['alias'] === null
+                                ? ' '
+                                : ' ('.$row['alias'].') '
+                        )."appears to be online."
+                    );
+
                     db_log($link, null, $text, LOG_LEVEL_CRITICAL);
                 }
                 else set_critical_error($link, $link->error);
@@ -2325,15 +2662,30 @@ function cron_tick($link) {
         }
         else set_critical_error($link, $link->error);
 
-        // Check which critical sessions have appeared offline lately and fuse them:
-        $result = $link->query("SELECT `nr`, `alias` FROM `session` WHERE (`flags` & '".FLAG_CRITICAL."') AND NOT (`flags` & '".FLAG_FUSED.
-                               "') AND (`end_time` IS NOT NULL AND `end_time` <= (NOW() - INTERVAL 3600 second))");
+        // Check if critical sessions have gone offline lately and fuse them:
+        $result = $link->query(
+            "SELECT `nr`, `alias` FROM `session` WHERE (`flags` & '".
+            FLAG_CRITICAL."') AND NOT (`flags` & '".FLAG_FUSED."') AND ".
+            "(`end_time` IS NOT NULL AND `end_time` <= (NOW() - INTERVAL 3600 ".
+            "second))"
+        );
+
         if ($link->errno === 0) {
             while ($row = $result->fetch_assoc()) {
-                $link->query("UPDATE `session` SET `flags` = `flags` | ".FLAG_FUSED." WHERE `nr` = '".$row['nr']."'");
+                $link->query(
+                    "UPDATE `session` SET `flags` = `flags` | ".FLAG_FUSED.
+                    " WHERE `nr` = '".$row['nr']."'"
+                );
+
                 if ($link->errno === 0) {
-                    $text = "Session #".$row['nr'].($row['alias'] === null ? ' ' : ' ('.$row['alias'].') ').
-                            "appears to be offline.";
+                    $text = (
+                        "Session #".$row['nr'].(
+                            $row['alias'] === null
+                                ? ' '
+                                : ' ('.$row['alias'].') '
+                        )."appears to be offline."
+                    );
+
                     db_log($link, null, $text, LOG_LEVEL_CRITICAL);
                 }
                 else set_critical_error($link, $link->error);
@@ -2342,8 +2694,12 @@ function cron_tick($link) {
         else set_critical_error($link, $link->error);
 
         // Check if decoding works right now:
-        $result = $link->query("SELECT `nr` FROM `session` WHERE (`role` & '".ROLE_DECODER.
-                               "') AND `end_time` IS NULL OR `end_time` > (NOW() - INTERVAL 120 second) LIMIT 1");
+        $result = $link->query(
+            "SELECT `nr` FROM `session` WHERE (`role` & '".ROLE_DECODER."') ".
+            "AND (`end_time` IS NULL OR `end_time` > (NOW() - INTERVAL 120 ".
+            "second)) LIMIT 1"
+        );
+
         if ($link->errno === 0) {
             $decoder_before = get_stat($link, 'decoder');
 
@@ -2351,22 +2707,33 @@ function cron_tick($link) {
                 // Decoder is online
                 if ($decoder_before === '0') {
                     set_stat($link, "decoder", '1');
-                    db_log($link, null, 'Cryptograffiti decoding is now enabled.', LOG_LEVEL_CRITICAL);
+                    db_log(
+                        $link, null, 'Cryptograffiti decoding is now enabled.',
+                        LOG_LEVEL_CRITICAL
+                    );
                 }
             }
             else {
                 // Decoder is offline
                 if ($decoder_before === '1') {
                     set_stat($link, "decoder", '0');
-                    db_log($link, null, 'Cryptograffiti decoding appears disabled!', LOG_LEVEL_CRITICAL);
+                    db_log(
+                        $link, null,
+                        'Cryptograffiti decoding appears disabled!',
+                        LOG_LEVEL_CRITICAL
+                    );
                 }
             }
         }
         else set_critical_error($link, $link->error);
 
         // Check if encoding works right now:
-        $result = $link->query("SELECT `nr` FROM `session` WHERE (`role` & '".ROLE_ENCODER.
-                               "') AND `end_time` IS NULL OR `end_time` > (NOW() - INTERVAL 120 second) LIMIT 1");
+        $result = $link->query(
+            "SELECT `nr` FROM `session` WHERE (`role` & '".ROLE_ENCODER."') ".
+            "AND (`end_time` IS NULL OR `end_time` > (NOW() - INTERVAL 120 ".
+            "second)) LIMIT 1"
+        );
+
         if ($link->errno === 0) {
             $encoder_before = get_stat($link, 'encoder');
 
@@ -2374,14 +2741,21 @@ function cron_tick($link) {
                 // Encoder is online
                 if ($encoder_before === '0') {
                     set_stat($link, "encoder", '1');
-                    db_log($link, null, 'Cryptograffiti encoding is now enabled.', LOG_LEVEL_CRITICAL);
+                    db_log(
+                        $link, null, 'Cryptograffiti encoding is now enabled.',
+                        LOG_LEVEL_CRITICAL
+                    );
                 }
             }
             else {
                 // Encoder is offline
                 if ($encoder_before === '1') {
                     set_stat($link, "encoder", '0');
-                    db_log($link, null, 'Cryptograffiti encoding appears disabled!', LOG_LEVEL_CRITICAL);
+                    db_log(
+                        $link, null,
+                        'Cryptograffiti encoding appears disabled!',
+                        LOG_LEVEL_CRITICAL
+                    );
                 }
             }
         }

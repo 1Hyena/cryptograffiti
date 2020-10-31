@@ -108,6 +108,7 @@ fi
 #log "API call: ${FUNC}"
 
 data=$(xxd -r -p <<< "${DATA}")
+
 hash=`printf "%s" "${SKEY}" | xxd -r -p | sha256sum | head -c 64`
 salt=$(
     head /dev/urandom | tr -dc A-Za-z0-9 | head -c 64 | sha256sum | head -c 32
@@ -156,4 +157,3 @@ else
     log "API error: ${response_errmsg}"
     printf "%s" "${response}" | jq . >/dev/stderr
 fi
-

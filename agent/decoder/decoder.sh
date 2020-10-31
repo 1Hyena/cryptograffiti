@@ -15,14 +15,18 @@ NAME=""                                                                        #
 CLIF=""                                                                        #
 CGDF=""                                                                        #
 DDIR=""                                                                        #
+CFGF=""                                                                        #
 ################################################################################
 DATE_FORMAT="%Y-%m-%d %H:%M:%S"
 CANARY="::"
 WORKERS="16"
+BLOCKSZ="8M"
 BESTBLOCK=""
 TXS_PER_QUERY=0
+MAX_DATA_SIZE=0
 NONCE_ERRORS=0
 OTHER_ERRORS=0
+CHEAP_ERRORS=0
 CACHE_ERRORS=0
 PULSE_PERIOD=30
 CACHE=""
@@ -30,19 +34,23 @@ TXBUF=""
 
 log() {
     if [ "${OTHER_ERRORS}" -ge "1" ]; then
-        CANARY="\033[0;31m::\033[0m" # Canary is "dead", we got errors.
+        CANARY="\033[1;31m::\033[0m"
+    elif [ "${CHEAP_ERRORS}" -ge "1" ]; then
+        CANARY="\033[0;31m::\033[0m"
     fi
 
-    local now=`date +"${DATE_FORMAT}"`
+    local now=$(date +"${DATE_FORMAT}")
     printf "\033[1;36m%s\033[0m ${CANARY} %s\n" "$now" "$1" >/dev/stderr
 }
 
 alert() {
     if [ "${OTHER_ERRORS}" -ge "1" ]; then
-        CANARY="\033[0;31m::\033[0m" # Canary is "dead", we got errors.
+        CANARY="\033[1;31m::\033[0m"
+    elif [ "${CHEAP_ERRORS}" -ge "1" ]; then
+        CANARY="\033[0;31m::\033[0m"
     fi
 
-    local now=`date +"${DATE_FORMAT}"`
+    local now=$(date +"${DATE_FORMAT}")
     local format="\033[1;36m%s\033[0m ${CANARY} \033[1;33m%s\033[0m\n"
     printf "${format}" "$now" "$1" >/dev/stderr
 }
@@ -91,16 +99,34 @@ config() {
 
     if [[ -r ${CONF} ]] ; then
         local cfg=$(<"$CONF")
-        NAME=`printf "%s" "${cfg}" | jq -r -M '.title | select (.!=null)'`
-        INIT=`printf "%s" "${cfg}" | jq -r -M '.["init.sh"] | select (.!=null)'`
-        CALL=`printf "%s" "${cfg}" | jq -r -M '.["call.sh"] | select (.!=null)'`
-        ADDR=`printf "%s" "${cfg}" | jq -r -M .api`
-        CGDF=`printf "%s" "${cfg}" | jq -r -M .cgd`
-        CLIF=`printf "%s" "${cfg}" | jq -r -M '.["bitcoin-cli"]'`
-        DDIR=`printf "%s" "${cfg}" | jq -r -M '.["bitcoin-dat"]'`
+        NAME=$(printf "%s" "${cfg}" | jq -r -M '.title | select (.!=null)')
+        INIT=$(
+            printf "%s" "${cfg}" | jq -r -M '.["init.sh"] | select (.!=null)'
+        )
+        CALL=$(
+            printf "%s" "${cfg}" | jq -r -M '.["call.sh"] | select (.!=null)'
+        )
+        ADDR=$(printf "%s" "${cfg}" | jq -r -M .api)
+        CGDF=$(printf "%s" "${cfg}" | jq -r -M .cgd)
+        CLIF=$(
+            printf "%s" "${cfg}" |
+            jq -r -M '.["bitcoin-cli"] | select (.!=null)'
+        )
+        DDIR=$(
+            printf "%s" "${cfg}" |
+            jq -r -M '.["bitcoin-dat"] | select (.!=null)'
+        )
+        CFGF=$(
+            printf "%s" "${cfg}" |
+            jq -r -M '.["bitcoin-cfg"] | select (.!=null)'
+        )
 
         if [ ! -z "${DDIR}" ] ; then
             DDIR="-datadir=${DDIR}"
+        fi
+
+        if [ ! -z "${CFGF}" ] ; then
+            CFGF="-conf=${CFGF}"
         fi
 
         if [ ! -z "${NAME}" ] ; then
@@ -136,13 +162,9 @@ config() {
         exit
     fi
 
-    if [ ! $(which "docker" 2>/dev/null ) ] ; then
-        log "Program not found: docker"
+    if [ ! $(which "djpeg" 2>/dev/null ) ] ; then
+        log "Program not found: djpeg"
         exit
-    else
-        local docker_img="v4tech/imagemagick:latest"
-        docker inspect "${docker_img}" > /dev/null 2>&1 \
-            || { log "Docker image not found: ${docker_img}" ; exit ; }
     fi
 
     return 0
@@ -150,63 +172,34 @@ config() {
 ################################################################################
 config
 ################################################################################
-get_cgd_cmd() {
-    local pipe1="${CLIF} ${DDIR} getrawtransaction {} 1"
-    local pipe2="${CGDF} --unicode-len 60 -M image/"
-    local pipe3="jq -r -M -c 'select(.graffiti == true)'"
-    printf "%s | %s | %s" "${pipe1}" "${pipe2}" "${pipe3}"
-    return 0
-}
-
 compile_graffiti_json() {
-    local gbuf="{"
-    local tx_count=0
+    local jq_cmd="jq -r -M -c '"
+    jq_cmd+=".files=([.files[] | {fsize, hash, location, mimetype, offset, "
+    jq_cmd+="error} | .[\"type\"] = .mimetype | del(.mimetype)] | map_values( "
+    jq_cmd+=". + {\"fsize\": .fsize|tostring, \"offset\": .offset|tostring} ) |"
+    jq_cmd+=" [.[] | select(.error == null) | del(.error) ]) | {files, txid, "
+    jq_cmd+="size, blocktime, blockheight} | .[\"txsize\"] = (.size|tostring) "
+    jq_cmd+="| del(.size) | .[\"txtime\"] = (.blocktime|tostring) | "
+    jq_cmd+="del(.blocktime) | .[\"txheight\"] = (.blockheight|tostring) | "
+    jq_cmd+="del(.blockheight) | ( select(.txtime == \"null\") |= "
+    jq_cmd+="del(.txtime) ) | ( select(.txheight == \"null\") |= "
+    jq_cmd+="del(.txheight) ) '"
 
-    local p1_1=".files[]"
-    local p1_2=".[\"type\"] = .mimetype"
-    local p1_3="del(.mimetype, .content, .entropy, .unicode)"
-    local p2=". + {\"fsize\": .fsize|tostring, \"offset\": .offset|tostring}"
-    local p3="[.[] | select(.error == null)]"
-    local jq_arg="[${p1_1} | ${p1_2} | ${p1_3}] | map_values( ${p2} ) | ${p3}"
+    local jq_out=$(
+        parallel --pipe -N 1 --timeout 10 -P "${WORKERS}" "${jq_cmd}" <<< "${1}"
+    )
 
-    while IFS= read -r line; do
-        ((tx_count++))
-        if [ "${tx_count}" -gt "${TXS_PER_QUERY}" ]; then
-            return 1
-        fi
+    local jq_arg="map( {(.txid|tostring): del(.txid) } ) | add"
 
-        local txid=`printf "%s" "${line}" | jq -M -r '.txid'`
-        local txsz=`printf "%s" "${line}" | jq -M -r '.size'`
-        local txtm=`printf "%s" "${line}" | jq -M -r '.time'`
-
-        # We must convert all known integer values
-        # to strings because Cryptograffiti's API
-        # notoriously only recognizes string values.
-
-        local files=$(printf "%s" "${line}" | jq -M -r -c "${jq_arg}")
-
-        if [ "${gbuf}" != "{" ]; then
-            gbuf+=","
-        fi
-
-        if [ "${txtm}" == "null" ]; then
-            gbuf+="\"${txid}\":{\"txsize\":\"${txsz}\",\"files\":${files}}"
-        else
-            gbuf+="\"${txid}\":{\"txsize\":\"${txsz}\",\"txtime\":\"${txtm}\","
-            gbuf+="\"files\":${files}}"
-        fi
-    done <<< "${1}"
-    gbuf+="}"
-
-    printf "%s" "${gbuf}"
+    jq -M -r -s -c "${jq_arg}" <<< "${jq_out}"
     return 0
 }
 
 init() {
-    local wdir=`pwd`
+    local wdir=$(pwd)
     log "${wdir}"
     log "${INIT} ${CONF}"
-    local config=`"${INIT}" "${CONF}"`
+    local config=$("${INIT}" "${CONF}")
 
     SKEY=$(jq -r -M .sec_key <<< "${config}" | xxd -r -p | xxd -p | tr -d '\n')
     SEED=$(jq -r -M .seed    <<< "${config}" | xxd -r -p | xxd -p | tr -d '\n')
@@ -238,9 +231,9 @@ init() {
         tr -d '\n'
     )
 
-    local response=`"${CALL}" "${CONF}" "get_constants" "${data}"`
+    local response=$("${CALL}" "${CONF}" "get_constants" "${data}")
+    local result=$(printf "%s" "${response}" | jq -r -M .result)
 
-    local result=`printf "%s" "${response}" | jq -r -M .result`
     if [ "${result}" == "SUCCESS" ]; then
         printf "%s" "${response}" | jq .constants
 
@@ -252,6 +245,15 @@ init() {
         )
 
         log "TXS_PER_QUERY: ${TXS_PER_QUERY}"
+
+        MAX_DATA_SIZE=$(
+            printf "%s" "${response}" |
+            jq -r -M .constants       |
+            jq -r -M .MAX_DATA_SIZE
+        )
+
+        log "MAX_DATA_SIZE: ${MAX_DATA_SIZE}"
+
         return 0
     fi
 
@@ -273,11 +275,12 @@ init() {
 loop() {
     while :
     do
-        local pulse_start=`date +%s`
+        local pulse_start=$(date +%s)
 
         if [ $(which "${CLIF}" 2>/dev/null ) ] \
         && [ $(which "${CGDF}" 2>/dev/null ) ] \
         && [ $(which sort)                   ] \
+        && [ $(which shuf)                   ] \
         && [ $(which uniq)                   ] \
         && [ $(which echo)                   ] \
         && [ $(which grep)                   ] \
@@ -287,7 +290,7 @@ loop() {
         && [ $(which tee)                    ] \
         && [ $(which parallel)               ] \
         && [ $(which jq)                     ] ; then
-            if ! step ; then
+            if ! step "${TXS_PER_QUERY}"  ; then
                 alert "Program step reported an error, breaking the loop."
                 break
             fi
@@ -296,14 +299,16 @@ loop() {
             exit
         fi
 
-        local pulse_end=`date +%s`
+        local pulse_end=$(date +%s)
 
         if [ "${pulse_end}" -ge "${pulse_start}" ]; then
             local delta_time=$((pulse_end-pulse_start))
             if [ "${delta_time}" -lt "${PULSE_PERIOD}" ]; then
                 local stime=$((PULSE_PERIOD-delta_time))
 
-                if [ ! -z "${TXBUF}" ] || [ ! -z "${CACHE}" ] ; then
+                if [ ! -z "${TXBUF}" ] \
+                || [ ! -z "${CACHE}" ] \
+                || [ ! -z "${VOLATILE_TXS}" ] ; then
                     log "Too much work in queue, skipping the nap of ${stime}s."
                 else
                     log "Sleeping for ${stime}s."
@@ -323,21 +328,360 @@ loop() {
     return 0
 }
 
+decode_graffiti() {
+    handle_state() {
+        local state="${1}"
+        local command=${2}""
+
+        if [ "${state}" -ge "1" ]; then
+            ((CHEAP_ERRORS++))
+            if [ "${state}" -eq "101" ]; then
+                alert "More than 100 jobs failed."
+            else
+                if [ "${state}" -le "100" ]; then
+                    if [ "${state}" -eq "1" ]; then
+                        alert "1 job failed."
+                    else
+                        alert "${state} jobs failed."
+                    fi
+                else
+                    alert "Other error from parallel (${command})."
+                fi
+            fi
+        fi
+
+        return 0
+    }
+
+    # Since this function could modify the CHEAP_ERRORS global variable via the
+    # handle_state function, we must not call this function from a subshell. For
+    # that reason, we use the DECODED_GRAFFITI global variable where we store
+    # the result of this function.
+    DECODED_GRAFFITI=""
+
+    local buf="${1}"
+    local prevbuf=""
+
+    if [ -z "${buf}" ] ; then
+        return 0
+    fi
+
+    # We shuffle the TXs to report more different errors in case there are many.
+    buf=$(shuf <<< "${buf}")
+
+    local cli_cmd="${CLIF} ${CFGF} ${DDIR} getrawtransaction {} "
+    local cli_state
+    prevbuf="${buf}"
+    buf=$(
+        parallel          \
+        --halt now,fail=1 \
+        --timeout 20      \
+        -P ${WORKERS}     \
+        "${cli_cmd}" <<< "${buf}"
+    )
+    cli_state=$?
+
+    if [ "${cli_state}" -ge "1" ]; then
+        buf="${prevbuf}"
+        buf=$(
+            parallel      \
+            --timeout 20  \
+            -P ${WORKERS} \
+            "${cli_cmd}" <<< "${buf}" 2>/dev/null
+        )
+        cli_state=$?
+    fi
+
+    handle_state "${cli_state}" "${cli_cmd}"
+
+    if [ -z "${buf}" ] ; then
+        return 0
+    fi
+
+    local cgd_cmd="${CGDF} --unicode-len 60 -M image/"
+    local cgd_state
+    prevbuf="${buf}"
+    buf=$(
+        parallel           \
+        --block ${BLOCKSZ} \
+        --halt now,fail=1  \
+        --pipe             \
+        -N 1               \
+        --timeout 10       \
+        -P ${WORKERS}      \
+        "${cgd_cmd}" <<< "${buf}"
+    )
+    cgd_state=$?
+
+    if [ "${cgd_state}" -ge "1" ]; then
+        buf="${prevbuf}"
+        buf=$(
+            parallel           \
+            --block ${BLOCKSZ} \
+            --pipe             \
+            -N 1               \
+            --timeout 10       \
+            -P ${WORKERS}      \
+            "${cgd_cmd}" <<< "${buf}" 2>/dev/null
+        )
+        cgd_state=$?
+    fi
+
+    handle_state "${cgd_state}" "${cgd_cmd}"
+
+    if [ -z "${buf}" ] ; then
+        return 0
+    fi
+
+    local jq2_cmd="jq -r -M -c 'select(.graffiti == true)'"
+    local jq2_state
+    prevbuf="${buf}"
+    buf=$(
+        parallel          \
+        --halt now,fail=1 \
+        --pipe            \
+        -N 1              \
+        --timeout 10      \
+        -P ${WORKERS}     \
+        "${jq2_cmd}" <<< "${buf}"
+    )
+    jq2_state=$?
+
+    if [ "${jq2_state}" -ge "1" ]; then
+        buf="${prevbuf}"
+        buf=$(
+            parallel      \
+            --pipe        \
+            -N 1          \
+            --timeout 10  \
+            -P ${WORKERS} \
+            "${jq2_cmd}" <<< "${buf}" 2>/dev/null
+        )
+        jq2_state=$?
+    fi
+
+    handle_state "${jq2_state}" "${jq2_cmd}"
+
+    local txids=$(jq -M -r -c -s '.[].txid' <<< "${buf}")
+
+    local extra=""
+
+    if [ ! -z "${txids}" ] ; then
+        local extra_cmd
+        local extra_state
+
+        extra_cmd="${CLIF} ${CFGF} ${DDIR} getrawtransaction {} 1 "
+        extra=$(
+            parallel          \
+            --halt now,fail=1 \
+            --timeout 20      \
+            -P ${WORKERS}     \
+            "${extra_cmd}" <<< "${txids}"
+        )
+        extra_state=$?
+
+        if [ "${extra_state}" -ge "1" ]; then
+            extra=$(
+                parallel      \
+                --timeout 20  \
+                -P ${WORKERS} \
+                "${extra_cmd}" <<< "${txids}" 2>/dev/null
+            )
+            extra_state=$?
+        fi
+
+        handle_state "${extra_state}" "${extra_cmd}"
+
+        extra=$(jq -M -r -c '{txid, blocktime, blockheight}' <<< "${extra}")
+    fi
+
+    if [ -z "${extra}" ] ; then
+        DECODED_GRAFFITI="${buf}"
+    else
+        local jqarg=''
+        jqarg+='map( {(.txid|tostring): . } ) | '
+        jqarg+='reduce .[] as $item ({}; . * $item) | .[]'
+
+        DECODED_GRAFFITI=$(
+            printf "%s\n%s" "${buf}" "${extra}" | jq -M -r -s -c "${jqarg}"
+        )
+    fi
+
+    return 0
+}
+
+get_volatile_txs() {
+    # Since this function could modify global variables, we must not call this
+    # function from a subshell. For that reason, we set global variables where
+    # store the return values of this function.
+    if [ -z "${VOLATILE_TXS_FROM_BLOCKHEIGHT}" ] ; then
+        return 0
+    fi
+
+    if [ -z "${VOLATILE_TXS_FROM_NR}" ] ; then
+        VOLATILE_TXS_FROM_NR="0"
+    fi
+
+    VOLATILE_TXS=""
+
+    local blockheight="${VOLATILE_TXS_FROM_BLOCKHEIGHT}"
+    local max_txs="${1}"
+
+    local old_nonce="${NONC}"
+    NONC=$(
+        printf "%s%s" "${NONC}" "${SEED}" |
+        xxd -r -p                         |
+        sha256sum                         |
+        head -c 64
+    )
+    local new_nonce="${NONC}"
+
+    local datafmt=""
+    datafmt+="{\"guid\":\"%s\",\"nonce\":\"%s\",\"count\":\"%s\","
+    datafmt+="\"height\":\"${blockheight}\",\"nr\":\"${VOLATILE_TXS_FROM_NR}\"}"
+    local data=$(
+        printf "${datafmt}" "${GUID}" "${NONC}" "${max_txs}" |
+        xxd -p                                                     |
+        tr -d '\n'
+    )
+
+    local state
+    local response
+    response=$("${CALL}" "${CONF}" "get_txs" <<< "${data}")
+    state=$?
+
+    NONC="${old_nonce}" # By default, we revert the nonce.
+
+    if [ "${state}" -ge "1" ] ; then
+        ((OTHER_ERRORS++))
+        alert "${CALL}: Exit code ${state}."
+    elif [ -z "${response}" ] ; then
+        ((OTHER_ERRORS++))
+        alert "Call script returned nothing."
+    else
+        # The API call did not fail on the network level, now it is safe to
+        # actually update the nonce.
+        NONC="${new_nonce}"
+
+        local result=$(printf "%s" "${response}" | jq -r -M .result)
+        local rpm=$(printf "%s" "${response}" | jq -r -M .api_usage.rpm)
+        local max_rpm=$(
+            printf "%s" "${response}" | jq -r -M .api_usage.max_rpm
+        )
+
+        if [ "${result}" == "SUCCESS" ]; then
+            VOLATILE_TXS=$(
+                printf "%s" "${response}" | jq -r -M '.txs[] | .txid'
+            )
+
+            local news_count=$(echo -n "${VOLATILE_TXS}" | grep -c '^')
+
+            if [ "${news_count}" -ge "1" ] ; then
+                local plural=" is"
+                if [ "${news_count}" -gt "1" ]; then
+                    plural="s are"
+                fi
+
+                local logmsg=""
+                logmsg+="At least ${news_count} more TX${plural} "
+                logmsg+="queued for refreshing, starting from "
+                logmsg+="#${VOLATILE_TXS_FROM_NR} (RPM: ${rpm}/${max_rpm})."
+                log "${logmsg}"
+
+                VOLATILE_TXS_FROM_NR=$(
+                    printf "%s" "${response}" | jq -r -M '.txs[] | .nr' |
+                    sort -rn | head -n 1
+                )
+                VOLATILE_TXS_FROM_NR=$((VOLATILE_TXS_FROM_NR+1))
+            fi
+        elif [ "${result}" == "FAILURE" ]; then
+            printf "%s" "${response}" | jq .error >/dev/stderr
+            local error_code=$(
+                jq -r -M .error <<< "${response}" | jq -r -M .code
+            )
+
+            if [ "${error_code}" == "ERROR_NONCE" ]; then
+                ((NONCE_ERRORS++))
+                return 1
+            else
+                local error_message=$(
+                    jq -r -M '.error | .message' <<< "${response}"
+                )
+                alert "Failed to get volatile TXs: ${error_message}"
+            fi
+        else
+            # Invalid output from the call script.
+            alert "Call script returned invalid output:"
+            printf "%s\n" "${response}" >/dev/stderr
+
+            ((OTHER_ERRORS++))
+            return 1
+        fi
+
+        ((rpm+=10))
+        if [ "${rpm}" -ge "${max_rpm}" ]; then
+            local msg=""
+            msg+="API usage is reaching its hard limit of ${max_rpm} "
+            msg+="RPM, throttling!"
+            log "${msg}"
+            sleep 60
+        fi
+    fi
+}
+
 step() {
+    local txs_per_query="${1}"
+
     if [ -z "${CACHE}" ] ; then
         local newscount="0"
         local news=""
 
         if [ -z "${TXBUF}" ] ; then
-            local bestblock=`${CLIF} ${DDIR} getbestblockhash`
+            local pool=$(${CLIF} ${CFGF} ${DDIR} getrawmempool | jq -M -r .[])
+            local bestblock=$(${CLIF} ${CFGF} ${DDIR} getbestblockhash)
+
             if [ "${bestblock}" != "${BESTBLOCK}" ]; then
-                log "Loading block ${bestblock}."
+                local blockheight=$(
+                    ${CLIF} ${CFGF} ${DDIR} getblockheader "${bestblock}" |
+                    jq -M -r .height
+                )
+
+                if [ ! -z "${blockheight}" ] ; then
+                    local txheight=$((
+                        blockheight >= 100 ? blockheight-100 : 0
+                    ))
+
+                    local volatile_txs_count=$(
+                        echo -n "${VOLATILE_TXS}" | grep -c '^'
+                    )
+
+                    if [ "${volatile_txs_count}" -lt "1"       ] \
+                    || [ -z "${VOLATILE_TXS_FROM_BLOCKHEIGHT}" ] ; then
+                        VOLATILE_TXS_FROM_NR="0"
+                        VOLATILE_TXS_FROM_BLOCKHEIGHT="${txheight}"
+                        log "Refreshing TXs since block ${txheight}."
+                    fi
+                else
+                    alert "Invalid block height."
+                fi
+
+                log "Latest block is now ${bestblock}."
                 BESTBLOCK="${bestblock}"
             fi
 
-            local pool=`${CLIF} ${DDIR} getrawmempool | jq -M -r .[]`
+            get_volatile_txs "${txs_per_query}" # Subshell must be avoided here.
+
+            local pfmt="%s%s\n"
+            if [[ ! -z "${pool}" ]]; then
+                pfmt="%s\n%s\n"
+            fi
+
+            pool=$(
+                printf "${pfmt}" "${pool}" "${VOLATILE_TXS}"
+            )
+
             news=$(
-                ${CLIF} ${DDIR} getblock ${bestblock} |
+                ${CLIF} ${CFGF} ${DDIR} getblock ${bestblock} |
                 jq -M -r '.tx | .[]'
             )
 
@@ -358,68 +702,45 @@ step() {
             mv ${NEWSFILE} ${OLDSFILE} && \
             mv ${TEMPFILE} ${NEWSFILE}
 
-            newscount=`echo -n "${news}" | grep -c '^'`
+            newscount=$(echo -n "${news}" | grep -c '^')
         fi
 
-        local bufsz=`echo -n "${TXBUF}" | grep -c '^'`
+        local bufsz=$(echo -n "${TXBUF}" | grep -c '^')
         if [ "${bufsz}" -ge "1" ]; then
             if [ "${newscount}" -ge "1" ]; then
-                news=`printf "%s\n%s" "${TXBUF}" "${news}"`
+                news=$(printf "%s\n%s" "${TXBUF}" "${news}")
             else
                 news="${TXBUF}"
             fi
 
             TXBUF=""
-            newscount=`echo -n "${news}" | grep -c '^'`
+            newscount=$(echo -n "${news}" | grep -c '^')
         fi
 
-        if [ "${newscount}" -gt "${TXS_PER_QUERY}" ]; then
-            local skip=$((newscount-TXS_PER_QUERY))
-            TXBUF=`printf "%s" "${news}" | tail "-${skip}"`
-            news=`printf "%s" "${news}" | head "-${TXS_PER_QUERY}"`
-            newscount=`echo -n "${news}" | grep -c '^'`
+        if [ "${newscount}" -gt "${txs_per_query}" ]; then
+            local skip=$((newscount-txs_per_query))
+            TXBUF=$(printf "%s" "${news}" | tail "-${skip}")
+            news=$(printf "%s" "${news}" | head "-${txs_per_query}")
+            newscount=$(echo -n "${news}" | grep -c '^')
         fi
 
         if [ "$newscount" -ge "1" ]; then
             if [ "$newscount" -gt "1" ]; then
-                local line_queue=`echo -n "${TXBUF}" | grep -c '^'`
+                local line_queue=$(echo -n "${TXBUF}" | grep -c '^')
                 if [ "${line_queue}" -ge "1" ]; then
                     log "Decoding ${newscount} TXs (${line_queue} in queue)."
                 else
                     log "Decoding ${newscount} TXs."
                 fi
             else
-                local txhash=`printf "%s" "${news}" | tr -d '\n'`
+                local txhash=$(printf "%s" "${news}" | tr -d '\n')
                 log "Decoding TX ${txhash}."
             fi
 
             local decoding_start=$SECONDS
 
-            local cgd_cmd=$(get_cgd_cmd)
-            local graffiti=$(
-                echo "${news}" |
-                parallel --timeout 30 -P ${WORKERS} "${cgd_cmd}"
-            )
-            local state=$?
-
-            docker rm $(docker ps -a -q) 2>/dev/null
-
-            if [ "${state}" -ge "1" ]; then
-                if [ "${state}" -eq "101" ]; then
-                    alert "More than 100 jobs failed."
-                else
-                    if [ "${state}" -le "100" ]; then
-                        if [ "${state}" -eq "1" ]; then
-                            alert "1 job failed."
-                        else
-                            alert "${state} jobs failed."
-                        fi
-                    else
-                        alert "Other error from parallel."
-                    fi
-                fi
-                ((OTHER_ERRORS++))
-            fi
+            decode_graffiti "${news}" # Subshell must be avoided here.
+            local graffiti="${DECODED_GRAFFITI}"
 
             local decoding_time=$(( SECONDS - decoding_start ))
 
@@ -427,47 +748,50 @@ step() {
                 log "Decoding took ${decoding_time} seconds."
             fi
 
-            local msgcount=`echo -n "${graffiti}" | grep -c '^'`
+            local msgcount_before=$(echo -n "${graffiti}" | grep -c '^')
 
-            if [ "${msgcount}" -ge "1" ]; then
+            if [ "${msgcount_before}" -ge "1" ]; then
                 local plural=""
-                if [ "${msgcount}" -gt "1" ]; then
+                if [ "${msgcount_before}" -gt "1" ]; then
                     plural="s"
                 fi
-                log "Detected graffiti from ${msgcount} TX${plural}."
+                log "Detected graffiti from ${msgcount_before} TX${plural}."
 
-                local jqcmd="jq -C '.files[]? |= del(.content)'"
-                echo "${graffiti}" |
-                parallel --pipe -P "${WORKERS}" "${jqcmd}"
+                # Here we could dump what CGD has returned us:
+                # local jqcmd="jq -C '.files[]? |= del(.content)'"
+                # parallel --pipe -N 1 -P ${WORKERS} "${jqcmd}" <<<"${graffiti}"
 
                 local graffiti_buffer=$(compile_graffiti_json "${graffiti}")
 
-                if [ -z "${graffiti_buffer}" ] ; then
-                    # This should never happen because previously we have made
-                    # sure that we are not decoding more TXs than TXS_PER_QUERY
-                    # allows per step (see how ${news} gets its value).
+                #jq <<< "${graffiti_buffer}"
+
+                local msgcount_after=$(
+                    jq -r -M -c length <<< "${graffiti_buffer}"
+                )
+
+                if [ "${msgcount_before}" != "${msgcount_after}" ]; then
                     ((OTHER_ERRORS++))
-                    local tx_limit="${TXS_PER_QUERY}"
-                    alert "Error, TX count exceeds the limit of ${tx_limit}!"
-                else
-                    local tcount=`printf "%s" "${graffiti_buffer}" | jq length`
-                    local fcount=$(
-                        printf "%s" "${graffiti_buffer}" |
-                        jq -r -M '.[].files'             |
-                        jq -r -M -s add                  |
-                        jq length
-                    )
-
-                    if [ "${tcount}" -eq "1" ]; then
-                        log "Uploading ${fcount} graffiti from ${tcount} TX."
-                    else
-                        log "Uploading ${fcount} graffiti from ${tcount} TXs."
-                    fi
-
-                    CACHE="${graffiti_buffer}"
-
-                    #jq . >/dev/stderr <<< "${CACHE}"
+                    local before="${msgcount_before}"
+                    local after="${msgcount_after}"
+                    alert "Error, ${after} of ${before} TXs compiled!"
+                    printf "%s\n" "${graffiti_buffer}"
                 fi
+
+                local tcount=$(printf "%s" "${graffiti_buffer}" | jq length)
+                local fcount=$(
+                    printf "%s" "${graffiti_buffer}" |
+                    jq -r -M '.[].files'             |
+                    jq -r -M -s add                  |
+                    jq length
+                )
+
+                if [ "${tcount}" -eq "1" ]; then
+                    log "Uploading ${fcount} graffiti from ${tcount} TX."
+                else
+                    log "Uploading ${fcount} graffiti from ${tcount} TXs."
+                fi
+
+                CACHE="${graffiti_buffer}"
             fi
         fi
     else
@@ -478,23 +802,54 @@ step() {
         return 0
     fi
 
+    local upload_txs=$(
+        jq -r -M -c 'keys | .[]' <<< "${CACHE}"
+    )
+
+    local old_nonce="${NONC}"
     NONC=$(
         printf "%s%s" "${NONC}" "${SEED}" | xxd -r -p | sha256sum | head -c 64
     )
+    local new_nonce="${NONC}"
 
     local datafmt="{\"guid\":\"%s\",\"nonce\":\"%s\",\"graffiti\":%s}"
     local data=$(
         printf "${datafmt}" "${GUID}" "${NONC}" "${CACHE}" | xxd -p | tr -d '\n'
     )
 
-    # for debugging:
-    #for i in {1..131072}
-    #do
-    #   data+="2020"
-    #done
+    local datasz=$(( ${#data} / 2 ))
 
-    local response=$("${CALL}" "${CONF}" "set_txs" <<< "${data}")
-    local state=$?
+    NONC="${old_nonce}" # By default, we revert the nonce.
+
+    if [ "${datasz}" -gt "${MAX_DATA_SIZE}" ]; then
+        alert "Upload of ${datasz} bytes exceeds the limit of ${MAX_DATA_SIZE}".
+
+        local upload_tx_count=$(echo -n "${upload_txs}" | grep -c '^')
+
+        if [ "${upload_tx_count}" -gt "1" ]; then
+            local txbufsz=$(echo -n "${TXBUF}" | grep -c '^')
+
+            if [ "${txbufsz}" -ge "1" ]; then
+                TXBUF=$(printf "%s\n%s" "${upload_txs}" "${TXBUF}")
+            else
+                TXBUF="${upload_txs}"
+            fi
+
+            CACHE=""
+            txs_per_query=$(( ${upload_tx_count} / 2 ))
+
+            if ! step "${txs_per_query}"  ; then
+                return 1
+            fi
+
+            return 0
+        fi
+    fi
+
+    local state
+    local response
+    response=$("${CALL}" "${CONF}" "set_txs" <<< "${data}")
+    state=$?
 
     if [ "${state}" -ge "1" ] ; then
         ((OTHER_ERRORS++))
@@ -509,9 +864,13 @@ step() {
         printf "%s\n" "${CACHE}" >/dev/stderr
         CACHE=""
     else
-        local result=`printf "%s" "${response}" | jq -r -M .result`
-        local rpm=`printf "%s" "${response}" | jq -r -M .api_usage.rpm`
-        local max_rpm=`printf "%s" "${response}" | jq -r -M .api_usage.max_rpm`
+        # The API call did not fail on the network level, now it is safe to
+        # actually update the nonce.
+        NONC="${new_nonce}"
+
+        local result=$(printf "%s" "${response}" | jq -r -M .result)
+        local rpm=$(printf "%s" "${response}" | jq -r -M .api_usage.rpm)
+        local max_rpm=$(printf "%s" "${response}" | jq -r -M .api_usage.max_rpm)
 
         if [ "${result}" == "SUCCESS" ]; then
             log "Upload completed successfully (RPM: ${rpm}/${max_rpm})."
@@ -557,7 +916,8 @@ step() {
 
         ((rpm+=10))
         if [ "${rpm}" -ge "${max_rpm}" ]; then
-            local msg="API usage is reaching its hard limit of ${max_rpm} RPM, "
+            local msg=""
+            msg+="API usage is reaching its hard limit of ${max_rpm} RPM, "
             msg+="throttling!"
             log "${msg}"
             sleep 60

@@ -35,6 +35,11 @@ void PROGRAM::run() {
     std::string input(std::istreambuf_iterator<char>(std::cin), {});
     nlohmann::json result = nlohmann::json();
 
+    while (!input.empty()) {
+        if (input.back() != '\n') break;
+        input.pop_back();
+    }
+
     bool success = decoder.decode(input, &result);
 
     if (result.count("txid") && result.at("txid").is_string()) {
@@ -81,7 +86,7 @@ bool PROGRAM::init(int argc, char **argv) {
         "tail",
         "tr",
         "file",
-        "docker"
+        "djpeg"
     };
 
     for (const char *prg : prerequisites) {
@@ -89,19 +94,6 @@ bool PROGRAM::init(int argc, char **argv) {
         std::snprintf(buf, sizeof(buf), "which %s > /dev/null 2>&1", prg);
         if (system(buf) != 0) {
             log(get_name(), "%s: command not found", prg);
-            return false;
-        }
-    }
-
-    constexpr const char *docker_images[] = {
-        "v4tech/imagemagick:latest"
-    };
-
-    for (const char *img : docker_images) {
-        char buf[256];
-        std::snprintf(buf, sizeof(buf), "docker inspect --type=image %s > /dev/null 2>&1", img);
-        if (system(buf) != 0) {
-            log(get_name(), "%s: docker image not found", img);
             return false;
         }
     }
@@ -183,7 +175,10 @@ const char *PROGRAM::get_comment() const {
     return comment.c_str();
 }
 
-bool PROGRAM::dump_json(const nlohmann::json &json, const int indent, std::string *to, const char* file, int line) {
+bool PROGRAM::dump_json(
+    const nlohmann::json &json, const int indent, std::string *to,
+    const char* file, int line
+) {
     std::string result;
 
     try {
@@ -191,7 +186,8 @@ bool PROGRAM::dump_json(const nlohmann::json &json, const int indent, std::strin
         else             result = json.dump();
     }
     catch (nlohmann::json::type_error& e) {
-        std::cerr << get_name() << ": " << e.what() << " (" << file << ":" << line << ")" << std::endl;
+        std::cerr << get_name() << ": " << e.what() << " (" << file << ":"
+        << line << ")" << std::endl;
         return false;
     }
 
@@ -223,18 +219,29 @@ size_t PROGRAM::estimate_cmd_buf_size() const {
             if (!std::isdigit(buf[j])) buf[j] = '\0';
         }
         if (str2int(buf, &i) && i >= 0) max_sys_cmd_len = i;
-        else log(get_name(), "Could not extract maximum command length from '%s'.", buf);
+        else {
+            log(
+                get_name(),
+                "Could not extract maximum command length from '%s'.", buf
+            );
+        }
     }
 
-    if (pclose(fp) == -1) log(get_name(), "%s: %s", __FUNCTION__, strerror(errno));
+    if (pclose(fp) == -1) {
+        log(get_name(), "%s: %s", __FUNCTION__, strerror(errno));
+    }
+
     return max_sys_cmd_len;
 }
 
-bool PROGRAM::syspipe(const unsigned char *input, size_t len, const std::string &cmd_target, std::vector<unsigned char> *output) const {
-    // Write len bytes from input into a temporary file. Then, execute the cmd_target
-    // command with popen, feeding the temporary file into its standard input.
-    // Read everything from that command and when output is present, write the
-    // data into the output vector.
+bool PROGRAM::syspipe(
+    const unsigned char *input, size_t len, const std::string &cmd_target,
+    std::vector<unsigned char> *output
+) const {
+    // Write len bytes from input into a temporary file. Then, execute the
+    // cmd_target command with popen, feeding the temporary file into its
+    // standard input. Read everything from that command and when output is
+    // present, write the data into the output vector.
     //
     // If the whole command would not exceed the maximum command length then
     // skip the temporary file creation and provide the input data direction
@@ -245,7 +252,10 @@ bool PROGRAM::syspipe(const unsigned char *input, size_t len, const std::string 
     const std::string cmd_suffix = "' | xxd -p -r | ";
     bool success = true;
 
-    size_t cmd_len = cmd_prefix.size() + 2*len + cmd_suffix.size() + cmd_target.size();
+    size_t cmd_len{
+        cmd_prefix.size() + 2*len + cmd_suffix.size() + cmd_target.size()
+    };
+
     if (cmd_len+1 < max_sys_cmd_len) {
         sys_cmd.reserve(cmd_len);
         sys_cmd.assign(cmd_prefix);
@@ -292,7 +302,12 @@ bool PROGRAM::syspipe(const unsigned char *input, size_t len, const std::string 
             }
 
             t2 = std::chrono::steady_clock::now();
-            size_t step_time = std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count();
+            long int step_time{
+                std::chrono::duration_cast<std::chrono::milliseconds>(
+                    t2-t1
+                ).count()
+            };
+
             if (total_remains > 0 && step_time > 3000) {
                 log(get_name(), "write: timeout (%s:%d)", __FILE__, __LINE__);
                 break;
@@ -304,7 +319,10 @@ bool PROGRAM::syspipe(const unsigned char *input, size_t len, const std::string 
 
         if (fsync(fd) < 0) {
             int enr = errno;
-            log(get_name(), "fsync: %s (%s:%d)", strerror(enr), __FILE__, __LINE__);
+            log(
+                get_name(), "fsync: %s (%s:%d)", strerror(enr),
+                __FILE__, __LINE__
+            );
             success = false;
         }
 
@@ -314,15 +332,25 @@ bool PROGRAM::syspipe(const unsigned char *input, size_t len, const std::string 
                 int enr = errno;
 
                 if (enr != EINTR) {
-                    log(get_name(), "close: %s (%s:%d)", strerror(enr), __FILE__, __LINE__);
+                    log(
+                        get_name(), "close: %s (%s:%d)", strerror(enr),
+                        __FILE__, __LINE__
+                    );
                     success = false;
                     break;
                 }
 
                 t2 = std::chrono::steady_clock::now();
-                size_t step_time = std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count();
+                long int step_time{
+                    std::chrono::duration_cast<std::chrono::milliseconds>(
+                        t2-t1
+                    ).count()
+                };
+
                 if (step_time > 3000) {
-                    log(get_name(), "close: timeout (%s:%d)", __FILE__, __LINE__);
+                    log(
+                        get_name(), "close: timeout (%s:%d)", __FILE__, __LINE__
+                    );
                     success = false;
                     break;
                 }
@@ -355,14 +383,20 @@ bool PROGRAM::syspipe(const unsigned char *input, size_t len, const std::string 
 
             if (pclose(fp) == -1) {
                 int enr = errno;
-                log(get_name(), "pclose: %s (%s:%d)", strerror(enr), __FILE__, __LINE__);
+                log(
+                    get_name(), "pclose: %s (%s:%d)", strerror(enr),
+                    __FILE__, __LINE__
+                );
                 success = false;
             }
         }
         else {
             if (errno != 0) {
                 int enr = errno;
-                log(get_name(), "popen: %s (%s:%d)", strerror(enr), __FILE__, __LINE__);
+                log(
+                    get_name(), "popen: %s (%s:%d)", strerror(enr),
+                    __FILE__, __LINE__
+                );
             }
             else log(get_name(), "popen: fail (%s:%d)", __FILE__, __LINE__);
             success = false;
@@ -379,4 +413,3 @@ bool PROGRAM::syspipe(const unsigned char *input, size_t len, const std::string 
 
     return success;
 }
-

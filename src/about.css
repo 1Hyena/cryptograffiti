@@ -1,0 +1,111 @@
+.cg-tab-about-setup {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-around;
+}
+
+.cg-tab-about-setup > div > span:first-child {
+    display: inline-block;
+    padding-top: 2ch;
+    padding-bottom: 1ch;
+    opacity: 0.5;
+}
+
+.cg-tab-about-setup > div:nth-child(1) > span::after { content:   "I"; }
+.cg-tab-about-setup > div:nth-child(2) > span::after { content:  "II"; }
+.cg-tab-about-setup > div:nth-child(3) > span::after { content: "III"; }
+.cg-tab-about-setup > div:nth-child(4) > span::after { content:  "IV"; }
+.cg-tab-about-setup > div:nth-child(5) > span::after { content:   "V"; }
+.cg-tab-about-setup > div:nth-child(6) > span::after { content:  "VI"; }
+
+.cg-tab-about-setup p {
+    display: block;
+    max-width: 80ch;
+    margin: 0 auto 1ch;
+    text-align: left;
+}
+
+.cg-about-contact {
+    display: block;
+    margin: 0 auto 1ch;
+    width: 80ch;
+    max-width: 100vw;
+    overflow: hidden;
+
+    border: medium outset rgba(255,255,255, 0.4);
+    border-radius: 1.0ch;
+    padding: 0.5ch;
+    background-color: rgba(255,255,255, 0.5);
+}
+
+.cg-about-contact>img {
+    display: inline-block;
+    height: 8rem;
+    width: auto;
+    vertical-align: middle;
+}
+
+#cg-about-contact-table-wrapper {
+    display: inline-block;
+    width: calc(100% - 16rem);
+    vertical-align: middle;
+}
+
+.cg-about-table {
+    margin: auto;
+    padding-bottom: 1ch;
+    vertical-align: top;
+    width: 100%;
+    table-layout: fixed;
+    white-space: nowrap;
+}
+
+.cg-about-table td {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cg-about-table td:nth-child(1) {
+    width: 18ch;
+    text-align: center;
+    padding-right: 1ch;
+}
+.cg-about-table td:nth-child(2) {
+    width: calc(100% - 18ch);
+    text-align: left;
+}
+
+.cg-about-table img {
+    height: 1rem;
+}
+
+@media not all and (min-width: 50rem) {
+    .cg-about-table td {
+        font-size: small;
+    }
+    .cg-about-table tr:nth-child(3),
+    .cg-about-table tr:nth-child(4),
+    .cg-about-table td:nth-child(1) {
+        display: none;
+    }
+    .cg-about-table td:nth-child(2) {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+@media not all and (min-width: 35rem) {
+    .cg-about-table td {
+        font-size: normal;
+    }
+    .cg-about-contact > img:nth-child(1),
+    .cg-about-contact > img:nth-child(3)  {
+        display: none;
+    }
+    #cg-about-contact-table-wrapper {
+        width: 100%;
+    }
+}

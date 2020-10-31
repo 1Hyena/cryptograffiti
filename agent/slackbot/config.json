@@ -4,9 +4,5 @@
   "cache": "https://cryptograffiti.info/cache/",
   "title": "CG-SlackBot",
   "call.sh": "../call.sh",
-  "cgd": "../decoder/cgd",
-  "bitcoin-cli": "bitcoin-cli",
-  "bitcoin-dat": "",
   "oauth": ""
 }
-

@@ -188,7 +188,7 @@ These values can be received with an API call of `get_constants` function.
     * `checksum`       --- 32-byte hex string (ALS)
 
 
-* __Get Message Metadata__
+* __Get Message Metadata (deprecated)__
     `POST https://cryptograffiti.info/api/`
 
     Takes an array of transaction hashes as an argument. Returns an array of TX
@@ -286,16 +286,24 @@ These values can be received with an API call of `get_constants` function.
     invalid then newest `count` of transactions is returned. If `mimetype` is
     specified then only the transactions containing the graffiti that matches
     with the selected mime-type are returned. The `count` parameter cannot
-    exceed `TXS_PER_QUERY`.
+    exceed `TXS_PER_QUERY`. If the `cache` parameter is set to '1', then fetch
+    only those TX records that have their raw transaction details available on
+    the server. If `cache` parameter is set to '0', then fetch only those TX
+    records that have their raw transaction details missing from the server.
+    If the `height` parameter is set, then only those TXs will be returned
+    that have their block height equal to or greater than the value of the said
+    parameter.
 
     _POST Parameters:_
     * `fun`            --- `get_txs`
     * `data`           --- JSON string with the following structure
         * `guid`       --- 64 bytes random hex string (optional)
-        * `nr`         --- the number of the first graffiti entry (optional)
-        * `count`      --- the total number of graffiti entries to be returned
+        * `nr`         --- the number of the first TX record (optional)
+        * `count`      --- the total number of TX records to be returned
         * `back`       --- if '1' get `count` earlier than `nr` rows (optional)
         * `mimetype`   --- expected file type, may be partial (optional)
+        * `cache`      --- presence of the raw transaction in cache (optional)
+        * `height`     --- minimum block height of the TXs (optional)
         * `nonce`      --- 64 bytes hex string (ALS)
     * `sec_hash`       --- SHA256(`sec_key`) as a 64-byte hex string (ALS)
     * `salt`           --- 32-byte hex string, must differ on each request (ALS)
@@ -311,7 +319,7 @@ These values can be received with an API call of `get_constants` function.
     * `checksum`       --- 32-byte hex string (ALS)
 
 
-* __Get Bitcoin Donations__
+* __Get Bitcoin Donations (deprecated)__
     `POST https://cryptograffiti.info/api/`
 
     Returns the graffiti TXs that have donations included in the defined range.
@@ -607,7 +615,8 @@ These values can be received with an API call of `get_constants` function.
       * `guid`         --- 64 bytes random hex string,
       * `graffiti`     --- array of key-value pairs where TX hash is the key
         * `txsize`     --- total size of the transaction
-        * `txtime`     --- TX time in seconds since epoch (optional)
+        * `txtime`     --- TX block time in seconds since epoch (optional)
+        * `txheight`   --- TX block height (optional)
         * `files`      --- array of graffiti objects
           * `location` --- location of the file within the TX
           * `fsize`    --- file size
@@ -734,4 +743,3 @@ These values can be received with an API call of `get_constants` function.
         * `error`      --- error dictionary if result was `FAILURE` (optional)
     * `iv`             --- 32-byte hex string (ALS)
     * `checksum`       --- 32-byte hex string (ALS)
-

@@ -1,15 +1,27 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-<title>CryptoGraffiti - Bitcoin Blockchain Messages</title>
+<title>CryptoGraffiti: Multimedia on the Blockchain</title>
 <meta http-equiv="content-type" content="text/html; charset=utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="application-name" content="CryptoGraffiti" data-api="https://cryptograffiti.info/api/" />
-<meta name="description" content="Read the messages that have been stored in the Bitcoin's blockchain or write them yourself. The service also includes a Proof of Existence tool that allows anyone to securely timestamp their files." />
-<meta name="keywords" content="crypto graffity,bitcoin blockchain decode encode messages text,bitcoin,blockchain,read blockchain messages,create bitcoin message,craft bitcoin message,make bitcoin message,btc,coin,graffity,chain,address,blockchain messages,addresses,engrave,graffiti,bitcoin address,crypto,cyptograffity,cryptograffiti,proof of existence,embed image into block chain,secure timestamping, decentralized timestamping" />
+<meta
+    name="application-name"
+    content="CryptoGraffiti"
+    data-api="https://cryptograffiti.info/api/"
+/>
+<meta
+    name="description"
+    content="Access multimedia that is stored on the Bitcoin's blockchain."
+/>
+<meta
+    name="keywords"
+    content="bitcoin, blockchain, decode, encode, messages, multimedia, images"
+/>
 <link rel="canonical" href="https://cryptograffiti.info/" />
 <!-- BEGIN EXTERNAL CSS -->
-<link href="./main.css" rel="stylesheet" type="text/css">
+<link href="./main.css"  rel="stylesheet" type="text/css">
+<link href="./wall.css"  rel="stylesheet" type="text/css">
+<link href="./about.css" rel="stylesheet" type="text/css">
 <!-- END EXTERNAL CSS -->
 
 <style media="screen" type="text/css">
@@ -17,72 +29,59 @@
 </style>
 
 <!-- BEGIN EXTERNAL SCRIPTS -->
-<script src="./lib/cryptojs/core.js"            type="text/javascript"></script>
-<script src="./lib/cryptojs/lib-typedarrays.js" type="text/javascript"></script>
-<script src="./lib/cryptojs/sha256.js"          type="text/javascript"></script>
-<script src="./lib/cryptojs/ripemd160.js"       type="text/javascript"></script>
-<script src="./lib/cryptojs/enc-base64.js"      type="text/javascript"></script>
-<script src="./lib/bitcoin.js"                  type="text/javascript"></script>
-<script src="./lib/sprintf.js"                  type="text/javascript"></script>
-<script src="./lib/cashaddr.js"                 type="text/javascript"></script>
-
-<script src="./lang.js"    type="text/javascript" charset="UTF-8"></script>
-<script src="./main.js"    type="text/javascript" charset="UTF-8"></script>
-<script src="./utils.js"   type="text/javascript" charset="UTF-8"></script>
-<script src="./read.js"    type="text/javascript" charset="UTF-8"></script>
-<script src="./write.js"   type="text/javascript" charset="UTF-8"></script>
-<script src="./save.js"    type="text/javascript" charset="UTF-8"></script>
-<script src="./view.js"    type="text/javascript" charset="UTF-8"></script>
-<script src="./captcha.js" type="text/javascript" charset="UTF-8"></script>
-<script src="./tools.js"   type="text/javascript" charset="UTF-8"></script>
-<script src="./help.js"    type="text/javascript" charset="UTF-8"></script>
-<script src="./about.js"   type="text/javascript" charset="UTF-8"></script>
+<script src="./lang.js"         type="text/javascript" charset="UTF-8"></script>
+<script src="./main.js"         type="text/javascript" charset="UTF-8"></script>
+<script src="./utils.js"        type="text/javascript" charset="UTF-8"></script>
+<script src="./wall.js"         type="text/javascript" charset="UTF-8"></script>
+<script src="./about.js"        type="text/javascript" charset="UTF-8"></script>
 <!-- END EXTERNAL SCRIPTS -->
-<script src="https://www.moneybutton.com/moneybutton.js"></script>
+<!--<script src="https://www.moneybutton.com/moneybutton.js"></script>-->
 </head>
 <body>
 
-<div style="height: 100%;" id="cg" class="appear">
-    <div style="display: table; width: 100%; height: 100%; table-layout: fixed;">
-        <div style="display: table-row; width: 100%;">
-            <div id="cg-header">
-                <div style="overflow: hidden;">
-                    <h2 style="display: inline; padding-left: 1ch; padding-right: 0.5ch;">CryptoGraffiti.info</h2>
-                </div>
-            </div>
-        </div>
-
-        <div style="display: table-row; width: 100%; height: 100%;">
-            <div style="width: 100%; height: 100%; position: relative;">
-                <div id="cg-body">
-                    <div id="cg-body-texture">
-                    <div id="cg-body-shade">
-                        <div id="cg-main">
-
-                            <div style="display:table; width: 100%; height: 100%;">
-                                <div style="display:table-cell;vertical-align:middle;">
-                                    <div style="margin-left:auto;margin-right:auto;">
-                                        <span id="cg-no-script">Please enable JavaScript.</span>
-                                        <br>
-                                        <span id="cg-progress">&nbsp;</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                        </div>
-                    </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div style="display: table-row; width: 100%;">
-            <div id="cg-footer">
-                <span id="cg-credits">&copy;2020 CryptoGraffiti Developers</span>
-            </div>
-        </div>
-    </div>
-</div>
+<div id="cg" class="cg-appear"><!--
+    --><div><!--
+        --><div id="cg-header-wrapper"><!--
+            --><div id="cg-header"><!--
+                --><div><!--
+                    --><h2>CryptoGraffiti.info</h2><!--
+                --></div><!--
+            --></div><!--
+        --></div><!--
+        --><div id="cg-body-wrapper"><!--
+            --><div><!--
+                --><div id="cg-body"><!--
+                    --><div id="cg-body-texture"><!--
+                        --><div id="cg-body-shade"><!--
+                            --><div id="cg-main"><!--
+                                --><div id="cg-main-initializer"><!--
+                                    --><div><!--
+                                        --><div><!--
+                                            --><span id="cg-no-script"><!--
+                                                -->Please enable JavaScript.<!--
+                                            --></span><!--
+                                            --><br><!--
+                                            --><span id="cg-progress"><!--
+                                                -->&nbsp;<!--
+                                            --></span><!--
+                                        --></div><!--
+                                    --></div><!--
+                                --></div><!--
+                            --></div><!--
+                        --></div><!--
+                    --></div><!--
+                --></div><!--
+            --></div><!--
+        --></div><!--
+        --><div id="cg-footer-wrapper"><!--
+            --><div id="cg-footer"><!--
+                --><span id="cg-credits"><!--
+                    -->&copy;2020 Erich Erstu<!--
+                --></span><!--
+            --></div><!--
+        --></div><!--
+    --></div><!--
+--></div>
 
 <script>
 var noscript = document.getElementById("cg-no-script");
@@ -100,8 +99,13 @@ function show_progress(text) {
 function fade_out() {
     var cg = document.getElementById("cg");
     if (cg !== null) {
-        if (cg.classList.contains('appear'))     cg.classList.remove('appear');
-        if (!cg.classList.contains('disappear')) cg.classList.add('disappear');
+        if (cg.classList.contains('cg-appear')) {
+            cg.classList.remove('cg-appear');
+        }
+
+        if (!cg.classList.contains('cg-disappear')) {
+            cg.classList.add('cg-disappear');
+        }
     }
 }
 window.onbeforeunload = fade_out;
@@ -129,7 +133,11 @@ window.onbeforeunload = fade_out;
 </div>
 
 <script>
-cg_start();
+window.addEventListener(
+    "load", function() {
+        cg_main();
+    }
+);
 </script>
 
 </body>

@@ -35,28 +35,30 @@ class OPTIONS {
     std::string mime;
     int unicode;
 
+    static constexpr const char *usage{
+        "Options:\n"
+        "      --brief         Print brief information (default).\n"
+        "  -h  --help          Display this usage information.\n"
+        "  -m  --max-cmd-len   Maximum system command length (default is -1).\n"
+        "                          Provide a negative number to automatically\n"
+        "                          determine a good value for this parameter.\n"
+        "  -M  --mime-types    Output only the graffiti with the given types.\n"
+        "  -H  --hash          Decode only the graffiti with the given hash.\n"
+        "  -u  --unicode-len   Maximum UTF8 preview length (default is 0).\n"
+        "      --verbose       Print verbose information.\n"
+        "      --content       Include graffiti content.\n"
+        "  -v  --version       Show version information.\n"
+    };
+
     std::string print_usage() const {
         char line[256];
 
-        std::snprintf(line, sizeof(line), "Usage: %s [options]\n", name.c_str());
+        std::snprintf(
+            line, sizeof(line), "Usage: %s [options]\n", name.c_str()
+        );
         std::string result(line);
 
-        result.append(
-            "Options:\n"
-            "      --brief           Print brief information (default).\n"
-            "  -h  --help            Display this usage information.\n"
-            "  -m  --max-cmd-len     Maximum system command length (default is -1).\n"
-            "                            Provide a negative number to automatically\n"
-            "                            determine a good value for this parameter.\n"
-            "  -M  --mime-types      Output only the graffiti with the given types.\n"
-            "  -H  --hash            Decode only the graffiti with the given hash.\n"
-            "  -u  --unicode-len     Maximum UTF8 preview length (default is 0).\n"
-            "      --verbose         Print verbose information.\n"
-            "      --content         Include graffiti content.\n"
-            "  -v  --version         Show version information.\n"
-        );
-
-        return result;
+        return result.append(usage);
     }
 
     bool init(int argc, char **argv) {
@@ -65,21 +67,24 @@ class OPTIONS {
         while (1) {
             static struct option long_options[] = {
                 // These options set a flag:
-                {"brief",               no_argument,         &verbose,           0 },
-                {"verbose",             no_argument,         &verbose,           1 },
-                {"content",             no_argument,         &content,           1 },
+                {"brief",       no_argument,       &verbose,   0 },
+                {"verbose",     no_argument,       &verbose,   1 },
+                {"content",     no_argument,       &content,   1 },
                 // These options may take an argument:
-                {"help",                no_argument,              0,            'h'},
-                {"version",             no_argument,              0,            'v'},
-                {"max-cmd-len",         required_argument,        0,            'm'},
-                {"unicode-len",         required_argument,        0,            'u'},
-                {"hash",                required_argument,        0,            'H'},
-                {"mime",                required_argument,        0,            'M'},
-                {0,                     0,                        0,             0 }
+                {"help",        no_argument,       0,        'h' },
+                {"version",     no_argument,       0,        'v' },
+                {"max-cmd-len", required_argument, 0,        'm' },
+                {"unicode-len", required_argument, 0,        'u' },
+                {"hash",        required_argument, 0,        'H' },
+                {"mime",        required_argument, 0,        'M' },
+                {0,             0,                 0,          0 }
             };
 
             int option_index = 0;
-            c = getopt_long(argc, argv, "hvm:u:H:M:", long_options, &option_index);
+            c = getopt_long(
+                argc, argv, "hvm:u:H:M:", long_options, &option_index
+            );
+
             if (c == -1) break; // End of command line parameters?
 
             switch (c) {
@@ -99,7 +104,11 @@ class OPTIONS {
                     {
                         int i = atoi(optarg);
                         if (i == 0 && (optarg[0] != '0' || optarg[1] != '\0')) {
-                            log(logfrom.c_str(), "max-cmd-len invalid: %s", optarg);
+                            log(
+                                logfrom.c_str(),
+                                "max-cmd-len invalid: %s",
+                                optarg
+                            );
                         }
                         else max_sys_cmd_len = i;
                     }
@@ -108,7 +117,10 @@ class OPTIONS {
                     {
                         int i = atoi(optarg);
                         if (i == 0 && (optarg[0] != '0' || optarg[1] != '\0')) {
-                            log(logfrom.c_str(), "unicode-len invalid: %s", optarg);
+                            log(
+                                logfrom.c_str(),
+                                "unicode-len invalid: %s", optarg
+                            );
                         }
                         else unicode = i;
                     }
@@ -116,7 +128,9 @@ class OPTIONS {
                 case 'H': {
                     if (hex2bin(optarg)) hash.assign(optarg);
                     else {
-                        log(logfrom.c_str(), "hash is invalid hex: %s", optarg);
+                        log(
+                            logfrom.c_str(), "hash is invalid hex: %s", optarg
+                        );
                     }
                     break;
                 }
@@ -157,4 +171,3 @@ class OPTIONS {
 };
 
 #endif
-

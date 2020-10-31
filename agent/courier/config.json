@@ -1,14 +1,14 @@
 {
-  "comment": "This is an example configuration file for the Decoder Agent.",
+  "comment": "This is an example configuration file for the Courier Agent.",
   "sec_key": "0000000000000000000000000000000000000000000000000000000000000000",
   "seed": "0000000000000000000000000000000000000000000000000000000000000000",
   "guid": "0000000000000000000000000000000000000000000000000000000000000000",
   "token": "0000000000000000000000000000000000000000000000000000000000000000",
   "api": "https://cryptograffiti.info/api/",
-  "title": "CG-Decoder",
+  "rawtx": "https://cryptograffiti.info/rawtx/",
+  "title": "CG-Courier",
   "init.sh": "../init.sh",
   "call.sh": "../call.sh",
-  "cgd": "../decoder/cgd",
   "bitcoin-cli": "bitcoin-cli",
   "bitcoin-dat": "",
   "bitcoin-cfg": ""

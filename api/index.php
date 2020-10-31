@@ -199,8 +199,8 @@ if ($l = init_sql()) {
         exit;
     }
 
-    $fun      = $_POST['fun'];
-    $data     = $_POST['data'];
+    $fun  = $_POST['fun'];
+    $data = $_POST['data'];
 
     $r = null;
 
@@ -236,8 +236,8 @@ if ($l = init_sql()) {
     if (strlen($data) > MAX_DATA_SIZE) $r = make_failure(ERROR_MISUSE, '`data` size exceeds '.MAX_DATA_SIZE.' byte limit.');
 
     if ($r === null) {
-        $ARGS     = extract_args($data);
-        $GUID     = $ARGS['guid'];
+        $ARGS = extract_args($data);
+        $GUID = $ARGS['guid'];
 
         if ($GUID) {
             if ( ($session_nr = get_session_nr($l, $GUID)) === null && $fun != 'init') {
@@ -297,7 +297,13 @@ if ($l = init_sql()) {
         case 'get_msg_metadata'  : $r=fun_get_msg_metadata ($l, $USER, $GUID, $ARGS['txids']);                                                    break;
         case 'get_btc_graffiti'  : $r=fun_get_btc_graffiti ($l, $USER, $GUID, $ARGS['nr'],  $ARGS['count'], $ARGS['back'], $ARGS['mimetype']);    break;
         case 'get_graffiti'      : $r=fun_get_graffiti     ($l, $USER, $GUID, $ARGS['nr'],  $ARGS['count'], $ARGS['back'], $ARGS['mimetype']);    break;
-        case 'get_txs'           : $r=fun_get_txs          ($l, $USER, $GUID, $ARGS['nr'],  $ARGS['count'], $ARGS['back'], $ARGS['mimetype']);    break;
+        case 'get_txs'           : {
+            $r=fun_get_txs(
+                $l, $USER, $GUID, $ARGS['nr'],  $ARGS['count'], $ARGS['back'],
+                $ARGS['mimetype'], $ARGS['cache'], $ARGS['height']
+            );
+            break;
+        }
         case 'get_btc_donations' : $r=fun_get_btc_donations($l, $USER, $GUID, $ARGS['nr'],  $ARGS['count'], $ARGS['back'], $ARGS['mimetype']);    break;
         case 'set_btc_txs'       : $r=fun_set_btc_txs      ($l, $USER, $GUID, $ARGS['txs']);                                                      break;
         case 'set_txs'           : $r=fun_set_txs          ($l, $USER, $GUID, $ARGS['graffiti']);                                                 break;
