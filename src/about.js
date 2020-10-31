@@ -39,7 +39,9 @@ function cg_about_construct(main) {
         w.style.opacity = "0";
         w.appendChild(p);
 
-        elements.push( { "parent" : "cg-tab-about", "child" : w });
+        elements.push(
+            { "parent" : "cg-tab-about", "child" : w, "sfx" : true }
+        );
     }
 
     {
@@ -169,22 +171,38 @@ function cg_about_construct(main) {
             contact.appendChild(core_img);
         }
 
+        var flex_br = document.createElement("div");
+        flex_br.style.flexBasis = "100%";
+        flex_br.style.height = "0";
+
+        elements.push(
+            { "parent" : "cg-tab-about", "child" : flex_br, "sfx" : false }
+        );
+
         contact.style.opacity = "0";
-        elements.push( { "parent" : "cg-tab-about", "child" : contact } );
+        elements.push(
+            { "parent" : "cg-tab-about", "child" : contact, "sfx" : true }
+        );
     }
 
+    var n = 0;
     for (var i=0; i<elements.length; ++i) {
         var parent = elements[i].parent;
         var child  = elements[i].child;
+        var sfx    = elements[i].sfx;
+
         parent = document.getElementById(parent);
 
         if (parent === null) continue;
 
         parent.appendChild(child);
-        setTimeout(function(e){
+
+        if (sfx === true) ++n;
+
+        setTimeout(function(e, sfx){
             e.classList.add("cg-appear");
-            cg_sfx_spray();
-        }, 750+250*i, child);
+            if (sfx === true) cg_sfx_spray();
+        }, 750+250*n, child, sfx);
     }
 }
 

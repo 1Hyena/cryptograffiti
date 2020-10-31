@@ -679,7 +679,7 @@ function cg_wall_scrolled_top() {
 
 function cg_wall_scrolled_bottom() {
     var wall = document.getElementById("cg-tab-wall");
-    return Math.ceil(wall.scrollHeight - wall.scrollTop) === wall.clientHeight;
+    return Math.ceil(wall.scrollHeight - wall.scrollTop) <= wall.clientHeight;
 }
 
 function cg_wall_should_load_new_txs(tab) {
