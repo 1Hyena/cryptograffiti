@@ -2486,9 +2486,14 @@ function http_get($url, $params=array()) {
 
 // curl --connect-timeout 300 --silent -d "task=cron_tick&pass=CRON_PASSWORD_HERE&T=5" -X POST 'https://amaraca.com/db/'
 function cron_tick($link) {
-    $result = $link->query("SELECT `sessions`, `max_sessions`, `IPs` FROM `stats` ORDER BY `nr` DESC LIMIT 1");
+    $result = $link->query(
+        "SELECT `sessions`, `max_sessions`, `IPs` FROM `stats` ORDER BY `nr` ".
+        "DESC LIMIT 1"
+    );
 
-         if ($link->errno !== 0) set_critical_error($link, $link->error);
+    if ($link->errno !== 0) {
+        set_critical_error($link, $link->error);
+    }
     else if ($row = $result->fetch_assoc()) {
         $IPs = intval($row['IPs']);
         $sessions = intval($row['sessions']);
@@ -2503,32 +2508,63 @@ function cron_tick($link) {
     }
 
     $IPs    = 0;
-    $result = $link->query("SELECT COUNT(`ip`) AS `IPs` FROM `address` WHERE `rpm` > 0");
+    $result = $link->query(
+        "SELECT COUNT(`ip`) AS `IPs` FROM `address` WHERE `rpm` > 0"
+    );
 
-         if ($link->errno !== 0) set_critical_error($link, $link->error);
+    if ($link->errno !== 0) {
+        set_critical_error($link, $link->error);
+    }
     else if ($row = $result->fetch_assoc()) {
         $IPs = intval($row['IPs']);
     }
 
-    $result = $link->query("SELECT COUNT(`nr`) AS `sessions` FROM `session` WHERE `end_time` IS NULL");
+    $result = $link->query(
+        "SELECT COUNT(`nr`) AS `sessions` FROM `session` WHERE `end_time` IS ".
+        "NULL"
+    );
 
-
-         if ($link->errno !== 0) set_critical_error($link, $link->error);
+    if ($link->errno !== 0) {
+        set_critical_error($link, $link->error);
+    }
     else if ($row = $result->fetch_assoc()) {
-        // Race condition BUG here: if CURDATE() changes before the next query then the next query has no effect.
-        $query = "UPDATE `stats` SET `updates` = `updates` + '1', `IPs` = '".$IPs."', `sessions` = '".intval($row['sessions']).
-                 "', `max_IPs` = IF (`max_IPs` < '".$IPs."', '".$IPs.
-                 "', `max_IPs`), `max_sessions` = IF (`max_sessions` < '".intval($row['sessions'])."', '".intval($row['sessions']).
-                 "', `max_sessions`), `free_tokens` = '0' WHERE `date` = CURDATE()";
+        // Race condition BUG here: if CURDATE() changes before the next query
+        // then the next query has no effect.
+
+        $query = (
+            "UPDATE `stats` SET `updates` = `updates` + '1', `IPs` = '".$IPs.
+            "', `sessions` = '".intval($row['sessions'])."', `max_IPs` = IF ".
+            "(`max_IPs` < '".$IPs."', '".$IPs."', `max_IPs`), `max_sessions`".
+            " = IF (`max_sessions` < '".intval($row['sessions'])."', '".
+            intval($row['sessions'])."', `max_sessions`), `free_tokens` = '0' ".
+            "WHERE `date` = CURDATE()"
+        );
+
         $link->query($query);
-        if ($link->errno !== 0) set_critical_error($link, $link->error);
+
+        if ($link->errno !== 0) {
+            set_critical_error($link, $link->error);
+        }
         else {
             if ($link->affected_rows === 0) {
-                db_log($link, null, "Failed to update stats. Inserting a new row for the current date.");
-                $link->query("INSERT IGNORE INTO `stats` (`date`) VALUES(CURDATE())");
+                db_log(
+                    $link, null,
+                    "Failed to update stats. Inserting a new row for the ".
+                    "current date."
+                );
+
+                $link->query(
+                    "INSERT IGNORE INTO `stats` (`date`) VALUES(CURDATE())"
+                );
+
                 if ($link->errno !== 0) set_critical_error($link, $link->error);
+
                 if ($link->affected_rows === 0) {
-                    db_log($link, null, "Failed to insert a new row to `stats`.", LOG_LEVEL_ERROR);
+                    db_log(
+                        $link, null,
+                        "Failed to insert a new row to `stats`.",
+                        LOG_LEVEL_ERROR
+                    );
                 }
             }
         }
@@ -2536,6 +2572,7 @@ function cron_tick($link) {
 
     // Make sure donations are up to date:
     $result = $link->query("SELECT SUM(`amount`) AS `donations` FROM `btc_tx`");
+
     if ($link->errno !== 0) set_critical_error($link, $link->error);
     else if ($row = $result->fetch_assoc()) {
         $donations = intval($row['donations']);
@@ -2544,26 +2581,48 @@ function cron_tick($link) {
 
     // Inactive captchas get deleted so that the user must solve a new CAPTCHA
     $link->query(
-        "DELETE FROM `captcha` WHERE (`sticky` IS FALSE AND `last_update` < ( NOW() - INTERVAL ".CAPTCHA_TIMEOUT." second ) )"
+        "DELETE FROM `captcha` WHERE (`sticky` IS FALSE AND `last_update` < ( ".
+        "NOW() - INTERVAL ".CAPTCHA_TIMEOUT." second ) )"
     );
-    if ( ($ar = $link->affected_rows) > 0) {
-        db_log($link, null, $ar.' CAPTCHA'.($ar == 1 ? '' : 's').' deleted for being unused for '.CAPTCHA_TIMEOUT.' seconds.');
+
+    if (($ar = $link->affected_rows) > 0) {
+        db_log(
+            $link, null,
+            $ar.' CAPTCHA'.($ar == 1 ? '' : 's').
+            ' deleted for being unused for '.CAPTCHA_TIMEOUT.' seconds.'
+        );
     }
-    $link->query("DELETE FROM `captcha` WHERE `fused` IS TRUE AND `sticky` IS FALSE");
+
+    $link->query(
+        "DELETE FROM `captcha` WHERE `fused` IS TRUE AND `sticky` IS FALSE"
+    );
+
     if ( ($ar = $link->affected_rows) > 0) {
-        db_log($link, null, $ar.' fused token'.($ar == 1 ? '' : 's').' deleted.');
+        db_log(
+            $link, null, $ar.' fused token'.($ar == 1 ? '' : 's').' deleted.'
+        );
     }
 
     $link->query("UPDATE `address` SET `rpm` = '0' WHERE `rpm` > '0'");
-    $link->query("UPDATE `address` SET `max_rpm` = DEFAULT(`max_rpm`) WHERE `max_rpm` > DEFAULT(`max_rpm`)");
+
+    $link->query(
+        "UPDATE `address` SET `max_rpm` = DEFAULT(`max_rpm`) WHERE `max_rpm` ".
+        "> DEFAULT(`max_rpm`)"
+    );
+
     $link->query("UPDATE `captcha` SET `rpm` = '0' WHERE `rpm` > '0'");
-    $link->query("UPDATE `address` SET `free_tokens` = '0' WHERE `free_tokens` > '0'");
+
+    $link->query(
+        "UPDATE `address` SET `free_tokens` = '0' WHERE `free_tokens` > '0'"
+    );
 
     $link->query(
         "UPDATE `session` SET `end_time` = NOW() ".
         "WHERE `end_time` IS NULL ".
-        "AND (`last_request` IS NULL OR `last_request` < (NOW() - INTERVAL ".SESSION_TIMEOUT." second))"
+        "AND (`last_request` IS NULL OR `last_request` < (NOW() - INTERVAL ".
+        SESSION_TIMEOUT." second))"
     );
+
     $link->query(
         "UPDATE `session` SET `end_time` = NULL, `start_time` = NOW() ".
         "WHERE `end_time` IS NOT NULL ".
@@ -2573,14 +2632,29 @@ function cron_tick($link) {
 
     {
         // Check which critical fused sessions have appeared online lately:
-        $result = $link->query("SELECT `nr`, `alias` FROM `session` WHERE (`flags` & '".FLAG_CRITICAL."') AND (`flags` & '".FLAG_FUSED.
-                               "') AND (`end_time` IS NULL OR `end_time` > (NOW() - INTERVAL 3600 second))");
+        $result = $link->query(
+            "SELECT `nr`, `alias` FROM `session` WHERE (`flags` & '".
+            FLAG_CRITICAL."') AND (`flags` & '".FLAG_FUSED."') AND ".
+            "(`end_time` IS NULL OR `end_time` > (NOW() - INTERVAL ".
+            "3600 second))"
+        );
+
         if ($link->errno === 0) {
             while ($row = $result->fetch_assoc()) {
-                $link->query("UPDATE `session` SET `flags` = `flags` & ~".FLAG_FUSED." WHERE `nr` = '".$row['nr']."'");
+                $link->query(
+                    "UPDATE `session` SET `flags` = `flags` & ~".FLAG_FUSED.
+                    " WHERE `nr` = '".$row['nr']."'"
+                );
+
                 if ($link->errno === 0) {
-                    $text = "Session #".$row['nr'].($row['alias'] === null ? ' ' : ' ('.$row['alias'].') ').
-                            "appears to be online.";
+                    $text = (
+                        "Session #".$row['nr'].(
+                            $row['alias'] === null
+                                ? ' '
+                                : ' ('.$row['alias'].') '
+                        )."appears to be online."
+                    );
+
                     db_log($link, null, $text, LOG_LEVEL_CRITICAL);
                 }
                 else set_critical_error($link, $link->error);
@@ -2588,15 +2662,30 @@ function cron_tick($link) {
         }
         else set_critical_error($link, $link->error);
 
-        // Check which critical sessions have appeared offline lately and fuse them:
-        $result = $link->query("SELECT `nr`, `alias` FROM `session` WHERE (`flags` & '".FLAG_CRITICAL."') AND NOT (`flags` & '".FLAG_FUSED.
-                               "') AND (`end_time` IS NOT NULL AND `end_time` <= (NOW() - INTERVAL 3600 second))");
+        // Check if critical sessions have gone offline lately and fuse them:
+        $result = $link->query(
+            "SELECT `nr`, `alias` FROM `session` WHERE (`flags` & '".
+            FLAG_CRITICAL."') AND NOT (`flags` & '".FLAG_FUSED."') AND ".
+            "(`end_time` IS NOT NULL AND `end_time` <= (NOW() - INTERVAL 3600 ".
+            "second))"
+        );
+
         if ($link->errno === 0) {
             while ($row = $result->fetch_assoc()) {
-                $link->query("UPDATE `session` SET `flags` = `flags` | ".FLAG_FUSED." WHERE `nr` = '".$row['nr']."'");
+                $link->query(
+                    "UPDATE `session` SET `flags` = `flags` | ".FLAG_FUSED.
+                    " WHERE `nr` = '".$row['nr']."'"
+                );
+
                 if ($link->errno === 0) {
-                    $text = "Session #".$row['nr'].($row['alias'] === null ? ' ' : ' ('.$row['alias'].') ').
-                            "appears to be offline.";
+                    $text = (
+                        "Session #".$row['nr'].(
+                            $row['alias'] === null
+                                ? ' '
+                                : ' ('.$row['alias'].') '
+                        )."appears to be offline."
+                    );
+
                     db_log($link, null, $text, LOG_LEVEL_CRITICAL);
                 }
                 else set_critical_error($link, $link->error);
@@ -2605,8 +2694,12 @@ function cron_tick($link) {
         else set_critical_error($link, $link->error);
 
         // Check if decoding works right now:
-        $result = $link->query("SELECT `nr` FROM `session` WHERE (`role` & '".ROLE_DECODER.
-                               "') AND (`end_time` IS NULL OR `end_time` > (NOW() - INTERVAL 120 second)) LIMIT 1");
+        $result = $link->query(
+            "SELECT `nr` FROM `session` WHERE (`role` & '".ROLE_DECODER."') ".
+            "AND (`end_time` IS NULL OR `end_time` > (NOW() - INTERVAL 120 ".
+            "second)) LIMIT 1"
+        );
+
         if ($link->errno === 0) {
             $decoder_before = get_stat($link, 'decoder');
 
@@ -2614,22 +2707,33 @@ function cron_tick($link) {
                 // Decoder is online
                 if ($decoder_before === '0') {
                     set_stat($link, "decoder", '1');
-                    db_log($link, null, 'Cryptograffiti decoding is now enabled.', LOG_LEVEL_CRITICAL);
+                    db_log(
+                        $link, null, 'Cryptograffiti decoding is now enabled.',
+                        LOG_LEVEL_CRITICAL
+                    );
                 }
             }
             else {
                 // Decoder is offline
                 if ($decoder_before === '1') {
                     set_stat($link, "decoder", '0');
-                    db_log($link, null, 'Cryptograffiti decoding appears disabled!', LOG_LEVEL_CRITICAL);
+                    db_log(
+                        $link, null,
+                        'Cryptograffiti decoding appears disabled!',
+                        LOG_LEVEL_CRITICAL
+                    );
                 }
             }
         }
         else set_critical_error($link, $link->error);
 
         // Check if encoding works right now:
-        $result = $link->query("SELECT `nr` FROM `session` WHERE (`role` & '".ROLE_ENCODER.
-                               "') AND (`end_time` IS NULL OR `end_time` > (NOW() - INTERVAL 120 second)) LIMIT 1");
+        $result = $link->query(
+            "SELECT `nr` FROM `session` WHERE (`role` & '".ROLE_ENCODER."') ".
+            "AND (`end_time` IS NULL OR `end_time` > (NOW() - INTERVAL 120 ".
+            "second)) LIMIT 1"
+        );
+
         if ($link->errno === 0) {
             $encoder_before = get_stat($link, 'encoder');
 
@@ -2637,14 +2741,21 @@ function cron_tick($link) {
                 // Encoder is online
                 if ($encoder_before === '0') {
                     set_stat($link, "encoder", '1');
-                    db_log($link, null, 'Cryptograffiti encoding is now enabled.', LOG_LEVEL_CRITICAL);
+                    db_log(
+                        $link, null, 'Cryptograffiti encoding is now enabled.',
+                        LOG_LEVEL_CRITICAL
+                    );
                 }
             }
             else {
                 // Encoder is offline
                 if ($encoder_before === '1') {
                     set_stat($link, "encoder", '0');
-                    db_log($link, null, 'Cryptograffiti encoding appears disabled!', LOG_LEVEL_CRITICAL);
+                    db_log(
+                        $link, null,
+                        'Cryptograffiti encoding appears disabled!',
+                        LOG_LEVEL_CRITICAL
+                    );
                 }
             }
         }
