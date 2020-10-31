@@ -902,7 +902,6 @@ function set_stat($link, $stat, $val) {
 function get_stat($link, $stat, $days_back = 0) {
     $days_back = intval($days_back);
     $stat      = $link->real_escape_string($stat);
-    $val       = $link->real_escape_string($val);
 
     $result = $link->query("SELECT `".$stat."` FROM `stats` WHERE `date` = (CURDATE() - INTERVAL ".$days_back." day) LIMIT 1");
     if ($link->errno !== 0) {
@@ -2607,7 +2606,7 @@ function cron_tick($link) {
 
         // Check if decoding works right now:
         $result = $link->query("SELECT `nr` FROM `session` WHERE (`role` & '".ROLE_DECODER.
-                               "') AND `end_time` IS NULL OR `end_time` > (NOW() - INTERVAL 120 second) LIMIT 1");
+                               "') AND (`end_time` IS NULL OR `end_time` > (NOW() - INTERVAL 120 second)) LIMIT 1");
         if ($link->errno === 0) {
             $decoder_before = get_stat($link, 'decoder');
 
@@ -2630,7 +2629,7 @@ function cron_tick($link) {
 
         // Check if encoding works right now:
         $result = $link->query("SELECT `nr` FROM `session` WHERE (`role` & '".ROLE_ENCODER.
-                               "') AND `end_time` IS NULL OR `end_time` > (NOW() - INTERVAL 120 second) LIMIT 1");
+                               "') AND (`end_time` IS NULL OR `end_time` > (NOW() - INTERVAL 120 second)) LIMIT 1");
         if ($link->errno === 0) {
             $encoder_before = get_stat($link, 'encoder');
 
