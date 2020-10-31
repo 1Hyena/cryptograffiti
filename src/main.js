@@ -566,6 +566,7 @@ function cg_load_stats() {
                         }
                     }
 
+                    /* TODO: uncomment when Encoder has been implemented.
                     if (encoder_ok !== cg_get_global("encoder")) {
                         if (!encoder_ok) {
                             cg_push_status(
@@ -582,6 +583,7 @@ function cg_load_stats() {
                             );
                         }
                     }
+                    */
 
                     cg_set_global("decoder", decoder_ok);
                     cg_set_global("encoder", encoder_ok);
