@@ -71,8 +71,9 @@ function cg_wall_construct(main) {
 
 function cg_wall_step(tab) {
     var timestamp = Math.floor(Date.now() / 1000);
+    //var forgotten = cg_wall_forget_new_txs(tab) + cg_wall_forget_old_txs(tab);
 
-    if (timestamp - tab.last_update < 1) return;
+    if (timestamp - tab.last_update < 1 /*|| forgotten > 0*/) return;
 
     tab.last_update = timestamp;
 
@@ -799,13 +800,132 @@ function cg_wall_should_load_old_txs(tab) {
 function cg_wall_get_smallest_tx_nr(tab) {
     if (tab.graffiti.order.length === 0) return null;
 
-    return tab.graffiti.data[""+tab.graffiti.order[0]].txnr;
+    return tab.graffiti.data[
+        ""+tab.graffiti.order[0]
+    ].txnr;
 }
 
 function cg_wall_get_greatest_tx_nr(tab) {
     if (tab.graffiti.order.length === 0) return null;
 
     return tab.graffiti.data[
-        tab.graffiti.order[""+tab.graffiti.order.length - 1]
+        ""+tab.graffiti.order[tab.graffiti.order.length - 1]
     ].txnr;
 }
+
+/*
+function cg_wall_should_forget_old_txs(tab) {
+    var wall = document.getElementById("cg-tab-wall");
+
+    var position = wall.scrollTop + wall.clientHeight / 2;
+    var visible = wall.clientHeight / wall.scrollHeight;
+
+    return visible < 0.25 && (position/wall.scrollHeight) < 0.5;
+}
+
+function cg_wall_should_forget_new_txs(tab) {
+    var wall = document.getElementById("cg-tab-wall");
+
+    var position = wall.scrollTop + wall.clientHeight / 2;
+    var visible = wall.clientHeight / wall.scrollHeight;
+
+    return visible < 0.25 && (position/wall.scrollHeight) >= 0.5;
+}
+
+function cg_wall_forget_old_txs(tab) {
+    var bodybuf = document.getElementById("cg-wall-bodybuf");
+
+    var forgotten = 0;
+    var numbers = {};
+
+    while (cg_wall_should_forget_old_txs(tab)) {
+        while (bodybuf.hasChildNodes()) {
+            var child = bodybuf.lastChild;
+
+            if (child.hasAttribute("data-graffiti-nr")) {
+                var gnr = child.getAttribute("data-graffiti-nr");
+
+                if (gnr !== "") {
+                    numbers[gnr] = true;
+                }
+            }
+
+            bodybuf.removeChild(child);
+            ++forgotten;
+
+            if (child.tagName.toLowerCase() === "hr") {
+                break;
+            }
+        }
+    }
+
+    for (var key in numbers) {
+        if (!numbers.hasOwnProperty(key)) continue;
+
+        if (key in tab.graffiti.data) delete tab.graffiti.data[key];
+    }
+
+    var new_order = [];
+
+    for (var i=0; i<tab.graffiti.order.length; ++i) {
+        var key = ""+tab.graffiti.order[i];
+
+        if (key in numbers) continue;
+
+        new_order.push(tab.graffiti.order[i]);
+    }
+
+    tab.graffiti.order = new_order;
+
+    return forgotten;
+}
+
+function cg_wall_forget_new_txs(tab) {
+    var bodybuf = document.getElementById("cg-wall-bodybuf");
+
+    var forgotten = 0;
+    var numbers = {};
+
+    while (cg_wall_should_forget_new_txs(tab)) {
+        while (bodybuf.hasChildNodes()) {
+            var child = bodybuf.firstChild;
+
+            if (child.hasAttribute("data-graffiti-nr")) {
+                var gnr = child.getAttribute("data-graffiti-nr");
+
+                if (gnr !== "") {
+                    numbers[gnr] = true;
+                }
+            }
+
+            bodybuf.removeChild(child);
+            ++forgotten;
+
+            if (child.tagName.toLowerCase() === "hr") {
+                break;
+            }
+        }
+    }
+
+    for (var key in numbers) {
+        if (!numbers.hasOwnProperty(key)) continue;
+
+        if (key in tab.graffiti.data) delete tab.graffiti.data[key];
+    }
+
+    var new_order = [];
+
+    for (var i=0; i<tab.graffiti.order.length; ++i) {
+        var key = ""+tab.graffiti.order[i];
+
+        if (key in numbers) continue;
+
+        new_order.push(tab.graffiti.order[i]);
+    }
+
+    tab.graffiti.order = new_order;
+
+    return forgotten;
+}
+*/
+
