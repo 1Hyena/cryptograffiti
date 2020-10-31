@@ -54,10 +54,6 @@
     border: 1px solid grey;
 }
 
-.cg-debug .cg-wall-frame-origin {
-    background-color: yellow;
-}
-
 .cg-wall-graffiti {
     display: inline-block;
     width: 100%;
@@ -78,6 +74,10 @@
 
 .cg-debug .cg-wall-graffiti-decoding {
     background-color: orange;
+}
+
+.cg-debug .cg-wall-frame-origin {
+    background-color: yellow;
 }
 
 .cg-wall-media {

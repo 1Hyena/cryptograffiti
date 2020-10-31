@@ -522,6 +522,8 @@ function cg_wall_refresh_visible(tab) {
     var bodybuf = document.getElementById("cg-wall-bodybuf");
     var contents = bodybuf.children;
 
+    var origin_candidates = [];
+
     for (var i=0; i<contents.length; ++i) {
         var frame = contents[i];
 
@@ -529,9 +531,32 @@ function cg_wall_refresh_visible(tab) {
 
         if (is_visible(tab.element, frame, false)) {
             frame.classList.add("cg-wall-frame-visible");
+
+            if (!frame.classList.contains("cg-wall-frame-empty")) {
+                origin_candidates.push(frame);
+            }
         }
         else {
             frame.classList.remove("cg-wall-frame-visible");
+        }
+    }
+
+    if (origin_candidates.length > 0) {
+        var origin = document.getElementsByClassName("cg-wall-frame-origin");
+        var median = origin_candidates[Math.floor(origin_candidates.length/2)];
+
+        for (var i = 1; i < origin.length; ++i) {
+            origin[i].classList.remove("cg-wall-frame-origin");
+        }
+
+        origin = origin.length > 0 ? origin[0] : null;
+
+        if (origin !== median) {
+            if (origin !== null) {
+                origin.classList.remove("cg-wall-frame-origin");
+            }
+
+            median.classList.add("cg-wall-frame-origin");
         }
     }
 }
@@ -813,7 +838,6 @@ function cg_wall_get_greatest_tx_nr(tab) {
     ].txnr;
 }
 
-/*
 function cg_wall_should_forget_old_txs(tab) {
     var wall = document.getElementById("cg-tab-wall");
 
@@ -832,6 +856,30 @@ function cg_wall_should_forget_new_txs(tab) {
     return visible < 0.25 && (position/wall.scrollHeight) >= 0.5;
 }
 
+/*function cg_wall_forget_new_txs(tab) {
+    var bodybuf = document.getElementById("cg-wall-bodybuf");
+
+    var forgotten = [];
+
+    while (cg_wall_should_forget_new_txs(tab)) {
+        while (bodybuf.hasChildNodes()) {
+            var child = bodybuf.firstChild;
+
+            if (child.classList.contains("cg-wall-frame-visible")
+            ||  child.classList.contains("cg-wall-frame-origin")) {
+                return forgotten;
+            }
+
+            bodybuf.removeChild(child);
+
+            if (child.tagName.toLowerCase() === "hr") {
+                break;
+            }
+        }
+    }
+}*/
+
+/*
 function cg_wall_forget_old_txs(tab) {
     var bodybuf = document.getElementById("cg-wall-bodybuf");
 
