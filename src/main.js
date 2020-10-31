@@ -566,7 +566,7 @@ function cg_load_stats() {
                         }
                     }
 
-                    if (encoder_ok != cg_get_global("decoder")) {
+                    if (encoder_ok !== cg_get_global("encoder")) {
                         if (!encoder_ok) {
                             cg_push_status(
                                 cg_translate(
