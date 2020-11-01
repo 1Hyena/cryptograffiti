@@ -17,7 +17,8 @@ var GIuGDtd14GQaDKh9TfVKGQJS = {
     "scroll_key" : false,
     "debug"      : false,
     "buggy"      : false,
-    "focus"      : null
+    "focus"      : null,
+    "api_usage"  : { rpm : 0, max_rpm : 60 }
 };
 
 function cg_get_global(name) {
@@ -475,6 +476,14 @@ function cg_refresh_footer_status() {
 }
 
 function cg_load_constants() {
+    var api_usage = cg_get_global("api_usage");
+
+    if (api_usage.rpm + 10 >= api_usage.max_rpm) {
+        tab.loading_txs = 0;
+        return;
+    }
+    else api_usage.rpm++;
+
     var data_obj = {};
     var json_str = encodeURIComponent(JSON.stringify(data_obj));
 
@@ -500,13 +509,19 @@ function cg_load_constants() {
                 else {
                     cg_handle_error(json);
                 }
+
+                if ("api_usage" in json) {
+                    cg_set_global("api_usage", json.api_usage);
+                }
             }
 
             if (status.length > 0) cg_push_status(status);
 
             if (cg_get_global("constants") !== null) {
-                setTimeout(function(){
-                    cg_load_stats();}, 100
+                setTimeout(
+                    function(){
+                        cg_load_stats();
+                    }, 100
                 );
                 return;
             }
@@ -521,6 +536,9 @@ function cg_load_constants() {
 }
 
 function cg_load_stats() {
+    // Here we don't check API usage because in case we were already banned we
+    // need to poll the API to see when the ban has been lifted.
+
     var data_obj = {};
     var json_str = encodeURIComponent(JSON.stringify(data_obj));
 
@@ -538,6 +556,11 @@ function cg_load_stats() {
             }
             else {
                 json = JSON.parse(response);
+
+                if ("api_usage" in json) {
+                    cg_set_global("api_usage", json.api_usage);
+                }
+
                 if ("stats" in json && json.stats.length === 1
                 &&  "sessions" in json.stats[0]
                 &&  "IPs" in json.stats[0]
@@ -603,7 +626,7 @@ function cg_load_stats() {
 
             setTimeout(function(){
                 cg_load_stats();
-            }, 60000);
+            }, 10000);
         }
     );
 }

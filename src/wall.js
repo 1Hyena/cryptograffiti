@@ -136,7 +136,8 @@ function cg_wall_import_txs(tab) {
                 offset:    graffiti.offset,
                 fsize:     graffiti.fsize,
                 hash:      graffiti.hash,
-                mimetype:  graffiti.mimetype
+                mimetype:  graffiti.mimetype,
+                cache:     tx.cache
             };
         }
     }
@@ -506,6 +507,14 @@ function cg_wall_get_txs(tab) {
         }
     }
 
+    var api_usage = cg_get_global("api_usage");
+
+    if (api_usage.rpm + 10 >= api_usage.max_rpm) {
+        tab.loading_txs = 0;
+        return;
+    }
+    else api_usage.rpm++;
+
     var json_str = encodeURIComponent(JSON.stringify(data_obj));
 
     cg_push_status(cg_translate(CG_TXT_WALL_LOADING_TX_METADATA));
@@ -524,6 +533,11 @@ function cg_wall_get_txs(tab) {
             }
             else {
                 json = JSON.parse(response);
+
+                if ("api_usage" in json) {
+                    cg_set_global("api_usage", json.api_usage);
+                }
+
                 if ("txs" in json) {
                     for (var i=0; i<json.txs.length; ++i) {
                         tab.txs[json.txs[i].txid] = json.txs[i];
@@ -650,6 +664,67 @@ function cg_wall_download_graffiti(tab) {
 }
 
 function cg_wall_get_rawtx_range(tab, txid, offset, fsize, graffiti_nr) {
+    if (graffiti_nr in tab.graffiti.data
+    && tab.graffiti.data[graffiti_nr].cache === false) {
+        var api_usage = cg_get_global("api_usage");
+
+        if (api_usage.rpm + 10 >= api_usage.max_rpm) {
+            var graffiti = document.getElementById(
+                "cg-wall-graffiti-"+graffiti_nr
+            );
+            graffiti.classList.remove("cg-wall-graffiti-downloading");
+            return;
+        }
+        else api_usage.rpm++;
+
+        var data_obj = {
+            count : "1",
+            nr : ""+tab.graffiti.data[graffiti_nr].txnr
+        };
+
+        var json_str = encodeURIComponent(JSON.stringify(data_obj));
+
+        xmlhttpPost(cg_get_global("api_url"), 'fun=get_txs&data='+json_str,
+            function(response) {
+                var graffiti = document.getElementById(
+                    "cg-wall-graffiti-"+graffiti_nr
+                );
+
+                if (response === false) {
+                    return;
+                }
+                else if (response === null ) {
+                    return;
+                }
+
+                var json = JSON.parse(response);
+
+                if ("api_usage" in json) {
+                    cg_set_global("api_usage", json.api_usage);
+                }
+
+                if (graffiti === null) {
+                    // This can happen if we removed this graffiti while it was
+                    // downloading. For example, we might have scrolled past
+                    // this graffiti and as it was no longer visible on screen
+                    // it got purged from memory before the download could
+                    // complete.
+
+                    return;
+                }
+
+                graffiti.classList.remove("cg-wall-graffiti-downloading");
+
+                if ("txs" in json && json.txs.length === 1
+                &&  json.txs[0].cache === true) {
+                    tab.graffiti.data[graffiti_nr].cache = true;
+                }
+            }
+        );
+
+        return;
+    }
+
     cg_push_status(cg_translate(CG_TXT_WALL_LOADING_RAWTX_SEGMENT));
 
     xmlhttpGet(
@@ -660,6 +735,15 @@ function cg_wall_get_rawtx_range(tab, txid, offset, fsize, graffiti_nr) {
             var graffiti = document.getElementById(
                 "cg-wall-graffiti-"+graffiti_nr
             );
+
+            if (graffiti === null) {
+                // This can happen if we removed this graffiti while it was
+                // downloading. For example, we might have scrolled past this
+                // graffiti and as it was no longer visible on screen it got
+                // purged from memory before the download could complete.
+
+                return;
+            }
 
             graffiti.classList.remove("cg-wall-graffiti-downloading");
             graffiti.classList.add("cg-wall-graffiti-decoding");
