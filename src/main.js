@@ -15,7 +15,9 @@ var GIuGDtd14GQaDKh9TfVKGQJS = {
     "tab"        : null,
     "tabs"       : {},
     "scroll_key" : false,
-    "debug"      : false
+    "debug"      : false,
+    "buggy"      : false,
+    "focus"      : null
 };
 
 function cg_get_global(name) {
@@ -146,6 +148,7 @@ function cg_setup_parameters(params) {
             switch (key) {
                 case "lang" : cg_set_global("language", val); break;
                 case "debug": cg_set_global("debug",    val); break;
+                case "focus": cg_set_global("focus",    val); break;
                 default     : break;
             }
         }
@@ -155,7 +158,8 @@ function cg_setup_parameters(params) {
 function cg_parse_hashtag() {
     var hashtag = {
         lang : null,
-        debug: false
+        debug: false,
+        focus: null
     };
 
     var hashes = location.hash.substring(1).split("#");
@@ -165,6 +169,7 @@ function cg_parse_hashtag() {
         else if (hash ===    "ru") hashtag.lang  = hash;
         else if (hash ===    "et") hashtag.lang  = hash;
         else if (hash === "debug") hashtag.debug = true;
+        else if (is_digital(hash)) hashtag.focus = hash;
     }
 
     cg_set_global("hashtag", hashtag);
@@ -878,6 +883,20 @@ function cg_first_status() {
     var status = cg_get_global("status");
     if (status.length === 0) return null;
     return status[0];
+}
+
+function cg_bug(arg) {
+    arg = typeof arg !== 'undefined' ? arg : null;
+
+    if (cg_get_global("buggy") === false) {
+        if (arg !== null) {
+            console.error("Forbidden condtion has been met ("+arg+").");
+        }
+        else console.error("Forbidden condtion has been met.");
+        console.trace();
+    }
+
+    cg_set_global("buggy", true);
 }
 
 var CG_IMG_US = (

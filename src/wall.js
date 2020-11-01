@@ -71,9 +71,9 @@ function cg_wall_construct(main) {
 
 function cg_wall_step(tab) {
     var timestamp = Math.floor(Date.now() / 1000);
-    //var forgotten = cg_wall_forget_new_txs(tab) + cg_wall_forget_old_txs(tab);
+    var forgotten = cg_wall_forget_new_txs(tab) + cg_wall_forget_old_txs(tab);
 
-    if (timestamp - tab.last_update < 1 /*|| forgotten > 0*/) return;
+    if (timestamp - tab.last_update < 1 || forgotten > 0) return;
 
     tab.last_update = timestamp;
 
@@ -458,22 +458,52 @@ function cg_wall_get_txs(tab) {
 
     if (origin.length !== 0) {
         data_obj.count = "1";
-    }
-    else if (cg_wall_should_load_old_txs(tab)) {
-        data_obj["back"] = "1";
-
-        var nr = cg_wall_get_smallest_tx_nr(tab);
-        if (nr !== null) data_obj["nr"] = ""+nr;
-    }
-    else if (cg_wall_should_load_new_txs(tab)) {
-        data_obj["back"] = "0";
-
-        var nr = cg_wall_get_greatest_tx_nr(tab);
-        if (nr !== null) data_obj["nr"] = ""+nr;
+        if (cg_get_global("focus") !== null) {
+            data_obj["nr"] = ""+cg_get_global("focus");
+        }
     }
     else {
-        tab.loading_txs = 0;
-        return;
+        var options = [
+            function (t, d) {
+                if (cg_wall_should_load_old_txs(t)) {
+                    d["back"] = "1";
+
+                    var nr = cg_wall_get_smallest_tx_nr(t);
+                    if (nr !== null) d["nr"] = ""+nr;
+
+                    return true;
+                }
+
+                return false;
+            },
+            function (t, d) {
+                if (cg_wall_should_load_new_txs(t)) {
+                    d["back"] = "0";
+
+                    var nr = cg_wall_get_greatest_tx_nr(t);
+                    if (nr !== null) d["nr"] = ""+nr;
+
+                    return true;
+                }
+
+                return false;
+            }
+        ];
+
+        shuffle(options);
+
+        var any_option = false;
+        for (var i=0; i<options.length; ++i) {
+            if (options[i](tab, data_obj)) {
+                any_option = true;
+                break;
+            }
+        }
+
+        if (any_option === false) {
+            tab.loading_txs = 0;
+            return;
+        }
     }
 
     var json_str = encodeURIComponent(JSON.stringify(data_obj));
@@ -529,7 +559,7 @@ function cg_wall_refresh_visible(tab) {
 
         if (!frame.classList.contains("cg-wall-frame")) continue;
 
-        if (is_visible(tab.element, frame, false)) {
+        if (is_visible(tab.element, frame, true)) {
             frame.classList.add("cg-wall-frame-visible");
 
             if (!frame.classList.contains("cg-wall-frame-empty")) {
@@ -856,124 +886,109 @@ function cg_wall_should_forget_new_txs(tab) {
     return visible < 0.25 && (position/wall.scrollHeight) >= 0.5;
 }
 
-/*function cg_wall_forget_new_txs(tab) {
+function cg_wall_remove_new_frames(tab) {
     var bodybuf = document.getElementById("cg-wall-bodybuf");
 
-    var forgotten = [];
+    var removed_frames = [];
 
-    while (cg_wall_should_forget_new_txs(tab)) {
+    if (cg_wall_should_forget_new_txs(tab)) {
         while (bodybuf.hasChildNodes()) {
             var child = bodybuf.firstChild;
 
             if (child.classList.contains("cg-wall-frame-visible")
             ||  child.classList.contains("cg-wall-frame-origin")) {
-                return forgotten;
+                return removed_frames;
             }
 
             bodybuf.removeChild(child);
 
             if (child.tagName.toLowerCase() === "hr") {
-                break;
+                continue;
+            }
+
+            if (child.classList.contains("cg-wall-frame")) {
+                removed_frames.push(child);
             }
         }
     }
-}*/
 
-/*
-function cg_wall_forget_old_txs(tab) {
+    return removed_frames;
+}
+
+function cg_wall_remove_old_frames(tab) {
     var bodybuf = document.getElementById("cg-wall-bodybuf");
 
-    var forgotten = 0;
-    var numbers = {};
+    var removed_frames = [];
 
-    while (cg_wall_should_forget_old_txs(tab)) {
+    if (cg_wall_should_forget_old_txs(tab)) {
         while (bodybuf.hasChildNodes()) {
             var child = bodybuf.lastChild;
 
-            if (child.hasAttribute("data-graffiti-nr")) {
-                var gnr = child.getAttribute("data-graffiti-nr");
-
-                if (gnr !== "") {
-                    numbers[gnr] = true;
-                }
+            if (child.classList.contains("cg-wall-frame-visible")
+            ||  child.classList.contains("cg-wall-frame-origin")) {
+                return removed_frames;
             }
 
             bodybuf.removeChild(child);
-            ++forgotten;
 
             if (child.tagName.toLowerCase() === "hr") {
-                break;
+                continue;
+            }
+
+            if (child.classList.contains("cg-wall-frame")) {
+                removed_frames.push(child);
             }
         }
     }
 
-    for (var key in numbers) {
-        if (!numbers.hasOwnProperty(key)) continue;
-
-        if (key in tab.graffiti.data) delete tab.graffiti.data[key];
-    }
-
-    var new_order = [];
-
-    for (var i=0; i<tab.graffiti.order.length; ++i) {
-        var key = ""+tab.graffiti.order[i];
-
-        if (key in numbers) continue;
-
-        new_order.push(tab.graffiti.order[i]);
-    }
-
-    tab.graffiti.order = new_order;
-
-    return forgotten;
+    return removed_frames;
 }
 
 function cg_wall_forget_new_txs(tab) {
-    var bodybuf = document.getElementById("cg-wall-bodybuf");
+    var removed_frames = cg_wall_remove_new_frames(tab);
 
-    var forgotten = 0;
-    var numbers = {};
+    for (var i=0; i<removed_frames.length; ++i) {
+        var frame = removed_frames[i];
+        if (frame.hasAttribute("data-graffiti-nr")) {
+            var graffiti_key = frame.getAttribute("data-graffiti-nr");
+            if (graffiti_key in tab.graffiti.data) {
+                var graffiti_nr = tab.graffiti.data[graffiti_key].nr;
+                delete tab.graffiti.data[graffiti_key];
 
-    while (cg_wall_should_forget_new_txs(tab)) {
-        while (bodybuf.hasChildNodes()) {
-            var child = bodybuf.firstChild;
-
-            if (child.hasAttribute("data-graffiti-nr")) {
-                var gnr = child.getAttribute("data-graffiti-nr");
-
-                if (gnr !== "") {
-                    numbers[gnr] = true;
+                var order_index = tab.graffiti.order.indexOf(graffiti_nr);
+                if (order_index !== -1) {
+                    tab.graffiti.order.splice(order_index, 1);
                 }
+                else cg_bug();
             }
-
-            bodybuf.removeChild(child);
-            ++forgotten;
-
-            if (child.tagName.toLowerCase() === "hr") {
-                break;
-            }
+            else cg_bug();
         }
     }
 
-    for (var key in numbers) {
-        if (!numbers.hasOwnProperty(key)) continue;
-
-        if (key in tab.graffiti.data) delete tab.graffiti.data[key];
-    }
-
-    var new_order = [];
-
-    for (var i=0; i<tab.graffiti.order.length; ++i) {
-        var key = ""+tab.graffiti.order[i];
-
-        if (key in numbers) continue;
-
-        new_order.push(tab.graffiti.order[i]);
-    }
-
-    tab.graffiti.order = new_order;
-
-    return forgotten;
+    return removed_frames.length;
 }
-*/
+
+function cg_wall_forget_old_txs(tab) {
+    var removed_frames = cg_wall_remove_old_frames(tab);
+
+    for (var i=0; i<removed_frames.length; ++i) {
+        var frame = removed_frames[i];
+        if (frame.hasAttribute("data-graffiti-nr")) {
+            var graffiti_key = frame.getAttribute("data-graffiti-nr");
+            if (graffiti_key in tab.graffiti.data) {
+                var graffiti_nr = tab.graffiti.data[graffiti_key].nr;
+                delete tab.graffiti.data[graffiti_key];
+
+                var order_index = tab.graffiti.order.indexOf(graffiti_nr);
+                if (order_index !== -1) {
+                    tab.graffiti.order.splice(order_index, 1);
+                }
+                else cg_bug();
+            }
+            else cg_bug();
+        }
+    }
+
+    return removed_frames.length;
+}
 

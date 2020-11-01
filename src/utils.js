@@ -234,6 +234,17 @@ function is_visible(container, element, partial) {
     return (isTotal || isPartial);
 }
 
+function is_digital(s) {
+    if (typeof s !== 'string') return false;
+
+    for (var i = s.length-1; i >= 0; --i) {
+        var d = s.charCodeAt(i);
+        if (d < 48 || d > 57) return false;
+    }
+
+    return true;
+}
+
 function is_empty(obj){
     for(var key in obj) {
         if (!obj.hasOwnProperty(key)) continue;
