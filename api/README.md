@@ -282,6 +282,13 @@ These values can be received with an API call of `get_constants` function.
 * __Get Transactions__
     `POST https://cryptograffiti.info/api/`
 
+    $(
+        curl -X POST                          \
+        --data-urlencode 'fun=get_txs'        \
+        --data-urlencode 'data={"count":"1"}' \
+        https://cryptograffiti.info/api/
+    )
+
     Returns Bitcoin transactions in the defined range. If `nr` is not sent or is
     invalid then newest `count` of transactions is returned. If `mimetype` is
     specified then only the transactions containing the graffiti that matches

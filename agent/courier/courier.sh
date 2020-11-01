@@ -219,7 +219,14 @@ init() {
             jq -r -M .TXS_PER_QUERY
         )
 
-        log "TXS_PER_QUERY: ${TXS_PER_QUERY}"
+        local txs_per_query=32
+
+        txs_per_query=$((
+            TXS_PER_QUERY < txs_per_query ? TXS_PER_QUERY : txs_per_query
+        ))
+
+        log "TXS_PER_QUERY: ${TXS_PER_QUERY} (using ${txs_per_query})"
+        TXS_PER_QUERY=${txs_per_query}
 
         return 0
     fi
