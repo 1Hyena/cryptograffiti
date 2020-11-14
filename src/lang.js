@@ -139,34 +139,6 @@ var CG_TXT_MAIN_SESSIONS = {
     ru : "сессии"
 };
 
-var CG_TXT_MAIN_API_REQUEST =
-{
-    en : "Querying %s.",
-    et : "Pärin %s teenust.",
-    ru : "Запрашиваем %s."
-};
-
-var CG_TXT_MAIN_API_ERROR =
-{
-    en : "Erroneous response from %s.",
-    et : "Vigane vastus %s teenuselt.",
-    ru : "Ошибочный ответ от %s."
-};
-
-var CG_TXT_MAIN_API_TIMEOUT =
-{
-    en : "Timeout occurred when querying %s.",
-    et : "Teenusele %s saadetud päring jäi vastuseta.",
-    ru : "Превышен интервал ожидания при запросе %s."
-};
-
-var CG_TXT_MAIN_API_INVALID_RESPONSE =
-{
-    en : "Invalid response from %s.",
-    et : "Lubamatu vastus teenuselt %s.",
-    ru : "Недопустимый ответ от %s."
-};
-
 var CG_TXT_MAIN_ERROR_ACCESS_DENIED =
 {
     en : "Access denied.",
@@ -202,12 +174,6 @@ var CG_TXT_MAIN_ENCODER_APPEARS_OFFLINE =
     ru : "Сервис кодирования сообщений цепочки блоков выключен."
 };
 
-var CG_TXT_MAIN_ERROR_ENCODER_IS_DOWN =
-{
-    en : "Block chain message encoding service is temporarily disabled.",
-    et : "Plokiahelasse andmete salvestamise teenus on ajutiselt peatatud.",
-    ru : "Сервис кодирования сообщений цепочки блоков временно выключен."
-};
 ////////////////////////////////////////////////////////////////////////////////
 // MAIN TRANSLATIONS END                                                      //
 ////////////////////////////////////////////////////////////////////////////////
@@ -218,9 +184,23 @@ var CG_TXT_MAIN_ERROR_ENCODER_IS_DOWN =
 
 var CG_TXT_WALL_LOADING_TX_METADATA =
 {
-    en : "Loading transaction metadata.",
+    en : "Loading the metadata of transactions.",
     et : "Laen ülekannete eelandmeid.",
-    ru : "(Loading transaction metadata.)" // NEEDS TRANSLATION
+    ru : "(Loading the metadata of transactions.)" // NEEDS TRANSLATION
+};
+
+var CG_TXT_WALL_LOADING_TX_METADATA_NEW =
+{
+    en : "Loading the metadata of transactions newer than #%s.",
+    et : "Laen eelandmeid ülekannetest, mis on uuemad kui #%s.",
+    ru : "(Loading the metadata of transactions newer than #%s.)" // NEEDS TRANSLATION
+};
+
+var CG_TXT_WALL_LOADING_TX_METADATA_OLD =
+{
+    en : "Loading the metadata of transactions older than #%s.",
+    et : "Laen eelandmeid ülekannetest, mis on vanemad kui #%s.",
+    ru : "(Loading the metadata of transactions older than #%s.)" // NEEDS TRANSLATION
 };
 
 var CG_TXT_WALL_LOADING_TX_METADATA_ERROR =
@@ -237,25 +217,25 @@ var CG_TXT_WALL_LOADING_TX_METADATA_TIMEOUT =
     ru : "(Attempt to load transaction metadata timed out.)" // NEEDS TRANSLATION
 };
 
-var CG_TXT_WALL_LOADING_RAWTX_SEGMENT =
+var CG_TXT_WALL_LOADING_GRAFFITI =
 {
-    en : "Loading a transaction segment.",
-    et : "Laen ülekande segmenti.",
-    ru : "(Loading a transaction segment.)" // NEEDS TRANSLATION
+    en : "Loading graffiti #%s.",
+    et : "Laen graffitit #%s.",
+    ru : "(Loading graffiti #%s.)" // NEEDS TRANSLATION
 };
 
-var CG_TXT_WALL_LOADING_RAWTX_SEGMENT_ERROR =
+var CG_TXT_WALL_LOADING_GRAFFITI_ERROR =
 {
-    en : "Could not load a transaction segment.",
-    et : "Ülekande segmendi allalaadimine ebaõnnestus.",
-    ru : "(Could not load a transaction segment.)" // NEEDS TRANSLATION
+    en : "Could not load graffiti.",
+    et : "Graffiti allalaadimine ebaõnnestus.",
+    ru : "(Could not load graffiti.)" // NEEDS TRANSLATION
 };
 
-var CG_TXT_WALL_LOADING_RAWTX_SEGMENT_TIMEOUT =
+var CG_TXT_WALL_LOADING_GRAFFITI_TIMEOUT =
 {
-    en : "Attempt to load a transaction segment timed out.",
-    et : "Ülekande segmendi allalaadimise katse aegus.",
-    ru : "(Attempt to load a transaction segment timed out.)" // NEEDS TRANSLATION
+    en : "Attempt to load a graffiti timed out.",
+    et : "Graffiti allalaadimise katse aegus.",
+    ru : "(Attempt to load a graffiti timed out.)" // NEEDS TRANSLATION
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -286,13 +266,6 @@ var CG_TXT_ABOUT_P3 =
     ru : "(This service is fully automated and any possible moderation can only take place after the fact. Decoding and encoding is done solely in the user's web browser using JavaScript. You are encouraged to report any occurrences of clearly illegal content to us (see the e-mail below). The content that is displayed here is mostly user generated and unpredictable in its nature. CryptoGraffiti.info is not responsible for the creation of such content. Viewer discretion is advised.)"
 };
 
-var CG_TXT_ABOUT_TOPIC =
-{
-    en : "discussion topic at bitcointalk.org",
-    et : "arutelu bitcointalk.org foorumis",
-    ru : "тема обсуждения на bitcointalk.org"
-};
-
 var CG_TXT_ABOUT_SOURCE =
 {
     en : "source code at github.com",
@@ -305,13 +278,6 @@ var CG_TXT_ABOUT_EMAIL_ALT =
     en : "administrator's e-mail address",
     et : "administraatori e-posti aadress",
     ru : "адрес электронной почты администратора"
-};
-
-var CG_TXT_ABOUT_FORUM_TOPIC =
-{
-    en : "Forum topic:",
-    et : "Foorumi teema:",
-    ru : "Тема на форуме:"
 };
 
 var CG_TXT_ABOUT_SOURCE_CODE =
@@ -334,7 +300,6 @@ var CG_TXT_ABOUT_FRIENDS =
     et : "Meie sõbrad:",
     ru : "Наши друзья:"
 };
-
 
 var CG_TXT_ABOUT_FRIEND_LIST =
 {

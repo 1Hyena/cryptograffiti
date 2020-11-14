@@ -72,6 +72,13 @@ function cg_wall_construct(main) {
         }
     );
 
+    window.addEventListener(
+        'resize',
+        function(e) {
+            tab.scrolled = true;
+        }
+    );
+
     tab.element.appendChild(headbuf);
     tab.element.appendChild(bodybuf);
     tab.element.appendChild(tailbuf);
@@ -527,7 +534,25 @@ function cg_wall_get_txs(tab) {
 
     var json_str = encodeURIComponent(JSON.stringify(data_obj));
 
-    cg_push_status(cg_translate(CG_TXT_WALL_LOADING_TX_METADATA));
+    if ("back" in data_obj && data_obj.back === "0") {
+        cg_push_status(
+            cg_translate(
+                CG_TXT_WALL_LOADING_TX_METADATA_NEW,
+                [parseInt(data_obj.nr, 10)-1]
+            )
+        );
+    }
+    else if ("back" in data_obj && data_obj.back === "1") {
+        cg_push_status(
+            cg_translate(
+                CG_TXT_WALL_LOADING_TX_METADATA_OLD,
+                [parseInt(data_obj.nr, 10)+1]
+            )
+        );
+    }
+    else {
+        cg_push_status(cg_translate(CG_TXT_WALL_LOADING_TX_METADATA));
+    }
 
     xmlhttpPost(cg_get_global("api_url"), 'fun=get_txs&data='+json_str,
         function(response) {
@@ -735,7 +760,9 @@ function cg_wall_get_rawtx_range(tab, txid, offset, fsize, graffiti_nr) {
         return;
     }
 
-    cg_push_status(cg_translate(CG_TXT_WALL_LOADING_RAWTX_SEGMENT));
+    cg_push_status(
+        cg_translate(CG_TXT_WALL_LOADING_GRAFFITI, [graffiti_nr])
+    );
 
     xmlhttpGet(
         "https://cryptograffiti.info/rawtx/"+txid, "",
@@ -759,11 +786,11 @@ function cg_wall_get_rawtx_range(tab, txid, offset, fsize, graffiti_nr) {
             graffiti.classList.add("cg-wall-graffiti-decoding");
 
             if (response === false) {
-                status = cg_translate(CG_TXT_WALL_LOADING_RAWTX_SEGMENT_ERROR);
+                status = cg_translate(CG_TXT_WALL_LOADING_GRAFFITI_ERROR);
             }
             else if (response === null ) {
                 status = cg_translate(
-                    CG_TXT_WALL_LOADING_RAWTX_SEGMENT_TIMEOUT
+                    CG_TXT_WALL_LOADING_GRAFFITI_TIMEOUT
                 );
             }
 

@@ -253,3 +253,19 @@ function is_empty(obj){
 
     return true;
 }
+
+function sprintf(fmt, args) {
+    var pieces = fmt.split("%s");
+    var result = "";
+
+    for (var i=0; i<pieces.length; ++i) {
+        if (i >= 1 && (i-1) < args.length) {
+            result += args[i-1];
+        }
+
+        result += pieces[i];
+    }
+
+    return result;
+}
+

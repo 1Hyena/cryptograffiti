@@ -3,7 +3,7 @@ var CG_LOG_ALERT   = 1;
 var CG_LOG_WARNING = 2;
 
 var GIuGDtd14GQaDKh9TfVKGQJS = {
-    "version"    : "2.00",
+    "version"    : "2.01",
     "language"   : "en",
     "api_url"    : "",
     "hashtag"    : null,
@@ -407,11 +407,10 @@ function cg_refresh_footer_status() {
     var status_message = "";
     var status_level   = CG_LOG_NORMAL;
 
-    if (cg_first_status() !== null) {
+    while (cg_first_status() !== null) {
         var status = cg_first_status();
 
-        status_message = status.text;
-        status_level   = status.level;
+        status_level = status.level;
 
         if (status.presentation_timestamp === null) {
             status.presentation_timestamp = Math.floor(Date.now() / 1000);
@@ -419,7 +418,8 @@ function cg_refresh_footer_status() {
 
         var time_to_live = 2+2*status_level;
 
-        if (get_timestamp_age(status.presentation_timestamp) > time_to_live) {
+        if (get_timestamp_age(status.presentation_timestamp) > time_to_live
+        ||  cg_status_count() > 1) {
             cg_pop_status();
 
             while ( (status = cg_first_status()) !== null ) {
@@ -433,8 +433,13 @@ function cg_refresh_footer_status() {
                 else break;
             }
         }
+        else {
+            status_message = status.text;
+            break;
+        }
     }
-    else {
+
+    if (status_message === "") {
         if (cg_get_global("online") === null) {
             status_message = cg_translate(CG_TXT_MAIN_PLEASE_WAIT);
         }
@@ -870,8 +875,9 @@ function cg_sfx_rattle(volume) {
     cg_sfx("sfx_rattle_"+snd);
 }
 
-function cg_translate(text) {
-    return text[cg_get_global("language")];
+function cg_translate(text, args) {
+    args = typeof args !== 'undefined' ? args : ([]);
+    return sprintf(text[cg_get_global("language")], args);
 }
 
 function cg_push_status(str, lvl) {
@@ -899,6 +905,11 @@ function cg_first_status() {
     var status = cg_get_global("status");
     if (status.length === 0) return null;
     return status[0];
+}
+
+function cg_status_count() {
+    var status = cg_get_global("status");
+    return status.length;
 }
 
 function cg_bug(arg) {
