@@ -27,9 +27,10 @@ while IFS='' read -r line || [[ -n "$line" ]]; do
             fi
         done
 
-        printf "Compiling CSS...\n"
-        cat ${files} | yui-compressor --verbose --type css --charset utf8 >> "$out"
+        printf "Compiling: %s\n" "${files}"
+        java -jar ../bin/closure-stylesheets.jar --allow-unrecognized-properties ${files} >> "$out"
         printf "\n" >> "${out}"
+
         continue
     fi
 
@@ -50,9 +51,10 @@ while IFS='' read -r line || [[ -n "$line" ]]; do
         done
 
         printf "<script>\n" >> "$out"
-        printf "Compiling JavaScript...\n"
-        cat ${files} | yui-compressor --verbose --type js --charset utf8 -v >> "$out"
+        printf "Compiling: %s\n" "${files}"
+        java -jar ../bin/closure-compiler.jar ${files} >> "$out"
         printf "\n</script>\n" >> "$out"
+
         continue
     fi
 

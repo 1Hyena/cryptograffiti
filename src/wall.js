@@ -13,6 +13,16 @@ function cg_wall_construct(main) {
     tab["scrolled_bottom"] = false;
     tab["scrolled_top"] = false;
     tab["refresh_visible"] = false;
+    tab["call_timestamps"] = {
+        spray : {
+            timestamp : 0,
+            fun : cg_sfx_spray
+        },
+        rattle : {
+            timestamp : 0,
+            fun : cg_sfx_rattle
+        }
+    };
 
     var headbuf = document.createElement("div");
     var bodybuf = document.createElement("div");
@@ -799,11 +809,21 @@ function cg_wall_decode_graffiti(tab, graffiti, data) {
             media.appendChild(link);
 
             setTimeout(
-                function(g, m){
+                function(g, m, t){
                     m.classList.add("cg-poofin");
                     g.appendChild(m);
+
+                    var newest = (
+                        t.graffiti.order.length > 0
+                            ? ""+t.graffiti.order[t.graffiti.order.length-1]
+                            : ""
+                    );
+
+                    if (newest === g.getAttribute("data-graffiti-nr")) {
+                        cg_wall_call(t, "spray");
+                    }
                 },
-                Math.floor(Math.random() * 1000), graffiti, media
+                Math.floor(Math.random() * 1000), graffiti, media, tab
             );
 
             graffiti.classList.remove("cg-wall-graffiti-decoding");
@@ -1074,5 +1094,17 @@ function cg_wall_forget_old_txs(tab) {
     }
 
     return removed_frames.length;
+}
+
+function cg_wall_call(tab, fun) {
+    if (fun in tab.call_timestamps) {
+        var timestamp = Math.floor(Date.now() / 1000);
+
+        if (timestamp - tab.call_timestamps[fun].timestamp > 1) {
+            tab.call_timestamps[fun].timestamp = timestamp;
+            tab.call_timestamps[fun].fun();
+        }
+    }
+    else cg_bug(fun);
 }
 

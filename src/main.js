@@ -273,12 +273,6 @@ function cg_check_key(e) {
         // down arrow
         cg_set_global("scroll_key", true);
     }
-    else if (e.keyCode == '37') {
-       // left arrow
-    }
-    else if (e.keyCode == '39') {
-       // right arrow
-    }
 }
 
 function cg_construct(cg) {
@@ -454,7 +448,6 @@ function cg_refresh_footer_status() {
             div.removeChild(div.lastChild);
         }
 
-        div.appendChild(document.createTextNode(status_message));
         div.setAttribute('data-status', status_message);
     }
 
