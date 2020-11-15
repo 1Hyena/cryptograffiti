@@ -355,8 +355,21 @@ function cg_wall_manage_frames(tab) {
                 var greatest_tx_nr = cg_wall_get_greatest_tx_nr(tab);
 
                 if (tab.graffiti.data[graffiti_nr].txnr !== greatest_tx_nr) {
+                    var scroll_height_before = tab.element.scrollHeight;
+                    var scroll_top_before    = tab.element.scrollTop;
+
                     if (cg_wall_move_row(tab, headbuf, bodybuf)) {
                         import_graffiti = true;
+
+                        var scroll_height_after = tab.element.scrollHeight;
+
+                        if (scroll_height_before < scroll_height_after) {
+                            tab.element.scrollTop = (
+                                scroll_top_before +
+                                scroll_height_after -
+                                scroll_height_before
+                            );
+                        }
                     }
                 }
             }
@@ -861,12 +874,12 @@ function cg_wall_decode_graffiti(tab, graffiti, data) {
 
 function cg_wall_scrolled_top() {
     var wall = document.getElementById("cg-tab-wall");
-    return Math.ceil(wall.scrollTop) === 0;
+    return Math.floor(wall.scrollTop) === 0;
 }
 
 function cg_wall_scrolled_bottom() {
     var wall = document.getElementById("cg-tab-wall");
-    return Math.ceil(wall.scrollHeight - wall.scrollTop) <= wall.clientHeight;
+    return (wall.scrollHeight - Math.ceil(wall.scrollTop)) <= wall.clientHeight;
 }
 
 function cg_wall_should_load_new_txs(tab) {
@@ -1076,6 +1089,9 @@ function cg_wall_remove_old_frames(tab) {
 }
 
 function cg_wall_forget_new_txs(tab) {
+    var scroll_height_before = tab.element.scrollHeight;
+    var scroll_top_before = tab.element.scrollTop;
+
     var removed_frames = cg_wall_remove_new_frames(tab);
 
     for (var i=0; i<removed_frames.length; ++i) {
@@ -1094,6 +1110,15 @@ function cg_wall_forget_new_txs(tab) {
             }
             else cg_bug();
         }
+    }
+
+    var scroll_height_after = tab.element.scrollHeight;
+    var scroll_height_change = scroll_height_after - scroll_height_before;
+
+    if (scroll_height_change < 0) {
+        tab.element.scrollTop = Math.max(
+            scroll_top_before + scroll_height_change, 0
+        );
     }
 
     return removed_frames.length;
