@@ -157,26 +157,23 @@ step() {
                 elif [[ ! -z "${AUTH}" ]]; then
                     log "Posting ${ghash} to Slack."
 
+                    local slack_img="${CACH}${ghash}"
                     local slack_msg=$(
-                        printf      \
-                            "TX %s" \
-                            "<https://bchsvexplorer.com/tx/${txid}|${txid}>"
+                        printf "TX <https://bchsvexplorer.com/tx/%s|%s>" \
+                        "${txid}" "${txid}"
                     )
 
                     if [ -z "${TIMESTAMP}" ] ; then
-                        local slack_img="${CACH}${ghash}"
-
-                        slack_img=$(
-                            printf "%s\n " "${slack_img}"
-                        )
-
                         local slack_req_json=""
                         slack_req_json+='{"channel":"cryptograffiti",'
-                        slack_req_json+='"unfurl_links":true,'
+                        slack_req_json+='"unfurl_links":false,'
                         slack_req_json+='"unfurl_media":true,"text":$str,'
-                        slack_req_json+='"attachments":[]}'
+                        slack_req_json+='"attachments":[{"image_url":'
+                        slack_req_json+='$imgurl,"title":$fhash}]}'
                         local slack_req=$(
-                            jq -M -nc --arg str "${slack_img}${slack_msg}" \
+                            jq -M -nc --arg str "${slack_msg}" \
+                            --arg imgurl "${slack_img}"        \
+                            --arg fhash "${ghash}"             \
                             "${slack_req_json}"
                         )
 
@@ -216,20 +213,18 @@ step() {
                             printf "%s" "${slack_resp}" | jq . >/dev/stderr
                         fi
                     else
-                        local slack_img="${CACH}${ghash}"
-
-                        slack_img=$(
-                            printf "%s\n " "${slack_img}"
-                        )
-
                         local slack_req_json=""
-                        slack_req_json+='{"unfurl_links":true,'
-                        slack_req_json+='"unfurl_media":true,"channel":$chid,'
-                        slack_req_json+='"ts":$ts,"text":$str,"attachments":'
-                        slack_req_json+='[]}'
+                        slack_req_json+='{"unfurl_links":false,'
+                        slack_req_json+='"unfurl_media":true,'
+                        slack_req_json+='"channel":$chid,'
+                        slack_req_json+='"ts":$ts,"text":$str,'
+                        slack_req_json+='"attachments":[{"image_url":'
+                        slack_req_json+='$imgurl,"title":$fhash}]}'
                         local slack_req=$(
-                            jq -M -nc --arg str "${slack_img}${slack_msg}"  \
+                            jq -M -nc --arg str "${slack_msg}"              \
                             --arg ts "${TIMESTAMP}" --arg chid "${CHAN_ID}" \
+                            --arg imgurl "${slack_img}"                     \
+                            --arg fhash "${ghash}"                          \
                             "${slack_req_json}"
                         )
 
@@ -260,7 +255,7 @@ step() {
                             && [[ ! -z "${LAST_HASH}" ]] ; then
                                 slack_req_json=""
                                 slack_req_json+='{"channel":"cryptograffiti",'
-                                slack_req_json+='"unfurl_links":true,'
+                                slack_req_json+='"unfurl_links":false,'
                                 slack_req_json+='"unfurl_media":true,'
                                 slack_req_json+='"thread_ts":$ts,"text":$str,'
                                 slack_req_json+='"attachments":[{"image_url":'
