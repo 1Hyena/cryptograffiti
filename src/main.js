@@ -477,7 +477,6 @@ function cg_load_constants() {
     var api_usage = cg_get_global("api_usage");
 
     if (api_usage.rpm + 10 >= api_usage.max_rpm) {
-        tab.loading_txs = 0;
         return;
     }
     else api_usage.rpm++;
