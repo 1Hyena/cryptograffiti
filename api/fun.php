@@ -641,7 +641,7 @@ function extract_nrs($var, $args, &$result) {
                 $result[$var][] = $nr;
             }
             else {
-                $result[$var] = null;
+                $result[$var] = false;
                 return false;
             }
         }
@@ -1761,8 +1761,12 @@ function fun_get_graffiti($link, $user, $guid, $graffiti_nr, $count, $back, $mim
 function fun_get_txs(
     $link, $user, $guid, $tx_nr, $nrs, $count, $back, $mimetype, $cache, $height
 ) {
-    if ($count  === null) {
+    if ($count === null) {
         return make_failure(ERROR_INVALID_ARGUMENTS, '`count` is invalid.');
+    }
+
+    if ($nrs === false) {
+        return make_failure(ERROR_INVALID_ARGUMENTS, '`nrs` is invalid.');
     }
 
     if ($mimetype !== null) $mimetype = $link->real_escape_string($mimetype);
