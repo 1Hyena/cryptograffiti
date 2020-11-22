@@ -635,8 +635,9 @@ function extract_nrs($var, $args, &$result) {
     &&  is_array($args[$var])) {
         $result[$var] = array();
         foreach ($args[$var] as $index => $nr) {
-            if (strlen($args[$var]) < 10
-            &&  is_num($args[$var])) {
+            if (is_string($nr)
+            &&  strlen($nr) < 10
+            &&  is_num($nr)) {
                 $result[$var][] = $nr;
             }
             else {
