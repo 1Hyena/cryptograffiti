@@ -1837,7 +1837,7 @@ function fun_get_txs(
             "((select `nr` AS txnr, `time` as txtime, `txid`, `size` AS ".
             "txsize from `tx` where (".$cache_condition.") AND (".
             $height_condition.") AND (".$nrset_condition.") AND `modified` IS ".
-            "NOT NULL AND `modified` > (NOW() - INTERVAL 1 minute) AND exists ".
+            "NOT NULL AND `modified` > (NOW() - INTERVAL 8 second) AND exists ".
             "(SELECT `nr` FROM `graffiti` WHERE `graffiti`.`txid` = ".
             "`tx`.`txid` ".$subwhere.") order by `requests` desc limit ".$limit.
             ") im) INNER JOIN `graffiti` ic ON `im`.`txid` = `ic`.`txid` ".
