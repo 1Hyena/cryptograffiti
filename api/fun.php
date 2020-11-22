@@ -1765,7 +1765,8 @@ function fun_get_txs(
         return make_failure(ERROR_INVALID_ARGUMENTS, '`count` is invalid.');
     }
 
-    if ($nrs === false) {
+    if ($nrs === false
+    ||  $nrs !== null && (!is_array($nrs) || count($nrs) < 1)) {
         return make_failure(ERROR_INVALID_ARGUMENTS, '`nrs` is invalid.');
     }
 
