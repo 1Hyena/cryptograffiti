@@ -289,7 +289,7 @@ function assure_stats($link) {
  `date` date NOT NULL DEFAULT current_timestamp() COMMENT 'Date of the statistics.',
  `time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT 'Last time this record was updated.',
  `decoder` tinyint(1) NOT NULL DEFAULT 1 COMMENT 'TRUE when CryptoGraffiti Decoder is online.',
- `encoder` tinyint(1) NOT NULL DEFAULT 1 COMMENT 'TRUE when CryptoGraffiti Encoder is online.',
+ `encoder` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'TRUE when CryptoGraffiti Encoder is online.',
  `sat_byte` bigint(20) unsigned NOT NULL DEFAULT 0 COMMENT 'Currently estimated fee (satoshis per byte).',
  `btc_donations` bigint(20) unsigned NOT NULL DEFAULT 0 COMMENT 'Number of satoshis received as donations.',
  `steps` int(10) unsigned NOT NULL DEFAULT 0 COMMENT 'Number of steps made with cron_second task calls.',
