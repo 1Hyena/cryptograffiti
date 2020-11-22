@@ -14,9 +14,7 @@ define("ERROR_NONCE",               "ERROR_NONCE"              ); // unexpected 
 define("ERROR_ACCESS_DENIED",       "ERROR_ACCESS_DENIED"      ); // banned or invalid IP address
 
 // GAME CONSTANTS:
-define("API_VERSION",                                    "1.08"); // Version identifier for this particular implementation of the API.
-define("SATOSHIS_PER_BITCOIN",                        100000000); // All bitcoin amounts are converted to integers known as satoshis.
-define("BTC_ADDRESS",      "1MVpQJA7FtcDrwKC6zATkZvZcxqma4JixS"); // Server's bitcoin address used to deposit bitcoins.
+define("API_VERSION",                                    "2.00"); // Version identifier for this particular implementation of the API.
 define("STATS_PER_QUERY",                                    50); // Maximum number of stats rows to be returned as a response to `get_stats`.
 define("LOGS_PER_QUERY",                                     50); // Maximum number of log rows to be returned as a response to `get_log`.
 define("ORDERS_PER_QUERY",                                   50); // Maximum number of order rows to be returned as a response to `get_*_orders`.
@@ -25,9 +23,6 @@ define("CAPTCHA_TIMEOUT",                                   600); // Number of s
 define("MAX_DATA_SIZE",                                  262144); // Maximum number of uncompressed and unencrypted data bytes accepted as valid input.
 define("TXS_PER_QUERY",                                    1000); // Maximum number of transactions to be dealt with per single API call.
 define("ROWS_PER_QUERY",                                   1000); // Maximum number of rows to be dealt with per single API call.
-define("MIN_BTC_DONATION",                                    1); // Minimum number of satoshis that count for a donation.
-define("MIN_BTC_OUTPUT",                                    546); // Minimum number of satoshis per TX output.
-define("ENCODER_FEE_AMPLIFIER",                             1.0); // Amplifier for the estimatefee results.
 
 // SECURITY ROLES:
 define("ROLE_DECODER",                                        1); // Decoder (Can submit transactions containing plaintext.)
@@ -289,9 +284,8 @@ function assure_stats($link) {
  `date` date NOT NULL DEFAULT current_timestamp() COMMENT 'Date of the statistics.',
  `time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT 'Last time this record was updated.',
  `decoder` tinyint(1) NOT NULL DEFAULT 1 COMMENT 'TRUE when CryptoGraffiti Decoder is online.',
- `encoder` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'TRUE when CryptoGraffiti Encoder is online.',
+ `encoder` tinyint(1) NOT NULL DEFAULT 1 COMMENT 'TRUE when CryptoGraffiti Encoder is online.',
  `sat_byte` bigint(20) unsigned NOT NULL DEFAULT 0 COMMENT 'Currently estimated fee (satoshis per byte).',
- `btc_donations` bigint(20) unsigned NOT NULL DEFAULT 0 COMMENT 'Number of satoshis received as donations.',
  `steps` int(10) unsigned NOT NULL DEFAULT 0 COMMENT 'Number of steps made with cron_second task calls.',
  `overload` int(10) unsigned NOT NULL DEFAULT 0 COMMENT 'Number of times cron_second task iteration exceeded the time limit.',
  `sessions` int(10) unsigned NOT NULL DEFAULT 0 COMMENT 'Number of sessions currently active.',
@@ -362,26 +356,6 @@ function assure_captcha($link) {
 
 function assure_log($link) {
     return assure_table($link, 'log', "CREATE TABLE `log` (  `nr` bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT 'Primary key. Unsigned big integer.',  `file` varchar(8) NOT NULL COMMENT 'File name of the originator script.',  `line` int(10) unsigned NOT NULL COMMENT 'Line number of the originating function call.',  `ip` varchar(45) DEFAULT NULL COMMENT 'IP associated with the cause of this log entry.',  `session_nr` int(10) unsigned DEFAULT NULL COMMENT 'Session number associated with the origination of this log entry.',  `fun` varchar(32) DEFAULT NULL COMMENT 'API function associated with the origination of this log entry.',  `level` int(11) NOT NULL DEFAULT '0' COMMENT 'Importance level of this log entry.',  `text` varchar(1024) NOT NULL DEFAULT '' COMMENT 'Textual body of this log entry.',  `creation_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Creation time of this log entry.',  PRIMARY KEY (`nr`),  KEY `ip` (`ip`,`session_nr`,`fun`,`level`)) ENGINE=InnoDB DEFAULT CHARSET=latin1");
-}
-
-function assure_btc_tx($link) {
-    return assure_table($link, 'btc_tx', "CREATE TABLE `btc_tx` (
- `nr` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'Unique integer identifier.',
- `type` varchar(64) DEFAULT NULL COMMENT 'Message content type.',
- `fsize` int(10) unsigned DEFAULT NULL COMMENT 'If null then we do not know if the TX contains a block chain file. If zero then it does not contain a file. If positive then it indicates the size of the block chain file found from this TX.',
- `amount` bigint(20) unsigned NOT NULL DEFAULT 0 COMMENT 'Number of satoshis included as donation.',
- `creation_time` timestamp NULL DEFAULT NULL COMMENT 'Indicates the date and time when this entry was inserted.',
- `last_update` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT 'Indicates the last update on this entry.',
- `confirmed` tinyint(1) DEFAULT NULL COMMENT 'TRUE when enough confirmations. FALSE when not enough. NULL when unknown.',
- `hash` binary(32) DEFAULT NULL COMMENT 'Transaction hash.',
- `msg_hash` binary(32) DEFAULT NULL COMMENT 'Hash of the message encoded into this transaction.',
- PRIMARY KEY (`nr`),
- UNIQUE KEY `hash` (`hash`),
- KEY `confirmed` (`confirmed`),
- KEY `amount` (`amount`),
- KEY `type` (`type`),
- KEY `msg_hash` (`msg_hash`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1");
 }
 
 function assure_graffiti($link) {
@@ -1265,16 +1239,12 @@ function fun_get_log($link, $user, $guid, $log_nr, $count) {
 
 function fun_get_constants($link, $user, $guid) {
     $response = array('constants' => array( "API_VERSION"                   => API_VERSION,
-                                            "SATOSHIS_PER_BITCOIN"          => SATOSHIS_PER_BITCOIN,
-                                            "BTC_ADDRESS"                   => BTC_ADDRESS,
-                                            "ENCODER_FEE_AMPLIFIER"         => ENCODER_FEE_AMPLIFIER,
                                             "STATS_PER_QUERY"               => STATS_PER_QUERY,
                                             "LOGS_PER_QUERY"                => LOGS_PER_QUERY,
                                             "ORDERS_PER_QUERY"              => ORDERS_PER_QUERY,
                                             "SESSION_TIMEOUT"               => SESSION_TIMEOUT,
                                             "CAPTCHA_TIMEOUT"               => CAPTCHA_TIMEOUT,
                                             "MAX_DATA_SIZE"                 => MAX_DATA_SIZE,
-                                            "MIN_BTC_OUTPUT"                => MIN_BTC_OUTPUT,
                                             "TXS_PER_QUERY"                 => TXS_PER_QUERY,
                                             "ROWS_PER_QUERY"                => ROWS_PER_QUERY ) );
 
@@ -1379,162 +1349,6 @@ function fun_set_stat($link, $user, $guid, $name, $value) {
     }
 
     return make_failure(ERROR_NO_CHANGE, 'Failed to set stat, value extraction failed.');
-}
-
-function fun_set_btc_txs($link, $user, $guid, $txs) {
-    if ($guid === null) return make_failure(ERROR_INVALID_ARGUMENTS, '`guid` is invalid.');
-    if ($txs  === null) return make_failure(ERROR_INVALID_ARGUMENTS, '`txs` is invalid.');
-    if (!has_access($link, $guid, ROLE_DECODER)) return make_failure(ERROR_MISUSE, 'Access denied!');
-    if (is_paralyzed($link, $guid)) return make_failure(ERROR_NO_CHANGE, 'Failed to set transactions, session is paralyzed!');
-
-    if (($c=count($txs)) > TXS_PER_QUERY) {
-        return make_failure(ERROR_MISUSE, '`txs` contains '.$c.' elements exceeding the limit of '.TXS_PER_QUERY.'.');
-    }
-
-    $errno   = 0;
-    $error   = '';
-    $changes = 0;
-    $added   = 0;
-    $donation= 0;
-    $spam    = 0;
-    $spam_tx = null;
-    foreach ($txs as $tx_hash => $data) {
-        if ($data['conf'] === null) continue;
-
-        $confirmed = 'FALSE';
-        $amount    = null;
-        $msg_type  = null;
-        $fsize     = null;
-        $msg_hash  = null;
-
-        if ($data['conf'] > 0) $confirmed = 'TRUE';
-        if ($data['amount'] !== null ) {
-            $amount = $data['amount'];
-            $donation += $amount;
-        }
-        if ($data['type']  !== null) $msg_type = $data['type'];
-        if ($data['fsize'] !== null) $fsize    = $data['fsize'];
-
-        if ($data['hash'] !== null) {
-            $msg_hash = $data['hash'];
-
-            // Spam protection only activates for transactions that have not made
-            // a donation to cryptograffiti.info.
-            if ($amount === null || $amount === 0) {
-                // We first check if some TX already exists with the same message hash
-                // but with a different transaction hash. If it does and it is not older
-                // than 1 month then we are not allowing this TX in our database, to
-                // avoid spam. Such spam can naturally happen if someone regularly
-                // receives coins to an address that can be decoded as human readable
-                // text. If same TX hash already exists in our DB with the same message
-                // hash then we must treat this part of the request as an update instead
-                // of ignoring it.
-                //
-                // Race condition BUG here:
-                // If another set_btc_txs request is made right after the following
-                // query and it adds a different TX with the same msg_hash for the first
-                // time then both TXs will be added to the DB. However, this behavior
-                // can be tolerated here because such race conditions happen very rarely
-                // and having a couple of duplicate messages now and then is not really
-                // a big deal.
-
-                $q = db_query($link, "SELECT `nr` FROM `btc_tx` WHERE `msg_hash` = X'".$msg_hash.
-                                     "' AND `hash` != X'".$tx_hash."' AND `creation_time` IS NOT NULL AND".
-                                     " `creation_time` > (NOW() - INTERVAL 30 day) LIMIT 1");
-                if ($q['errno'] === 0) {
-                    if ($q['result']->fetch_assoc()) {
-                        // Some other TX already exists with the same hash. Ignore this TX.
-                        $spam++;
-                        $spam_tx = $tx_hash;
-                        continue;
-                    }
-                }
-                else {
-                    $errno = $q['errno'];
-                    $error = $q['error'];
-                    if ($errno !== 0) set_critical_error($link);
-                    continue;
-                }
-            }
-        }
-
-        $nr = insert_hex_unique($link, 'btc_tx', array('hash' => $tx_hash));
-        if ($nr === false) {
-            db_log($link, $user, "SQL failure when inserting TX ".$tx_hash.", retrying.", LOG_LEVEL_ALERT);
-            $nr = insert_hex_unique($link, 'btc_tx', array('hash' => $tx_hash));
-            if ($nr === false) {
-                db_log($link, $user, "Repeated failure when inserting TX ".$tx_hash.".", LOG_LEVEL_ALERT);
-            }
-        }
-
-        if ($nr === null) {
-            $query_string = "UPDATE `btc_tx` SET ".
-                         ($amount   !== null ? "`amount` = '".$amount."', "      : "").
-                         ($msg_type !== null ? "`type` = '".$msg_type."', "      : "").
-                         ($fsize    !== null ? "`fsize` = '".$fsize."', "        : "").
-                         ($msg_hash !== null ? "`msg_hash` = X'".$msg_hash."', " : "").
-                         "`confirmed` = ".$confirmed." ".
-                         "WHERE `hash` = X'".$tx_hash."'";
-            $link->query($query_string);
-            $errno = $link->errno;
-            $error = $link->error;
-            if ($link->affected_rows !== 0) {
-                db_log($link, $user, $query_string);
-                $changes++;
-            }
-        }
-        else if ($nr !== false) {
-            $added++;
-
-            $query_string = "UPDATE `btc_tx` SET ".
-                         "`confirmed` = ".$confirmed.", ".
-                         ($amount   !== null ? "`amount` = '".$amount."', "      : "").
-                         ($msg_type !== null ? "`type` = '".$msg_type."', "      : "").
-                         ($fsize    !== null ? "`fsize` = '".$fsize."', "        : "").
-                         ($msg_hash !== null ? "`msg_hash` = X'".$msg_hash."', " : "").
-                         "`creation_time` = NOW() WHERE `nr` = '".$nr."'";
-            $link->query($query_string);
-            $errno = $link->errno;
-            $error = $link->error;
-            if ($fsize !== null && $msg_type === null) db_log($link, $user, "Query setting fsize without mime type: ".$query_string, LOG_LEVEL_ERROR);
-            if ($link->affected_rows === 0) set_critical_error($link);
-        }
-        else set_critical_error($link);
-    }
-
-    db_log($link, $user, 'Added '.$added.', updated '.$changes.' Bitcoin transaction'.($changes === 1 ? '.' : 's.'));
-    if ($spam > 0) {
-        if ($spam === 1) db_log($link, $user, 'Ignored 1 BTC TX '.$spam_tx.' (spam detected).');
-        else             db_log($link, $user, 'Ignored '.$spam.' BTC TXs (spam detected).');
-    }
-
-    if ($donation > 0) {
-        $donations_before = intval(get_stat($link, 'btc_donations'));
-        $donations_after  = $donations_before;
-        $result = $link->query("SELECT SUM(`amount`) AS `donations` FROM `btc_tx`");
-             if ($link->errno !== 0) set_critical_error($link, $link->error);
-        else if ($row = $result->fetch_assoc()) {
-            $donations_after = intval($row['donations']);
-        }
-
-        if ($donations_after !== $donations_before) {
-            set_stat($link, "btc_donations", $donations_after);
-            if ($donations_before < $donations_after) {
-                $new_donations = $donations_after - $donations_before;
-                $new_donations/= SATOSHIS_PER_BITCOIN;
-                $donation     /= SATOSHIS_PER_BITCOIN;
-                if ($donations_before === 0) {
-                    db_log($link, $user, 'Received a donation of '.sprintf("%.8f", $donation).' BTC.', LOG_LEVEL_FINANCIAL);
-                }
-                else {
-                    db_log($link, $user, 'Received a donation of '.sprintf("%.8f", $new_donations).' BTC.', LOG_LEVEL_FINANCIAL);
-                }
-            }
-        }
-    }
-
-    if ($errno !== 0) return make_failure(ERROR_SQL, $error);
-    return make_success();
 }
 
 function fun_set_txs($link, $user, $guid, $graffiti) {
@@ -1864,116 +1678,6 @@ function fun_set_txs($link, $user, $guid, $graffiti) {
     return make_success();
 }
 
-
-function fun_get_msg_metadata($link, $user, $guid, $txids) {
-    if ($txids  === null) return make_failure(ERROR_INVALID_ARGUMENTS, '`txids` is invalid.');
-
-    $c = count($txids);
-    if ($c > TXS_PER_QUERY) return make_failure(ERROR_MISUSE, '`txids` contains '.$c.' elements exceeding the limit of '.TXS_PER_QUERY.'.');
-
-    $response = array();
-
-    if ($c <= 0) {
-        $response['payload'] = json_decode("[]");
-        return make_success($response);
-    }
-
-    $buffer =array();
-    $payload=array();
-    $hashes =array();
-    foreach ($txids as $index => $hash) {
-        $hashes[] = "X'".$hash."'";
-    }
-
-    $query = "SELECT *, CONVERT_TZ(`creation_time`, @@session.time_zone, '+00:00') AS `utc_creation` ".
-             "FROM `btc_tx` WHERE `hash` IN (".implode(',',$hashes).")";
-
-    $result = $link->query($query);
-    if ($link->errno === 0) {
-        while ($row = $result->fetch_assoc()) {
-            $hash = bin2hex($row['hash']);
-            $buffer[$hash] = array("nr"            => $row['nr'],
-                                   "type"          => $row['type'],
-                                   "fsize"         => $row['fsize'],
-                                   "amount"        => $row['amount'],
-                                   "confirmed"     => $row['confirmed'],
-                                   "creation_UTC"  => $row['utc_creation']
-                                  );
-        }
-        $result->free();
-
-        foreach ($txids as $index => $hash) {
-            if (array_key_exists($hash, $buffer)) $payload[] = $buffer[$hash];
-            else                                  $payload[] = null;
-        }
-        $response['payload'] = $payload;
-    }
-    else {
-        return make_failure(ERROR_SQL, $link->error);
-    }
-
-    return make_success($response);
-}
-
-function fun_get_btc_graffiti($link, $user, $guid, $graffiti_nr, $count, $back, $mimetype) {
-    if ($count  === null) return make_failure(ERROR_INVALID_ARGUMENTS, '`count` is invalid.');
-
-    if ($mimetype !== null) $mimetype = $link->real_escape_string($mimetype);
-
-    $limit = intval(min(intval($count), TXS_PER_QUERY));
-
-    $response = array('txs' => null);
-    $graffiti = array();
-
-    if ($limit <= 0) return make_success($response);
-
-    $where = "";
-    $query = null;
-
-    if ($graffiti_nr === null) {
-        if ($mimetype !== null) $where = "WHERE `type` LIKE '".$mimetype."%'";
-        $query = "SELECT *, CONVERT_TZ(`creation_time`, @@session.time_zone, '+00:00') AS `utc_creation` ".
-                 "FROM `btc_tx` ".$where." ORDER BY `nr` DESC LIMIT ".$limit;
-    }
-    else if ($back === '1') {
-        if ($mimetype !== null) $where = "AND `type` LIKE '".$mimetype."%'";
-        $query = "SELECT *, CONVERT_TZ(`creation_time`, @@session.time_zone, '+00:00') AS `utc_creation` ".
-                 "FROM `btc_tx` WHERE `nr` <= '".$graffiti_nr."' ".$where." ORDER BY `nr` DESC LIMIT ".$limit;
-    }
-    else if ($back === '0' || $back === null) {
-        if ($mimetype !== null) $where = "AND `type` LIKE '".$mimetype."%'";
-        $query = "SELECT *, CONVERT_TZ(`creation_time`, @@session.time_zone, '+00:00') AS `utc_creation` ".
-                 "FROM `btc_tx` WHERE `nr` >= '".$graffiti_nr."' ".$where." ORDER BY `nr` ASC LIMIT ".$limit;
-    }
-
-    if ($query === null) {
-        return make_failure(ERROR_INTERNAL, 'Unexpected program flow.');
-    }
-
-    $result = $link->query($query);
-    if ($link->errno === 0) {
-        while ($row = $result->fetch_assoc()) {
-            $graffiti[] = array("nr"            => $row['nr'],
-                                "type"          => $row['type'],
-                                "fsize"         => $row['fsize'],
-                                "amount"        => $row['amount'],
-                                "txid"          => bin2hex($row['hash']),
-                                "confirmed"     => $row['confirmed'],
-                                "creation_UTC"  => $row['utc_creation']
-                               );
-        }
-        $result->free();
-        $response['txs'] = $graffiti;
-    }
-    else {
-        return make_failure(ERROR_SQL, $link->error);
-    }
-
-    if ($graffiti_nr === null && is_array($response['txs'])) $response['txs'] = array_reverse($response['txs']);
-
-    return make_success($response);
-}
-
 function fun_get_graffiti($link, $user, $guid, $graffiti_nr, $count, $back, $mimetype) {
     if ($count  === null) return make_failure(ERROR_INVALID_ARGUMENTS, '`count` is invalid.');
 
@@ -2219,63 +1923,6 @@ function fun_get_txs(
     if ($tx_nr === null && is_array($response['txs'])) {
         $response['txs'] = array_reverse($response['txs']);
     }
-
-    return make_success($response);
-}
-
-function fun_get_btc_donations($link, $user, $guid, $graffiti_nr, $count, $back, $mimetype) {
-    if ($count  === null) return make_failure(ERROR_INVALID_ARGUMENTS, '`count` is invalid.');
-
-    if ($mimetype !== null) $mimetype = $link->real_escape_string($mimetype);
-
-    $limit = intval(min(intval($count), TXS_PER_QUERY));
-
-    $response = array('txs' => null);
-    $graffiti = array();
-
-    if ($limit <= 0) return make_success($response);
-
-    $where = "";
-    $query = null;
-    if ($mimetype !== null) $where = "AND `type` LIKE '".$mimetype."%'";
-
-    if ($graffiti_nr === null) {
-        $query = "SELECT *, CONVERT_TZ(`creation_time`, @@session.time_zone, '+00:00') AS `utc_creation` ".
-                 "FROM `btc_tx` WHERE `amount` >= '".MIN_BTC_DONATION."' ".$where." ORDER BY `amount` DESC LIMIT ".$limit;
-    }
-    else if ($back === '1') {
-        $query = "SELECT *, CONVERT_TZ(`creation_time`, @@session.time_zone, '+00:00') AS `utc_creation` ".
-                 "FROM `btc_tx` WHERE `nr` <= '".$graffiti_nr."' AND `amount` >= '".MIN_BTC_DONATION."' ".$where." ORDER BY `nr` DESC LIMIT ".$limit;
-    }
-    else if ($back === '0' || $back === null) {
-        $query = "SELECT *, CONVERT_TZ(`creation_time`, @@session.time_zone, '+00:00') AS `utc_creation` ".
-                 "FROM `btc_tx` WHERE `nr` >= '".$graffiti_nr."' AND `amount` >= '".MIN_BTC_DONATION."' ".$where." ORDER BY `nr` ASC LIMIT ".$limit;
-    }
-
-    if ($query === null) {
-        return make_failure(ERROR_INTERNAL, 'Unexpected program flow.');
-    }
-
-    $result = $link->query($query);
-    if ($link->errno === 0) {
-        while ($row = $result->fetch_assoc()) {
-            $graffiti[] = array("nr"            => $row['nr'],
-                                "type"          => $row['type'],
-                                "fsize"         => $row['fsize'],
-                                "amount"        => $row['amount'],
-                                "txid"          => bin2hex($row['hash']),
-                                "confirmed"     => $row['confirmed'],
-                                "creation_UTC"  => $row['utc_creation']
-                               );
-        }
-        $result->free();
-        $response['txs'] = $graffiti;
-    }
-    else {
-        return make_failure(ERROR_SQL, $link->error);
-    }
-
-    if ($graffiti_nr === null && is_array($response['txs'])) $response['txs'] = array_reverse($response['txs']);
 
     return make_success($response);
 }
@@ -2568,15 +2215,6 @@ function cron_tick($link) {
                 }
             }
         }
-    }
-
-    // Make sure donations are up to date:
-    $result = $link->query("SELECT SUM(`amount`) AS `donations` FROM `btc_tx`");
-
-    if ($link->errno !== 0) set_critical_error($link, $link->error);
-    else if ($row = $result->fetch_assoc()) {
-        $donations = intval($row['donations']);
-        set_stat($link, "btc_donations", $donations);
     }
 
     // Inactive captchas get deleted so that the user must solve a new CAPTCHA

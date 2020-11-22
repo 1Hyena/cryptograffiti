@@ -1,4 +1,4 @@
-PUBLIC API, 15. 06. 2019
+PUBLIC API, 22. 11. 2020
 --------------------------------------------------------------------------------
 
 ##### TERMS OF USE #############################################################
@@ -34,9 +34,6 @@ error info as described below.
 
 ##### CONSTANTS ################################################################
 These values can be received with an API call of `get_constants` function.
-* `SATOSHIS_PER_BITCOIN` - bitcoin amounts are converted to integers (satoshis)
-* `BTC_ADDRESS`          - server's bitcoin address used to deposit bitcoins
-* `ENCODER_FEE_AMPLIFIER`- TX fee amplifier used on the results of `estimatefee`
 * `STATS_PER_QUERY`      - max number of `stats` rows returned from `get_stats`
 * `LOGS_PER_QUERY`       - max number of `log` rows returned from `get_log`
 * `ORDERS_PER_QUERY`     - max number of `order` rows from `get_*_orders` calls
@@ -45,8 +42,6 @@ These values can be received with an API call of `get_constants` function.
 * `MAX_DATA_SIZE`        - max number of uncompressed and unencrypted data bytes
 * `TXS_PER_QUERY`        - max number of TXs to be dealt with for each API call
 * `ROWS_PER_QUERY`       - max number of rows to be dealt with for each API call
-* `MIN_BTC_DONATION`     - min number of satoshis that count for a donation
-* `MIN_BTC_OUTPUT`       - min number of satoshis per TX output
 
 
 ##### APPLICATION LAYER SECURITY ###############################################
@@ -188,66 +183,6 @@ These values can be received with an API call of `get_constants` function.
     * `checksum`       --- 32-byte hex string (ALS)
 
 
-* __Get Message Metadata (deprecated)__
-    `POST https://cryptograffiti.info/api/`
-
-    Takes an array of transaction hashes as an argument. Returns an array of TX
-    metadata respectively to the input array. Each element is either an object
-    containing known graffiti metadata or `null` in case there is no metadata
-    available in the database. The length of the `txids` array cannot exceed
-    `TXS_PER_QUERY`.
-
-    _POST Parameters:_
-    * `fun`            --- `get_msg_metadata`
-    * `data`           --- JSON string with the following structure
-        * `guid`       --- 64 bytes random hex string (optional)
-        * `txids`      --- array of transaction hashes
-        * `nonce`      --- 64 bytes hex string (ALS)
-    * `sec_hash`       --- SHA256(`sec_key`) as a 64-byte hex string (ALS)
-    * `salt`           --- 32-byte hex string, must differ on each request (ALS)
-    * `checksum`       --- 32-byte hex string (ALS)
-    * `token`          --- 64 bytes hex string (optional)
-
-    _Returns a JSON dictionary:_
-    * `data`
-        * `result`     --- `SUCCESS` or `FAILURE`
-        * `error`      --- error dictionary if result was `FAILURE` (optional)
-        * `payload`    --- array of graffiti metadata (optional)
-    * `iv`             --- 32-byte hex string (ALS),
-    * `checksum`       --- 32-byte hex string (ALS)
-
-
-* __Get Bitcoin Graffiti (deprecated)__
-    `POST https://cryptograffiti.info/api/`
-
-    Returns the graffiti in the defined range. If `nr` is not sent or is invalid
-    then newest `count` of transactions (TXs) is returned. If `mimetype` is
-    specified then only the graffiti matching with the selected mime-type are
-    returned. The `count` parameter cannot exceed `TXS_PER_QUERY`.
-
-    _POST Parameters:_
-    * `fun`            --- `get_btc_graffiti`
-    * `data`           --- JSON string with the following structure
-        * `guid`       --- 64 bytes random hex string (optional)
-        * `nr`         --- the number of the first graffiti entry (optional)
-        * `count`      --- the total number of graffiti entries to be returned
-        * `back`       --- if '1' get `count` earlier than `nr` rows (optional)
-        * `mimetype`   --- expected file type, may be partial (optional)
-        * `nonce`      --- 64 bytes hex string (ALS)
-    * `sec_hash`       --- SHA256(`sec_key`) as a 64-byte hex string (ALS)
-    * `salt`           --- 32-byte hex string, must differ on each request (ALS)
-    * `checksum`       --- 32-byte hex string (ALS)
-    * `token`          --- 64 bytes hex string (optional)
-
-    _Returns a JSON dictionary:_
-    * `data`
-        * `result`     --- `SUCCESS` or `FAILURE`
-        * `error`      --- error dictionary if result was `FAILURE` (optional)
-        * `txs`        --- array of graffiti transactions (optional)
-    * `iv`             --- 32-byte hex string (ALS),
-    * `checksum`       --- 32-byte hex string (ALS)
-
-
 * __Get Graffiti__
     `POST https://cryptograffiti.info/api/`
 
@@ -323,38 +258,6 @@ These values can be received with an API call of `get_constants` function.
         * `error`      --- error dictionary if result was `FAILURE` (optional)
         * `txs`        --- array of transactions (optional)
     * `iv`             --- 32-byte hex string (ALS),
-    * `checksum`       --- 32-byte hex string (ALS)
-
-
-* __Get Bitcoin Donations (deprecated)__
-    `POST https://cryptograffiti.info/api/`
-
-    Returns the graffiti TXs that have donations included in the defined range.
-    If `nr` is not sent or is invalid then the newest `count` of graffiti TXs
-    are returned. If `mimetype` is specified then only the graffiti matching
-    with the selected mime-type are returned. The value of the `count` argument
-    cannot exceed `TXS_PER_QUERY`.
-
-    _POST Parameters:_
-    * `fun`            --- `get_btc_donations`
-    * `data`           --- JSON string with the following structure
-        * `guid`       --- 64 bytes random hex string (optional)
-        * `nr`         --- the number of the first graffiti entry (optional)
-        * `count`      --- the total number of graffiti entries to be returned
-        * `back`       --- if '1' get `count` earlier than `nr` rows (optional)
-        * `mimetype`   --- expected file type, may be partial (optional)
-        * `nonce`      --- 64 bytes hex string (ALS)
-    * `sec_hash`       --- SHA256(`sec_key`) as a 64-byte hex string (ALS)
-    * `salt`           --- 32-byte hex string, must differ on each request (ALS)
-    * `checksum`       --- 32-byte hex string (ALS)
-    * `token`          --- 64 bytes hex string (optional)
-
-    _Returns a JSON dictionary:_
-    * `data`
-        * `result`     --- `SUCCESS` or `FAILURE`
-        * `error`      --- error dictionary if result was `FAILURE` (optional)
-        * `txs`        --- array of graffiti transactions (optional)
-    * `iv`             --- 32-byte hex string (ALS)
     * `checksum`       --- 32-byte hex string (ALS)
 
 
@@ -572,38 +475,6 @@ These values can be received with an API call of `get_constants` function.
         * `result`     --- `SUCCESS` or `FAILURE`
         * `error`      --- error dictionary if result was `FAILURE` (optional)
         * `log`        --- JSON dictionary of the requested entries (optional)
-    * `iv`             --- 32-byte hex string (ALS)
-    * `checksum`       --- 32-byte hex string (ALS)
-
-
-* __Set BTC Transactions (deprecated)__
-    `POST https://cryptograffiti.info/api/`
-
-    Add a list of Bitcoin transactions. No more than `TXS_PER_QUERY` TXs can be
-    sent with this function. If that limit is exceeded the function returns
-    `FAILURE` without changing anything. Remember that all dictionary values
-    must be in string format.
-
-    _POST Parameters:_
-    * `fun`            --- `set_btc_txs`
-    * `data`           --- JSON string with the following structure
-        * `guid`       --- 64 bytes random hex string,
-        * `txs`        --- array of key-value pairs where TX hash is the key
-            * `conf`   --- number of confirmations
-            * `amount` --- number of satoshis donated (optional)
-            * `type`   --- block chain file's mime type (optional)
-            * `fsize`  --- size of the embedded block chain file (optional)
-            * `hash`   --- message hash (optional)
-        * `nonce`      --- 64 bytes hex string (ALS)
-    * `sec_hash`       --- SHA256(`sec_key`) as a 64-byte hex string (ALS)
-    * `salt`           --- 32-byte hex string, must differ on each request (ALS)
-    * `checksum`       --- 32-byte hex string (ALS)
-    * `token`          --- 64 bytes hex string (optional)
-
-    _Returns a JSON dictionary:_
-    * `data`
-        * `result`     --- `SUCCESS` or `FAILURE`
-        * `error`      --- error dictionary if result was `FAILURE` (optional)
     * `iv`             --- 32-byte hex string (ALS)
     * `checksum`       --- 32-byte hex string (ALS)
 

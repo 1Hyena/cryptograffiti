@@ -294,8 +294,6 @@ if ($l = init_sql()) {
         case 'get_session'       : $r=fun_get_session      ($l, $USER, $GUID);                                                                    break;
         case 'get_stats'         : $r=fun_get_stats        ($l, $USER, $GUID, $ARGS['start_date'],  $ARGS['end_date']);                           break;
         case 'get_log'           : $r=fun_get_log          ($l, $USER, $GUID, $ARGS['nr'],  $ARGS['count']);                                      break;
-        case 'get_msg_metadata'  : $r=fun_get_msg_metadata ($l, $USER, $GUID, $ARGS['txids']);                                                    break;
-        case 'get_btc_graffiti'  : $r=fun_get_btc_graffiti ($l, $USER, $GUID, $ARGS['nr'],  $ARGS['count'], $ARGS['back'], $ARGS['mimetype']);    break;
         case 'get_graffiti'      : $r=fun_get_graffiti     ($l, $USER, $GUID, $ARGS['nr'],  $ARGS['count'], $ARGS['back'], $ARGS['mimetype']);    break;
         case 'get_txs'           : {
             $r=fun_get_txs(
@@ -304,8 +302,6 @@ if ($l = init_sql()) {
             );
             break;
         }
-        case 'get_btc_donations' : $r=fun_get_btc_donations($l, $USER, $GUID, $ARGS['nr'],  $ARGS['count'], $ARGS['back'], $ARGS['mimetype']);    break;
-        case 'set_btc_txs'       : $r=fun_set_btc_txs      ($l, $USER, $GUID, $ARGS['txs']);                                                      break;
         case 'set_txs'           : $r=fun_set_txs          ($l, $USER, $GUID, $ARGS['graffiti']);                                                 break;
         case 'accept_order'      : $r=fun_accept_order     ($l, $USER, $GUID, $ARGS['nr']);                                                       break;
         case 'set_order'         : $r=fun_set_order        ($l, $USER, $GUID, $ARGS['nr'], $ARGS['output'], $ARGS['filled']);                     break;
@@ -414,7 +410,6 @@ function assure_tables($l) {
     if (!assure_captcha($l)     ) return make_failure(ERROR_TABLE_ASSURANCE, 'Unable to assure table `captcha`.') ;
     if (!assure_graffiti($l)    ) return make_failure(ERROR_TABLE_ASSURANCE, 'Unable to assure table `graffiti`.');
     if (!assure_tx($l)          ) return make_failure(ERROR_TABLE_ASSURANCE, 'Unable to assure table `tx`.')      ;
-    if (!assure_btc_tx($l)      ) return make_failure(ERROR_TABLE_ASSURANCE, 'Unable to assure table `btc_tx`.')  ;
     if (!assure_order($l)       ) return make_failure(ERROR_TABLE_ASSURANCE, 'Unable to assure table `order`.')   ;
 
     return true;
