@@ -631,19 +631,25 @@ function extract_txids($var, $args, &$result) {
 }
 
 function extract_nrs($var, $args, &$result) {
-    if (array_key_exists($var, $args)
-    &&  is_array($args[$var])) {
-        $result[$var] = array();
-        foreach ($args[$var] as $index => $nr) {
-            if (is_string($nr)
-            &&  strlen($nr) < 10
-            &&  is_num($nr)) {
-                $result[$var][] = $nr;
+    if (array_key_exists($var, $args)) {
+        if (is_array($args[$var])) {
+            $result[$var] = array();
+
+            foreach ($args[$var] as $index => $nr) {
+                if (is_string($nr)
+                &&  strlen($nr) < 10
+                &&  is_num($nr)) {
+                    $result[$var][] = $nr;
+                }
+                else {
+                    $result[$var] = false;
+                    return false;
+                }
             }
-            else {
-                $result[$var] = false;
-                return false;
-            }
+        }
+        else {
+            $result[$var] = false;
+            return false;
         }
     }
 
