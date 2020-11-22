@@ -297,8 +297,9 @@ if ($l = init_sql()) {
         case 'get_graffiti'      : $r=fun_get_graffiti     ($l, $USER, $GUID, $ARGS['nr'],  $ARGS['count'], $ARGS['back'], $ARGS['mimetype']);    break;
         case 'get_txs'           : {
             $r=fun_get_txs(
-                $l, $USER, $GUID, $ARGS['nr'],  $ARGS['count'], $ARGS['back'],
-                $ARGS['mimetype'], $ARGS['cache'], $ARGS['height']
+                $l, $USER, $GUID, $ARGS['nr'], $ARGS['nrs'], $ARGS['count'],
+                $ARGS['back'], $ARGS['mimetype'], $ARGS['cache'],
+                $ARGS['height']
             );
             break;
         }

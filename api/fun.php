@@ -489,6 +489,7 @@ function extract_args($data) {
     extract_btc_addr ('btc_addr',    $args, $result);
     extract_email    ('email',       $args, $result);
     extract_txs      ('txs',         $args, $result);
+    extract_nrs      ('nrs',         $args, $result);
     extract_graffiti ('graffiti',    $args, $result);
     extract_txids    ('txids',       $args, $result);
     extract_json     ('input',       $args, $result);
@@ -618,6 +619,25 @@ function extract_txids($var, $args, &$result) {
             if (strlen($hash) === 64
             &&  ctype_xdigit($hash)) {
                 $result[$var][] = $hash;
+            }
+            else {
+                $result[$var] = null;
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+function extract_nrs($var, $args, &$result) {
+    if (array_key_exists($var, $args)
+    &&  is_array($args[$var])) {
+        $result[$var] = array();
+        foreach ($args[$var] as $index => $nr) {
+            if (strlen($args[$var]) < 10
+            &&  is_num($args[$var])) {
+                $result[$var][] = $nr;
             }
             else {
                 $result[$var] = null;
@@ -1738,7 +1758,7 @@ function fun_get_graffiti($link, $user, $guid, $graffiti_nr, $count, $back, $mim
 }
 
 function fun_get_txs(
-    $link, $user, $guid, $tx_nr, $count, $back, $mimetype, $cache, $height
+    $link, $user, $guid, $tx_nr, $nrs, $count, $back, $mimetype, $cache, $height
 ) {
     if ($count  === null) {
         return make_failure(ERROR_INVALID_ARGUMENTS, '`count` is invalid.');
@@ -1777,16 +1797,23 @@ function fun_get_txs(
         $height_condition = "`height` IS NULL OR `height` >= '".$height."'";
     }
 
+    $nrset_condition = "TRUE";
+
+    if ($nrs !== null) {
+        $nrset_condition = "`nr` IN (".implode(',', $nrs).")";
+    }
+
     if ($tx_nr === null) {
         $query = $cache === null ? (
             "SELECT `txnr`, `txsize`, `txtime`, `ic`.`txid`, `ic`.`nr` AS ".
             "gnr, `location`, `fsize`, `offset`, `mimetype`, `hash` FROM ".
             "((select `nr` AS txnr, `time` AS txtime, `txid`, `size` AS ".
             "txsize from `tx` where (".$cache_condition.") AND (".
-            $height_condition.") AND exists (SELECT `nr` FROM `graffiti` ".
-            "WHERE `graffiti`.`txid` = `tx`.`txid` ".$subwhere.") order by ".
-            "`txnr` desc limit ".$limit.") im) INNER JOIN `graffiti` ic ON ".
-            "`im`.`txid` = `ic`.`txid` ".$where." ORDER BY `txnr` DESC"
+            $height_condition.") AND (".$nrset_condition.") AND exists ".
+            "(SELECT `nr` FROM `graffiti` WHERE `graffiti`.`txid` = ".
+            "`tx`.`txid` ".$subwhere.") order by `txnr` desc limit ".$limit.
+            ") im) INNER JOIN `graffiti` ic ON `im`.`txid` = `ic`.`txid` ".
+            $where." ORDER BY `txnr` DESC"
         ) : (
             // Here we retrieve the transactions that have been modified within
             // the last minute. We order them descendingly by the number of
@@ -1797,12 +1824,12 @@ function fun_get_txs(
             "gnr, `location`, `fsize`, `offset`, `mimetype`, `hash` FROM ".
             "((select `nr` AS txnr, `time` as txtime, `txid`, `size` AS ".
             "txsize from `tx` where (".$cache_condition.") AND (".
-            $height_condition.") AND `modified` IS NOT NULL AND `modified` ".
-            "> (NOW() - INTERVAL 1 minute) AND exists (SELECT `nr` FROM ".
-            "`graffiti` WHERE `graffiti`.`txid` = `tx`.`txid` ".$subwhere.") ".
-            "order by `requests` desc limit ".$limit.") im) INNER JOIN ".
-            "`graffiti` ic ON `im`.`txid` = `ic`.`txid` ".$where." ORDER BY ".
-            "`txnr` DESC"
+            $height_condition.") AND (".$nrset_condition.") AND `modified` IS ".
+            "NOT NULL AND `modified` > (NOW() - INTERVAL 1 minute) AND exists ".
+            "(SELECT `nr` FROM `graffiti` WHERE `graffiti`.`txid` = ".
+            "`tx`.`txid` ".$subwhere.") order by `requests` desc limit ".$limit.
+            ") im) INNER JOIN `graffiti` ic ON `im`.`txid` = `ic`.`txid` ".
+            $where." ORDER BY `txnr` DESC"
         );
     }
     else if ($back === '1') {

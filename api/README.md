@@ -241,6 +241,7 @@ These values can be received with an API call of `get_constants` function.
     * `data`           --- JSON string with the following structure
         * `guid`       --- 64 bytes random hex string (optional)
         * `nr`         --- the number of the first TX record (optional)
+        * `nrs`        --- array of transaction numbers (optional)
         * `count`      --- the total number of TX records to be returned
         * `back`       --- if '1' get `count` earlier than `nr` rows (optional)
         * `mimetype`   --- expected file type, may be partial (optional)
