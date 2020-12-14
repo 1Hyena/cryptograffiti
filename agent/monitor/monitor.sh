@@ -240,6 +240,7 @@ do
             elif [ "${state}" -ge "1" ] ; then
                 printf "%s\n" "${CALL}: Exit code ${state}."
             else
+                log "Unexpected response from the call script."
                 printf "%s" "${response}" | jq .error >/dev/stderr
             fi
 

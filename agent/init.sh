@@ -184,4 +184,3 @@ else
     log "Incomplete results, exiting."
     exit
 fi
-

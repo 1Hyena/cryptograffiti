@@ -627,6 +627,8 @@ function extract_txids($var, $args, &$result) {
         }
     }
 
+    if (!array_key_exists($var, $result)) $result[$var] = null;
+
     return true;
 }
 
@@ -652,6 +654,8 @@ function extract_nrs($var, $args, &$result) {
             return false;
         }
     }
+
+    if (!array_key_exists($var, $result)) $result[$var] = null;
 
     return true;
 }
@@ -698,6 +702,8 @@ function extract_txs($var, $args, &$result) {
             }
         }
     }
+
+    if (!array_key_exists($var, $result)) $result[$var] = null;
 
     return true;
 }
@@ -770,6 +776,8 @@ function extract_graffiti($var, $args, &$result) {
             }
         }
     }
+
+    if (!array_key_exists($var, $result)) $result[$var] = null;
 
     return true;
 }
@@ -1112,7 +1120,7 @@ function fun_init($link, $user, $IP, $guid, $sec_hash, $HTTPS, $restore) {
     if ($nr === null) {
         if (($nr = get_session_nr($link, $guid)) === null) $nr = 'N/A';
 
-        $extra_info = array('TLS' => $HTTPS, 'ALS' => $ALS);
+        $extra_info = array('TLS' => $HTTPS, 'ALS' => $ALS, 'seed' => null);
         if ($ALS) {
             $nonce = get_session_variable($link, $guid, 'nonce');
             $seed  = get_session_variable($link, $guid, 'seed');
@@ -1397,7 +1405,7 @@ function fun_set_txs($link, $user, $guid, $graffiti) {
         );
     }
 
-    if (($c=count($txs)) > TXS_PER_QUERY) {
+    if (($c=count($graffiti)) > TXS_PER_QUERY) {
         return make_failure(
             ERROR_MISUSE, '`txs` contains '.$c.
             ' elements exceeding the limit of '.TXS_PER_QUERY.'.'

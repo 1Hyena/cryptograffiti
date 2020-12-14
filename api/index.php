@@ -45,6 +45,19 @@ if ($l = init_sql()) {
         exit;
     }
 
+    set_error_handler(
+        function ($errno, $errstr, $errfile, $errline) use ($l) {
+            db_log(
+                $l, null,
+                $errstr." (".$errno.", ".$errfile.":".$errline.").",
+                LOG_LEVEL_ERROR
+            );
+        }
+    );
+
+    if (!array_key_exists('fun',  $_POST)) $_POST['fun' ] = null;
+    if (!array_key_exists('data', $_POST)) $_POST['data'] = "";
+
     $USER = array( 'ip'      => $IP,
                    'session' => null,
                    'tls'     => $HTTPS,
@@ -377,26 +390,56 @@ if ($l = init_sql()) {
             }
             if ($inc_errors) increase_stat($l, "errors");
         }
+
         if ($api_usage !== null) $r['api_usage'] = $api_usage;
+
+        $r_json_encoded = json_encode($r, JSON_INVALID_UTF8_SUBSTITUTE);
+
+        if ($r_json_encoded === false) {
+            set_critical_error(
+                $l,
+                "Unable to encode JSON (".$fun.", ERROR ".json_last_error().")."
+            );
+            $r_json_encoded = "{}";
+        }
 
         if ($ALS && $SEC_KEY !== null) {
             if (strlen($_POST['salt']) === 32
             &&  ctype_xdigit($_POST['salt'])) {
                 $key   = bin2hex($SEC_KEY);
                 $iv    = md5(generateRandomString(16));
-                $plain = json_encode($r);
+                $plain = $r_json_encoded;
                 $edata = AES_256_encrypt($plain, $key, $iv);
                 $cs    = md5($plain.$key);
-                echo json_encode(array('iv' => $iv, 'data' => $edata, 'checksum' => $cs));
+
+                $r_json_encoded = json_encode(
+                    array(
+                        'iv' => $iv,
+                        'data' => $edata,
+                        'checksum' => $cs
+                    )
+                );
             }
         }
-        else echo json_encode($r);
+
+        if ($r_json_encoded === false) {
+            set_critical_error($l, "Unable to encode JSON (".$fun.").");
+            $r_json_encoded = "";
+        }
+
+        echo $r_json_encoded;
     }
     deinit_sql($l);
 }
 else {
-    echo json_encode(array('result' => make_result(false),
-                           'error'  => make_error(ERROR_DATABASE_CONNECTION, 'Database connection failed.')));
+    echo json_encode(
+        array(
+            'result' => make_result(false),
+            'error'  => make_error(
+                ERROR_DATABASE_CONNECTION, 'Database connection failed.'
+            )
+        )
+    );
 }
 
 function assure_tables($l) {
