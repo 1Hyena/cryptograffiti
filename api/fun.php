@@ -2100,9 +2100,13 @@ function fun_send_mail($link, $user, $guid, $to, $subj, $msg, $headers) {
 }
 
 function fun_default($link, $user) {
-    $task = $_POST['task'];
-    $pass = $_POST['pass'];
-    $T    = isset($_POST['T']) ? intval($_POST['T']) : 1;
+    $task = null;
+    $pass = null;
+
+    if (array_key_exists('task',  $_POST)) $task = $_POST['task'];
+    if (array_key_exists('pass',  $_POST)) $pass = $_POST['pass'];
+
+    $T = isset($_POST['T']) ? intval($_POST['T']) : 1;
 
     if ($pass !== CRON_PASSWORD) return make_failure(ERROR_MISUSE, 'Missing `fun` parameter.');
 
