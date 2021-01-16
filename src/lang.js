@@ -315,11 +315,11 @@ var CG_TXT_ABOUT_FRIEND_LIST =
         et  : "Usaldusväärne krüptovaluutadele orienteeritud uudistesait",
         ru  : "(Trusted source for all of the latest cryptocurrency news)"
     },
-   "MoneyButton" : {
-        website : "https://www.moneybutton.com/",
-        en  : "Simple browser based wallet for Bitcoin that we have integrated with",
-        et  : "Lihtne veebilehitsejal baseeruv rahakott, millega oleme integreeritud",
-        ru  : "(Simple browser based wallet for Bitcoin that we have integrated with)"
+   "Craig Wright" : {
+        website : "https://craigwright.net/",
+        en  : "Creator of Bitcoin - Satoshi Nakamoto",
+        et  : "Bitimündi looja - Satoshi Nakamoto",
+        ru  : "(Creator of Bitcoin - Satoshi Nakamoto)"
     }
 };
 
