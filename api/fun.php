@@ -2452,47 +2452,125 @@ function cron_tick($link) {
     }
 }
 
-//curl --connect-timeout 60 --silent 'http://www.cryptograffiti.info/database/index.php?task=cron_day&pass=NZQAtEYE3gYG' >/dev/null 2>&1
 function cron_day($link) {
-    db_log($link, null, 'CRON day event starts ('.$_SERVER['REQUEST_TIME'].').', LOG_LEVEL_MINOR);
+    db_log(
+        $link, null, 'CRON day event starts ('.$_SERVER['REQUEST_TIME'].').',
+        LOG_LEVEL_MINOR
+    );
+
+    $result = $link->query(
+        "SELECT `txid` FROM `tx` WHERE `height` IS NULL AND `created` IS NOT ".
+        "NULL AND `created` < (NOW() - INTERVAL 1 month) LIMIT ".ROWS_PER_QUERY
+    );
+
+    if ($link->errno === 0) {
+        $tx_buf = array();
+
+        while ($row = $result->fetch_assoc()) {
+            $tx_buf[] = "X'".bin2hex($row['txid'])."'";
+        }
+
+        $bufsz = count($tx_buf);
+
+        if ($bufsz > 0) {
+            db_log(
+                $link, null, "Deleting ".$bufsz." unconfirmed TX".(
+                    $bufsz == 1 ? " and its " : "s and their "
+                )."respective graffiti.",
+                LOG_LEVEL_NORMAL
+            );
+
+            $qstr = (
+                "DELETE `tx`, `graffiti` FROM `tx` LEFT JOIN `graffiti` ON ".
+                "`graffiti`.`txid` = `tx`.`txid` WHERE `tx`.`txid` IN (".
+                implode(',', $tx_buf).")"
+            );
+
+            $q = db_query($link, $qstr);
+
+            if ($q['errno'] === 0) {
+                $deleted = $q['affected_rows'];
+
+                if ($deleted > 0) {
+                    db_log(
+                        $link, null,
+                        'Deleted '.$deleted.' TX and graffiti record'.(
+                            $deleted === 1 ? '' : 's'
+                        ).' in total.'
+                    );
+                }
+                else set_critical_error($link);
+            }
+            else set_critical_error($link, $q['error']);
+        }
+    }
+    else set_critical_error($link, $link->error);
+
     $errors = 0;
 
     db_log($link, null, 'Checking log table for errors.', LOG_LEVEL_NORMAL);
 
-    $result = $link->query("SELECT `creation_time`, `text`, `line`, `file` FROM `log` ".
-                           "WHERE `level` >= '".LOG_LEVEL_ERROR."' AND `creation_time` IS NOT NULL AND ".
-                           "`creation_time` >= (NOW() - INTERVAL 24 hour) ORDER BY `nr` ASC LIMIT 50");
+    $result = $link->query(
+        "SELECT `creation_time`, `text`, `line`, `file` FROM `log` WHERE ".
+        "`level` >= '".LOG_LEVEL_ERROR."' AND `creation_time` IS NOT NULL AND ".
+        "`creation_time` >= (NOW() - INTERVAL 24 hour) ORDER BY `nr` ASC LIMIT".
+        " 50"
+    );
 
     $message = '';
     if ($link->errno === 0) {
         while ($row = $result->fetch_assoc()) {
-            $message.=$row['creation_time'].' : '.$row['text'].' ('.$row['file'].':'.$row['line'].")\n";
+            $message.=(
+                $row['creation_time'].' : '.$row['text'].' ('.$row['file'].':'.
+                $row['line'].")\n"
+            );
+
             $errors++;
         }
     }
     else set_critical_error($link, $link->error);
 
-
     if ($errors > 0) {
-        $to = "hyena@hyena.net.ee";
+        $to = "support".chr(64)."cryptograffiti.info";
         $subject = "CGD ERROR";
-        $from = "Error@CryptoGraffiti.info";
+        $from = "Error".chr(64)."CryptoGraffiti.info";
         $headers = "From:" . $from;
 
-        db_log($link, null, 'E-mailing '.$errors.' error'.($errors == 1 ? '' : 's').' to '.$to.'.', LOG_LEVEL_NORMAL);
-        mail($to,$subject,$message,$headers);
+        db_log(
+            $link, null, (
+                'E-mailing '.$errors.' error'.(
+                    $errors == 1 ? '' : 's'
+                ).' to '.$to.'.'
+            ), LOG_LEVEL_NORMAL
+        );
+
+        mail($to, $subject, $message, $headers);
     }
 
-    $link->query("DELETE FROM `log` WHERE `creation_time` IS NOT NULL AND `creation_time` < (NOW() - INTERVAL 30 day)");
+    $link->query(
+        "DELETE FROM `log` WHERE `creation_time` IS NOT NULL AND ".
+        "`creation_time` < (NOW() - INTERVAL 30 day)"
+    );
+
     if ($link->errno === 0) {
         $ar = $link->affected_rows;
+
         if ($ar > 0) {
-            db_log($link, null, 'Deleted '.$ar.' old log'.($ar == 1 ? '' : 's').'.', LOG_LEVEL_NORMAL);
+            db_log(
+                $link, null,
+                'Deleted '.$ar.' old log'.($ar == 1 ? '' : 's').'.',
+                LOG_LEVEL_NORMAL
+            );
         }
     }
     else set_critical_error($link, $link->error);
 
-    db_log($link, null, 'CRON day event ends ('.$_SERVER['REQUEST_TIME'].').', LOG_LEVEL_MINOR);
+    db_log(
+        $link, null,
+        'CRON day event ends ('.$_SERVER['REQUEST_TIME'].').',
+        LOG_LEVEL_MINOR
+    );
+
     return make_success();
 }
 
