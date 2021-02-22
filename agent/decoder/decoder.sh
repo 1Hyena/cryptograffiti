@@ -1,10 +1,11 @@
 #!/bin/bash
 
 ################################################################################
-# Example usage: ./decoder.sh config.json (TX hash)                            #
+# Example usage: ./decoder.sh config.json (TX hash | block height)             #
 ################################################################################
 CONF="$1"                                                                      #
 TXID="$2"                                                                      #
+BLHT="$2"                                                                      #
 SKEY=""                                                                        #
 SEED=""                                                                        #
 GUID=""                                                                        #
@@ -20,7 +21,7 @@ CFGF=""                                                                        #
 DATE_FORMAT="%Y-%m-%d %H:%M:%S"
 CANARY="::"
 WORKERS="16"
-BLOCKSZ="8M"
+BLOCKSZ="16M"
 BESTBLOCK=""
 TXS_PER_QUERY=0
 MAX_DATA_SIZE=0
@@ -77,6 +78,14 @@ config() {
     if [ -z "$CONF" ] ; then
         log "Configuration file not provided, exiting."
         exit
+    fi
+
+    if [ ! -z "$BLHT" ] ; then
+        if [ "$BLHT" -eq "$BLHT" ] 2>/dev/null; then
+	        TXID=""
+        else
+	        BLHT=""
+        fi
     fi
 
     if [ ! -z "$TXID" ] ; then
@@ -308,6 +317,7 @@ loop() {
 
                 if [ ! -z "${TXBUF}" ] \
                 || [ ! -z "${CACHE}" ] \
+                || [ ! -z "${BLHT}"  ] \
                 || [ ! -z "${VOLATILE_TXS}" ] ; then
                     log "Too much work in queue, skipping the nap of ${stime}s."
                 else
@@ -637,8 +647,23 @@ step() {
         local news=""
 
         if [ -z "${TXBUF}" ] ; then
-            local pool=$(${CLIF} ${CFGF} ${DDIR} getrawmempool | jq -M -r .[])
-            local bestblock=$(${CLIF} ${CFGF} ${DDIR} getbestblockhash)
+            local pool=""
+            local bestblock=""
+
+            if [ -z "${BLHT}" ] ; then
+                pool=$(${CLIF} ${CFGF} ${DDIR} getrawmempool | jq -M -r .[])
+                bestblock=$(${CLIF} ${CFGF} ${DDIR} getbestblockhash)
+            else
+                bestblock=$(${CLIF} ${CFGF} ${DDIR} getblockhash "${BLHT}")
+
+                if [ ! -z "${bestblock}" ] ; then
+                    log "Loading block ${BLHT}."
+                    ((BLHT++))
+                else
+                    log "Reached the end of block chain, exiting."
+                    exit
+                fi
+            fi
 
             if [ "${bestblock}" != "${BESTBLOCK}" ]; then
                 local blockheight=$(
@@ -647,19 +672,21 @@ step() {
                 )
 
                 if [ ! -z "${blockheight}" ] ; then
-                    local txheight=$((
-                        blockheight >= 100 ? blockheight-100 : 0
-                    ))
+                    if [ -z "${BLHT}" ] ; then
+                        local txheight=$((
+                            blockheight >= 100 ? blockheight-100 : 0
+                        ))
 
-                    local volatile_txs_count=$(
-                        echo -n "${VOLATILE_TXS}" | grep -c '^'
-                    )
+                        local volatile_txs_count=$(
+                            echo -n "${VOLATILE_TXS}" | grep -c '^'
+                        )
 
-                    if [ "${volatile_txs_count}" -lt "1"       ] \
-                    || [ -z "${VOLATILE_TXS_FROM_BLOCKHEIGHT}" ] ; then
-                        VOLATILE_TXS_FROM_NR="0"
-                        VOLATILE_TXS_FROM_BLOCKHEIGHT="${txheight}"
-                        log "Refreshing TXs since block ${txheight}."
+                        if [ "${volatile_txs_count}" -lt "1"       ] \
+                        || [ -z "${VOLATILE_TXS_FROM_BLOCKHEIGHT}" ] ; then
+                            VOLATILE_TXS_FROM_NR="0"
+                            VOLATILE_TXS_FROM_BLOCKHEIGHT="${txheight}"
+                            log "Refreshing TXs since block ${txheight}."
+                        fi
                     fi
                 else
                     alert "Invalid block height."
