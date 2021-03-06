@@ -20,6 +20,7 @@ CFGF=""                                                                        #
 DATE_FORMAT="%Y-%m-%d %H:%M:%S"
 CANARY="::"
 WORKERS="16"
+BLOCKSZ="16M"
 TXS_PER_QUERY=0
 NONCE_ERRORS=0
 OTHER_ERRORS=0
@@ -372,10 +373,11 @@ get_rawtxs() {
     local cli_state
     prevbuf="${buf}"
     buf=$(
-        parallel          \
-        --halt now,fail=1 \
-        --timeout 30      \
-        -P ${WORKERS}     \
+        parallel           \
+        --block ${BLOCKSZ} \
+        --halt now,fail=1  \
+        --timeout 30       \
+        -P ${WORKERS}      \
         "${cli_cmd}" <<< "${buf}"
     )
     cli_state=$?
@@ -383,9 +385,10 @@ get_rawtxs() {
     if [ "${cli_state}" -ge "1" ]; then
         buf="${prevbuf}"
         buf=$(
-            parallel      \
-            --timeout 30  \
-            -P ${WORKERS} \
+            parallel           \
+            --block ${BLOCKSZ} \
+            --timeout 30       \
+            -P ${WORKERS}      \
             "${cli_cmd}" <<< "${buf}" 2>/dev/null
         )
         cli_state=$?
@@ -589,23 +592,25 @@ step() {
     local curl_out
 
     curl_out=$(
-        parallel          \
-        --halt now,fail=1 \
-        --timeout 60      \
-        --pipe            \
-        -N 1              \
-        -P ${WORKERS}     \
+        parallel           \
+        --block ${BLOCKSZ} \
+        --halt now,fail=1  \
+        --timeout 60       \
+        --pipe             \
+        -N 1               \
+        -P ${WORKERS}      \
         "${curl_cmd}" <<< "${CACHE}"
     )
     curl_state=$?
 
     if [ "${curl_state}" -ge "1" ]; then
         curl_out=$(
-            parallel      \
-            --timeout 60  \
-            --pipe        \
-            -N 1          \
-            -P ${WORKERS} \
+            parallel           \
+            --block ${BLOCKSZ} \
+            --timeout 60       \
+            --pipe             \
+            -N 1               \
+            -P ${WORKERS}      \
             "${curl_cmd}" <<< "${CACHE}" 2>/dev/null
         )
         curl_state=$?
