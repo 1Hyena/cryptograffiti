@@ -7,6 +7,7 @@ function cg_wall_construct(main) {
         data : {},
         order: []
     };
+    tab["tx_requests"] = 0;
     tab["loading_txs"] = 0;
     tab["last_update"] = 0;
     tab["scrolled"] = false;
@@ -23,6 +24,20 @@ function cg_wall_construct(main) {
             fun : cg_sfx_rattle
         }
     };
+
+    var worker = null;
+
+    if (typeof OffscreenCanvas !== "undefined") {
+        worker = make_worker(
+            document.getElementById('cg-ww-img-resizer').textContent
+        );
+
+        worker.onmessage = function(e) {
+            cg_wall_image_resized(tab, e);
+        };
+    }
+
+    tab["image_resizer"] = worker;
 
     var headbuf = document.createElement("div");
     var bodybuf = document.createElement("div");
@@ -96,9 +111,11 @@ function cg_wall_step(tab) {
 
     if (cg_get_global("constants") === null) return;
 
+    var origin = document.getElementsByClassName("cg-wall-frame-origin");
+
     if (tab.loading_txs >= 0
     &&  timestamp - tab.loading_txs >= 3
-    &&  document.getElementsByClassName("cg-wall-frame-origin").length === 1) {
+    &&  origin.length === 1) {
         tab.loading_txs = -1;
         cg_wall_get_txs(tab);
     }
@@ -301,6 +318,13 @@ function cg_wall_move_row(tab, from, to) {
         row[Math.floor(row.length/2)].classList.add(
             "cg-wall-frame-origin"
         );
+
+        setTimeout(
+            function() {
+                tab.last_update = 0;
+                cg_wall_step(tab);
+            }, 0
+        );
     }
 
     var frag = document.createDocumentFragment();
@@ -487,10 +511,16 @@ function cg_wall_get_txs(tab) {
         "cg-wall-frame-origin cg-wall-frame-empty"
     );
 
+    var fastforward = false;
+
     if (origin.length !== 0) {
         data_obj.count = "1";
         if (cg_get_global("focus") !== null) {
             data_obj["nr"] = ""+cg_get_global("focus");
+        }
+
+        if (tab.tx_requests === 0) {
+            fastforward = true;
         }
     }
     else {
@@ -537,7 +567,13 @@ function cg_wall_get_txs(tab) {
             }
         ];
 
-        shuffle(options);
+        if (tab.tx_requests > 1) {
+            // In the very beginning we want to load old graffiti as soon as
+            // possible to give the user something to look. After that we can
+            // shuffle our options.
+
+            shuffle(options);
+        }
 
         var any_option = false;
         for (var i=0; i<options.length; ++i) {
@@ -583,9 +619,16 @@ function cg_wall_get_txs(tab) {
         cg_push_status(cg_translate(CG_TXT_WALL_LOADING_TX_METADATA));
     }
 
+    ++tab.tx_requests;
+
     xmlhttpPost(cg_get_global("api_url"), 'fun=get_txs&data='+json_str,
         function(response) {
-            tab.loading_txs = Math.floor(Date.now() / 1000);
+            if (fastforward) {
+                tab.loading_txs = 0;
+            }
+            else {
+                tab.loading_txs = Math.floor(Date.now() / 1000);
+            }
 
             var status = "";
 
@@ -607,7 +650,13 @@ function cg_wall_get_txs(tab) {
                         tab.txs[json.txs[i].txid] = json.txs[i];
                     }
 
-                    if (tab.scrolled_bottom || tab.scrolled_top) {
+                    if (tab.scrolled_bottom
+                    ||  tab.scrolled_top
+                    ||  tab.loading_txs === 0) {
+                        if (!is_empty(tab.txs)) {
+                            cg_wall_import_txs(tab);
+                        }
+
                         setTimeout(function(){
                             tab.last_update = 0;
                             cg_wall_step(tab);
@@ -833,42 +882,91 @@ function cg_wall_decode_graffiti(tab, graffiti, data) {
 
         if (location === "NULL_DATA"
         &&  mimetype.indexOf("image/") === 0) {
-            var media = document.createElement("DIV");
-            media.classList.add("cg-wall-media");
+            if (tab.image_resizer !== null) {
+                tab.image_resizer.postMessage(
+                    {
+                        subject  : graffiti_nr,
+                        mimetype : mimetype,
+                        payload  : data
+                    }
+                );
+
+                return;
+            }
 
             var b64imgData = arrayBufferToBase64(data);
-            var img = new Image();
-            img.src = "data:"+mimetype+";base64,"+b64imgData;
+            var img_src = "data:"+mimetype+";base64,"+b64imgData;
 
-            var link = document.createElement("a");
-            link.href = "https://cryptograffiti.info/cache/"+hash;
-            link.target = "_blank";
-
-            link.appendChild(img);
-            media.appendChild(link);
-
-            setTimeout(
-                function(g, m, t){
-                    m.classList.add("cg-poofin");
-                    g.appendChild(m);
-
-                    var newest = (
-                        t.graffiti.order.length > 0
-                            ? ""+t.graffiti.order[t.graffiti.order.length-1]
-                            : ""
-                    );
-
-                    if (newest === g.getAttribute("data-graffiti-nr")) {
-                        cg_wall_call(t, "spray");
-                    }
-                },
-                Math.floor(Math.random() * 1000), graffiti, media, tab
-            );
-
-            graffiti.classList.remove("cg-wall-graffiti-decoding");
-            graffiti.classList.add("cg-wall-graffiti-decoded");
+            cg_wall_render_graffiti(tab, graffiti, img_src);
         }
     }
+}
+
+function cg_wall_render_graffiti(tab, graffiti, img_src) {
+    if (graffiti.classList.contains("cg-wall-graffiti-decoded")
+    || !graffiti.classList.contains("cg-wall-graffiti-decoding")) {
+        return;
+    }
+
+    var graffiti_nr = graffiti.getAttribute("data-graffiti-nr");
+
+    if (graffiti_nr in tab.graffiti.data == false) {
+        return;
+    }
+
+    var hash = tab.graffiti.data[graffiti_nr].hash;
+
+    var media = document.createElement("DIV");
+    media.classList.add("cg-wall-media");
+
+    var img = new Image();
+    img.src = img_src;
+
+    var link = document.createElement("a");
+    link.href = "https://cryptograffiti.info/cache/"+hash;
+    link.target = "_blank";
+
+    link.appendChild(img);
+    media.appendChild(link);
+
+    setTimeout(
+        function(g, m, t){
+            m.classList.add("cg-poofin");
+            g.appendChild(m);
+
+            var newest = (
+                t.graffiti.order.length > 0
+                    ? ""+t.graffiti.order[t.graffiti.order.length-1]
+                    : ""
+            );
+
+            if (newest === g.getAttribute("data-graffiti-nr")) {
+                cg_wall_call(t, "spray");
+            }
+        },
+        Math.floor(Math.random() * 1000), graffiti, media, tab
+    );
+
+    graffiti.classList.remove("cg-wall-graffiti-decoding");
+    graffiti.classList.add("cg-wall-graffiti-decoded");
+}
+
+function cg_wall_image_resized(tab, event) {
+    var b64data = event.data.b64data;
+    var subject = event.data.subject;
+
+    var graffiti = document.getElementById(
+        "cg-wall-graffiti-"+subject
+    );
+
+    if (graffiti !== null) {
+        cg_wall_render_graffiti(tab, graffiti, b64data);
+    }
+}
+
+function cg_wall_image_rendered(event) {
+    var image = event.target;
+    image.classList.remove("cg-wall-img-rendering");
 }
 
 function cg_wall_scrolled_top() {
@@ -1158,4 +1256,3 @@ function cg_wall_call(tab, fun) {
     }
     else cg_bug(fun);
 }
-

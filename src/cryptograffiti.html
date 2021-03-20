@@ -111,6 +111,68 @@ function fade_out() {
 window.onbeforeunload = fade_out;
 </script>
 
+<script id="cg-ww-img-resizer" type="javascript/worker">
+    function cg_ww_bitmap_loaded(bmp, subject, mimetype) {
+        var canvas_width = 256;
+        var canvas_height = 256;
+
+        if (bmp.width >= bmp.height) {
+            var resize_width = Math.min(256, bmp.width);
+            canvas_width = resize_width;
+            canvas_height = bmp.height * (resize_width / bmp.width);
+        }
+        else {
+            var resize_height = Math.min(256, bmp.height);
+            canvas_height = resize_height;
+            canvas_width = bmp.width * (resize_height / bmp.height);
+        }
+
+        var canvas = new OffscreenCanvas(canvas_width, canvas_height);
+
+        var ctx = canvas.getContext("2d");
+
+        ctx.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+
+        canvas.convertToBlob(
+            {
+                type: mimetype,
+                quality: 0.8
+            }
+        ).then(
+            function (result) {
+                var reader = new FileReader();
+
+                reader.addEventListener(
+                    "load",
+                    function () {
+                        postMessage(
+                            {
+                                subject : subject,
+                                b64data : this.result
+                            }
+                        );
+                    }, false
+                );
+
+                reader.readAsDataURL(result);
+            }
+        );
+    }
+
+    function cg_ww_message(e) {
+        var subject = e.data.subject;
+        var mimetype = e.data.mimetype;
+
+        self.createImageBitmap(new Blob([e.data.payload])).then(
+            function (bmp) {
+                cg_ww_bitmap_loaded(bmp, subject, mimetype);
+            }
+        );
+    }
+
+    self.addEventListener('message', cg_ww_message, false);
+</script>
+
 <!-- PASTE EXTERNAL JS HERE -->
 
 <!-- BEGIN EXTERNAL SFX -->

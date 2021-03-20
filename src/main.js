@@ -3,7 +3,7 @@ var CG_LOG_ALERT   = 1;
 var CG_LOG_WARNING = 2;
 
 var GIuGDtd14GQaDKh9TfVKGQJS = {
-    "version"    : "2.01",
+    "version"    : "2.02",
     "language"   : "en",
     "api_url"    : "",
     "hashtag"    : null,
@@ -130,7 +130,6 @@ function cg_main() {
         }
 
         cg_load_constants();
-        cg_startup(cg_main);
     }, 250);
 }
 
@@ -215,8 +214,6 @@ function cg_startup(cg) {
                 cg_check_key(event);
             }
         );
-
-        cg_main_loop();
     }
     else {
         setTimeout(function(){
@@ -305,6 +302,11 @@ function cg_construct(cg) {
 
     setTimeout(function(){
         cg_construct_footer();
+    }, 0);
+
+    setTimeout(function(){
+        cg_activate_interface();
+        cg_main_loop();
     }, 0);
 }
 
@@ -515,6 +517,9 @@ function cg_load_constants() {
             if (status.length > 0) cg_push_status(status);
 
             if (cg_get_global("constants") !== null) {
+                var cg_main = document.getElementById("cg-main");
+                cg_startup(cg_main);
+
                 setTimeout(
                     function(){
                         cg_load_stats();
@@ -707,9 +712,18 @@ function cg_activate_interface() {
         cg.removeChild(cg.lastChild);
     }
 
-    var btn = document.getElementById("cg-btn-tab-wall");
-    btn.disabled = false;
-    btn.click();
+    cg_sfx_rattle();
+
+    cg.classList.remove("cg-appear");
+    cg.classList.add("cg-disappear");
+
+    setTimeout(
+        function(){
+            cg_wall_construct(cg);
+            cg.classList.remove("cg-disappear");
+            cg.classList.add("cg-appear");
+        }, 0
+    );
 }
 
 function cg_construct_buttons(tabs) {
@@ -737,14 +751,12 @@ function cg_construct_buttons(tabs) {
         btn.appendChild(txt);
         btn.id = template.id;
 
+        if (template.id === "cg-btn-tab-wall") {
+            btn.disabled = true;
+        }
+
         tabs.appendChild(btn);
     }
-
-    setTimeout(
-        function(){
-            cg_activate_interface();
-        }, 0
-    );
 }
 
 function cg_button_click(btn, fun) {
