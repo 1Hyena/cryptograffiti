@@ -106,6 +106,13 @@ var CG_TXT_MAIN_BTN_WALL =
     ru : "(WALL)"
 };
 
+var CG_TXT_MAIN_BTN_ADMIN =
+{
+    en : "ADMIN",
+    et : "HALDUS",
+    ru : "(ADMIN)"
+};
+
 var CG_TXT_MAIN_BTN_ABOUT =
 {
     en : "ABOUT",
@@ -182,6 +189,27 @@ var CG_TXT_MAIN_ENCODER_APPEARS_OFFLINE =
 //  WALL TAB TRANSLATIONS BEGIN                                               //
 ////////////////////////////////////////////////////////////////////////////////
 
+var CG_TXT_WALL_BTN_REPORT =
+{
+    en : "REPORT",
+    et : "TEATA",
+    ru : "(REPORT)" // NEEDS TRANSLATION
+};
+
+var CG_TXT_WALL_BTN_ALLOW =
+{
+    en : "ALLOW",
+    et : "LUBA",
+    ru : "(ALLOW)" // NEEDS TRANSLATION
+};
+
+var CG_TXT_WALL_BTN_CENSOR =
+{
+    en : "CENSOR",
+    et : "TSENSEERI",
+    ru : "(CENSOR)" // NEEDS TRANSLATION
+};
+
 var CG_TXT_WALL_LOADING_TX_METADATA =
 {
     en : "Loading the metadata of transactions.",
@@ -194,6 +222,27 @@ var CG_TXT_WALL_LOADING_TX_METADATA_NEW =
     en : "Loading the metadata of transactions newer than #%s.",
     et : "Laen eelandmeid ülekannetest, mis on uuemad kui #%s.",
     ru : "(Loading the metadata of transactions newer than #%s.)" // NEEDS TRANSLATION
+};
+
+var CG_TXT_WALL_REPORTING_GRAFFITI =
+{
+    en : "Reporting graffiti #%s as inappropriate.",
+    et : "Teatan ebasobilikust graffitist #%s.",
+    ru : "(Reporting graffiti #%s as inappropriate.)" // NEEDS TRANSLATION
+};
+
+var CG_TXT_WALL_ALLOWING_GRAFFITI =
+{
+    en : "Reporting graffiti #%s as appropriate.",
+    et : "Teatan sobilikust graffitist #%s.",
+    ru : "(Reporting graffiti #%s as appropriate.)" // NEEDS TRANSLATION
+};
+
+var CG_TXT_WALL_CENSORING_GRAFFITI =
+{
+    en : "Censoring graffiti #%s.",
+    et : "Tsenseering graffitit #%s.",
+    ru : "(Censoring graffiti #%s.)" // NEEDS TRANSLATION
 };
 
 var CG_TXT_WALL_LOADING_TX_METADATA_OLD =

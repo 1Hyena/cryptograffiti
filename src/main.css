@@ -2,7 +2,7 @@
 html, body {height:100%; width:100%; overflow: hidden;}
 
 body {
-    background-color: rgba(224,224,224, 0.5);
+    background-color: transparent;
 }
 
 button {
@@ -13,13 +13,23 @@ button {
     white-space: nowrap;
     font-family: "Courier New", monospace;
     font-size: 1rem;
+    max-width: 100%;
 }
 
 #cg {
-    background: repeating-linear-gradient(-45deg, rgba(0,0,0,0), rgba(0,0,0,0.1) 5%, rgba(0,0,0,0) 10%);
+    background-color: rgba(240,240,240, 1);
     font-family: "Courier New", monospace;
     font-size: 1rem;
     height: 100%;
+}
+
+#cg > div:first-child {
+    background: repeating-linear-gradient(-45deg, rgba(0,0,0,0), rgba(0,0,0,0.1) 5%, rgba(0,0,0,0) 10%);
+}
+
+.cg-state-wall-selecting {
+    cursor: crosshair;
+    filter: invert(100%);
 }
 
 #cg>div:first-child {
@@ -131,16 +141,42 @@ button {
 
 #cg-footer {
     font-size: 1rem;
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    min-height: 2rem;
+    width: 100%;
+    height: 100%;
+    min-height: 2.2rem;
     overflow: hidden;
+    text-align: center;
+}
+
+#cg-footer > span:first-child {
+    display: inline-block;
+    width: 0%;
+    height: 100%;
+    min-height: 2.2rem;
+    vertical-align: middle;
+}
+
+#cg-footer-status {
+    display: inline-block;
+    width: 33%;
+    vertical-align: middle;
 }
 
 #cg-footer-status::after {
    content: attr(data-status);
+   margin-left: 0.5rem;
+}
+
+#cg-footer-toolbar {
+    display: inline-block;
+    width: 34%;
+    vertical-align: middle;
+    padding-bottom: 0.2rem;
+}
+
+#cg-credits {
+    display: inline-block;
+    vertical-align: middle;
 }
 
 #cg-title-link {
@@ -241,6 +277,10 @@ button {
     animation-fill-mode: forwards;
 }
 
+.cg-state-wall-selecting .cg-btn {
+    pointer-events: none;
+}
+
 @-webkit-keyframes cg-btn-anim {
     0%   {width: 0ch; opacity: 0;}
     100% {width: 12ch; opacity: 1;}
@@ -310,13 +350,10 @@ button {
 }
 
 .cg-status {
-    flex: 1 1 auto;
     opacity: 0;
     border: 0rem solid blue;
     overflow: hidden;
     text-align: left;
-    margin-left: 0.5rem;
-    margin-right: 0.5rem;
     -webkit-animation-name: cg-appear-anim;
     -webkit-animation-duration: 1.0s;
     animation-name: cg-appear-anim;
@@ -422,7 +459,10 @@ button {
 */
 
 .cg-footer-languages {
-    white-space: nowrap;
+    display: inline-block;
+    width: 33%;
+    text-align: right;
+    vertical-align: middle;
 }
 .cg-footer-languages img {
     height: 1rem;

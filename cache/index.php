@@ -30,7 +30,7 @@ $link = new mysqli($host, $username, $password, $db_name);
 if ($link->connect_error) shutdown($link, 500, "INTERNAL ERROR (".__LINE__.")");
 
 $query = (
-    "SELECT `txid`, `location`, `fsize`, `offset`, `mimetype` ".
+    "SELECT `txid`, `location`, `fsize`, `offset`, `mimetype`, `censored` ".
     "FROM `graffiti` WHERE `hash` = X'".$link->real_escape_string($hash).
     "' LIMIT 1"
 );
@@ -45,9 +45,14 @@ if ($errno === 0) {
 
     $txid = bin2hex($row['txid']);
     $location = $row['location'];
+    $censored = $row['censored'];
     $fsize = intval($row['fsize']);
     $offset = intval($row['offset']);
     $mimetype = $row['mimetype'];
+
+    if ($censored) {
+        shutdown($link, 403, "FORBIDDEN");
+    }
 
     if ($location !== "NULL_DATA") {
         shutdown($link, 500, "INTERNAL ERROR (".__LINE__.")");

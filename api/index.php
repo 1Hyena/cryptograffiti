@@ -301,35 +301,38 @@ if ($l = init_sql()) {
 
     $no_fun = false;
     if ($r === null) {
-      switch ($fun) {
-        case 'handshake'         : $r=fun_handshake        ($l, $USER, $IP, $_POST['sec_key'], $HTTPS);                                           break;
-        case 'init'              : $r=fun_init             ($l, $USER, $IP, $GUID, $_POST['sec_hash'], $HTTPS, $ARGS['restore']);                 break;
-        case 'get_session'       : $r=fun_get_session      ($l, $USER, $GUID);                                                                    break;
-        case 'get_stats'         : $r=fun_get_stats        ($l, $USER, $GUID, $ARGS['start_date'],  $ARGS['end_date']);                           break;
-        case 'get_log'           : $r=fun_get_log          ($l, $USER, $GUID, $ARGS['nr'],  $ARGS['count']);                                      break;
-        case 'get_graffiti'      : $r=fun_get_graffiti     ($l, $USER, $GUID, $ARGS['nr'],  $ARGS['count'], $ARGS['back'], $ARGS['mimetype']);    break;
-        case 'get_txs'           : {
-            $r=fun_get_txs(
-                $l, $USER, $GUID, $ARGS['nr'], $ARGS['nrs'], $ARGS['count'],
-                $ARGS['back'], $ARGS['mimetype'], $ARGS['cache'],
-                $ARGS['height']
-            );
-            break;
+        switch ($fun) {
+            case 'handshake'         : $r=fun_handshake        ($l, $USER, $IP, $_POST['sec_key'], $HTTPS);                                           break;
+            case 'init'              : $r=fun_init             ($l, $USER, $IP, $GUID, $_POST['sec_hash'], $HTTPS, $ARGS['restore']);                 break;
+            case 'get_session'       : $r=fun_get_session      ($l, $USER, $GUID);                                                                    break;
+            case 'get_stats'         : $r=fun_get_stats        ($l, $USER, $GUID, $ARGS['start_date'],  $ARGS['end_date']);                           break;
+            case 'get_log'           : $r=fun_get_log          ($l, $USER, $GUID, $ARGS['nr'],  $ARGS['count']);                                      break;
+            case 'get_graffiti'      : $r=fun_get_graffiti     ($l, $USER, $GUID, $ARGS['nr'],  $ARGS['count'], $ARGS['back'], $ARGS['mimetype']);    break;
+            case 'get_txs'           : {
+                $r=fun_get_txs(
+                    $l, $USER, $GUID, $ARGS['nr'], $ARGS['nrs'], $ARGS['count'],
+                    $ARGS['back'], $ARGS['mimetype'], $ARGS['cache'],
+                    $ARGS['reported'], $ARGS['censored'], $ARGS['height']
+                );
+                break;
+            }
+            case 'set_txs'           : $r=fun_set_txs          ($l, $USER, $GUID, $ARGS['graffiti']);                                                 break;
+            case 'accept_order'      : $r=fun_accept_order     ($l, $USER, $GUID, $ARGS['nr']);                                                       break;
+            case 'set_order'         : $r=fun_set_order        ($l, $USER, $GUID, $ARGS['nr'], $ARGS['output'], $ARGS['filled']);                     break;
+            case 'get_order'         : $r=fun_get_order        ($l, $USER, $GUID, $ARGS['nr'], $ARGS['inclusive']);                                   break;
+            case 'get_constants'     : $r=fun_get_constants    ($l, $USER, $GUID);                                                                    break;
+            case 'report_graffiti'   : $r=fun_report_graffiti  ($l, $USER, $GUID, $ARGS['nr']);                                                       break;
+            case 'allow_graffiti'    : $r=fun_allow_graffiti   ($l, $USER, $GUID, $ARGS['nr'], $ARGS['hmac']);                                        break;
+            case 'censor_graffiti'   : $r=fun_censor_graffiti  ($l, $USER, $GUID, $ARGS['nr'], $ARGS['hmac']);                                        break;
+            case 'make_order'        : $r=fun_make_order       ($l, $USER, $GUID, $ARGS['group'], $ARGS['input'], $ARGS['token']);                    break;
+            // TODO: Remove the fallback to `inclusive` variable when all bitbroker instances have been updated:
+            case 'get_orders'        : $r=fun_get_orders       ($l, $USER, $GUID, $ARGS['group'], $ARGS['nr'],   $ARGS['count'],  $ARGS['back'],
+                                                               ($ARGS['accepted']===null ? $ARGS['inclusive'] : $ARGS['accepted']), $ARGS['filled'],
+                                                               $ARGS['executive']);                                                                   break;
+            case 'send_mail'         : $r=fun_send_mail        ($l, $USER, $GUID, $ARGS['to'], $ARGS['subj'], $ARGS['msg'], $ARGS['headers']);        break;
+            case 'set_stat'          : $r=fun_set_stat         ($l, $USER, $GUID, $ARGS['name'], $ARGS['value']);                                     break;
+            default                  : $r=fun_default          ($l, $USER); $no_fun = true;                                                           break;
         }
-        case 'set_txs'           : $r=fun_set_txs          ($l, $USER, $GUID, $ARGS['graffiti']);                                                 break;
-        case 'accept_order'      : $r=fun_accept_order     ($l, $USER, $GUID, $ARGS['nr']);                                                       break;
-        case 'set_order'         : $r=fun_set_order        ($l, $USER, $GUID, $ARGS['nr'], $ARGS['output'], $ARGS['filled']);                     break;
-        case 'get_order'         : $r=fun_get_order        ($l, $USER, $GUID, $ARGS['nr'], $ARGS['inclusive']);                                   break;
-        case 'get_constants'     : $r=fun_get_constants    ($l, $USER, $GUID);                                                                    break;
-        case 'make_order'        : $r=fun_make_order       ($l, $USER, $GUID, $ARGS['group'], $ARGS['input'], $ARGS['token']);                    break;
-        // TODO: Remove the fallback to `inclusive` variable when all bitbroker instances have been updated:
-        case 'get_orders'        : $r=fun_get_orders       ($l, $USER, $GUID, $ARGS['group'], $ARGS['nr'],   $ARGS['count'],  $ARGS['back'],
-                                                           ($ARGS['accepted']===null ? $ARGS['inclusive'] : $ARGS['accepted']), $ARGS['filled'],
-                                                           $ARGS['executive']);                                                                   break;
-        case 'send_mail'         : $r=fun_send_mail        ($l, $USER, $GUID, $ARGS['to'], $ARGS['subj'], $ARGS['msg'], $ARGS['headers']);        break;
-        case 'set_stat'          : $r=fun_set_stat         ($l, $USER, $GUID, $ARGS['name'], $ARGS['value']);                                     break;
-        default                  : $r=fun_default          ($l, $USER); $no_fun = true;                                                           break;
-      }
     }
 
     if (is_array($r)) {

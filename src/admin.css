@@ -1,0 +1,35 @@
+#cg-tab-admin > span:first-child {
+    display: inline-block;
+    width: 0%;
+    height: 100%;
+    vertical-align: middle;
+}
+
+#cg-admin-wrapper {
+    display: inline-block;
+    vertical-align: middle;
+    max-height: 36rem;
+}
+
+#cg-admin-btn-save {
+    width: 2rem;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+}
+
+#cg-admin-wrapper > form > fieldset > label {
+    padding-right: 0.5rem;
+}
+
+#cg-admin-wrapper > form > fieldset {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+#cg-admin-hmac {
+    display: inline-block;
+}
+
+#cg-admin-hmac:after {
+    content: attr(data-content);
+}

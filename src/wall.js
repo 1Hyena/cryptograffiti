@@ -1,5 +1,6 @@
 function cg_wall_construct(main) {
     var tab = cg_init_tab(main, 'cg-tab-wall');
+
     if (tab === null) return;
 
     tab["txs"] = {};
@@ -101,6 +102,60 @@ function cg_wall_construct(main) {
     tab.element.classList.add("cg-tab-wall-setup");
 }
 
+function cg_wall_step_toolbar(tab) {
+    var footer_toolbar = document.getElementById("cg-footer-toolbar");
+
+    if (footer_toolbar === null
+    ||  footer_toolbar.classList.contains("cg-footer-toolbar-ready")) {
+        return;
+    }
+
+    while (footer_toolbar.hasChildNodes()) {
+        footer_toolbar.removeChild(footer_toolbar.lastChild);
+    }
+
+    var buttons = [
+        {
+            id: "cg-wall-btn-report",
+            label : CG_TXT_WALL_BTN_REPORT,
+            click_fun : cg_wall_button_click_report
+        },
+        {
+            id: "cg-wall-btn-allow",
+            label : CG_TXT_WALL_BTN_ALLOW,
+            click_fun : cg_wall_button_click_allow
+        },
+        {
+            id: "cg-wall-btn-censor",
+            label : CG_TXT_WALL_BTN_CENSOR,
+            click_fun : cg_wall_button_click_censor
+        }
+    ];
+
+    while (buttons.length > 0) {
+        var template = buttons.shift();
+
+        if (cg_get_global("admin")) {
+            if (template.id === "cg-wall-btn-report") continue;
+        }
+        else {
+            if (template.id !== "cg-wall-btn-report") continue;
+        }
+
+        var btn = document.createElement("BUTTON");
+        btn.classList.add("cg-btn");
+        btn.addEventListener("click", template.click_fun);
+
+        var txt = document.createTextNode(cg_translate(template.label));
+        btn.appendChild(txt);
+        btn.id = template.id;
+
+        footer_toolbar.appendChild(btn);
+    }
+
+    footer_toolbar.classList.add("cg-footer-toolbar-ready");
+}
+
 function cg_wall_step(tab) {
     var timestamp = Math.floor(Date.now() / 1000);
     var forgotten = cg_wall_forget_new_txs(tab) + cg_wall_forget_old_txs(tab);
@@ -150,6 +205,8 @@ function cg_wall_step(tab) {
             cg_wall_download_graffiti(tab);
         }, 0
     );
+
+    cg_wall_step_toolbar(tab);
 }
 
 function cg_wall_import_txs(tab) {
@@ -167,6 +224,8 @@ function cg_wall_import_txs(tab) {
                 nr:        parseInt(graffiti.nr),
                 timestamp: tx.txtime,
                 location:  graffiti.location,
+                reported:  graffiti.reported,
+                censored:  graffiti.censored,
                 offset:    graffiti.offset,
                 fsize:     graffiti.fsize,
                 hash:      graffiti.hash,
@@ -304,6 +363,8 @@ function cg_wall_emplace_graffiti(tab, key, frame) {
 
         graffiti.setAttribute("data-timestamp", "0");
         graffiti.setAttribute("data-graffiti-nr", key);
+
+        graffiti.addEventListener('click', cg_wall_graffiti_click);
 
         frame.appendChild(graffiti);
     }
@@ -504,8 +565,13 @@ function cg_wall_add_frame(tab, framebuf) {
 
 function cg_wall_get_txs(tab) {
     var data_obj = {
-        count : ""+Math.min(cg_get_global("constants").TXS_PER_QUERY, 64)
+        count : ""+Math.min(cg_get_global("constants").TXS_PER_QUERY, 64),
+        censored : "0"
     };
+
+    if (cg_get_global("admin")) {
+        data_obj.reported = "1";
+    }
 
     var origin = document.getElementsByClassName(
         "cg-wall-frame-origin cg-wall-frame-empty"
@@ -864,12 +930,123 @@ function cg_wall_get_rawtx_range(tab, txid, offset, fsize, graffiti_nr) {
     return;
 }
 
+function cg_wall_report_graffiti(graffiti_nr) {
+    cg_push_status(
+        cg_translate(CG_TXT_WALL_REPORTING_GRAFFITI, [graffiti_nr])
+    );
+
+    var json_str = encodeURIComponent(
+        JSON.stringify(
+            {
+                nr : ""+graffiti_nr
+            }
+        )
+    );
+
+    xmlhttpPost(cg_get_global("api_url"), 'fun=report_graffiti&data='+json_str,
+        function(response) {
+            if (response === false) {
+                return;
+            }
+            else if (response === null ) {
+                return;
+            }
+        }
+    );
+
+    return;
+}
+
+function cg_wall_censor_graffiti(graffiti_nr) {
+    cg_push_status(
+        cg_translate(CG_TXT_WALL_CENSORING_GRAFFITI, [graffiti_nr])
+    );
+
+    var json_str = encodeURIComponent(
+        JSON.stringify(
+            {
+                nr : ""+graffiti_nr,
+                hmac : cg_admin_hmac("censor_graffiti"+graffiti_nr)
+            }
+        )
+    );
+
+    xmlhttpPost(cg_get_global("api_url"), 'fun=censor_graffiti&data='+json_str,
+        function(response) {
+            var success = false;
+
+            if (response !== null && response !== false) {
+                var json = JSON.parse(response);
+
+                if (json.result === "SUCCESS") {
+                    success = true;
+                }
+            }
+
+            if (!success) {
+                var graffiti = document.getElementById(
+                    "cg-wall-graffiti-"+graffiti_nr
+                );
+
+                if (graffiti !== null) {
+                    graffiti.classList.remove("cg-wall-graffiti-moderated");
+                }
+            }
+        }
+    );
+
+    return;
+}
+
+function cg_wall_allow_graffiti(graffiti_nr) {
+    cg_push_status(
+        cg_translate(CG_TXT_WALL_ALLOWING_GRAFFITI, [graffiti_nr])
+    );
+
+    var json_str = encodeURIComponent(
+        JSON.stringify(
+            {
+                nr : ""+graffiti_nr,
+                hmac : cg_admin_hmac("allow_graffiti"+graffiti_nr)
+            }
+        )
+    );
+
+    xmlhttpPost(cg_get_global("api_url"), 'fun=allow_graffiti&data='+json_str,
+        function(response) {
+            var success = false;
+
+            if (response !== null && response !== false) {
+                var json = JSON.parse(response);
+
+                if (json.result === "SUCCESS") {
+                    success = true;
+                }
+            }
+
+            if (!success) {
+                var graffiti = document.getElementById(
+                    "cg-wall-graffiti-"+graffiti_nr
+                );
+
+                if (graffiti !== null) {
+                    graffiti.classList.remove("cg-wall-graffiti-moderated");
+                }
+            }
+        }
+    );
+
+    return;
+}
+
 function cg_wall_decode_graffiti(tab, graffiti, data) {
     var graffiti_nr = graffiti.getAttribute("data-graffiti-nr");
 
     if (graffiti_nr in tab.graffiti.data) {
         var timestamp = Math.floor(Date.now() / 1000);
         var location  = tab.graffiti.data[graffiti_nr].location;
+        var reported  = tab.graffiti.data[graffiti_nr].reported;
+        var censored  = tab.graffiti.data[graffiti_nr].censored;
         var mimetype  = tab.graffiti.data[graffiti_nr].mimetype;
         var hash      = tab.graffiti.data[graffiti_nr].hash;
 
@@ -879,6 +1056,9 @@ function cg_wall_decode_graffiti(tab, graffiti, data) {
             graffiti.classList.remove("cg-wall-graffiti-decoding");
             return;
         }
+
+        if (reported) graffiti.classList.add("cg-wall-graffiti-reported");
+        if (censored) graffiti.classList.add("cg-wall-graffiti-censored");
 
         if (location === "NULL_DATA"
         &&  mimetype.indexOf("image/") === 0) {
@@ -919,15 +1099,17 @@ function cg_wall_render_graffiti(tab, graffiti, img_src) {
     var media = document.createElement("DIV");
     media.classList.add("cg-wall-media");
 
-    var img = new Image();
-    img.src = img_src;
+    if (!graffiti.classList.contains("cg-wall-graffiti-censored")) {
+        var img = new Image();
+        img.src = img_src;
 
-    var link = document.createElement("a");
-    link.href = "https://cryptograffiti.info/cache/"+hash;
-    link.target = "_blank";
+        var link = document.createElement("a");
+        link.href = "https://cryptograffiti.info/cache/"+hash;
+        link.target = "_blank";
 
-    link.appendChild(img);
-    media.appendChild(link);
+        link.appendChild(img);
+        media.appendChild(link);
+    }
 
     setTimeout(
         function(g, m, t){
@@ -1255,4 +1437,73 @@ function cg_wall_call(tab, fun) {
         }
     }
     else cg_bug(fun);
+}
+
+function cg_wall_button_click_report(what) {
+    var cg = document.getElementById("cg");
+    cg.classList.add("cg-state-wall-reporting");
+    cg.classList.add("cg-state-wall-selecting");
+
+    what.stopPropagation();
+}
+
+function cg_wall_button_click_allow(what) {
+    var cg = document.getElementById("cg");
+    cg.classList.add("cg-state-wall-allowing");
+    cg.classList.add("cg-state-wall-selecting");
+
+    what.stopPropagation();
+}
+
+function cg_wall_button_click_censor(what) {
+    var cg = document.getElementById("cg");
+    cg.classList.add("cg-state-wall-censoring");
+    cg.classList.add("cg-state-wall-selecting");
+
+    what.stopPropagation();
+}
+
+function cg_wall_graffiti_click(what) {
+    var cg = document.getElementById("cg");
+
+    if (cg.classList.contains("cg-state-wall-selecting")) {
+        cg.classList.remove("cg-state-wall-selecting");
+
+        if (cg.classList.contains("cg-state-wall-reporting")) {
+            cg.classList.remove("cg-state-wall-reporting");
+
+            if (!what.target.classList.contains("cg-wall-graffiti-reported")) {
+                what.target.classList.add("cg-wall-graffiti-reported");
+                cg_wall_report_graffiti(
+                    what.target.getAttribute("data-graffiti-nr")
+                );
+            }
+        }
+
+        if (cg.classList.contains("cg-state-wall-censoring")) {
+            cg.classList.remove("cg-state-wall-censoring");
+
+            if (!what.target.classList.contains("cg-wall-graffiti-moderated")) {
+                what.target.classList.add("cg-wall-graffiti-moderated");
+                cg_wall_censor_graffiti(
+                    what.target.getAttribute("data-graffiti-nr")
+                );
+            }
+        }
+
+        if (cg.classList.contains("cg-state-wall-allowing")) {
+            cg.classList.remove("cg-state-wall-allowing");
+
+            if (!what.target.classList.contains("cg-wall-graffiti-moderated")) {
+                what.target.classList.add("cg-wall-graffiti-moderated");
+
+                cg_wall_allow_graffiti(
+                    what.target.getAttribute("data-graffiti-nr")
+                );
+            }
+        }
+
+        what.stopPropagation();
+        return;
+    }
 }

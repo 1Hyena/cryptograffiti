@@ -246,6 +246,8 @@ These values can be received with an API call of `get_constants` function.
         * `back`       --- if '1' get `count` earlier than `nr` rows (optional)
         * `mimetype`   --- expected file type, may be partial (optional)
         * `cache`      --- presence of the raw transaction in cache (optional)
+        * `reported`   --- if '1' get only reported graffiti (optional)
+        * `censored`   --- if '1' get only censored graffiti (optional)
         * `height`     --- minimum block height of the TXs (optional)
         * `nonce`      --- 64 bytes hex string (ALS)
     * `sec_hash`       --- SHA256(`sec_key`) as a 64-byte hex string (ALS)
@@ -321,6 +323,30 @@ These values can be received with an API call of `get_constants` function.
         * `result`     --- `SUCCESS` or `FAILURE`
         * `error`      --- error dictionary if result was `FAILURE` (optional)
         * `token`      --- 64 bytes hex string to be used as PoW (optional)
+
+
+* __Report Graffiti__
+    `POST https://cryptograffiti.info/api/`
+
+    Report graffiti as inappropriate for the public to see.
+
+    _POST Parameters:_
+    * `fun`            --- `report_graffiti`
+    * `data`           --- JSON string with the following structure
+        * `guid`       --- 64 bytes random hex string (optional)
+        * `nr`         --- the number of the graffiti entry
+        * `nonce`      --- 64 bytes hex string (ALS)
+    * `sec_hash`       --- SHA256(`sec_key`) as a 64-byte hex string (ALS)
+    * `salt`           --- 32-byte hex string, must differ on each request (ALS)
+    * `checksum`       --- 32-byte hex string (ALS)
+    * `token`          --- 64 bytes hex string (optional)
+
+    _Returns a JSON dictionary:_
+    * `data`
+        * `result`     --- `SUCCESS` or `FAILURE`
+        * `error`      --- error dictionary if result was `FAILURE` (optional)
+    * `iv`             --- 32-byte hex string (ALS)
+    * `checksum`       --- 32-byte hex string (ALS)
 
 
 * __Make Order__
@@ -452,6 +478,56 @@ These values can be received with an API call of `get_constants` function.
 
 
 ##### PRIVATE FUNCTIONS ########################################################
+* __Allow Graffiti__
+    `POST https://cryptograffiti.info/api/`
+
+    Allow graffiti as appropriate for the public to see.
+
+    _POST Parameters:_
+    * `fun`            --- `allow_graffiti`
+    * `data`           --- JSON string with the following structure
+        * `guid`       --- 64 bytes random hex string (optional)
+        * `nr`         --- the number of the graffiti entry
+        * `hmac`       --- RIPEMD-160(user+pass+unix_minute+fun+nr)
+        * `nonce`      --- 64 bytes hex string (ALS)
+    * `sec_hash`       --- SHA256(`sec_key`) as a 64-byte hex string (ALS)
+    * `salt`           --- 32-byte hex string, must differ on each request (ALS)
+    * `checksum`       --- 32-byte hex string (ALS)
+    * `token`          --- 64 bytes hex string (optional)
+
+    _Returns a JSON dictionary:_
+    * `data`
+        * `result`     --- `SUCCESS` or `FAILURE`
+        * `error`      --- error dictionary if result was `FAILURE` (optional)
+    * `iv`             --- 32-byte hex string (ALS)
+    * `checksum`       --- 32-byte hex string (ALS)
+
+
+* __Censor Graffiti__
+    `POST https://cryptograffiti.info/api/`
+
+    Censor the specified graffiti.
+
+    _POST Parameters:_
+    * `fun`            --- `allow_graffiti`
+    * `data`           --- JSON string with the following structure
+        * `guid`       --- 64 bytes random hex string (optional)
+        * `nr`         --- the number of the graffiti entry
+        * `hmac`       --- RIPEMD-160(user+pass+unix_minute+fun+nr)
+        * `nonce`      --- 64 bytes hex string (ALS)
+    * `sec_hash`       --- SHA256(`sec_key`) as a 64-byte hex string (ALS)
+    * `salt`           --- 32-byte hex string, must differ on each request (ALS)
+    * `checksum`       --- 32-byte hex string (ALS)
+    * `token`          --- 64 bytes hex string (optional)
+
+    _Returns a JSON dictionary:_
+    * `data`
+        * `result`     --- `SUCCESS` or `FAILURE`
+        * `error`      --- error dictionary if result was `FAILURE` (optional)
+    * `iv`             --- 32-byte hex string (ALS)
+    * `checksum`       --- 32-byte hex string (ALS)
+
+
 * __Get Log__
     `POST https://cryptograffiti.info/api/`
 

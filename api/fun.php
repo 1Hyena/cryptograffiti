@@ -360,20 +360,24 @@ function assure_log($link) {
 
 function assure_graffiti($link) {
     return assure_table($link, 'graffiti', "CREATE TABLE `graffiti` (
- `nr` bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT 'primary key',
- `txid` binary(32) NOT NULL COMMENT 'TX hash',
- `location` varchar(16) NOT NULL DEFAULT 'NULL_DATA' COMMENT 'location of the payload within the TX',
- `fsize` bigint(20) unsigned DEFAULT NULL COMMENT 'file size in bytes',
- `offset` bigint(20) NOT NULL DEFAULT 0 COMMENT 'first byte offset of the file',
- `mimetype` varchar(64) DEFAULT NULL COMMENT 'file MIME type',
- `hash` binary(20) DEFAULT NULL COMMENT 'RIPEMD-160 hash of the file',
- `created` timestamp NOT NULL DEFAULT current_timestamp() COMMENT 'creation timestamp',
- `modified` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT 'timestamp of the last update',
- PRIMARY KEY (`nr`),
- UNIQUE KEY `identifier` (`txid`,`location`,`offset`) USING BTREE COMMENT 'prevents duplicate graffiti',
- KEY `txid` (`txid`),
- KEY `mimetype` (`mimetype`),
- KEY `hash` (`hash`)
+  `nr` bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT 'primary key',
+  `txid` binary(32) NOT NULL COMMENT 'TX hash',
+  `location` varchar(16) NOT NULL DEFAULT 'NULL_DATA' COMMENT 'location of the payload within the TX',
+  `fsize` bigint(20) unsigned DEFAULT NULL COMMENT 'file size in bytes',
+  `offset` bigint(20) NOT NULL DEFAULT 0 COMMENT 'first byte offset of the file',
+  `mimetype` varchar(64) DEFAULT NULL COMMENT 'file MIME type',
+  `reported` bit(1) NOT NULL COMMENT 'Set if the graffiti has been reported by users as inappropriate.',
+  `censored` bit(1) NOT NULL COMMENT 'Set if the graffiti contains inappropriate content.',
+  `hash` binary(20) DEFAULT NULL COMMENT 'RIPEMD-160 hash of the file',
+  `created` timestamp NOT NULL DEFAULT current_timestamp() COMMENT 'creation timestamp',
+  `modified` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT 'timestamp of the last update',
+  PRIMARY KEY (`nr`),
+  UNIQUE KEY `identifier` (`txid`,`location`,`offset`) USING BTREE COMMENT 'prevents duplicate graffiti',
+  KEY `txid` (`txid`),
+  KEY `mimetype` (`mimetype`),
+  KEY `hash` (`hash`),
+  KEY `censored` (`censored`) USING BTREE,
+  KEY `reported` (`reported`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8");
 }
 
@@ -412,6 +416,14 @@ function assure_order($link) {
  KEY `locked` (`accepted`),
  KEY `filled` (`filled`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1");
+}
+
+function get_admin_hmac($salt) {
+    $timestamp = time();
+    $timesocket = intval($timestamp / 60);
+    $message = ADMIN_USERNAME.ADMIN_PASSWORD.$timesocket.$salt;
+
+    return hash("ripemd160", $message, false);
 }
 
 function ALS_extract($link, $fun, $data, $sec_hash, $salt, $checksum, &$security_key) {
@@ -462,6 +474,7 @@ function extract_args($data) {
     extract_hex64    ('hash',        $args, $result);
     extract_hex64    ('nonce',       $args, $result);
     extract_hex64    ('token',       $args, $result);
+    extract_hex40    ('hmac',        $args, $result);
     extract_num      ('min_time',    $args, $result);
     extract_num      ('max_time',    $args, $result);
     extract_num      ('min_forfeit', $args, $result);
@@ -479,6 +492,8 @@ function extract_args($data) {
     extract_bool     ('live',        $args, $result);
     extract_bool     ('scam',        $args, $result);
     extract_bool     ('back',        $args, $result);
+    extract_bool     ('reported',    $args, $result);
+    extract_bool     ('censored',    $args, $result);
     extract_bool     ('cache',       $args, $result);
     extract_bool     ('inclusive',   $args, $result);
     extract_bool     ('filled',      $args, $result);
@@ -583,6 +598,17 @@ function extract_bool($var, $args, &$result) {
 function extract_hex64($var, $args, &$result) {
     if (array_key_exists($var, $args)
     &&  strlen($args[$var]) === 64
+    &&  ctype_xdigit($args[$var])) {
+        $result[$var] = $args[$var];
+        return true;
+    }
+    $result[$var] = null;
+    return false;
+}
+
+function extract_hex40($var, $args, &$result) {
+    if (array_key_exists($var, $args)
+    &&  strlen($args[$var]) === 40
     &&  ctype_xdigit($args[$var])) {
         $result[$var] = $args[$var];
         return true;
@@ -1286,6 +1312,86 @@ function fun_get_constants($link, $user, $guid) {
     return make_success($response);
 }
 
+function fun_report_graffiti($link, $user, $guid, $graffiti_nr) {
+    if ($graffiti_nr === null) {
+        return make_failure(ERROR_INVALID_ARGUMENTS, '`nr` is invalid.');
+    }
+
+    $link->query(
+        "UPDATE `graffiti` SET `reported` = 1 WHERE `nr` = '".$graffiti_nr."'"
+    );
+
+    if ($link->errno !== 0) return make_failure(ERROR_SQL, $link->error);
+
+    if ($link->affected_rows === 0) {
+        return make_failure(
+            ERROR_NO_CHANGE, 'Failed to report graffiti #'.$graffiti_nr.'.'
+        );
+    }
+
+    db_log(
+        $link, $user,
+        'Graffiti #'.$graffiti_nr.' was reported as inappropriate.'
+    );
+
+    return make_success();
+}
+
+function fun_censor_graffiti($link, $user, $guid, $graffiti_nr, $hmac) {
+    if ($graffiti_nr === null) {
+        return make_failure(ERROR_INVALID_ARGUMENTS, '`nr` is invalid.');
+    }
+
+    if ($hmac !== get_admin_hmac("censor_graffiti".$graffiti_nr)) {
+        return make_failure(ERROR_ACCESS_DENIED, 'HMAC mismatch!');
+    }
+
+    $link->query(
+        "UPDATE `graffiti` SET `censored` = 1 WHERE `nr` = '".$graffiti_nr."'"
+    );
+
+    if ($link->errno !== 0) return make_failure(ERROR_SQL, $link->error);
+
+    if ($link->affected_rows === 0) {
+        return make_failure(
+            ERROR_NO_CHANGE, 'Failed to censor graffiti #'.$graffiti_nr.'.'
+        );
+    }
+
+    db_log($link, $user, 'Graffiti #'.$graffiti_nr.' is now censored.');
+
+    return make_success();
+}
+
+function fun_allow_graffiti($link, $user, $guid, $graffiti_nr, $hmac) {
+    if ($graffiti_nr === null) {
+        return make_failure(ERROR_INVALID_ARGUMENTS, '`nr` is invalid.');
+    }
+
+    if ($hmac !== get_admin_hmac("allow_graffiti".$graffiti_nr)) {
+        return make_failure(ERROR_ACCESS_DENIED, 'HMAC mismatch!');
+    }
+
+    $link->query(
+        "UPDATE `graffiti` SET `reported` = 0, `censored` = 0 WHERE `nr` = '".
+        $graffiti_nr."'"
+    );
+
+    if ($link->errno !== 0) return make_failure(ERROR_SQL, $link->error);
+
+    if ($link->affected_rows === 0) {
+        return make_failure(
+            ERROR_NO_CHANGE, 'Failed to allow graffiti #'.$graffiti_nr.'.'
+        );
+    }
+
+    db_log(
+        $link, $user, 'Graffiti #'.$graffiti_nr.' is considered appropriate.'
+    );
+
+    return make_success();
+}
+
 function fun_make_order($link, $user, $guid, $group, $input, $token) {
     if ($group === null) return make_failure(ERROR_INVALID_ARGUMENTS, '`group` is invalid.');
     if ($input === null) return make_failure(ERROR_INVALID_ARGUMENTS, '`input` is invalid.');
@@ -1753,6 +1859,8 @@ function fun_get_graffiti($link, $user, $guid, $graffiti_nr, $count, $back, $mim
         while ($row = $result->fetch_assoc()) {
             $graffiti[] = array("nr"            => $row['nr'],
                                 "location"      => $row['location'],
+                                "reported"      => ($row['reported'] != false),
+                                "censored"      => ($row['censored'] != false),
                                 "mimetype"      => $row['mimetype'],
                                 "fsize"         => $row['fsize'],
                                 "offset"        => $row['offset'],
@@ -1773,7 +1881,8 @@ function fun_get_graffiti($link, $user, $guid, $graffiti_nr, $count, $back, $mim
 }
 
 function fun_get_txs(
-    $link, $user, $guid, $tx_nr, $nrs, $count, $back, $mimetype, $cache, $height
+    $link, $user, $guid, $tx_nr, $nrs, $count, $back, $mimetype, $cache,
+    $reported, $censored, $height
 ) {
     if ($count === null) {
         return make_failure(ERROR_INVALID_ARGUMENTS, '`count` is invalid.');
@@ -1797,9 +1906,23 @@ function fun_get_txs(
     $subwhere = "";
     $query = null;
 
-    if ($mimetype !== null) {
-        $where = "WHERE `mimetype` LIKE '".$mimetype."%'";
-        $subwhere = "AND `graffiti`.`mimetype` LIKE '".$mimetype."%'";
+    if ($mimetype !== null || $reported !== null || $censored !== null) {
+        $where = "WHERE 1 = 1 ";
+
+        if ($mimetype !== null) {
+            $where    .= "AND `mimetype` LIKE '".$mimetype."%' ";
+            $subwhere .= "AND `graffiti`.`mimetype` LIKE '".$mimetype."%' ";
+        }
+
+        if ($reported !== null) {
+            $where    .= "AND `reported` = ".$reported." ";
+            $subwhere .= "AND `graffiti`.`reported` = ".$reported." ";
+        }
+
+        if ($censored !== null) {
+            $where    .= "AND `censored` = ".$censored." ";
+            $subwhere .= "AND `graffiti`.`censored` = ".$censored." ";
+        }
     }
 
     $cache_condition = "TRUE";
@@ -1826,7 +1949,8 @@ function fun_get_txs(
     if ($tx_nr === null) {
         $query = $cache === null ? (
             "SELECT `txnr`, `txsize`, `txtime`, `ic`.`txid`, `ic`.`nr` AS ".
-            "gnr, `location`, `fsize`, `offset`, `mimetype`, `hash` FROM ".
+            "gnr, `location`, `reported`, `censored`, `fsize`, `offset`, ".
+            "`mimetype`, `hash` FROM ".
             "((select `nr` AS txnr, `time` AS txtime, `txid`, `size` AS ".
             "txsize from `tx` where (".$cache_condition.") AND (".
             $height_condition.") AND (".$nrset_condition.") AND exists ".
@@ -1841,7 +1965,8 @@ function fun_get_txs(
             // raw transaction details need to be uploaded to the server.
 
             "SELECT `txnr`, `txsize`, `txtime`, `ic`.`txid`, `ic`.`nr` AS ".
-            "gnr, `location`, `fsize`, `offset`, `mimetype`, `hash` FROM ".
+            "gnr, `location`, `reported`, `censored`, `fsize`, `offset`, ".
+            "`mimetype`, `hash` FROM ".
             "((select `nr` AS txnr, `time` as txtime, `txid`, `size` AS ".
             "txsize from `tx` where (".$cache_condition.") AND (".
             $height_condition.") AND (".$nrset_condition.") AND `modified` IS ".
@@ -1855,7 +1980,8 @@ function fun_get_txs(
     else if ($back === '1') {
         $query = (
             "SELECT `txnr`, `txsize`, `txtime`, `ic`.`txid`, `ic`.`nr` AS ".
-            "gnr, `location`, `fsize`, `offset`, `mimetype`, `hash` FROM ".
+            "gnr, `location`, `reported`, `censored`, `fsize`, `offset`, ".
+            "`mimetype`, `hash` FROM ".
             "((select `nr` AS txnr, `txid`, `time` AS txtime, `size` AS ".
             "txsize from `tx` where (".$cache_condition.") AND (".
             $height_condition.") AND `nr` <= '".$tx_nr."' and exists (SELECT ".
@@ -1868,7 +1994,8 @@ function fun_get_txs(
     else if ($back === '0' || $back === null) {
         $query = (
             "SELECT `txnr`, `txsize`, `txtime`, `ic`.`txid`, `ic`.`nr` AS ".
-            "gnr, `location`, `fsize`, `offset`, `mimetype`, `hash` FROM ".
+            "gnr, `location`, `reported`, `censored`, `fsize`, `offset`, ".
+            "`mimetype`, `hash` FROM ".
             "((select `nr` AS txnr, `txid`, `size` AS txsize, `time` AS ".
             "txtime from `tx` where (".$cache_condition.") AND (".
             $height_condition.") AND `nr` >= '".$tx_nr."' and exists (SELECT ".
@@ -1906,6 +2033,8 @@ function fun_get_txs(
             $tx_buf[$txnr]["graffiti"][] = array(
                 "nr"       => $row['gnr'],
                 "location" => $row['location'],
+                "reported" => ($row['reported'] != false),
+                "censored" => ($row['censored'] != false),
                 "fsize"    => $row['fsize'],
                 "offset"   => $row['offset'],
                 "mimetype" => $row['mimetype'],
@@ -2506,6 +2635,40 @@ function cron_day($link) {
     }
     else set_critical_error($link, $link->error);
 
+    $reports = 0;
+
+    $result = $link->query(
+        "SELECT COUNT(*) AS 'reports' FROM `graffiti` WHERE `reported` = 1"
+    );
+
+    if ($link->errno === 0) {
+        if ($row = $result->fetch_assoc()) {
+            $reports = intval($row['reports']);
+        }
+    }
+    else set_critical_error($link, $link->error);
+
+    if ($reports > 0) {
+        $to = "support".chr(64)."cryptograffiti.info";
+        $subject = "CG REPORT";
+        $from = "Report".chr(64)."CryptoGraffiti.info";
+        $headers = "From:" . $from;
+
+        db_log(
+            $link, null, (
+                'Notifying '.$to.' about '.$reports.
+                ' allegedly inappropriate graffiti.'
+            ), LOG_LEVEL_NORMAL
+        );
+
+        mail(
+            $to, $subject,
+            $reports." graffiti need".($reports === 1 ? "s" : "").
+            " to be reviewed.",
+            $headers
+        );
+    }
+
     $errors = 0;
 
     db_log($link, null, 'Checking log table for errors.', LOG_LEVEL_NORMAL);
@@ -2532,7 +2695,7 @@ function cron_day($link) {
 
     if ($errors > 0) {
         $to = "support".chr(64)."cryptograffiti.info";
-        $subject = "CGD ERROR";
+        $subject = "CG ERROR";
         $from = "Error".chr(64)."CryptoGraffiti.info";
         $headers = "From:" . $from;
 

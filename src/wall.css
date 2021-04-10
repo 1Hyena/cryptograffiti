@@ -90,9 +90,25 @@
     height: 100%;
 }
 
-.cg-wall-media > a > img {
+.cg-wall-media img {
     width: calc(100% - 0.5rem);
     height: calc(100% - 0.5rem);
     object-fit: contain;
     filter: drop-shadow(0.125rem 0.25rem 0.5rem black);
+}
+
+.cg-state-wall-selecting .cg-wall-media img {
+    filter: drop-shadow(0.125rem 0.25rem 0.5rem black) invert(100%);
+}
+
+#cg:not(.cg-admin) .cg-wall-graffiti-reported .cg-wall-media img {
+    filter: blur(0.5rem) drop-shadow(0.125rem 0.25rem 0.5rem black);
+}
+
+#cg.cg-admin .cg-wall-graffiti-moderated .cg-wall-media img {
+    opacity: 0.25;
+}
+
+.cg-state-wall-selecting .cg-wall-media {
+    pointer-events: none;
 }

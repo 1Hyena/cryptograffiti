@@ -198,10 +198,29 @@ function formatBytes(bytes) {
     else                         return (bytes/1073741824).toFixed(2) + " GiB";
 }
 
+function str2utf8_array(str) {
+    var utf8_str = unescape(encodeURIComponent(str));
+
+    var bytes = [];
+    for (var i=0, sz = utf8_str.length; i<sz; i++) {
+        bytes.push(utf8_str.charCodeAt(i));
+    }
+
+    return bytes;
+}
+
 function hex2binary(hex) {
     for (var bytes = [], c = 0; c < hex.length; c += 2)
     bytes.push(parseInt(hex.substr(c, 2), 16));
     return bytes;
+}
+
+function bin2hex(byteArray) {
+    return Array.prototype.map.call(
+        byteArray, function(byte) {
+            return ('0' + (byte & 0xFF).toString(16)).slice(-2);
+        }
+    ).join('');
 }
 
 function arrayBufferToBase64(buffer) {
