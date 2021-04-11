@@ -2638,7 +2638,8 @@ function cron_day($link) {
     $reports = 0;
 
     $result = $link->query(
-        "SELECT COUNT(*) AS 'reports' FROM `graffiti` WHERE `reported` = 1"
+        "SELECT COUNT(*) AS 'reports' FROM `graffiti` WHERE `reported` = 1 ".
+        "AND `censored` = 0"
     );
 
     if ($link->errno === 0) {
