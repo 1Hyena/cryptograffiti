@@ -5,10 +5,15 @@
     "background_color": "#f0f0f0",
     "icons": [
         {
-            "src": "https://cryptograffiti.info/pwa/icon.png",
+            "src": "https://cryptograffiti.info/pwa/maskable.png",
             "type": "image/png",
             "sizes": "any",
-            "purpose": "maskable any"
+            "purpose": "maskable"
+        },
+        {
+            "src": "https://cryptograffiti.info/pwa/icon.png",
+            "type": "image/png",
+            "sizes": "any"
         },
         {
             "src": "https://cryptograffiti.info/pwa/splash.png",
