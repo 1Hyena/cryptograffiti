@@ -19,7 +19,8 @@ var GIuGDtd14GQaDKh9TfVKGQJS = {
     "buggy"      : false,
     "admin"      : false,
     "focus"      : null,
-    "api_usage"  : { rpm : 0, max_rpm : 60 }
+    "api_usage"  : { rpm : 0, max_rpm : 60 },
+    "standalone" : false
 };
 
 function cg_get_global(name) {
@@ -43,6 +44,10 @@ function cg_set_global(name, value) {
 }
 
 function cg_main() {
+    cg_set_global(
+        "standalone", (typeof COMPILE_TIME !== 'undefined' ? true : false)
+    );
+
     var metas = document.getElementsByTagName("META");
     for (var i=0; i < metas.length; ++i) {
         if (metas[i].name === "application-name") {
@@ -51,26 +56,32 @@ function cg_main() {
         }
     }
 
+    cg_parse_hashtag();
+    cg_setup_parameters();
+
     var cg_main = document.getElementById("cg-main");
 
     (
         function() {
-            var link = (
-                document.querySelector("link[rel*='icon']") ||
-                document.createElement('link')
-            );
-
+            var link = document.createElement('link')
             link.type = 'image/x-icon';
             link.rel = 'shortcut icon';
-            link.href = document.getElementById("gfx_icon").src;
+            link.href = document.getElementById("gfx_favicon").src;
+            document.getElementsByTagName('head')[0].appendChild(link);
+
+            link = document.createElement('link')
+            link.type = 'image/png';
+            link.rel = 'apple-touch-icon';
+            link.href = document.getElementById("gfx_apple_touch_icon").src;
             document.getElementsByTagName('head')[0].appendChild(link);
         }
     )();
 
-    cg_init_sound();
+    if (cg_get_global("standalone") && cg_get_global("admin")) {
+        cg_init_serviceworker();
+    }
 
-    cg_parse_hashtag();
-    cg_setup_parameters();
+    cg_init_sound();
 
     if (cg_get_global("hashtag").lang === null) {
         var lang = (
@@ -987,6 +998,20 @@ function cg_body_click(event) {
     cg.classList.remove("cg-state-wall-selecting");
     cg.classList.remove("cg-state-wall-allowing");
     cg.classList.remove("cg-state-wall-censoring");
+}
+
+function cg_init_serviceworker() {
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("serviceworker.js").then(
+            function (registration) {
+                console.log("success load");
+            }
+        ).catch(
+            function (err) {
+                console.log(err);
+            }
+        );
+    }
 }
 
 var CG_IMG_US = (

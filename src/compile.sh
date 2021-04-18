@@ -1,5 +1,6 @@
 #!/bin/bash
 out="../index.html"
+webmanifest="../pwa/.webmanifest"
 
 > "$out"
 ext_src=false
@@ -11,6 +12,12 @@ css_files=
 sfx_files=
 gfx_files=
 while IFS='' read -r line || [[ -n "$line" ]]; do
+    if [ "${line}" == "/* FIRST SCRIPT LINE */" ]; then
+        timestamp=$(date +%s)
+        printf "var COMPILE_TIME='%s';\n" "${timestamp}" >> "${out}"
+        continue
+    fi
+
     if [ "$line" == "/* PASTE EXTERNAL CSS HERE */" ]; then
         files=""
 
@@ -60,6 +67,18 @@ while IFS='' read -r line || [[ -n "$line" ]]; do
 
     if [ "$line" == "<!-- BEGIN EXTERNAL CSS -->" ]; then
         ext_css=true
+
+        if [ -z "${webmanifest}" ]; then
+            continue
+        else
+            if [ -f "${webmanifest}" ]; then
+                b64=$(base64 --wrap=0 "${webmanifest}")
+                printf "<link rel='manifest' href='data:application/manifest+json;base64,%s' crossorigin='use-credentials'>\n" "${b64}" >> "$out"
+            else
+                echo "Webmanifest file does not exist."
+            fi
+        fi
+
         continue
     fi
 
@@ -165,4 +184,3 @@ while IFS='' read -r line || [[ -n "$line" ]]; do
 
     echo "$line" >> "$out"
 done < ${1:-cryptograffiti.html}
-
