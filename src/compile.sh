@@ -91,7 +91,7 @@ while IFS='' read -r line || [[ -n "${line}" ]]; do
     if [ "${line}" == "<!-- BEGIN EXTERNAL CSS -->" ]; then
         ext_css=true
 
-        if [ -z "${webmanifest}" ]; then
+        if [ -z "${pwa_dir}${pwa_webmanifest}" ]; then
             continue
         fi
 

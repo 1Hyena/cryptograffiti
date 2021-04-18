@@ -366,6 +366,15 @@ function cg_wall_emplace_graffiti(tab, key, frame) {
 
         graffiti.addEventListener('click', cg_wall_graffiti_click);
 
+        var bg_wrapper = document.createElement("div");
+        bg_wrapper.classList.add("cg-wall-graffiti-bg");
+
+        var placeholder = document.createElement("img");
+        placeholder.src = document.getElementById("gfx_favicon").src;
+        placeholder.classList.add("cg-poofin");
+
+        bg_wrapper.appendChild(placeholder);
+        graffiti.appendChild(bg_wrapper);
         frame.appendChild(graffiti);
     }
 }
@@ -871,6 +880,7 @@ function cg_wall_download_graffiti(tab) {
                 if (get_timestamp_age(timestamp) < 3) continue;
 
                 child.classList.add("cg-wall-graffiti-downloading");
+                frame.classList.add("cg-wall-frame-busy");
 
                 cg_wall_get_rawtx_range(
                     tab,
@@ -1114,6 +1124,7 @@ function cg_wall_render_graffiti(tab, graffiti, img_src) {
     setTimeout(
         function(g, m, t){
             m.classList.add("cg-poofin");
+
             g.appendChild(m);
 
             var newest = (
@@ -1124,6 +1135,21 @@ function cg_wall_render_graffiti(tab, graffiti, img_src) {
 
             if (newest === g.getAttribute("data-graffiti-nr")) {
                 cg_wall_call(t, "spray");
+            }
+
+            var bg = g.getElementsByClassName("cg-wall-graffiti-bg");
+            if (bg.length !== 0) {
+                bg = bg[0];
+
+                bg.classList.add("cg-poofout");
+
+                setTimeout(
+                    function(g2, bg2) {
+                        g2.removeChild(bg2);
+                        g2.parentNode.classList.remove("cg-wall-frame-busy");
+                    },
+                    200, g, bg
+                );
             }
         },
         Math.floor(Math.random() * 1000), graffiti, media, tab
@@ -1319,7 +1345,8 @@ function cg_wall_remove_new_frames(tab) {
             var child = bodybuf.firstChild;
 
             if (child.classList.contains("cg-wall-frame-visible")
-            ||  child.classList.contains("cg-wall-frame-origin")) {
+            ||  child.classList.contains("cg-wall-frame-origin")
+            ||  child.classList.contains("cg-wall-frame-busy")) {
                 return removed_frames;
             }
 
@@ -1348,7 +1375,8 @@ function cg_wall_remove_old_frames(tab) {
             var child = bodybuf.lastChild;
 
             if (child.classList.contains("cg-wall-frame-visible")
-            ||  child.classList.contains("cg-wall-frame-origin")) {
+            ||  child.classList.contains("cg-wall-frame-origin")
+            ||  child.classList.contains("cg-wall-frame-busy")) {
                 return removed_frames;
             }
 
