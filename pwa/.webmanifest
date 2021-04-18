@@ -7,13 +7,13 @@
         {
             "src": "https://cryptograffiti.info/pwa/maskable.png",
             "type": "image/png",
-            "sizes": "any",
+            "sizes": "180x180",
             "purpose": "maskable"
         },
         {
             "src": "https://cryptograffiti.info/pwa/icon.png",
             "type": "image/png",
-            "sizes": "any"
+            "sizes": "128x128"
         },
         {
             "src": "https://cryptograffiti.info/pwa/splash.png",
