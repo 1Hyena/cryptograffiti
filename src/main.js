@@ -3,7 +3,7 @@ var CG_LOG_ALERT   = 1;
 var CG_LOG_WARNING = 2;
 
 var GIuGDtd14GQaDKh9TfVKGQJS = {
-    "version"    : "2.05",
+    "version"    : "2.10",
     "language"   : "en",
     "api_url"    : "",
     "hashtag"    : null,
@@ -1001,10 +1001,15 @@ function cg_body_click(event) {
 }
 
 function cg_init_serviceworker() {
-      if ("serviceWorker" in navigator) {
+    if ("serviceWorker" in navigator) {
         navigator.serviceWorker.register("serviceworker.js").then(
             function (registration) {
-                console.log("success load");
+                registration.addEventListener(
+                    'updatefound',
+                    function() {
+                        console.log("A new service worker is being installed.");
+                    }
+                );
             }
         ).catch(
             function (err) {
