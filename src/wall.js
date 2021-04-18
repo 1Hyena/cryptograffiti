@@ -368,10 +368,10 @@ function cg_wall_emplace_graffiti(tab, key, frame) {
 
         var bg_wrapper = document.createElement("div");
         bg_wrapper.classList.add("cg-wall-graffiti-bg");
+        bg_wrapper.classList.add("cg-poofin");
 
         var placeholder = document.createElement("img");
         placeholder.src = document.getElementById("gfx_favicon").src;
-        placeholder.classList.add("cg-poofin");
 
         bg_wrapper.appendChild(placeholder);
         graffiti.appendChild(bg_wrapper);
@@ -1142,6 +1142,7 @@ function cg_wall_render_graffiti(tab, graffiti, img_src) {
                 bg = bg[0];
 
                 bg.classList.add("cg-poofout");
+                bg.classList.remove("cg-poofin");
 
                 setTimeout(
                     function(g2, bg2) {

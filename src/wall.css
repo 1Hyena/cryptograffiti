@@ -67,14 +67,13 @@
     left: 0;
     right: 0;
     bottom: 0;
-    filter: grayscale(75%) opacity(0.5) blur(0.1rem);
 }
 
 .cg-wall-graffiti-bg > img {
     width: 50%;
     height: 100%;
     object-fit: contain;
-    opacity: 0;
+    opacity: 0.125;
 }
 
 .cg-debug .cg-wall-graffiti {
