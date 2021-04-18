@@ -77,7 +77,7 @@ function cg_main() {
         }
     )();
 
-    if (cg_get_global("standalone") && cg_get_global("admin")) {
+    if (cg_get_global("standalone")) {
         cg_init_serviceworker();
     }
 
