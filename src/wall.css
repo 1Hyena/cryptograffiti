@@ -41,9 +41,16 @@
 .cg-wall-frame {
     display: inline-block;
     width: 100%;
-    height: 15rem;
-    max-width: 15rem;
+    height: 10rem;
+    max-width: 10rem;
     vertical-align: middle;
+}
+
+@media only screen and (min-width: 32rem) {
+    .cg-wall-frame {
+        height: 15rem;
+        max-width: 15rem;
+    }
 }
 
 .cg-debug .cg-wall-frame {
@@ -101,20 +108,34 @@
     height: 100%;
 }
 
+.cg-wall-media > span:nth-child(1) {
+    width: 0;
+    height: 100%;
+    vertical-align: middle;
+    display: inline-block;
+}
+
 .cg-wall-media > a {
     width: 100%;
     height: 100%;
 }
 
 .cg-wall-media img {
-    width: calc(100% - 0.5rem);
-    height: calc(100% - 0.5rem);
+    min-width: 2rem;
+    min-height: 2rem;
+    max-width: calc(100% - 0.5rem);
+    max-height: calc(100% - 0.5rem);
     object-fit: contain;
     filter: drop-shadow(0.125rem 0.25rem 0.5rem black);
+    vertical-align: middle;
 }
 
 .cg-state-wall-selecting .cg-wall-media img {
     filter: drop-shadow(0.125rem 0.25rem 0.5rem black) invert(100%);
+}
+
+.cg-state-wall-selecting .cg-wall-media img:hover {
+    filter: drop-shadow(0.125rem 0.25rem 0.5rem white) invert(100%);
 }
 
 #cg:not(.cg-admin) .cg-wall-graffiti-reported .cg-wall-media img {
@@ -125,6 +146,6 @@
     opacity: 0.25;
 }
 
-.cg-state-wall-selecting .cg-wall-media {
-    pointer-events: none;
+.cg-state-wall-selecting .cg-wall-media > a {
+    cursor: crosshair;
 }

@@ -364,8 +364,6 @@ function cg_wall_emplace_graffiti(tab, key, frame) {
         graffiti.setAttribute("data-timestamp", "0");
         graffiti.setAttribute("data-graffiti-nr", key);
 
-        graffiti.addEventListener('click', cg_wall_graffiti_click);
-
         var bg_wrapper = document.createElement("div");
         bg_wrapper.classList.add("cg-wall-graffiti-bg");
         bg_wrapper.classList.add("cg-poofin");
@@ -1117,7 +1115,10 @@ function cg_wall_render_graffiti(tab, graffiti, img_src) {
         link.href = "https://cryptograffiti.info/cache/"+hash;
         link.target = "_blank";
 
+        link.addEventListener("click", cg_wall_graffiti_link_click);
+
         link.appendChild(img);
+        media.appendChild(document.createElement("span"));
         media.appendChild(link);
     }
 
@@ -1492,8 +1493,18 @@ function cg_wall_button_click_censor(what) {
     what.stopPropagation();
 }
 
-function cg_wall_graffiti_click(what) {
+function cg_wall_graffiti_link_click(ev) {
     var cg = document.getElementById("cg");
+
+    var graffiti = ev.target;
+
+    while (graffiti !== null) {
+        if (graffiti.classList.contains("cg-wall-graffiti")) break;
+
+        graffiti = graffiti.parentNode;
+    }
+
+    if (graffiti === null) return;
 
     if (cg.classList.contains("cg-state-wall-selecting")) {
         cg.classList.remove("cg-state-wall-selecting");
@@ -1501,10 +1512,10 @@ function cg_wall_graffiti_click(what) {
         if (cg.classList.contains("cg-state-wall-reporting")) {
             cg.classList.remove("cg-state-wall-reporting");
 
-            if (!what.target.classList.contains("cg-wall-graffiti-reported")) {
-                what.target.classList.add("cg-wall-graffiti-reported");
+            if (!graffiti.classList.contains("cg-wall-graffiti-reported")) {
+                graffiti.classList.add("cg-wall-graffiti-reported");
                 cg_wall_report_graffiti(
-                    what.target.getAttribute("data-graffiti-nr")
+                    graffiti.getAttribute("data-graffiti-nr")
                 );
             }
         }
@@ -1512,10 +1523,10 @@ function cg_wall_graffiti_click(what) {
         if (cg.classList.contains("cg-state-wall-censoring")) {
             cg.classList.remove("cg-state-wall-censoring");
 
-            if (!what.target.classList.contains("cg-wall-graffiti-moderated")) {
-                what.target.classList.add("cg-wall-graffiti-moderated");
+            if (!graffiti.classList.contains("cg-wall-graffiti-moderated")) {
+                graffiti.classList.add("cg-wall-graffiti-moderated");
                 cg_wall_censor_graffiti(
-                    what.target.getAttribute("data-graffiti-nr")
+                    graffiti.getAttribute("data-graffiti-nr")
                 );
             }
         }
@@ -1523,16 +1534,17 @@ function cg_wall_graffiti_click(what) {
         if (cg.classList.contains("cg-state-wall-allowing")) {
             cg.classList.remove("cg-state-wall-allowing");
 
-            if (!what.target.classList.contains("cg-wall-graffiti-moderated")) {
-                what.target.classList.add("cg-wall-graffiti-moderated");
+            if (!graffiti.classList.contains("cg-wall-graffiti-moderated")) {
+                graffiti.classList.add("cg-wall-graffiti-moderated");
 
                 cg_wall_allow_graffiti(
-                    what.target.getAttribute("data-graffiti-nr")
+                    graffiti.getAttribute("data-graffiti-nr")
                 );
             }
         }
 
-        what.stopPropagation();
+        ev.preventDefault();
+        ev.stopPropagation();
         return;
     }
 }
