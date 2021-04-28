@@ -3,7 +3,7 @@ var CG_LOG_ALERT   = 1;
 var CG_LOG_WARNING = 2;
 
 var GIuGDtd14GQaDKh9TfVKGQJS = {
-    "version"    : "2.11",
+    "version"    : "2.12",
     "language"   : "en",
     "api_url"    : "",
     "hashtag"    : null,
