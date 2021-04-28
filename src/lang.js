@@ -113,6 +113,13 @@ var CG_TXT_MAIN_BTN_ADMIN =
     ru : "(ADMIN)"
 };
 
+var CG_TXT_MAIN_BTN_LINKS =
+{
+    en : "LINKS",
+    et : "VIITED",
+    ru : "(LINKS)"
+};
+
 var CG_TXT_MAIN_BTN_ABOUT =
 {
     en : "ABOUT",
@@ -292,6 +299,79 @@ var CG_TXT_WALL_LOADING_GRAFFITI_TIMEOUT =
 ////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////
+//  LINKS TAB TRANSLATIONS BEGIN                                              //
+/////////7///////////////////////////////////////////////////////////////////////
+
+var CG_TXT_LINKS =
+{
+    "LEARNING" : {
+        en  : "Learning",
+        et  : "Õppematerjalid",
+        ru  : "(Learning)"
+    },
+    "NEWS" : {
+        en  : "News",
+        et  : "Uudised",
+        ru  : "(News)"
+    },
+    "SOFTWARE" : {
+        en  : "Software",
+        et  : "Tarkvara",
+        ru  : "(Software)"
+    },
+    "COMMUNITY" : {
+        en  : "Community",
+        et  : "Kommuun",
+        ru  : "(Community)"
+    },
+    "WHITEPAPER" : {
+        en  : "Whitepaper",
+        et  : "Tehniline kirjeldus",
+        ru  : "(Whitepaper)"
+    },
+    "LINK_TO_WHITEPAPER" : {
+        website : "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3440802",
+        en  : "Bitcoin: A Peer-to-Peer Electronic Cash System",
+        et  : "Bitimünt: kaaslaselt-kaaslasele elektroonilise raha süsteem",
+        ru  : "(Bitcoin: A Peer-to-Peer Electronic Cash System)"
+    },
+    "LINK_TO_CRAIG_WRIGHT" : {
+        website : "https://craigwright.net/",
+        en  : "Home page of the Creator of Bitcoin",
+        et  : "Bitimündi looja koduleht",
+        ru  : "(Homepage of the Creator of Bitcoin)"
+    },
+    "LINK_TO_COINGEEK" : {
+        website : "https://coingeek.com/",
+        en  : "Trustworthy source of Bitcoin news",
+        et  : "Usaldusväärne Bitimünti kajastav uudistesait",
+        ru  : "(Trustworthy source of Bitcoin news)"
+    },
+    "LINK_TO_ELECTRUMSV" : {
+        website : "https://electrumsv.io/",
+        en  : "Deterministic Bitcoin wallet for desktop",
+        et  : "Deterministlik Bitimündi rahakott töölauale",
+        ru  : "(Deterministic Bitcoin wallet for desktop)"
+    },
+    "LINK_TO_SIMPLY_CASH" : {
+        website : "https://simply.cash/",
+        en  : "Simple Bitcoin wallet for a smartphone",
+        et  : "Lihtne Bitimündi rahakott nutitelefonile",
+        ru  : "(Simple Bitcoin wallet for a smartphone)"
+    },
+    "LINK_TO_METANET" : {
+        website : "https://metanet.icu/",
+        en  : "Exclusive membership club focused on Bitcoin",
+        et  : "Eksklusiivne liikmeklubi, mis on fokuseeritud Bitimündile",
+        ru  : "(Exclusive membership club focused on Bitcoin)"
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////
+//  LINKS TAB TRANSLATIONS END                                                //
+////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////
 //  ABOUT TAB TRANSLATIONS BEGIN                                              //
 ////////////////////////////////////////////////////////////////////////////////
 var CG_TXT_ABOUT_P1 =
@@ -341,35 +421,6 @@ var CG_TXT_ABOUT_CONTACT_US =
     en : "Contact us:",
     et : "Meie kontakt:",
     ru : "Свяжитесь с нами:"
-};
-
-var CG_TXT_ABOUT_FRIENDS =
-{
-    en : "Our friends:",
-    et : "Meie sõbrad:",
-    ru : "Наши друзья:"
-};
-
-var CG_TXT_ABOUT_FRIEND_LIST =
-{
-   "MetaNet" : {
-        website : "https://metanet.icu/",
-        en  : "Exclusive membership club focused on BitCoin and the MetaNet",
-        et  : "Eksklusiivne liikmeklubi, mis on fokuseeritud Bitimündile ja Metanetile",
-        ru  : "(Exclusive membership club focused on BitCoin and the MetaNet)"
-    },
-   "CoinGeek" : {
-        website : "https://coingeek.com/",
-        en  : "Trusted source for all of the latest cryptocurrency news",
-        et  : "Usaldusväärne krüptovaluutadele orienteeritud uudistesait",
-        ru  : "(Trusted source for all of the latest cryptocurrency news)"
-    },
-   "Craig Wright" : {
-        website : "https://craigwright.net/",
-        en  : "Creator of Bitcoin - Satoshi Nakamoto",
-        et  : "Bitimündi looja - Satoshi Nakamoto",
-        ru  : "(Creator of Bitcoin - Satoshi Nakamoto)"
-    }
 };
 
 ////////////////////////////////////////////////////////////////////////////////

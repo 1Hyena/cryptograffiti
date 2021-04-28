@@ -57,7 +57,10 @@ while IFS='' read -r line || [[ -n "${line}" ]]; do
         printf "Compiling: %s\n" "${files}"
         jar="${jar_closure_stylesheets}"
         arg1="--allow-unrecognized-properties"
-        java -jar "${jar}" "${arg1}" ${files} >> "${out_dir}${out_index}"
+        arg2="--allowed-non-standard-function"
+        arg3="minmax"
+        java -jar "${jar}" "${arg1}" "${arg2}" "${arg3}" ${files} \
+            >> "${out_dir}${out_index}"
         printf "\n" >> "${out_dir}${out_index}"
 
         continue

@@ -275,6 +275,7 @@ function cg_main_loop() {
             case "cg-tab-wall":  cg_wall_step(tab);  break;
             case "cg-tab-about": cg_about_step(tab); break;
             case "cg-tab-admin": cg_admin_step(tab); break;
+            case "cg-tab-links": cg_links_step(tab); break;
             default: break;
         }
     }, 0);
@@ -769,6 +770,11 @@ function cg_construct_buttons(tabs) {
             click_fun : cg_button_click_admin
         },
         {
+            id: "cg-btn-tab-links",
+            label : CG_TXT_MAIN_BTN_LINKS,
+            click_fun : cg_button_click_links
+        },
+        {
             id: "cg-btn-tab-about",
             label : CG_TXT_MAIN_BTN_ABOUT,
             click_fun : cg_button_click_about
@@ -875,6 +881,11 @@ function cg_button_click_about() {
 function cg_button_click_admin() {
     var btn = document.getElementById("cg-btn-tab-admin");
     cg_button_click(btn, cg_admin_construct);
+}
+
+function cg_button_click_links() {
+    var btn = document.getElementById("cg-btn-tab-links");
+    cg_button_click(btn, cg_links_construct);
 }
 
 function cg_button_click_wall() {

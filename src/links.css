@@ -1,0 +1,31 @@
+#cg-tab-links > span:first-child {
+    display: inline-block;
+    width: 0%;
+    height: 100%;
+    vertical-align: middle;
+}
+
+#cg-links-wrapper {
+    display: inline-block;
+    vertical-align: middle;
+    max-height: 36rem;
+    width: 36rem;
+    max-width: 100%;
+    text-align: left;
+}
+
+#cg-links-wrapper > div {
+    padding-bottom: 3rem;
+}
+
+#cg-links-wrapper > div > div {
+    display: grid;
+    grid-template-columns: 8rem minmax(0, 1fr);
+    grid-gap: 0.25rem;
+    justify-content: center;
+    padding-top: 1rem;
+}
+
+#cg-links-wrapper h1 {
+    text-align: center;
+}

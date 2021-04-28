@@ -128,30 +128,10 @@ function cg_about_construct(main) {
 
         td3_2.appendChild(t_email);
         td3_2.appendChild(img_domain);
-        td4_1.appendChild(
-            document.createTextNode(cg_translate(CG_TXT_ABOUT_FRIENDS))
-        );
         td5_1.appendChild(document.createTextNode("Bitcoin:"));
         td5_2.appendChild(a_bsvinfo);
         td5_2.appendChild(document.createElement("br"));
         td5_2.appendChild(a_wrightpaper);
-
-        var first_friend = true;
-        for (var key in CG_TXT_ABOUT_FRIEND_LIST) {
-            if (!CG_TXT_ABOUT_FRIEND_LIST.hasOwnProperty(key)) continue;
-            if (!first_friend) {
-                td4_2.appendChild(document.createTextNode(", "));
-            }
-
-            var t_friend = document.createTextNode(key);
-            var a_friend = document.createElement("a");
-            a_friend.appendChild(t_friend);
-            a_friend.title = cg_translate(CG_TXT_ABOUT_FRIEND_LIST[key]);
-            a_friend.href  = CG_TXT_ABOUT_FRIEND_LIST[key].website;
-            a_friend.target= "_blank";
-            td4_2.appendChild(a_friend);
-            first_friend = false;
-        }
 
         {
             var cash_img = document.createElement("img");
