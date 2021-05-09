@@ -188,7 +188,7 @@ while IFS='' read -r line || [[ -n "${line}" ]]; do
             fmt="<script>show_progress('%s');</script>\n"
             printf "${fmt}" "${fname}" >> "${out_dir}${out_index}"
 
-            fmt="<img id='%s' src='data:%s;base64,%s'></img>\n"
+            fmt="<img id='%s' src='data:%s;base64,%s' alt=''>\n"
             out="${out_dir}${out_index}"
             printf "${fmt}" "${id}" "${mimetype}" "${b64}" >> "${out}"
         done

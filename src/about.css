@@ -99,7 +99,7 @@
 
 @media not all and (min-width: 35rem) {
     .cg-about-table td {
-        font-size: normal;
+        font-size: medium;
     }
     .cg-about-contact > img:nth-child(1),
     .cg-about-contact > img:nth-child(3)  {
