@@ -420,7 +420,7 @@ function assure_order($link) {
 
 function get_admin_hmac($salt) {
     $timestamp = time();
-    $timesocket = intval($timestamp / 60);
+    $timesocket = intval($timestamp / 600);
     $message = ADMIN_USERNAME.ADMIN_PASSWORD.$timesocket.$salt;
 
     return hash("ripemd160", $message, false);

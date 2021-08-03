@@ -68,7 +68,7 @@ function cg_admin_hmac(salt) {
     var username = input_user !== null ? input_user.value : "";
     var password = input_pass !== null ? input_pass.value : "";
     var timestamp = Math.floor(Date.now() / 1000);
-    var timesocket = Math.floor(timestamp / 60);
+    var timesocket = Math.floor(timestamp / 600);
     var message = username+password+timesocket+salt;
 
     return bin2hex(rmd160(new Uint8Array(str2utf8_array(message))));
