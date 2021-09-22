@@ -765,8 +765,9 @@ step() {
             fi
 
             local decoding_start=$SECONDS
-
+            set -x
             decode_graffiti "${news}" # Subshell must be avoided here.
+            set +x
             local graffiti="${DECODED_GRAFFITI}"
 
             local decoding_time=$(( SECONDS - decoding_start ))
