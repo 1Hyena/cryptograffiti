@@ -335,12 +335,6 @@ var CG_TXT_LINKS =
         et  : "Bitimünt: kaaslaselt-kaaslasele elektroonilise raha süsteem",
         ru  : "(Bitcoin: A Peer-to-Peer Electronic Cash System)"
     },
-    "LINK_TO_CRAIG_WRIGHT" : {
-        website : "https://craigwright.net/",
-        en  : "Home page of the Creator of Bitcoin",
-        et  : "Bitimündi looja koduleht",
-        ru  : "(Homepage of the Creator of Bitcoin)"
-    },
     "LINK_TO_COINGEEK" : {
         website : "https://coingeek.com/",
         en  : "Trustworthy source of Bitcoin news",

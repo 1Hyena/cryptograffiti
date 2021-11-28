@@ -6,8 +6,7 @@ function cg_links_construct(main) {
         {
             label: "LEARNING",
             links: [
-                [ "WHITEPAPER",   "LINK_TO_WHITEPAPER"   ],
-                [ "Craig Wright", "LINK_TO_CRAIG_WRIGHT" ]
+                [ "WHITEPAPER",   "LINK_TO_WHITEPAPER"   ]
             ]
         },
         {
