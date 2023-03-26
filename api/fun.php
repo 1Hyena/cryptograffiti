@@ -2535,11 +2535,13 @@ function cron_tick($link) {
                 // Decoder is offline
                 if ($decoder_before === '1') {
                     set_stat($link, "decoder", '0');
+                    /*
                     db_log(
                         $link, null,
                         'Cryptograffiti decoding appears disabled!',
                         LOG_LEVEL_CRITICAL
                     );
+                    */
                 }
             }
         }

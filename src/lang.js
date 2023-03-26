@@ -22,6 +22,13 @@ var CG_TXT_MAIN_PLEASE_WAIT =
     ru : "Пожалуйста, подождите."
 };
 
+var CG_TXT_MAIN_PROJECT_DISCONTINUED =
+{
+    en : "This project has been discontinued.",
+    et : "Seda projekti ei jätkata enam.",
+    ru : "Этот проект был прекращен."
+};
+
 var CG_TXT_MAIN_TRANSLATE_TO_EN =
 {
     en : "Translate page to English.",

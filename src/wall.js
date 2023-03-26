@@ -115,11 +115,11 @@ function cg_wall_step_toolbar(tab) {
     }
 
     var buttons = [
-        {
+        /*{
             id: "cg-wall-btn-report",
             label : CG_TXT_WALL_BTN_REPORT,
             click_fun : cg_wall_button_click_report
-        },
+        },*/
         {
             id: "cg-wall-btn-allow",
             label : CG_TXT_WALL_BTN_ALLOW,

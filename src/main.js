@@ -297,7 +297,9 @@ function cg_check_key(e) {
 }
 
 function cg_construct(cg) {
-    var text = document.createTextNode(cg_translate(CG_TXT_MAIN_PLEASE_WAIT));
+    var text = document.createTextNode(
+        cg_translate(CG_TXT_MAIN_PROJECT_DISCONTINUED)
+    );
 
     while (cg.hasChildNodes()) {
         cg.removeChild(cg.lastChild);
@@ -331,7 +333,7 @@ function cg_construct(cg) {
     setTimeout(function(){
         cg_activate_interface();
         cg_main_loop();
-    }, 0);
+    }, 5000);
 }
 
 function cg_construct_footer() {
