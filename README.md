@@ -1,4 +1,4 @@
-# CryptoGraffiti Client v2.0
+# CryptoGraffiti v2.0 (discontinued)
 A browser-based client for the CryptoGraffiti service which allows the encoding
 and decoding of multimedia messages respectively to and from the Bitcoin's block
 chain.
